@@ -26,14 +26,23 @@ app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    
+    // Check if origin is in whitelist or if wildcard is present
+    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
       return callback(null, true);
     }
-    return callback(new Error('Not allowed by CORS'));
+    
+    // In development, allow if no origins defined
+    if (process.env.NODE_ENV !== 'production' && allowedOrigins.length === 0) {
+      return callback(null, true);
+    }
+
+    return callback(null, false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
 
 // Security headers
@@ -46,6 +55,7 @@ app.use(compression());
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 500,
+  skip: (req) => req.method === 'OPTIONS',
   message: { success: false, error: 'Too many requests, please try again later' }
 });
 app.use(generalLimiter);
@@ -54,6 +64,7 @@ app.use(generalLimiter);
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
+  skip: (req) => req.method === 'OPTIONS',
   message: { success: false, error: 'Too many authentication attempts, please try again later' }
 });
 
