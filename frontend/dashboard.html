@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CureLIS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 antialiased text-slate-800 selection:bg-brand-500 selection:text-white">
+
+    <div class="flex h-screen overflow-hidden bg-gradient-premium">
+        
+        <!-- Sidebar is now injected by layout.js -->
+
+        <!-- Main Content -->
+        <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar pb-12">
+            
+            <!-- Top Header (Search) -->
+            <header class="bg-white/40 backdrop-blur-xl border-b border-white/40 shadow-[0_4px_30px_rgba(0,0,0,0.02)] flex items-center justify-between px-8 py-5 sticky top-0 z-10 transition-custom">
+                <div class="flex-1 w-full max-w-2xl flex relative group">
+                    <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
+                    <input type="text" id="global-search" placeholder="Search patients or reports (by name, phone)..." class="w-full pl-12 pr-4 py-3 bg-white/70 border border-slate-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:bg-white shadow-sm transition-all focus:shadow-md text-sm font-medium">
+                    <div id="search-results" class="absolute top-14 left-0 w-full bg-white shadow-2xl rounded-xl hidden overflow-hidden z-20 border border-slate-100"></div>
+                </div>
+                <div class="ml-6 flex items-center space-x-4">
+                    <button class="relative bg-white p-2.5 rounded-xl text-slate-500 hover:text-brand-600 shadow-sm border border-slate-100 hover:shadow transition-all">
+                        <i class="fas fa-bell"></i>
+                        <span class="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                        </span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="px-8 py-8 max-w-[1600px] mx-auto">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Dashboard Overview</h1>
+                        <p class="text-sm text-slate-500 mt-1">Welcome back. Here's what's happening today.</p>
+                    </div>
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-medium text-slate-500" id="current-date"></p>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="stats-container">
+                    <div class="glass-card p-8 flex items-center justify-center h-36">
+                        <i class="fas fa-circle-notch fa-spin text-3xl text-brand-500"></i>
+                    </div>
+                </div>
+
+
+
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <!-- Recent Patients -->
+                    <div class="glass-card overflow-hidden">
+                        <div class="px-7 py-5 border-b border-slate-100/50 flex justify-between items-center bg-white/40">
+                            <h2 class="text-lg font-bold text-slate-800 flex items-center"><i class="fas fa-user-plus text-brand-500 mr-2"></i> Recent Additions</h2>
+                            <a href="patients.html" class="text-sm font-semibold text-brand-600 hover:text-brand-800 hover:underline transition-colors block">View All <i class="fas fa-arrow-right ml-1 text-xs"></i></a>
+                        </div>
+                        <div class="p-0 overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-100">
+                                <thead class="bg-slate-50/50">
+                                    <tr>
+                                        <th class="px-7 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Patient</th>
+                                        <th class="px-7 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone</th>
+                                        <th class="px-7 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date Added</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-patients-list" class="divide-y divide-slate-50">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Pending Reports -->
+                    <div class="glass-card overflow-hidden">
+                         <div class="px-7 py-5 border-b border-slate-100/50 flex justify-between items-center bg-white/40">
+                            <h2 class="text-lg font-bold text-slate-800 flex items-center"><i class="fas fa-flask text-brand-500 mr-2"></i> Recent Reports</h2>
+                        </div>
+                        <div class="p-0 overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-100">
+                                <thead class="bg-slate-50/50">
+                                    <tr>
+                                        <th class="px-7 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Patient</th>
+                                        <th class="px-7 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-7 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-reports-list" class="divide-y divide-slate-50">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/layout.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCommonLayout();
+            checkAuth();
+            loadDashboardData();
+            setupSearch();
+            
+            // Set current date
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', options);
+        });
+
+        async function loadDashboardData() {
+            try {
+                const res = await api.request('/dashboard/summary');
+                const data = res.data;
+
+                // Render KPI
+                const statsHTML = `
+                    <div class="glass-card relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-brand-500 opacity-5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Patients</p>
+                                <div class="p-2.5 rounded-xl bg-brand-50 text-brand-600 shadow-sm border border-brand-100/50">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-3xl font-bold text-slate-800 tracking-tight">${data.totalPatients}</h3>
+                        </div>
+                    </div>
+
+                    <div class="glass-card relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-orange-500 opacity-5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Pending Reports</p>
+                                <div class="p-2.5 rounded-xl bg-orange-50 text-orange-600 shadow-sm border border-orange-100/50">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-3xl font-bold text-slate-800 tracking-tight">${data.pendingReports}</h3>
+                        </div>
+                    </div>
+
+                    <div class="glass-card relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-emerald-500 opacity-5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Sent Reports</p>
+                                <div class="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 shadow-sm border border-emerald-100/50">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-3xl font-bold text-slate-800 tracking-tight">${data.sentReports}</h3>
+                        </div>
+                    </div>
+
+                    <div class="glass-card relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-500 opacity-5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Reports</p>
+                                <div class="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 shadow-sm border border-indigo-100/50">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                            </div>
+                            <h3 class="text-3xl font-bold text-slate-800 tracking-tight">${data.totalReports}</h3>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('stats-container').innerHTML = statsHTML;
+
+                // Render Recent Patients
+                const patientsList = document.getElementById('recent-patients-list');
+                patientsList.innerHTML = data.recentPatients.map(p => `
+                    <tr class="hover:bg-brand-50/30 transition-colors">
+                        <td class="px-7 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-brand-100 to-indigo-100 text-brand-700 flex items-center justify-center font-bold shadow-sm border border-white">
+                                    ${p.name.charAt(0)}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-bold text-slate-800">${p.name}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-7 py-4 whitespace-nowrap text-sm text-slate-500 font-medium">${p.phone}</td>
+                        <td class="px-7 py-4 whitespace-nowrap text-sm text-slate-500">${new Date(p.createdAt).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'})}</td>
+                    </tr>
+                `).join('') || `<tr><td colspan="3" class="px-7 py-8 text-center text-sm text-slate-500">No recent patients. Get started by adding one.</td></tr>`;
+
+                // Render Recent Reports
+                const reportsList = document.getElementById('recent-reports-list');
+                reportsList.innerHTML = data.recentReports.map(r => {
+                    const statusColors = {
+                        draft: 'bg-slate-100 text-slate-600 border-slate-200',
+                        saved: 'bg-brand-50 text-brand-700 border-brand-200',
+                        sent: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    };
+                    return `
+                    <tr class="hover:bg-brand-50/30 transition-colors">
+                        <td class="px-7 py-4 whitespace-nowrap text-sm font-bold text-slate-800">${r.patientId ? r.patientId.name : 'Unknown Patient'}</td>
+                        <td class="px-7 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs font-bold rounded-lg border ${statusColors[r.status] || statusColors.draft} shadow-sm">${r.status.toUpperCase()}</span>
+                        </td>
+                        <td class="px-7 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            ${r.status !== 'draft' ? `<a href="${BASE_URL}/reports/${r._id}/pdf" target="_blank" class="p-2 text-brand-600 hover:bg-brand-50 hover:text-brand-800 rounded-lg transition-colors mr-1 tooltip-container" title="View PDF"><i class="fas fa-file-pdf"></i></a>` : ''}
+                            <a href="report-create.html?edit=${r._id}" class="p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 rounded-lg transition-colors tooltip-container" title="Edit Report"><i class="fas fa-edit"></i></a>
+                        </td>
+                    </tr>
+                `}).join('') || `<tr><td colspan="3" class="px-7 py-8 text-center text-sm text-slate-500">No recent reports found.</td></tr>`;
+
+
+
+            } catch (err) {
+                UI.showToast('Failed to load dashboard data', 'error');
+            }
+        }
+
+        // Global Search Logic (Maintained exactly)
+        function setupSearch() {
+            const searchInput = document.getElementById('global-search');
+            const resultsBox = document.getElementById('search-results');
+            let debounceTimer;
+
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(debounceTimer);
+                const query = e.target.value.trim();
+                
+                if (!query) {
+                    resultsBox.classList.add('hidden');
+                    return;
+                }
+
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const res = await api.request(`/search?query=${query}`);
+                        
+                        let html = '';
+                        if (res.data.patients.length > 0) {
+                            html += '<div class="bg-slate-50/80 px-5 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">Patients</div>';
+                            res.data.patients.forEach(p => {
+                                html += `<a href="patients.html?id=${p._id}" class="block px-5 py-3 hover:bg-brand-50 transition-colors text-sm border-b border-slate-50 last:border-0"><span class="font-bold text-slate-800">${p.name}</span> <span class="text-slate-500 block text-xs mt-0.5">${p.phone}</span></a>`;
+                            });
+                        }
+                        
+                        if (res.data.reports.length > 0) {
+                            html += '<div class="bg-slate-50/80 px-5 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-t border-slate-100">Reports</div>';
+                             res.data.reports.forEach(r => {
+                                html += `<a href="report-create.html?edit=${r._id}" class="block px-5 py-3 hover:bg-brand-50 transition-colors text-sm border-b border-slate-50 last:border-0"><span class="font-bold text-slate-800">Report for ${r.patientId ? r.patientId.name : 'Unknown'}</span> <span class="text-slate-500 block text-xs mt-0.5">${new Date(r.date).toLocaleDateString()}</span></a>`;
+                            });
+                        }
+
+                        if (!html) {
+                            html = '<div class="px-5 py-5 text-sm font-medium text-slate-500 text-center flex flex-col items-center"><i class="fas fa-search block text-2xl text-slate-300 mb-2"></i>No results found</div>';
+                        }
+                        
+                        resultsBox.innerHTML = html;
+                        resultsBox.classList.remove('hidden');
+
+                    } catch (err) {
+                        console.error('Search failed', err);
+                    }
+                }, 400);
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
+                    resultsBox.classList.add('hidden');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

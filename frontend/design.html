@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Report - CureLIS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 antialiased text-slate-800 selection:bg-brand-500 selection:text-white">
+
+    <div class="flex h-screen overflow-hidden bg-gradient-premium">
+        
+        <!-- Sidebar Navigation -->
+        <!-- Sidebar Layout Injected via JS -->
+
+        <!-- Main Content -->
+        <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar pb-12">
+            
+            <!-- Top Header -->
+            <header class="bg-white/40 backdrop-blur-xl border-b border-white/40 shadow-[0_4px_30px_rgba(0,0,0,0.02)] flex items-center justify-between px-8 py-5 sticky top-0 z-10 transition-custom">
+                <div class="flex-1 w-full max-w-2xl flex relative opacity-0">
+                    <!-- Placeholder to keep layout even -->
+                </div>
+                <!-- Breadcrumbs -->
+                <nav class="flex absolute left-8 top-1/2 transform -translate-y-1/2" aria-label="Breadcrumb">
+                  <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+                    <li class="inline-flex items-center text-slate-500 hover:text-brand-600 transition-colors">
+                      <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-2"></i>Dashboard</a>
+                    </li>
+                    <li>
+                      <div class="flex items-center">
+                        <i class="fas fa-chevron-right text-slate-400 text-xs mx-2"></i>
+                        <span class="text-slate-800 font-bold">Branding & Print Settings</span>
+                      </div>
+                    </li>
+                  </ol>
+                </nav>
+            </header>
+
+            <div class="px-8 py-8 max-w-[1600px] mx-auto">
+                
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Branding & Print Settings</h1>
+                        <p class="text-sm text-slate-500 mt-1">Customize your laboratory's letterhead, logos, and report layout preferences.</p>
+                    </div>
+                    <button id="btn-save-settings" onclick="saveSettings()" class="bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white px-6 py-2.5 rounded-xl shadow-lg shadow-brand-500/30 transition-all flex items-center font-bold transform hover:-translate-y-0.5">
+                        <i class="fas fa-save mr-2"></i> Save Settings
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <!-- Images Upload -->
+                    <div class="glass-card overflow-hidden">
+                         <div class="px-7 py-5 border-b border-slate-100/50 bg-white/40">
+                            <h2 class="text-lg font-bold text-slate-800 flex items-center"><i class="fas fa-images text-brand-500 mr-2"></i> Letterhead Images</h2>
+                         </div>
+                         <div class="p-7 space-y-8">
+                             <!-- Header Image -->
+                             <div>
+                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Header Image (Logo & Address)</label>
+                                 
+                                 <div id="header-preview-container" class="mb-4 h-36 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center overflow-hidden transition-colors hover:border-brand-300">
+                                     <img id="header-preview" src="" class="max-h-full object-contain hidden" alt="Header Preview">
+                                     <span id="header-placeholder" class="text-slate-400 text-center">
+                                         <i class="fas fa-image text-3xl mb-2 block"></i>
+                                         <span class="text-sm font-medium">No Header Set</span>
+                                     </span>
+                                 </div>
+                                 
+                                 <div class="flex items-center space-x-3">
+                                     <input type="file" id="header-file" accept="image/*" class="hidden" onchange="uploadImage('header')">
+                                     <button onclick="document.getElementById('header-file').click()" class="bg-white border border-slate-200 text-sm font-bold text-slate-700 py-2.5 px-5 rounded-xl shadow-sm hover:bg-slate-50 hover:shadow transition-all transform hover:-translate-y-0.5" id="btn-upload-header">
+                                         <i class="fas fa-cloud-upload-alt mr-2 text-brand-500"></i> Upload Header
+                                     </button>
+                                     <button onclick="clearImage('header')" id="btn-clear-header" class="hidden text-red-500 hover:text-red-700 text-sm font-bold hover:bg-red-50 px-3 py-2.5 rounded-xl transition-colors">
+                                         <i class="fas fa-trash-alt mr-1"></i> Clear
+                                     </button>
+                                 </div>
+                                 <input type="hidden" id="header-url">
+                             </div>
+
+                             <!-- Footer Image -->
+                             <div>
+                                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Footer Image (Signatures)</label>
+                                 
+                                 <div id="footer-preview-container" class="mb-4 h-36 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center overflow-hidden transition-colors hover:border-brand-300">
+                                     <img id="footer-preview" src="" class="max-h-full object-contain hidden" alt="Footer Preview">
+                                     <span id="footer-placeholder" class="text-slate-400 text-center">
+                                         <i class="fas fa-signature text-3xl mb-2 block"></i>
+                                         <span class="text-sm font-medium">No Footer Set</span>
+                                     </span>
+                                 </div>
+                                 
+                                 <div class="flex items-center space-x-3">
+                                     <input type="file" id="footer-file" accept="image/*" class="hidden" onchange="uploadImage('footer')">
+                                     <button onclick="document.getElementById('footer-file').click()" class="bg-white border border-slate-200 text-sm font-bold text-slate-700 py-2.5 px-5 rounded-xl shadow-sm hover:bg-slate-50 hover:shadow transition-all transform hover:-translate-y-0.5" id="btn-upload-footer">
+                                         <i class="fas fa-cloud-upload-alt mr-2 text-brand-500"></i> Upload Footer
+                                     </button>
+                                     <button onclick="clearImage('footer')" id="btn-clear-footer" class="hidden text-red-500 hover:text-red-700 text-sm font-bold hover:bg-red-50 px-3 py-2.5 rounded-xl transition-colors">
+                                         <i class="fas fa-trash-alt mr-1"></i> Clear
+                                     </button>
+                                 </div>
+                                 <input type="hidden" id="footer-url">
+                             </div>
+                         </div>
+                    </div>
+
+                    <!-- Layout Preferences -->
+                    <div class="glass-card overflow-hidden">
+                        <div class="px-7 py-5 border-b border-slate-100/50 bg-white/40 flex justify-between items-center">
+                            <h2 class="text-lg font-bold text-slate-800 flex items-center"><i class="fas fa-sliders-h text-brand-500 mr-2"></i> Layout Preferences</h2>
+                            <button onclick="resetLayout()" class="text-xs font-bold text-slate-500 hover:text-brand-600 bg-white hover:bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm transition-colors flex items-center tooltip-container" title="Restore default layout settings">
+                                <i class="fas fa-undo mr-1.5"></i> Reset
+                            </button>
+                        </div>
+                        <div class="p-7">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Page Margins (pt)</label>
+                            <div class="grid grid-cols-2 gap-5 mb-8">
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-1.5">Top Margin</label>
+                                    <input type="number" id="m-top" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-1.5">Bottom Margin</label>
+                                    <input type="number" id="m-bottom" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-1.5">Left Margin</label>
+                                    <input type="number" id="m-left" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-1.5">Right Margin</label>
+                                    <input type="number" id="m-right" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Image Heights (pt)</label>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Header Max Height <span class="text-xs text-slate-400 font-normal ml-1">(0 = auto)</span></label>
+                                            <input type="number" id="header-height" min="0" placeholder="e.g. 100" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Footer Max Height <span class="text-xs text-slate-400 font-normal ml-1">(0 = auto)</span></label>
+                                            <input type="number" id="footer-height" min="0" placeholder="e.g. 60" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Typography</label>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Base Font Size</label>
+                                            <div class="relative">
+                                                <select id="font-size" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all font-medium text-slate-800 appearance-none cursor-pointer shadow-sm">
+                                                    <option value="10">10 pt</option>
+                                                    <option value="11">11 pt</option>
+                                                    <option value="12">12 pt (Default)</option>
+                                                    <option value="14">14 pt</option>
+                                                </select>
+                                                <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500">
+                                                    <i class="fas fa-chevron-down text-sm"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/layout.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+             loadCommonLayout();
+             checkAuth();
+             loadSettings();
+        });
+
+        async function loadSettings() {
+             try {
+                 const res = await api.request('/settings/print');
+                 const data = res.data;
+                 
+                 if (data.headerImageURL) updateImageUI('header', data.headerImageURL);
+                 if (data.footerImageURL) updateImageUI('footer', data.footerImageURL);
+                 
+                 const lp = data.layoutPreferences || {};
+                 document.getElementById('m-top').value = lp.marginTop || 20;
+                 document.getElementById('m-bottom').value = lp.marginBottom || 20;
+                 document.getElementById('m-left').value = lp.marginLeft || 20;
+                 document.getElementById('m-right').value = lp.marginRight || 20;
+                 document.getElementById('font-size').value = lp.fontSize || 12;
+                 document.getElementById('header-height').value = lp.headerHeight || 0;
+                 document.getElementById('footer-height').value = lp.footerHeight || 0;
+
+             } catch(err) {
+                 UI.showToast('Failed to load settings', 'error');
+             }
+        }
+
+        async function uploadImage(target) {
+            const input = document.getElementById(`${target}-file`);
+            const file = input.files[0];
+            if (!file) return;
+
+            const btnId = `btn-upload-${target}`;
+            UI.toggleLoader(btnId, true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Uploading...');
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const res = await api.request('/settings/upload', 'POST', formData);
+                updateImageUI(target, res.data.url);
+                UI.showToast(`${target.charAt(0).toUpperCase() + target.slice(1)} uploaded successfully`, 'success');
+            } catch (err) {
+                UI.showToast(err.message, 'error');
+            } finally {
+                const label = target.charAt(0).toUpperCase() + target.slice(1);
+                UI.toggleLoader(btnId, false, `<i class="fas fa-cloud-upload-alt mr-2 text-brand-500"></i> Upload ${label}`);
+                input.value = ''; // Reset
+            }
+        }
+
+        function updateImageUI(target, url) {
+             document.getElementById(`${target}-url`).value = url;
+             const img = document.getElementById(`${target}-preview`);
+             img.src = url;
+             img.classList.remove('hidden');
+             document.getElementById(`${target}-placeholder`).classList.add('hidden');
+             document.getElementById(`btn-upload-${target}`).classList.add('hidden');
+             document.getElementById(`btn-clear-${target}`).classList.remove('hidden');
+        }
+
+        async function clearImage(target) {
+            const imageUrl = document.getElementById(`${target}-url`).value;
+            
+            if (imageUrl) {
+                try {
+                    await api.request('/settings/delete-image', 'POST', { imageUrl });
+                    UI.showToast(`${target.charAt(0).toUpperCase() + target.slice(1)} image removed`, 'success');
+                } catch (err) {
+                    UI.showToast('Failed to delete image: ' + err.message, 'error');
+                    return; // Don't clear UI if delete failed
+                }
+            }
+
+            document.getElementById(`${target}-url`).value = '';
+            document.getElementById(`${target}-preview`).classList.add('hidden');
+            document.getElementById(`${target}-preview`).src = '';
+            document.getElementById(`${target}-placeholder`).classList.remove('hidden');
+            document.getElementById(`btn-upload-${target}`).classList.remove('hidden');
+            document.getElementById(`btn-clear-${target}`).classList.add('hidden');
+        }
+
+        async function saveSettings() {
+            UI.toggleLoader('btn-save-settings', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Saving...');
+
+            const payload = {
+                headerImageURL: document.getElementById('header-url').value,
+                footerImageURL: document.getElementById('footer-url').value,
+                layoutPreferences: {
+                    marginTop: parseInt(document.getElementById('m-top').value) || 20,
+                    marginBottom: parseInt(document.getElementById('m-bottom').value) || 20,
+                    marginLeft: parseInt(document.getElementById('m-left').value) || 20,
+                    marginRight: parseInt(document.getElementById('m-right').value) || 20,
+                    fontSize: parseInt(document.getElementById('font-size').value) || 12,
+                    headerHeight: parseInt(document.getElementById('header-height').value) || 0,
+                    footerHeight: parseInt(document.getElementById('footer-height').value) || 0
+                }
+            };
+
+            try {
+                await api.request('/settings/print', 'PUT', payload);
+                UI.showToast('Settings saved successfully', 'success');
+            } catch(err) {
+                UI.showToast('Failed to save settings: ' + err.message, 'error');
+            } finally {
+                UI.toggleLoader('btn-save-settings', false, '<i class="fas fa-save mr-2"></i> Save Settings');
+            }
+        }
+
+        function resetLayout() {
+            if (confirm("Are you sure you want to revert layout preferences to default? (Make sure to click Save Settings afterwards)")) {
+                 document.getElementById('m-top').value = 20;
+                 document.getElementById('m-bottom').value = 20;
+                 document.getElementById('m-left').value = 20;
+                 document.getElementById('m-right').value = 20;
+                 document.getElementById('font-size').value = 12;
+                 document.getElementById('header-height').value = 0;
+                 document.getElementById('footer-height').value = 0;
+                 UI.showToast("Layout parameters reset. Click Save to apply.", "success");
+            }
+        }
+    </script>
+</body>
+</html>

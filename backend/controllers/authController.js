@@ -1,0 +1,145 @@
+const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+const { isValidEmail, isStrongPassword } = require('../middlewares/validate');
+
+// Generate JWT Helper — 7 day expiry (reduced from 30d)
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: '7d'
+  });
+};
+
+// @desc    Register user
+// @route   POST /api/auth/register
+// @access  Public (first Doctor only) / Private (LabTech requires parent Doctor token)
+exports.register = async (req, res) => {
+  try {
+    const { email, password, role, labName, parentDoctorId } = req.body;
+
+    // --- Input Validation ---
+    if (!email || !password || !labName) {
+      return res.status(400).json({ success: false, error: 'Email, password, and lab name are required' });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ success: false, error: 'Please provide a valid email address' });
+    }
+
+    if (!isStrongPassword(password)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 8 characters with at least 1 uppercase letter and 1 number'
+      });
+    }
+
+    // --- Role Validation ---
+    const allowedRoles = ['Doctor', 'LabTech'];
+    const userRole = allowedRoles.includes(role) ? role : 'Doctor';
+
+    // --- Registration Restrictions ---
+    if (userRole === 'LabTech') {
+      // LabTech MUST have a parentDoctorId
+      if (!parentDoctorId) {
+        return res.status(400).json({ success: false, error: 'Lab Technician accounts require a parent Doctor ID' });
+      }
+      // Verify the parent doctor exists
+      const parentDoctor = await User.findById(parentDoctorId);
+      if (!parentDoctor || parentDoctor.role !== 'Doctor') {
+        return res.status(400).json({ success: false, error: 'Invalid parent Doctor ID' });
+      }
+    }
+
+    // --- Check existing user ---
+    const userExists = await User.findOne({ email: email.toLowerCase().trim() });
+    if (userExists) {
+      return res.status(400).json({ success: false, error: 'An account with this email already exists' });
+    }
+
+    // --- Create user ---
+    const userFields = {
+      email: email.toLowerCase().trim(),
+      password,
+      role: userRole,
+      labName: labName.trim()
+    };
+
+    if (userRole === 'LabTech' && parentDoctorId) {
+      userFields.parentDoctorId = parentDoctorId;
+    }
+
+    const user = await User.create(userFields);
+
+    res.status(201).json({
+      success: true,
+      token: generateToken(user._id),
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        labName: user.labName
+      }
+    });
+  } catch (error) {
+    console.error('Registration error:', error.message);
+    res.status(500).json({ success: false, error: 'Registration failed. Please try again.' });
+  }
+};
+
+// @desc    Login user
+// @route   POST /api/auth/login
+// @access  Public
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'Please provide an email and password' });
+    }
+
+    // Check for user (case-insensitive email)
+    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
+
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    // Check if password matches
+    const isMatch = await user.matchPassword(password);
+
+    if (!isMatch) {
+      return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    res.status(200).json({
+      success: true,
+      token: generateToken(user._id),
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        labName: user.labName,
+        parentDoctorId: user.parentDoctorId
+      }
+    });
+
+  } catch (error) {
+    console.error('Login error:', error.message);
+    res.status(500).json({ success: false, error: 'Login failed. Please try again.' });
+  }
+};
+
+// @desc    Get current logged in user
+// @route   GET /api/auth/me
+// @access  Private
+exports.getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+    res.status(200).json({ success: true, data: user });
+  } catch (error) {
+    console.error('GetMe error:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to retrieve user profile' });
+  }
+};

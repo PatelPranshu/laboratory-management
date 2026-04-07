@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patients - CureLIS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 antialiased text-slate-800 selection:bg-brand-500 selection:text-white">
+
+    <div class="flex h-screen overflow-hidden bg-gradient-premium">
+        
+        <!-- Sidebar Layout Injected via JS -->
+
+        <!-- Main Content -->
+        <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar pb-12">
+            
+            <!-- Top Header -->
+            <header class="bg-white/40 backdrop-blur-xl border-b border-white/40 shadow-[0_4px_30px_rgba(0,0,0,0.02)] flex items-center justify-between px-8 py-5 sticky top-0 z-10 transition-custom">
+                <div class="flex-1 w-full max-w-2xl flex relative opacity-0">
+                    <!-- Placeholder to keep layout even if not using global search here -->
+                </div>
+                <!-- Breadcrumbs -->
+                <nav class="flex absolute left-8 top-1/2 transform -translate-y-1/2" aria-label="Breadcrumb">
+                  <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+                    <li class="inline-flex items-center text-slate-500 hover:text-brand-600 transition-colors">
+                      <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-2"></i>Dashboard</a>
+                    </li>
+                    <li>
+                      <div class="flex items-center">
+                        <i class="fas fa-chevron-right text-slate-400 text-xs mx-2"></i>
+                        <span class="text-slate-800 font-bold">Patients</span>
+                      </div>
+                    </li>
+                  </ol>
+                </nav>
+            </header>
+
+            <div class="px-8 py-8 max-w-[1600px] mx-auto">
+                
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Patients Directory</h1>
+                        <p class="text-sm text-slate-500 mt-1">Manage all registered patients, their information, and historical data.</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button onclick="exportCSV()" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-xl shadow-sm transition-all flex items-center font-bold transform hover:-translate-y-0.5">
+                            <i class="fas fa-file-csv mr-2 text-brand-500"></i> Export CSV
+                        </button>
+                        <button onclick="openModal()" class="bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-brand-500/30 transition-all flex items-center font-bold transform hover:-translate-y-0.5">
+                            <i class="fas fa-plus mr-2"></i> Add Patient
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search and Filter -->
+                <div class="glass-card p-2 flex space-x-3 mb-8">
+                    <div class="flex-1 relative group">
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
+                        <input type="text" id="patient-search" placeholder="Search patients by name, phone, or ID..." class="w-full pl-12 pr-4 py-3 bg-white/70 border-none rounded-lg focus:outline-none focus:ring-0 text-sm font-medium placeholder-slate-400 shadow-inner">
+                    </div>
+                    <button onclick="applySearch()" class="bg-white hover:bg-slate-50 text-brand-600 px-6 py-3 rounded-lg transition-colors font-bold shadow-sm border border-slate-200">
+                        Search
+                    </button>
+                </div>
+
+                <!-- Table -->
+                <div class="glass-card overflow-hidden">
+                    <div class="overflow-x-auto min-h-[400px]">
+                        <table class="min-w-full divide-y divide-slate-100/60 border-collapse">
+                            <thead class="bg-slate-50/50">
+                                <tr>
+                                    <th class="px-7 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-1/3">Patient Identity</th>
+                                    <th class="px-7 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Contact Info</th>
+                                    <th class="px-7 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Demographics</th>
+                                    <th class="px-7 py-5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="patients-list" class="divide-y divide-slate-50 bg-white/40">
+                                <!-- Populated via JS -->
+                                <tr><td colspan="4" class="text-center py-20"><i class="fas fa-circle-notch fa-spin text-4xl text-brand-500"></i></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="bg-white/60 backdrop-blur-md px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                        <div class="flex-1 flex justify-between sm:hidden">
+                            <button onclick="loadPatients(currentPage > 1 ? currentPage - 1 : 1)" class="relative inline-flex items-center px-4 py-2 border border-slate-200 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50">Previous</button>
+                            <button onclick="loadPatients(currentPage + 1)" class="ml-3 relative inline-flex items-center px-4 py-2 border border-slate-200 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50">Next</button>
+                        </div>
+                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-500" id="pagination-info">
+                                    Loading pagination...
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="relative z-0 inline-flex rounded-lg shadow-sm -space-x-px" aria-label="Pagination" id="pagination-controls">
+                                    <!-- Pagination Buttons -->
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Patient Modal -->
+    <div id="patient-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden overflow-y-auto h-full w-full z-50 flex items-center justify-center transition-opacity">
+        <div class="relative mx-auto border-0 w-full max-w-xl shadow-2xl rounded-2xl bg-white m-4 transform transition-transform scale-95 opacity-0 duration-300" id="modal-content">
+            
+            <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-2xl">
+                <h3 class="text-xl font-bold text-slate-800 flex items-center" id="modal-title">
+                    <i class="fas fa-user-plus text-brand-500 mr-3"></i> Add New Patient
+                </h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-lg transition-colors focus:outline-none">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <div class="px-8 py-6">
+                <form id="patient-form" onsubmit="savePatient(event)">
+                    <input type="hidden" id="patient-id">
+                    
+                    <div class="mb-5">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Full Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="p-name" required placeholder="John Doe" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                    </div>
+                    
+                    <div class="mb-5">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Phone Number <span class="text-red-500">*</span></label>
+                        <input type="text" id="p-phone" required placeholder="+1 234 567 8900" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                    </div>
+
+                    <div class="flex space-x-5 mb-5">
+                        <div class="flex-1">
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Age <span class="text-red-500">*</span></label>
+                            <input type="number" id="p-age" required min="0" placeholder="e.g. 35" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Gender <span class="text-red-500">*</span></label>
+                            <select id="p-gender" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 cursor-pointer appearance-none">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-8">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Address</label>
+                        <textarea id="p-address" rows="3" placeholder="Full residential address..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 resize-none"></textarea>
+                    </div>
+
+                    <div class="flex items-center justify-end space-x-4 pt-4 border-t border-slate-100">
+                        <button type="button" onclick="closeModal()" class="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 focus:outline-none transition-colors">Cancel</button>
+                        <button type="submit" id="btn-save-patient" class="px-6 py-2.5 rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 focus:outline-none transform hover:-translate-y-0.5 transition-all">Save Patient</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/layout.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let currentPage = 1;
+        let searchQuery = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCommonLayout();
+            checkAuth();
+            loadPatients(1);
+        });
+
+        async function loadPatients(page = 1) {
+            currentPage = page;
+            const tbody = document.getElementById('patients-list');
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-20"><i class="fas fa-circle-notch fa-spin text-4xl text-brand-500"></i></td></tr>`;
+            
+            try {
+                const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
+                const res = await api.request(`/patients?page=${page}&limit=10${searchParam}`);
+                const data = res.data;
+                const pagination = res.pagination;
+
+                // Build a map of patientId -> latest reportId by fetching reports for these patients
+                const patientReportMap = {};
+                if (data.length > 0) {
+                    try {
+                        const reportsRes = await api.request(`/reports?limit=1000`);
+                        if (reportsRes.data) {
+                            reportsRes.data.forEach(r => {
+                                const pid = typeof r.patientId === 'object' ? r.patientId._id : r.patientId;
+                                // Keep the most recent report (first one since sorted by createdAt desc)
+                                if (!patientReportMap[pid]) {
+                                    patientReportMap[pid] = r._id;
+                                }
+                            });
+                        }
+                    } catch(e) { /* If reports fetch fails, default to create report buttons */ }
+                }
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-20 text-slate-500 font-medium">No patients found.</td></tr>`;
+                } else {
+                    tbody.innerHTML = data.map(p => {
+                        const existingReportId = patientReportMap[p._id];
+                        const reportActionBtn = existingReportId
+                            ? `<a href="report-create.html?edit=${existingReportId}" class="p-2 bg-amber-50 text-amber-600 hover:bg-amber-100 hover:text-amber-700 rounded-lg transition-colors tooltip-container font-medium" title="Edit Report"><i class="fas fa-edit"></i></a>`
+                            : `<a href="report-create.html?patient=${p._id}" class="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 rounded-lg transition-colors tooltip-container font-medium" title="Create Report"><i class="fas fa-file-medical"></i></a>`;
+                        return `
+                        <tr class="hover:bg-brand-50/40 transition-colors group">
+                            <td class="px-7 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-brand-100 to-indigo-100 text-brand-700 flex items-center justify-center font-bold shadow-sm border border-white">
+                                        ${p.name.charAt(0)}
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-bold text-slate-800">${p.name}</div>
+                                        <div class="text-xs text-slate-500 font-medium mt-0.5">ID: ${p._id.slice(-6).toUpperCase()}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-7 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-slate-700"><i class="fas fa-phone-alt text-slate-400 mr-1.5 text-xs"></i>${p.phone}</div>
+                                ${p.email ? `<div class="text-xs text-slate-500 font-medium mt-1"><i class="fas fa-envelope text-slate-400 mr-1.5"></i>${p.email}</div>` : ''}
+                            </td>
+                            <td class="px-7 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 text-xs font-bold bg-slate-100 text-slate-600 rounded-lg mr-2">${p.age} years</span>
+                                <span class="px-2.5 py-1 text-xs font-bold bg-slate-100 text-slate-600 rounded-lg"><i class="fas fa-${p.gender.toLowerCase() === 'male' ? 'mars' : p.gender.toLowerCase() === 'female' ? 'venus' : 'genderless'} mr-1 opacity-70"></i>${p.gender}</span>
+                            </td>
+                            <td class="px-7 py-4 whitespace-nowrap text-right text-sm">
+                                <div class="flex justify-end space-x-2">
+                                    ${reportActionBtn}
+                                    <button onclick='editPatient(${JSON.stringify(p)})' class="p-2 bg-slate-50 text-slate-600 hover:bg-slate-200 hover:text-slate-800 rounded-lg transition-colors tooltip-container" title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button onclick="deletePatient('${p._id}')" class="p-2 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 rounded-lg transition-colors tooltip-container" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    `}).join('');
+                }
+
+                updatePaginationUI(pagination);
+            } catch (err) {
+                UI.showToast('Failed to load patients', 'error');
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-20 text-red-500 font-bold">Failed to load data.</td></tr>`;
+            }
+        }
+
+        function updatePaginationUI(p) {
+            const info = document.getElementById('pagination-info');
+            const start = (p.page - 1) * p.limit + 1;
+            const end = Math.min(p.page * p.limit, p.total);
+            const total = p.total;
+            if (total === 0) {
+                 info.innerHTML = `Showing <span class="font-bold text-slate-800">0</span> results`;
+            } else {
+                 info.innerHTML = `Showing <span class="font-bold text-slate-800">${start}</span> to <span class="font-bold text-slate-800">${end}</span> of <span class="font-bold text-slate-800">${total}</span> results`;
+            }
+
+            const controls = document.getElementById('pagination-controls');
+            let btns = '';
+            
+            if (p.page > 1) {
+                btns += `<button onclick="loadPatients(${p.page - 1})" class="relative inline-flex items-center px-3 py-2 rounded-l-lg border border-slate-200 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors"><i class="fas fa-chevron-left"></i></button>`;
+            } else {
+                btns += `<button disabled class="relative inline-flex items-center px-3 py-2 rounded-l-lg border border-slate-200 bg-slate-50 text-sm font-medium text-slate-300 cursor-not-allowed"><i class="fas fa-chevron-left"></i></button>`;
+            }
+
+            for(let i=1; i<=p.pages; i++) {
+                if(i === p.page) {
+                     btns += `<span class="relative inline-flex items-center px-4 py-2 border border-brand-500 bg-brand-50 text-sm font-bold text-brand-600 z-10">${i}</span>`;
+                } else {
+                     btns += `<button onclick="loadPatients(${i})" class="relative inline-flex items-center px-4 py-2 border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">${i}</button>`;
+                }
+            }
+
+            if (p.page < p.pages) {
+                btns += `<button onclick="loadPatients(${p.page + 1})" class="relative inline-flex items-center px-3 py-2 rounded-r-lg border border-slate-200 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors"><i class="fas fa-chevron-right"></i></button>`;
+            } else {
+                btns += `<button disabled class="relative inline-flex items-center px-3 py-2 rounded-r-lg border border-slate-200 bg-slate-50 text-sm font-medium text-slate-300 cursor-not-allowed"><i class="fas fa-chevron-right"></i></button>`;
+            }
+
+            controls.innerHTML = btns;
+        }
+
+        function applySearch() {
+            searchQuery = document.getElementById('patient-search').value;
+            loadPatients(1);
+        }
+
+        document.getElementById('patient-search').addEventListener('keypress', (e) => {
+             if (e.key === 'Enter') applySearch();
+        });
+
+        // Modals with animation
+        function openModal() {
+            document.getElementById('patient-form').reset();
+            document.getElementById('patient-id').value = '';
+            document.getElementById('modal-title').innerHTML = '<i class="fas fa-user-plus text-brand-500 mr-3"></i> Add New Patient';
+            
+            const modal = document.getElementById('patient-modal');
+            const content = document.getElementById('modal-content');
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('patient-modal');
+            const content = document.getElementById('modal-content');
+            
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function editPatient(p) {
+            document.getElementById('patient-id').value = p._id;
+            document.getElementById('p-name').value = p.name;
+            document.getElementById('p-phone').value = p.phone;
+            document.getElementById('p-age').value = p.age;
+            document.getElementById('p-gender').value = p.gender;
+            document.getElementById('p-address').value = p.address || '';
+            document.getElementById('modal-title').innerHTML = '<i class="fas fa-user-edit text-brand-500 mr-3"></i> Edit Patient';
+            
+            const modal = document.getElementById('patient-modal');
+            const content = document.getElementById('modal-content');
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        async function savePatient(e) {
+            e.preventDefault();
+            UI.toggleLoader('btn-save-patient', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Saving...');
+
+            const id = document.getElementById('patient-id').value;
+            const data = {
+                name: document.getElementById('p-name').value,
+                phone: document.getElementById('p-phone').value,
+                age: document.getElementById('p-age').value,
+                gender: document.getElementById('p-gender').value,
+                address: document.getElementById('p-address').value
+            };
+
+            try {
+                if (id) {
+                    await api.request(`/patients/${id}`, 'PUT', data);
+                    UI.showToast('Patient updated successfully', 'success');
+                } else {
+                    await api.request(`/patients`, 'POST', data);
+                    UI.showToast('Patient added successfully', 'success');
+                }
+                closeModal();
+                loadPatients(currentPage); // reload current page
+            } catch (err) {
+                UI.showToast(err.message, 'error');
+            } finally {
+                UI.toggleLoader('btn-save-patient', false, 'Save Patient');
+            }
+        }
+
+        async function deletePatient(id) {
+            if (confirm('Are you sure you want to delete this patient? This action cannot be undone.')) {
+                try {
+                    await api.request(`/patients/${id}`, 'DELETE');
+                    UI.showToast('Patient deleted', 'success');
+                    loadPatients(1);
+                } catch (err) {
+                     UI.showToast(err.message, 'error');
+                }
+            }
+        }
+
+        async function exportCSV() {
+            try {
+                UI.showToast('Preparing CSV Export...', 'success');
+                const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
+                // Fetch all data for export by setting a large limit
+                const res = await api.request(`/patients?page=1&limit=1000${searchParam}`);
+                const patients = res.data;
+                
+                if (patients.length === 0) {
+                    return UI.showToast('No data to export', 'error');
+                }
+
+                const headers = ['Identity', 'Name', 'Phone', 'Email', 'Age', 'Gender', 'Registration Date'];
+                const csvData = patients.map(p => [
+                    p._id.slice(-6).toUpperCase(),
+                    `"${p.name.replace(/"/g, '""')}"`,
+                    p.phone || 'N/A',
+                    p.email || 'N/A',
+                    p.age,
+                    p.gender,
+                    new Date(p.createdAt).toLocaleDateString()
+                ]);
+
+                const csvContent = [headers.join(','), ...csvData.map(row => row.join(','))].join('\n');
+                
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.setAttribute('href', url);
+                link.setAttribute('download', `CureLIS_Patients_${new Date().toISOString().slice(0,10)}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                UI.showToast('Export successful!', 'success');
+
+            } catch (error) {
+                UI.showToast('Export failed', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

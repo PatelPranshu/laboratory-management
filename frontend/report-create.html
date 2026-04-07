@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Report - CureLIS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 antialiased text-slate-800 selection:bg-brand-500 selection:text-white">
+
+    <div class="flex h-screen overflow-hidden bg-gradient-premium">
+        
+        <!-- Sidebar Layout Injected via JS -->
+
+        <!-- Main Content -->
+        <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar pb-12">
+            
+            <!-- Top Header -->
+            <header class="bg-white/40 backdrop-blur-xl border-b border-white/40 shadow-[0_4px_30px_rgba(0,0,0,0.02)] flex items-center justify-between px-8 py-5 sticky top-0 z-10 transition-custom">
+                <div class="flex-1 w-full max-w-2xl flex relative opacity-0">
+                    <!-- Placeholder to keep layout even -->
+                </div>
+                <!-- Breadcrumbs -->
+                <nav class="flex absolute left-8 top-1/2 transform -translate-y-1/2" aria-label="Breadcrumb">
+                  <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+                    <li class="inline-flex items-center text-slate-500 hover:text-brand-600 transition-colors">
+                      <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-2"></i>Dashboard</a>
+                    </li>
+                    <li>
+                      <div class="flex items-center">
+                        <i class="fas fa-chevron-right text-slate-400 text-xs mx-2"></i>
+                        <span class="text-slate-800 font-bold">Create Report</span>
+                      </div>
+                    </li>
+                  </ol>
+                </nav>
+            </header>
+
+            <div class="px-8 py-8 max-w-[1600px] mx-auto flex flex-col xl:flex-row gap-8">
+            
+            <!-- Left Side: Editor Area -->
+            <div class="w-full xl:w-2/3 flex flex-col relative pb-10">
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-slate-800 tracking-tight" id="page-title">Draft New Report</h1>
+                    <p class="text-sm text-slate-500 mt-1">Select a patient, pick a template (or start from scratch), and input results.</p>
+                </div>
+                
+                <input type="hidden" id="report-id">
+
+                <!-- Patient Selection -->
+                <div class="glass-card mb-6 relative z-50">
+                    <div class="px-7 py-5 border-b border-slate-100/50 bg-white/40">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center">
+                            <span class="flex items-center justify-center w-6 h-6 rounded-full bg-brand-100 text-brand-600 text-xs mr-3">1</span> 
+                            Select Patient
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div id="search-input-container" class="relative group mb-2">
+                            <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
+                            <input type="text" id="patient-search-input" placeholder="Search by name, ID, or phone..." class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:bg-white transition-all font-medium text-slate-800 shadow-inner">
+                            <div id="patient-search-results" class="absolute z-30 bg-white w-full border border-slate-200 rounded-xl shadow-xl hidden max-h-60 overflow-y-auto mt-2"></div>
+                        </div>
+                        
+                        <div id="selected-patient-card" class="bg-gradient-to-r from-brand-50 to-indigo-50 border border-brand-200/60 rounded-xl p-5 hidden mt-4 flex justify-between items-center shadow-sm">
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold text-brand-600 uppercase tracking-widest mb-1">Selected Patient</span>
+                                <p class="text-lg font-bold text-slate-800" id="sp-name">Patient Name</p>
+                                <p class="text-sm font-medium text-slate-600 mt-0.5" id="sp-details">Phone - Age/Gender</p>
+                                <input type="hidden" id="sp-id">
+                            </div>
+                            <button onclick="clearPatient()" class="p-2 text-slate-400 hover:text-red-500 hover:bg-slate-100 rounded-lg transition-colors focus:outline-none" title="Remove Patient">
+                                <i class="fas fa-times-circle text-2xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Template Selection (Multi-select) -->
+                <div class="glass-card mb-6">
+                     <div class="px-7 py-5 border-b border-slate-100/50 bg-white/40">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center">
+                            <span class="flex items-center justify-center w-6 h-6 rounded-full bg-brand-100 text-brand-600 text-xs mr-3">2</span> 
+                            Load Test Templates <span class="text-sm font-normal text-slate-400 ml-2">(Select multiple tests to combine)</span>
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                         <div id="templates-checkbox-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                             <p class="text-sm text-slate-400 italic">Loading templates...</p>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- Report Editor -->
+                <div class="glass-card mb-6 shadow-md">
+                     <div class="px-7 py-5 border-b border-slate-100/50 bg-white/40 flex justify-between items-center">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center">
+                            <span class="flex items-center justify-center w-6 h-6 rounded-full bg-brand-100 text-brand-600 text-xs mr-3">3</span> 
+                            Edit Test Results
+                        </h2>
+                        <button onclick="addReportSection()" class="text-sm font-bold text-brand-600 hover:text-brand-800 focus:outline-none transition-colors px-3 py-1.5 rounded-lg hover:bg-brand-50">
+                            <i class="fas fa-plus mr-1"></i> Add Custom Section
+                        </button>
+                     </div>
+
+                     <div id="report-sections-container" class="p-6 space-y-8">
+                         <!-- Report Sections Injected Here -->
+                     </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Actions Panel (Sticky) -->
+            <div class="w-full xl:w-1/3">
+                <div class="sticky top-8 space-y-6">
+                    
+                    <!-- Save Actions -->
+                    <div class="glass-card p-6 shadow-lg border border-brand-100/50">
+                        <h3 class="text-lg font-bold text-slate-800 mb-5 flex items-center"><i class="fas fa-cog text-brand-500 mr-2"></i> Report Status</h3>
+                        
+                        <div class="mb-5">
+                            <div class="relative">
+                                <select id="report-status" class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-sm appearance-none cursor-pointer">
+                                    <option value="draft">Draft (Private, Editing in progress)</option>
+                                    <option value="saved">Finalized (Ready to share with patient)</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500">
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button id="btn-save-report" onclick="saveReport()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-emerald-500/30 transform hover:-translate-y-0.5 transition-all outline-none">
+                            <i class="fas fa-save mr-2"></i> Save Report Progress
+                        </button>
+                        <p class="text-xs font-semibold text-slate-400 text-center mt-4 tracking-wide" id="last-saved-info"></p>
+                    </div>
+
+                    <!-- Export & Delivery -->
+                    <div id="export-panel" class="glass-card flex flex-col shadow-lg border border-indigo-100/50 p-6 hidden">
+                         <h3 class="text-lg font-bold text-slate-800 mb-5 flex items-center"><i class="fas fa-share-alt text-indigo-500 mr-2"></i> Delivery Options</h3>
+                         
+                         <button onclick="downloadPdf()" class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 rounded-xl transition-all shadow-sm border border-slate-200 flex items-center justify-center mb-4 transform hover:-translate-y-0.5">
+                            <i class="fas fa-file-pdf text-red-500 mr-2 text-xl"></i> View / Download PDF
+                         </button>
+
+                         <div class="relative flex py-4 items-center">
+                             <div class="flex-grow border-t border-slate-200"></div>
+                             <span class="flex-shrink-0 mx-4 text-slate-400 text-xs font-bold uppercase tracking-widest">Share Directly</span>
+                             <div class="flex-grow border-t border-slate-200"></div>
+                         </div>
+
+                         <button id="btn-whatsapp" onclick="sendReport('whatsapp')" class="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center mb-3 transform hover:-translate-y-0.5 outline-none">
+                            <i class="fab fa-whatsapp text-2xl mr-2"></i> Send to WhatsApp
+                         </button>
+
+                         <button id="btn-email" onclick="sendReport('email')" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center transform hover:-translate-y-0.5 outline-none">
+                            <i class="fas fa-envelope text-xl mr-2"></i> Email to Patient
+                         </button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Template for Report Section -->
+    <template id="report-sec-template">
+        <div class="rep-section bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm relative group">
+            <!-- Decorative left border -->
+            <div class="absolute left-0 top-0 bottom-0 w-1 bg-brand-400"></div>
+            
+            <div class="bg-slate-50/80 px-5 py-4 border-b border-slate-100 flex justify-between items-center ml-1">
+                <input type="text" class="rs-name font-bold text-slate-800 bg-transparent border-b-2 border-transparent hover:border-slate-300 focus:border-brand-500 focus:outline-none p-1 w-2/3 transition-colors text-lg" placeholder="Section Name (e.g., Complete Blood Count)">
+                <button onclick="this.closest('.rep-section').remove()" class="text-slate-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors focus:outline-none" title="Remove Section"><i class="fas fa-trash-alt"></i></button>
+            </div>
+            <div class="p-6 ml-1 space-y-5">
+                <div>
+                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Remarks / Summary Text</label>
+                     <textarea class="rs-text w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:bg-white text-sm font-medium text-slate-700 transition-all resize-none shadow-inner" rows="2" placeholder="Descriptive findings or remarks..."></textarea>
+                </div>
+                <div>
+                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Parameters & Values</label>
+                     <div class="rs-params space-y-3">
+                         <!-- Params injected here -->
+                     </div>
+                     <button onclick="addParamLine(this)" class="mt-4 inline-flex items-center px-3 py-1.5 border border-brand-200 shadow-sm text-xs font-bold rounded-lg text-brand-600 bg-brand-50 hover:bg-brand-100 focus:outline-none transition-colors">
+                        <i class="fas fa-plus mr-1.5"></i> Add Data Row
+                     </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Template for Parameter Line -->
+    <template id="param-line-template">
+        <div class="param-line flex items-center space-x-3 bg-white p-1 rounded-lg border border-transparent hover:border-slate-100 transition-colors">
+            <input type="text" class="p-key flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all shadow-sm" placeholder="Test Name (e.g. Hemoglobin)">
+            <i class="fas fa-arrow-right text-slate-300 text-xs"></i>
+            <input type="text" class="p-val flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all shadow-sm" placeholder="Value & Unit (e.g. 14.5 g/dL)">
+            <button onclick="this.closest('.param-line').remove()" class="text-slate-300 hover:text-red-500 p-2 rounded-lg transition-colors focus:outline-none bg-white hover:bg-red-50 border border-transparent hover:border-red-100"><i class="fas fa-times"></i></button>
+        </div>
+    </template>
+
+    <script src="js/layout.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let templatesData = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+             loadCommonLayout();
+             checkAuth();
+             await loadTemplatesCheckboxes();
+
+             // Check URL params
+             const urlParams = new URLSearchParams(window.location.search);
+             const editId = urlParams.get('edit');
+             const patientId = urlParams.get('patient');
+
+             if (editId) {
+                 await loadExistingReport(editId);
+             } else if (patientId) {
+                 await selectPatientById(patientId);
+                 addReportSection(); // empty section
+             } else {
+                 addReportSection(); // empty section
+             }
+
+             setupPatientSearch();
+        });
+
+        async function loadTemplatesCheckboxes() {
+             try {
+                 const res = await api.request('/templates');
+                 templatesData = res.data;
+                 const container = document.getElementById('templates-checkbox-container');
+                 container.innerHTML = '';
+                 
+                 if (templatesData.length === 0) {
+                     container.innerHTML = '<p class="text-sm text-slate-400 italic">No templates found.</p>';
+                     return;
+                 }
+                 
+                 templatesData.forEach(t => {
+                     const wrapper = document.createElement('label');
+                     wrapper.className = 'flex items-center space-x-3 p-3 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-brand-50 hover:border-brand-200 transition-colors shadow-sm';
+                     wrapper.innerHTML = `
+                         <input type="checkbox" class="w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500" value="${t._id}" onchange="toggleTemplate(this, '${t._id}')">
+                         <span class="text-sm font-bold text-slate-700 truncate" title="${t.templateName}">${t.templateName}</span>
+                     `;
+                     container.appendChild(wrapper);
+                 });
+             } catch (err) {
+                 const container = document.getElementById('templates-checkbox-container');
+                 if(container) container.innerHTML = '<p class="text-sm text-red-500 italic">Error loading templates.</p>';
+             }
+        }
+
+        // Patient Search Logic
+        function setupPatientSearch() {
+            const input = document.getElementById('patient-search-input');
+            const results = document.getElementById('patient-search-results');
+            let debounce;
+
+            input.addEventListener('input', (e) => {
+                clearTimeout(debounce);
+                const query = e.target.value.trim();
+                if(!query) return results.classList.add('hidden');
+
+                debounce = setTimeout(async () => {
+                    try {
+                        const res = await api.request(`/patients?search=${query}&limit=5`);
+                        if(res.data.length === 0) {
+                            results.innerHTML = `<div class="p-4 text-sm font-medium text-slate-500 text-center">No patients found. <a href="patients.html" class="text-brand-600 font-bold hover:underline">Add new patient</a></div>`;
+                        } else {
+                            results.innerHTML = '<div class="px-4 py-2 bg-slate-50 border-b border-slate-100 text-xs font-bold text-slate-400 uppercase tracking-widest">Select Patient</div>' + res.data.map(p => `
+                                <div class="px-5 py-3 hover:bg-brand-50 cursor-pointer border-b border-slate-50 last:border-0 transition-colors" onclick='selectPatient(${JSON.stringify(p)})'>
+                                    <div class="flex items-center">
+                                         <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs mr-3 border border-white shadow-sm flex-shrink-0">${p.name.charAt(0)}</div>
+                                         <div>
+                                            <p class="font-bold text-slate-800 text-sm">${p.name}</p>
+                                            <p class="text-xs font-medium text-slate-500 mt-0.5"><i class="fas fa-phone-alt text-[10px] mr-1 text-slate-400"></i>${p.phone} &bull; <i class="fas fa-info-circle text-[10px] mr-1 text-slate-400 mb-0.5"></i>${p.age}y/${p.gender.charAt(0)}</p>
+                                         </div>
+                                    </div>
+                                </div>
+                            `).join('');
+                        }
+                        results.classList.remove('hidden');
+                    } catch(err) {}
+                }, 300);
+            });
+
+            document.addEventListener('click', e => {
+                if(!input.contains(e.target) && !results.contains(e.target)) results.classList.add('hidden');
+            });
+        }
+
+        async function selectPatientById(id) {
+            try {
+                const res = await api.request(`/patients/${id}`);
+                selectPatient(res.data);
+            } catch (err) {
+                UI.showToast('Failed to load patient info', 'error');
+            }
+        }
+
+        function selectPatient(p) {
+            document.getElementById('patient-search-results').classList.add('hidden');
+            document.getElementById('patient-search-input').value = '';
+            
+            document.getElementById('sp-id').value = p._id;
+            document.getElementById('sp-name').textContent = p.name;
+            document.getElementById('sp-details').innerHTML = `<span class="bg-white px-2 py-1 rounded-md border border-brand-100 shadow-sm"><i class="fas fa-phone mr-1.5 text-brand-400 opacity-70"></i>${p.phone}</span> <span class="bg-white px-2 py-1 rounded-md border border-brand-100 shadow-sm ml-2"><i class="fas fa-calendar mr-1.5 text-brand-400 opacity-70"></i>${p.age}y</span> <span class="bg-white px-2 py-1 rounded-md border border-brand-100 shadow-sm ml-2">${p.gender}</span>`;
+            
+            document.getElementById('search-input-container').classList.add('hidden');
+            document.getElementById('selected-patient-card').classList.remove('hidden');
+        }
+
+        function clearPatient() {
+            document.getElementById('sp-id').value = '';
+            document.getElementById('selected-patient-card').classList.add('hidden');
+            document.getElementById('search-input-container').classList.remove('hidden');
+            // Check if there is editing going on and maybe we dont want to clear URL params? it's fine for now.
+        }
+
+        // Editor Logic
+        function addReportSection() {
+            const tpl = document.getElementById('report-sec-template');
+            const clone = tpl.content.cloneNode(true);
+            document.getElementById('report-sections-container').appendChild(clone);
+            return document.getElementById('report-sections-container').lastElementChild;
+        }
+
+        function addParamLine(btn, key='', val='') {
+            const tpl = document.getElementById('param-line-template');
+            const clone = tpl.content.cloneNode(true);
+            if(key) clone.querySelector('.p-key').value = key;
+            if(val) clone.querySelector('.p-val').value = val;
+            
+            const container = btn.previousElementSibling;
+            container.appendChild(clone);
+        }
+
+        function toggleTemplate(checkbox, templateId) {
+            if (checkbox.checked) {
+                const t = templatesData.find(x => x._id === templateId);
+                if (!t) return;
+                
+                // Optional: clean up completely empty default section
+                const existingBlocks = document.querySelectorAll('.rep-section');
+                if (existingBlocks.length === 1) {
+                    const onlyBlock = existingBlocks[0];
+                    const name = onlyBlock.querySelector('.rs-name').value;
+                    const text = onlyBlock.querySelector('.rs-text').value;
+                    const params = onlyBlock.querySelectorAll('.param-line').length;
+                    if (!name && !text && params === 0) {
+                        onlyBlock.remove();
+                    }
+                }
+
+                t.sections.forEach(sec => {
+                    const block = addReportSection();
+                    block.dataset.templateId = templateId; // Mark it
+                    block.querySelector('.rs-name').value = sec.sectionName;
+                    block.querySelector('.rs-text').value = sec.defaultText || '';
+                    
+                    if (sec.defaultValues) {
+                        const btn = block.querySelector('button[onclick="addParamLine(this)"]');
+                        for(const [k, v] of Object.entries(sec.defaultValues)) {
+                            addParamLine(btn, k, v);
+                        }
+                    }
+                });
+            } else {
+                // Unchecked, remove its sections
+                const blocks = document.querySelectorAll(`.rep-section[data-template-id="${templateId}"]`);
+                blocks.forEach(b => b.remove());
+                
+                // If container is totally empty now, add an empty section
+                if (document.querySelectorAll('.rep-section').length === 0) {
+                    addReportSection();
+                }
+            }
+        }
+
+        async function loadExistingReport(id) {
+             try {
+                 const res = await api.request(`/reports/${id}`);
+                 const r = res.data;
+                 
+                 document.getElementById('page-title').textContent = 'Edit Diagnostic Report';
+                 document.getElementById('report-id').value = r._id;
+                 document.getElementById('report-status').value = r.status;
+                 
+                 if(r.patientId) selectPatient(r.patientId); // Handle case if patient was deleted
+                 
+                 const container = document.getElementById('report-sections-container');
+                 container.innerHTML = '';
+
+                 r.sections.forEach(sec => {
+                     const block = addReportSection();
+                     block.querySelector('.rs-name').value = sec.sectionName;
+                     block.querySelector('.rs-text').value = sec.text || '';
+                     
+                     if (sec.values) {
+                         const btn = block.querySelector('button[onclick="addParamLine(this)"]');
+                         for(const [k, v] of Object.entries(sec.values)) {
+                             addParamLine(btn, k, v);
+                         }
+                     }
+                 });
+
+                 // Show export panel if saved
+                 if(r.status !== 'draft') {
+                      document.getElementById('export-panel').classList.remove('hidden');
+                 }
+
+             } catch(err) {
+                 UI.showToast('Failed to load report', 'error');
+             }
+        }
+
+        async function saveReport() {
+            const patientId = document.getElementById('sp-id').value;
+            if (!patientId) return UI.showToast('Please select a patient first', 'error');
+
+            const status = document.getElementById('report-status').value;
+            const reportId = document.getElementById('report-id').value;
+
+            // Gather sections
+            const sections = [];
+            document.querySelectorAll('.rep-section').forEach(secBlock => {
+                 const sName = secBlock.querySelector('.rs-name').value;
+                 if(!sName) return;
+
+                 const sText = secBlock.querySelector('.rs-text').value;
+                 const values = {};
+                 
+                 secBlock.querySelectorAll('.param-line').forEach(pl => {
+                      const k = pl.querySelector('.p-key').value;
+                      const v = pl.querySelector('.p-val').value;
+                      if(k) values[k] = v;
+                 });
+
+                 sections.push({
+                     sectionName: sName,
+                     text: sText,
+                     values: Object.keys(values).length > 0 ? values : undefined
+                 });
+            });
+
+            if (sections.length === 0) return UI.showToast('Report must contain at least one section with a name', 'error');
+
+            UI.toggleLoader('btn-save-report', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Saving...');
+
+            try {
+                let savedReport;
+                if(reportId) {
+                    const res = await api.request(`/reports/${reportId}`, 'PUT', { status, sections });
+                    savedReport = res.data;
+                    UI.showToast('Report updated successfully', 'success');
+                } else {
+                    const res = await api.request('/reports', 'POST', { patientId, status, sections });
+                    savedReport = res.data;
+                    document.getElementById('report-id').value = savedReport._id;
+                    document.getElementById('page-title').textContent = 'Edit Diagnostic Report';
+                    UI.showToast('Report created successfully', 'success');
+                }
+
+                document.getElementById('last-saved-info').textContent = `Document saved: ${new Date().toLocaleTimeString()}`;
+
+                if (savedReport.status !== 'draft') {
+                    document.getElementById('export-panel').classList.remove('hidden');
+                } else {
+                    document.getElementById('export-panel').classList.add('hidden');
+                }
+
+            } catch (err) {
+                UI.showToast(err.message, 'error');
+            } finally {
+                UI.toggleLoader('btn-save-report', false, '<i class="fas fa-save mr-2"></i> Save Report Progress');
+            }
+        }
+
+        // Actions
+        function downloadPdf() {
+             const id = document.getElementById('report-id').value;
+             const token = localStorage.getItem('lis_token');
+             
+             UI.showToast('Generating PDF securely...', 'success');
+             
+             fetch(`${BASE_URL}/reports/${id}/pdf`, {
+                 headers: { 'Authorization': `Bearer ${token}` }
+             })
+             .then(res => {
+                 if(!res.ok) throw new Error('Failed to generate PDF');
+                 return res.blob();
+             })
+             .then(blob => {
+                 const url = window.URL.createObjectURL(blob);
+                 const a = document.createElement('a');
+                 a.href = url;
+                 a.download = `Diagnostic_Report_${id.slice(-6).toUpperCase()}.pdf`;
+                 document.body.appendChild(a);
+                 a.click();
+                 a.remove();
+             })
+             .catch(err => {
+                 UI.showToast(err.message, 'error');
+             });
+        }
+
+        async function sendReport(method) {
+            const id = document.getElementById('report-id').value;
+            const btnId = `btn-${method}`;
+            
+            try {
+                UI.toggleLoader(btnId, true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Processing...');
+                const res = await api.request(`/reports/${id}/send`, 'POST', { method });
+                UI.showToast(res.message, 'success');
+                
+                // Update status UI
+                document.getElementById('report-status').value = 'sent';
+            } catch (err) {
+                UI.showToast(err.message, 'error');
+            } finally {
+                UI.toggleLoader(btnId, false, method === 'whatsapp' ? '<i class="fab fa-whatsapp text-2xl mr-2"></i> Send to WhatsApp' : '<i class="fas fa-envelope text-xl mr-2"></i> Email to Patient');
+            }
+        }
+
+    </script>
+</body>
+</html>
