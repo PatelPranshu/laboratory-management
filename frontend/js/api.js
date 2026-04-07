@@ -1,6 +1,12 @@
 // Auto-detect API base URL: use same origin in production, localhost in development
 const BASE_URL = (() => {
   const hostname = window.location.hostname;
+  
+  // Production URL mapping
+  if (hostname === 'laboratory-management-six.vercel.app') {
+    return 'https://mylaboratory.onrender.com/api';
+  }
+
   const isLocal = hostname === 'localhost' || 
                   hostname === '127.0.0.1' || 
                   hostname.startsWith('192.168.') || 
@@ -10,7 +16,6 @@ const BASE_URL = (() => {
   if (window.location.protocol !== 'file:' && !isLocal) {
     return `${window.location.origin}/api`;
   }
-  // Development fallback: Change this to yours if backend is on a different IP
   return `http://${hostname}:5000/api`;
 })();
 
