@@ -15,6 +15,8 @@ connectDB();
 
 const app = express();
 
+// Trust the reverse proxy (e.g., Render) so rate limiters use the correct client IP
+app.set('trust proxy', 1);
 // ---------- Security Middleware ----------
 
 // CORS — whitelist origins from environment variable
