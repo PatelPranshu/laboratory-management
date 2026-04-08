@@ -378,9 +378,9 @@
                                         <i class="fas fa-user-slash text-sm"></i>
                                     </div>
                                     <p class="text-sm font-bold text-slate-800">No patients found</p>
-                                    <a href="patients.html" class="inline-block mt-2 text-xs font-bold text-brand-600 hover:text-brand-700 hover:underline">
+                                    <button type="button" onclick="openPatientModal()" class="inline-block mt-2 text-xs font-bold text-brand-600 hover:text-brand-700 hover:underline focus:outline-none">
                                         <i class="fas fa-user-plus mr-1"></i> Add new patient
-                                    </a>
+                                    </button>
                                 </div>`;
                         } else {
                             results.innerHTML = `
@@ -861,6 +861,111 @@
                 DraftManager.save('report', draft);
             }
         }, 800);
+        // --- Add New Patient Modal Handling ---
+        function openPatientModal() {
+            document.getElementById('new-patient-form').reset();
+            const modal = document.getElementById('new-patient-modal');
+            const content = document.getElementById('new-patient-modal-content');
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closePatientModal() {
+            const modal = document.getElementById('new-patient-modal');
+            const content = document.getElementById('new-patient-modal-content');
+            
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        async function saveNewPatient(e) {
+            e.preventDefault();
+            UI.toggleLoader('btn-save-new-patient', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Saving...');
+
+            const data = {
+                name: document.getElementById('new-p-name').value,
+                phone: document.getElementById('new-p-phone').value,
+                age: document.getElementById('new-p-age').value,
+                gender: document.getElementById('new-p-gender').value,
+                address: document.getElementById('new-p-address').value
+            };
+
+            try {
+                const res = await api.request(`/patients`, 'POST', data);
+                UI.showToast('Patient added successfully', 'success');
+                
+                // Automatically select the new patient
+                selectPatient(res.data);
+                
+                closePatientModal();
+            } catch (err) {
+                UI.showToast(err.message, 'error');
+            } finally {
+                UI.toggleLoader('btn-save-new-patient', false, 'Save Patient');
+            }
+        }
     </script>
+
+    <!-- Add New Patient Modal -->
+    <div id="new-patient-modal" class="fixed inset-0 bg-slate-900/40 hidden overflow-y-auto h-full w-full z-[1000] flex items-center justify-center transition-opacity">
+        <div class="relative mx-auto border-0 w-full max-w-xl shadow-2xl rounded-2xl bg-white m-4 transform transition-transform scale-95 opacity-0 duration-300" id="new-patient-modal-content">
+            
+            <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+                <h3 class="text-xl font-bold text-slate-800 flex items-center">
+                    <i class="fas fa-user-plus text-brand-500 mr-3"></i> Quick Add Patient
+                </h3>
+                <button onclick="closePatientModal()" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-lg transition-colors focus:outline-none">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <div class="px-8 py-6">
+                <form id="new-patient-form" onsubmit="saveNewPatient(event)">
+                    <div class="mb-5">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Full Name <span class="text-red-500">*</span></label>
+                        <input type="text" id="new-p-name" required placeholder="John Doe" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                    </div>
+                    
+                    <div class="mb-5">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Phone Number <span class="text-red-500">*</span></label>
+                        <input type="text" id="new-p-phone" required placeholder="+1 234 567 8900" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                    </div>
+
+                    <div class="flex space-x-5 mb-5">
+                        <div class="flex-1">
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Age <span class="text-red-500">*</span></label>
+                            <input type="number" id="new-p-age" required min="0" placeholder="e.g. 35" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Gender <span class="text-red-500">*</span></label>
+                            <select id="new-p-gender" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 cursor-pointer appearance-none">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-8">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Address</label>
+                        <textarea id="new-p-address" rows="3" placeholder="Full residential address..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 resize-none"></textarea>
+                    </div>
+
+                    <div class="flex items-center justify-end space-x-4 pt-4 border-t border-slate-100">
+                        <button type="button" onclick="closePatientModal()" class="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 focus:outline-none transition-colors">Cancel</button>
+                        <button type="submit" id="btn-save-new-patient" class="px-6 py-2.5 rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 focus:outline-none transform hover:-translate-y-0.5 transition-all">Save Patient</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
