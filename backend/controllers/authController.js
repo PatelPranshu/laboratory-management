@@ -14,11 +14,11 @@ const generateToken = (id) => {
 // @access  Public (first Doctor only) / Private (LabTech requires parent Doctor token)
 exports.register = async (req, res) => {
   try {
-    const { email, password, role, labName, parentDoctorId } = req.body;
+    const { email, password, role, labName, name, parentDoctorId } = req.body;
 
     // --- Input Validation ---
-    if (!email || !password || !labName) {
-      return res.status(400).json({ success: false, error: 'Email, password, and lab name are required' });
+    if (!email || !password || !labName || !name) {
+      return res.status(400).json({ success: false, error: 'Name, email, password, and lab name are required' });
     }
 
     if (!isValidEmail(email)) {
@@ -58,6 +58,7 @@ exports.register = async (req, res) => {
     // --- Create user ---
     const userFields = {
       email: email.toLowerCase().trim(),
+      name: name.trim(),
       password,
       role: userRole,
       labName: labName.trim()
@@ -75,6 +76,7 @@ exports.register = async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
+        name: user.name,
         role: user.role,
         labName: user.labName
       }
@@ -116,6 +118,7 @@ exports.login = async (req, res) => {
       user: {
         id: user._id,
         email: user.email,
+        name: user.name,
         role: user.role,
         labName: user.labName,
         parentDoctorId: user.parentDoctorId
@@ -141,5 +144,70 @@ exports.getMe = async (req, res) => {
   } catch (error) {
     console.error('GetMe error:', error.message);
     res.status(500).json({ success: false, error: 'Failed to retrieve user profile' });
+  }
+};
+
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+exports.updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('+password');
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    const { email, labName, name, password } = req.body;
+
+    // Update email if provided
+    if (email && email !== user.email) {
+      if (!isValidEmail(email)) {
+        return res.status(400).json({ success: false, error: 'Please provide a valid email address' });
+      }
+      const emailExists = await User.findOne({ email: email.toLowerCase().trim() });
+      if (emailExists) {
+        return res.status(400).json({ success: false, error: 'Email already in use' });
+      }
+      user.email = email.toLowerCase().trim();
+    }
+
+    // Update labName if provided
+    if (labName) {
+      user.labName = labName.trim();
+    }
+
+    // Update name if provided
+    if (name) {
+      user.name = name.trim();
+    }
+
+    // Update password if provided (only if non-empty)
+    if (password && password.trim() !== '') {
+      if (!isStrongPassword(password)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Password must be at least 8 characters with at least 1 uppercase letter and 1 number'
+        });
+      }
+      user.password = password;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        labName: user.labName
+      }
+    });
+
+  } catch (error) {
+    console.error('UpdateProfile error:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to update profile' });
   }
 };

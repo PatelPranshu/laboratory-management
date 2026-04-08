@@ -16,7 +16,7 @@ function sanitizeForHtml(str) {
 }
 
 function loadCommonLayout() {
-    let labName = 'CureLIS';
+    let labName = 'MyPathoLabs';
     const userStr = localStorage.getItem('lis_user');
     if (userStr) {
         try {
@@ -33,11 +33,18 @@ function loadCommonLayout() {
             <!-- Decorative blur -->
             <div class="absolute top-0 left-0 w-full h-32 bg-white/5 backdrop-blur-3xl -z-10"></div>
             
-            <div class="h-20 flex items-center justify-start border-b border-white/10 px-6">
-                <div class="bg-white/10 p-2 rounded-xl backdrop-blur-md shadow-sm border border-white/20 mr-3 shrink-0">
-                    <i class="fa-solid fa-flask text-xl text-brand-100"></i>
+            <div class="h-24 flex items-center justify-start border-b border-white/10 px-6 group/logo cursor-default">
+                <div class="relative">
+                    <div class="bg-gradient-to-br from-brand-400/20 to-indigo-500/20 p-2.5 rounded-2xl backdrop-blur-xl shadow-lg border border-white/20 mr-4 shrink-0 transition-all duration-500 group-hover/logo:scale-110 group-hover/logo:rotate-6 group-hover/logo:border-brand-300/40">
+                        <i class="fa-solid fa-microscope text-2xl text-brand-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"></i>
+                    </div>
+                    <div class="absolute inset-0 bg-brand-400/10 rounded-2xl blur-xl animate-pulse -z-10 group-hover/logo:bg-brand-400/20"></div>
                 </div>
-                <span class="text-xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-brand-100 truncate leading-tight" title="${safeLabName}">${safeLabName}</span>
+                <div class="flex flex-col min-w-0">
+                    <div class="text-lg font-black tracking-tighter text-white truncate leading-none uppercase group-hover/logo:tracking-tight transition-all duration-500" title="MyPathoLabs">
+                        MyPatho<span class="text-brand-300 font-bold block mt-0.5 text-sm tracking-widest">Labs</span>
+                    </div>
+                </div>
             </div>
             
             <nav class="flex-1 px-4 py-8 space-y-3 overflow-y-auto custom-scrollbar">
@@ -60,6 +67,10 @@ function loadCommonLayout() {
                 <a href="design.html" data-page="design" class="nav-link flex items-center px-4 py-3.5 text-indigo-100/70 hover:bg-white/5 hover:text-white rounded-xl transition-custom group">
                     <i class="fas fa-paint-brush w-6 group-hover:text-brand-100 transition-colors"></i> 
                     <span class="font-medium ml-2">Design Report</span>
+                </a>
+                <a href="profile.html" data-page="profile" class="nav-link flex items-center px-4 py-3.5 text-indigo-100/70 hover:bg-white/5 hover:text-white rounded-xl transition-custom group">
+                    <i class="fas fa-user-cog w-6 group-hover:text-brand-100 transition-colors"></i> 
+                    <span class="font-medium ml-2">Account Settings</span>
                 </a>
             </nav>
 
@@ -117,7 +128,7 @@ function loadCommonLayout() {
         if (userNameEl && user) {
             try {
                 const u = JSON.parse(user);
-                const displayName = u.email ? u.email.split('@')[0] : 'User';
+                const displayName = u.name || (u.email ? u.email.split('@')[0] : 'User');
                 userNameEl.textContent = `Dr. ${displayName}`;
             } catch(e) {
                 userNameEl.textContent = 'User';

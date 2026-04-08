@@ -95,5 +95,9 @@ const api = {
 
   async getMe() {
     return this.request('/auth/me');
+  },
+
+  async updateProfile(data) {
+    return this.request('/auth/profile', 'PUT', data);
   }
 };
