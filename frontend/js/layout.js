@@ -68,22 +68,20 @@ function loadCommonLayout() {
                     <i class="fas fa-paint-brush w-6 group-hover:text-brand-100 transition-colors"></i> 
                     <span class="font-medium ml-2">Design Report</span>
                 </a>
-                <a href="profile.html" data-page="profile" class="nav-link flex items-center px-4 py-3.5 text-indigo-100/70 hover:bg-white/5 hover:text-white rounded-xl transition-custom group">
-                    <i class="fas fa-user-cog w-6 group-hover:text-brand-100 transition-colors"></i> 
-                    <span class="font-medium ml-2">Account Settings</span>
-                </a>
             </nav>
 
             <div class="p-5 border-t border-white/10 bg-black/10 backdrop-blur-sm">
-                <div class="flex items-center mb-5">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-sm font-bold shadow-lg border border-white/20">
-                        <i class="fas fa-user-md"></i>
+                <a href="profile.html" class="flex items-center mb-5 p-2 -mx-2 rounded-xl transition-all hover:bg-white/5 active:scale-95 group no-underline">
+                    <div class="w-10 h-10 flex-shrink-0 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-sm font-bold shadow-lg border border-white/20 group-hover:shadow-brand-500/20 transition-all">
+                        <i class="fas fa-user-md text-white"></i>
                     </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-semibold text-white truncate w-36" id="nav-user-name">Loading...</p>
-                        <p class="text-xs text-indigo-200/70">Administrator</p>
+                    <div class="ml-3 overflow-hidden">
+                        <p class="text-sm font-bold text-white truncate w-32" id="nav-user-name">Loading...</p>
+                        <p class="text-[10px] font-bold text-indigo-300/60 uppercase tracking-widest flex items-center">
+                            Admin <i class="fas fa-chevron-right ml-1 text-[8px] opacity-0 group-hover:opacity-100 group-hover:ml-2 transition-all"></i>
+                        </p>
                     </div>
-                </div>
+                </a>
                 <button id="logout-btn" class="w-full flex items-center justify-center px-4 py-2.5 bg-white/5 hover:bg-red-500/80 border border-white/10 hover:border-red-400 rounded-xl text-sm font-medium text-white transition-all duration-300">
                     <i class="fas fa-sign-out-alt mr-2"></i> Sign Out
                 </button>
