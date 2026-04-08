@@ -25,7 +25,7 @@ const ReportSectionSchema = new mongoose.Schema({
 const AuditLogSchema = new mongoose.Schema({
   action: {
     type: String,
-    enum: ['Created', 'Modified', 'Sent']
+    enum: ['Created', 'Modified', 'Sent', 'Downloaded PDF', 'Shared']
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,

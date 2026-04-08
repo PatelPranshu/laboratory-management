@@ -153,6 +153,13 @@ exports.generatePdf = async (req, res) => {
     const patientObj = report.patientId.toObject ? report.patientId.toObject() : report.patientId;
     
     const pdfBuffer = await pdfService.generateReportPdf(reportObj, patientObj, settings ? settings.toObject() : null);
+    
+    // Update status to 'saved' if it was a draft
+    if (report.status === 'draft') {
+        report.status = 'saved';
+        report.auditLogs.push({ action: 'Downloaded PDF', userId: req.user.id });
+        await report.save();
+    }
 
     // Sanitize filename — remove special chars
     const safeName = (report.patientId.name || 'Patient').replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_');
@@ -195,7 +202,7 @@ exports.sendReport = async (req, res) => {
     console.log(`Mock sending report ${report._id} via ${method}`);
 
     // Update status and audit log
-    report.status = 'sent';
+    report.status = 'saved';
     report.auditLogs.push({ action: 'Sent', userId: req.user.id });
     await report.save();
 

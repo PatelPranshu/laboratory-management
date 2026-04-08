@@ -76,8 +76,8 @@
 
                             <!-- State 2: Share Actions (Visible on Success) -->
                             <div id="header-post-save-actions" class="hidden flex items-center gap-2 animate-scale-in">
-                                <div class="flex items-center bg-emerald-50 text-emerald-600 px-3 py-2 rounded-xl border border-emerald-100 mr-2">
-                                    <i class="fas fa-check-circle mr-2"></i> <span class="text-[10px] font-bold uppercase tracking-wider">Saved</span>
+                                <div class="flex items-center bg-brand-50 text-brand-600 px-3 py-2 rounded-xl border border-brand-100 mr-2" id="header-status-wrapper">
+                                    <i class="fas fa-check-circle mr-2" id="header-status-icon"></i> <span class="text-[10px] font-bold uppercase tracking-wider" id="header-status-badge">Draft</span>
                                 </div>
                                 
                                 <button onclick="downloadPdf()" class="p-2.5 bg-white text-red-600 hover:bg-red-50 border border-slate-200 rounded-xl transition-all shadow-sm group" title="Download PDF">
@@ -107,6 +107,7 @@
 
             <div class="px-8 py-8 max-w-5xl mx-auto">
                 <input type="hidden" id="report-id">
+                <input type="hidden" id="report-status">
 
                 <!-- 1. Patient Selection -->
                 <div id="patient-selection-container" class="glass-card mb-8 relative z-50">
@@ -629,6 +630,7 @@
                  document.getElementById('page-title').textContent = 'Edit Diagnostic Report';
                  document.getElementById('report-id').value = r._id;
                  document.getElementById('report-status').value = r.status;
+                 if (typeof updateStatusBadgeUI === 'function') updateStatusBadgeUI(r.status);
                  document.getElementById('report-referred-by').value = r.referredBy || '';
                  
                  if(r.patientId) selectPatient(r.patientId); // Handle case if patient was deleted
@@ -738,8 +740,9 @@
                     const res = await api.request('/reports', 'POST', { patientId, status, sections, referredBy });
                     savedReport = res.data;
                     document.getElementById('report-id').value = savedReport._id;
+                    document.getElementById('report-status').value = savedReport.status;
                     document.getElementById('page-title').textContent = 'Edit Diagnostic Report';
-                    UI.showToast('Report created successfully', 'success');
+                    UI.showToast('Report saved as DRAFT', 'success');
                 }
 
                 document.getElementById('last-saved-info').textContent = `Document saved: ${new Date().toLocaleTimeString()}`;
@@ -761,16 +764,53 @@
         function toggleActionState(state) {
             const saveBtn = document.getElementById('btn-save-report');
             const shareActions = document.getElementById('header-post-save-actions');
+            const statusBadge = document.getElementById('header-status-badge');
+            const statusWrapper = document.getElementById('header-status-wrapper');
+            const statusIcon = document.getElementById('header-status-icon');
+            
             if (!saveBtn || !shareActions) return;
 
             if (state === 'saved') {
                 saveBtn.classList.add('hidden');
                 shareActions.classList.remove('hidden');
                 shareActions.classList.add('flex');
+                
+                // Set badge appearance based on report-status input (if we have one set already)
+                const currentStatus = document.getElementById('report-status').value || 'saved';
+                updateStatusBadgeUI(currentStatus);
             } else {
                 saveBtn.classList.remove('hidden');
                 shareActions.classList.add('hidden');
                 shareActions.classList.remove('flex');
+            }
+        }
+
+        function updateStatusBadgeUI(status) {
+            const badge = document.getElementById('header-status-badge');
+            const wrapper = document.getElementById('header-status-wrapper');
+            if (!badge || !wrapper) return;
+
+            if (status.toLowerCase() === 'draft') {
+                badge.textContent = 'Draft';
+                wrapper.className = 'flex items-center bg-slate-100 text-slate-600 px-3 py-2 rounded-xl border border-slate-200 mr-2';
+            } else {
+                badge.textContent = 'Saved';
+                wrapper.className = 'flex items-center bg-emerald-50 text-emerald-600 px-3 py-2 rounded-xl border border-emerald-100 mr-2';
+            }
+        }
+
+        async function markReportAsSaved() {
+            const id = document.getElementById('report-id').value;
+            const currentStatus = document.getElementById('report-status').value;
+            
+            if (!id || currentStatus === 'saved') return;
+
+            try {
+                await api.request(`/reports/${id}`, 'PUT', { status: 'saved' });
+                document.getElementById('report-status').value = 'saved';
+                updateStatusBadgeUI('saved');
+            } catch (err) {
+                console.error('Failed to update status to saved', err);
             }
         }
 
@@ -796,6 +836,9 @@
                  document.body.appendChild(a);
                  a.click();
                  a.remove();
+                 
+                 // Mark as saved upon successful interaction
+                 markReportAsSaved();
              })
              .catch(err => {
                  UI.showToast(err.message, 'error');
@@ -810,6 +853,7 @@
                 UI.toggleLoader(btnId, true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Processing...');
                 const res = await api.request(`/reports/${id}/send`, 'POST', { method });
                 UI.showToast(res.message, 'success');
+                markReportAsSaved();
             } catch (err) {
                 UI.showToast(err.message, 'error');
             } finally {
