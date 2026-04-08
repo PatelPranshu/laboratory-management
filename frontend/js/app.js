@@ -1,5 +1,25 @@
 // Global App logic and UI helpers
 
+class DraftManager {
+    static save(key, data) {
+        localStorage.setItem(`lis_draft_${key}`, JSON.stringify(data));
+    }
+    static load(key) {
+        const data = localStorage.getItem(`lis_draft_${key}`);
+        return data ? JSON.parse(data) : null;
+    }
+    static clear(key) {
+        localStorage.removeItem(`lis_draft_${key}`);
+    }
+    static debounce(func, wait = 300) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+}
+
 /**
  * Escape HTML entities to prevent XSS when injecting user content into the DOM.
  */

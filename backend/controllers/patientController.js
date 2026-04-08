@@ -16,18 +16,40 @@ exports.getPatients = async (req, res) => {
     
     const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
 
+    // Build Query
     let query = { doctorId };
 
-    // Search term
+    // 1. Text Search Logic
     if (req.query.search) {
-      query.$text = { $search: String(req.query.search) };
+      const searchStr = String(req.query.search).trim();
+      if (searchStr.length >= 2) {
+        const searchRegex = new RegExp('^' + searchStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        query.$or = [
+          { name: { $regex: searchRegex } },
+          { phone: { $regex: searchRegex } }
+        ];
+      }
+    }
+
+    // 2. Date Range Logic (createdAt)
+    const { fromDate, toDate } = req.query;
+    if (fromDate || toDate) {
+      query.createdAt = {};
+      if (fromDate) query.createdAt.$gte = new Date(fromDate);
+      if (toDate) {
+        const end = new Date(toDate);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = end;
+      }
     }
 
     const total = await Patient.countDocuments(query);
     const patients = await Patient.find(query)
+      .select(req.query.search ? '_id name phone age gender' : '') // Optimize payload if searching
       .skip(startIndex)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.status(200).json({
       success: true,

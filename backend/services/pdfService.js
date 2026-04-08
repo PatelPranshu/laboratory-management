@@ -55,6 +55,57 @@ function downloadImageAsBase64(url) {
   });
 }
 
+/**
+ * Robust numeric check for abnormality using structured bounds.
+ * Returns true if result is outside [min, max].
+ */
+function checkNumericAbnormal(resultStr, min, max) {
+  if (min === null || max === null || !resultStr) return false;
+  const match = resultStr.match(/([\d.]+)/);
+  if (!match) return false;
+  const val = parseFloat(match[1]);
+  return val < min || val > max;
+}
+
+/**
+ * Checks if a numeric result string falls outside a normal range string.
+ * Legacy support for old string-based normal ranges.
+ */
+function isOutsideRangeLegacy(resultStr, normalRangeStr) {
+  if (!resultStr || !normalRangeStr) return false;
+
+  // Extract the first numeric value from the result string
+  const resultMatch = resultStr.match(/([\d.]+)/);
+  if (!resultMatch) return false; // Non-numeric result
+
+  const resultNum = parseFloat(resultMatch[1]);
+  if (isNaN(resultNum)) return false;
+
+  // Try "min - max" pattern
+  const rangeMatch = normalRangeStr.match(/([\d.]+)\s*[-–—]\s*([\d.]+)/);
+  if (rangeMatch) {
+    const min = parseFloat(rangeMatch[1]);
+    const max = parseFloat(rangeMatch[2]);
+    return resultNum < min || resultNum > max;
+  }
+
+  // Try "< value" or "<= value"
+  const ltMatch = normalRangeStr.match(/^\s*(<[=]?)\s*([\d.]+)/);
+  if (ltMatch) {
+    const threshold = parseFloat(ltMatch[2]);
+    return ltMatch[1] === '<=' ? resultNum > threshold : resultNum >= threshold;
+  }
+
+  // Try "> value" or ">= value"
+  const gtMatch = normalRangeStr.match(/^\s*(>[=]?)\s*([\d.]+)/);
+  if (gtMatch) {
+    const threshold = parseFloat(gtMatch[2]);
+    return gtMatch[1] === '>=' ? resultNum < threshold : resultNum <= threshold;
+  }
+
+  return false;
+}
+
 exports.generateReportPdf = async (report, patient, settings) => {
   const content = [];
   
@@ -93,9 +144,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
       headerConfig.width = contentWidth;
     }
     content.push(headerConfig);
-  } else {
-    content.push({ text: 'Laboratory Report', style: 'header', alignment: 'center', margin: [0, 0, 0, 20] });
-  }
+  } 
 
   // Patient Info
   const reportDate = report.date ? new Date(report.date).toLocaleDateString() : new Date().toLocaleDateString();
@@ -111,36 +160,144 @@ exports.generateReportPdf = async (report, patient, settings) => {
   content.push({ canvas: [{ type: 'line', x1: 0, y1: 5, x2: contentWidth, y2: 5, lineWidth: 1 }] });
   content.push({text: '\n'});
 
-  // Report Sections
+  // Initialize Master Table Body and Remarks Collection
+  const masterTableBody = [
+    [
+      { text: 'TEST', bold: true, decoration: 'underline', margin: [0, 2, 0, 2] },
+      { text: 'RESULT', bold: true, decoration: 'underline', margin: [0, 2, 0, 2] },
+      { text: 'UNITS', bold: true, decoration: 'underline', margin: [0, 2, 0, 2] },
+      { text: 'NORMAL VALUES', bold: true, decoration: 'underline', margin: [0, 2, 0, 2] }
+    ]
+  ];
+
+  const allRemarks = [];
+
   const sections = report.sections || [];
-  sections.forEach(sec => {
+  sections.forEach((sec, sIdx) => {
+    // 1. Add Section Title as a spanning row
     if (sec.sectionName) {
-      content.push({ text: sec.sectionName, style: 'subheader', margin: [0, 10, 0, 5] });
+      masterTableBody.push([
+        { 
+          text: sec.sectionName.toUpperCase(), 
+          colSpan: 4, 
+          bold: true, 
+          decoration: 'underline', 
+          margin: [0, sIdx === 0 ? 5 : 15, 0, 5] 
+        },
+        {}, {}, {}
+      ]);
     }
+
+    // 2. Collect Remarks (Description) for the end of the report
     if (sec.text) {
-      content.push({ text: sec.text, margin: [0, 0, 0, 5] });
+      allRemarks.push({
+        title: (sec.sectionName || `Section ${sIdx + 1}`).toUpperCase(),
+        text: sec.text
+      });
     }
-    if (sec.values) {
-      const tableBody = [];
-      // Convert to plain object in case it's a Mongoose Map or document
+    
+    // 3. Process Parameters (Structured Array)
+    const params = sec.parameters || [];
+    if (params.length > 0) {
+      params.forEach(p => {
+        const resultStr = p.result || '';
+        const unitsStr = p.units || '';
+        let normalRangeStr = '';
+        let isAbnormal = false;
+
+        if (p.isGenderSpecific) {
+          const m = p.normalRange?.male;
+          const f = p.normalRange?.female;
+          const maleRange = `Male: ${m?.min ?? '?'}-${m?.max ?? '?'} ${unitsStr}`;
+          const femaleRange = `Female: ${f?.min ?? '?'}-${f?.max ?? '?'} ${unitsStr}`;
+          normalRangeStr = `${maleRange}\n${femaleRange}`;
+
+          const gender = (patient.gender || '').toLowerCase();
+          if (gender === 'male' && m) {
+            isAbnormal = checkNumericAbnormal(resultStr, m.min, m.max);
+          } else if (gender === 'female' && f) {
+            isAbnormal = checkNumericAbnormal(resultStr, f.min, f.max);
+          }
+        } else if (p.normalRange) {
+          const nr = p.normalRange;
+          normalRangeStr = `${nr.min ?? '?'}-${nr.max ?? '?'} ${unitsStr}`;
+          isAbnormal = checkNumericAbnormal(resultStr, nr.min, nr.max);
+        }
+
+        masterTableBody.push([
+          { text: p.name || '', margin: [0, 2, 0, 2] },
+          { text: resultStr, bold: isAbnormal, margin: [0, 2, 0, 2] },
+          { text: unitsStr, margin: [0, 2, 0, 2] },
+          { text: normalRangeStr, fontSize: fontSize - 2, margin: [0, 2, 0, 2] }
+        ]);
+      });
+    } else if (sec.values) {
+      // Backward compatibility for old format
       const valuesObj = sec.values.toJSON ? sec.values.toJSON() : (typeof sec.values === 'object' ? sec.values : {});
       for (const [key, val] of Object.entries(valuesObj)) {
-        if (key !== '_id' && key !== '$__' && key !== '$isNew') {
-          tableBody.push([String(key), String(val)]);
+        if (key === '_id' || key === '$__' || key === '$isNew' || key === 'parameters') continue;
+
+        let resultStr = '';
+        let normalRangeStr = '';
+
+        if (typeof val === 'object' && val !== null) {
+          resultStr = String(val.value || '');
+          normalRangeStr = String(val.normalRange || '');
+        } else {
+          resultStr = String(val);
         }
-      }
-      if (tableBody.length > 0) {
-        content.push({
-          table: {
-            widths: ['*', '*'],
-            body: tableBody
-          },
-          layout: 'lightHorizontalLines',
-          margin: [0, 0, 0, 10]
-        });
+
+        const isAbnormal = isOutsideRangeLegacy(resultStr, normalRangeStr);
+
+        masterTableBody.push([
+          { text: String(key), margin: [0, 2, 0, 2] },
+          { text: resultStr, bold: isAbnormal, margin: [0, 2, 0, 2] },
+          { text: '', margin: [0, 2, 0, 2] },
+          { text: normalRangeStr, fontSize: fontSize - 2, margin: [0, 2, 0, 2] }
+        ]);
       }
     }
   });
+
+  // Push the Master Table to content
+  if (masterTableBody.length > 1) {
+    content.push({
+      table: {
+        headerRows: 1,
+        // Using proportional widths to ensure fit regardless of content length
+        widths: ['38%', '15%', '15%', '32%'], 
+        body: masterTableBody
+      },
+      layout: {
+        hLineWidth: function (i, node) {
+          // Lines: Top, Below Header, and Bottom
+          return (i === 0 || i === 1 || i === node.table.body.length) ? 1 : 0;
+        },
+        vLineWidth: () => 0,
+        paddingLeft: () => 5,
+        paddingRight: () => 5,
+        paddingTop: () => 4,
+        paddingBottom: () => 4
+      },
+      margin: [0, 10, 0, 10]
+    });
+  }
+
+  // Adding Remarks / Description at the end
+  if (allRemarks.length > 0) {
+    content.push({ canvas: [{ type: 'line', x1: 0, y1: 5, x2: contentWidth, y2: 5, lineWidth: 0.5, lineColor: '#cbd5e1' }] });
+    content.push({ text: 'REMARKS / OBSERVATIONS', style: 'subheader', margin: [0, 10, 0, 5], fontSize: fontSize - 2, color: '#64748b' });
+    
+    allRemarks.forEach(rem => {
+      content.push({
+        text: [
+          { text: `${rem.title}: `, bold: true, fontSize: fontSize - 1 },
+          { text: rem.text, fontSize: fontSize - 1 }
+        ],
+        margin: [0, 2, 0, 4]
+      });
+    });
+  }
 
   // Footer Image (at the end of content)
   if (footerImageData) {

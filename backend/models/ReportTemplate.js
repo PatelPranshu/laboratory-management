@@ -8,9 +8,17 @@ const SectionSchema = new mongoose.Schema({
   defaultText: {
     type: String
   },
-  defaultValues: {
-    type: mongoose.Schema.Types.Mixed // For dynamic params e.g. { Hemoglobin: "14 g/dL" }
-  }
+  parameters: [{
+    name: { type: String, required: true },
+    units: { type: String },
+    isGenderSpecific: { type: Boolean, default: false },
+    normalRange: {
+      min: Number,
+      max: Number,
+      male: { min: Number, max: Number },
+      female: { min: Number, max: Number }
+    }
+  }]
 });
 
 const ReportTemplateSchema = new mongoose.Schema({

@@ -31,7 +31,9 @@ const PatientSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Create text index for search
-PatientSchema.index({ name: 'text', phone: 'text' });
+// Optimized indexes for production-ready regex search
+PatientSchema.index({ name: 1 });
+PatientSchema.index({ phone: 1 });
+PatientSchema.index({ doctorId: 1 }); // Already likely but good to be explicit for compound filters
 
 module.exports = mongoose.model('Patient', PatientSchema);

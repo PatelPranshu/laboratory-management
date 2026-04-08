@@ -8,9 +8,18 @@ const ReportSectionSchema = new mongoose.Schema({
   text: {
     type: String
   },
-  values: {
-    type: mongoose.Schema.Types.Mixed // Filled out values { Hemoglobin: "12 g/dL" }
-  }
+  parameters: [{
+    name: { type: String, required: true },
+    result: { type: String },
+    units: { type: String },
+    isGenderSpecific: { type: Boolean, default: false },
+    normalRange: {
+      min: Number,
+      max: Number,
+      male: { min: Number, max: Number },
+      female: { min: Number, max: Number }
+    }
+  }]
 });
 
 const AuditLogSchema = new mongoose.Schema({

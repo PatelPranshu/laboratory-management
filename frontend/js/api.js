@@ -24,7 +24,7 @@ const api = {
     return localStorage.getItem('lis_token');
   },
 
-  async request(endpoint, method = 'GET', body = null) {
+  async request(endpoint, method = 'GET', body = null, signal = null) {
     const headers = {};
     
     const token = this.getToken();
@@ -34,7 +34,8 @@ const api = {
 
     const config = {
       method,
-      headers
+      headers,
+      signal // Support for AbortController cancellation
     };
 
     if (body && !(body instanceof FormData)) {

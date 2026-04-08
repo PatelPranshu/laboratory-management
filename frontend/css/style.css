@@ -6,36 +6,32 @@ body {
   color: #0f172a; /* Tailwind slate-900 */
 }
 
-/* Base UI Gradients */
+/* Base UI Gradients - Simplified for performance */
 .bg-gradient-premium {
-  background: linear-gradient(135deg, #f0fdfa 0%, #e0e7ff 100%);
+  background: #f1f5f9; /* Solid slate-100 */
 }
 
 .bg-gradient-sidebar {
-  background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+  background: #1e1b4b; /* Solid Navy */
 }
 
-/* Glassmorphism utility */
+/* Simplified Cards (Removed Blurs) */
 .glass {
-  background: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: #ffffff;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.6);
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border: 1px solid #f1f5f9;
   border-radius: 1rem;
 }
 
 .glass-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.12);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+  transition: box-shadow 0.2s ease;
 }
 
 /* Gradient Text */
@@ -46,17 +42,17 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* Custom transitions */
+/* Custom transitions - simplified */
 .transition-custom {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 /* Table Hover Effect */
 tbody tr {
-  transition: background-color 0.2s ease;
+  transition: background-color 0.15s ease;
 }
 tbody tr:hover {
-  background-color: #f1f5f9;
+  background-color: #f8fafc;
 }
 
 /* Custom Scrollbar */
@@ -90,51 +86,28 @@ tbody tr:hover {
   color: white;
   font-weight: 500;
   min-width: 250px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  transform: translateY(100%) scale(0.9);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
   opacity: 0;
-  animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideIn 0.3s ease-out forwards;
 }
 
 .toast.success {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: #10b981;
 }
 
 .toast.error {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: #ef4444;
 }
 
 @keyframes slideIn {
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .fade-out {
-  animation: fadeOut 0.3s forwards;
+  animation: fadeOut 0.2s forwards;
 }
 
 @keyframes fadeOut {
-  to {
-    opacity: 0;
-    transform: translateY(10px) scale(0.95);
-  }
-}
-
-/* Background blob animations for auth page */
-.animate-blob {
-  animation: blob 7s infinite;
-}
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-.animation-delay-4000 {
-  animation-delay: 4s;
-}
-@keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-  100% { transform: translate(0px, 0px) scale(1); }
+  to { opacity: 0; }
 }

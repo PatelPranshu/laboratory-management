@@ -27,7 +27,7 @@
 </head>
 <body class="bg-slate-50 antialiased text-slate-800 selection:bg-brand-500 selection:text-white">
 
-    <div class="flex h-screen overflow-hidden bg-gradient-premium">
+    <div class="flex h-screen overflow-hidden bg-slate-100">
         
         <!-- Sidebar Layout Injected via JS -->
 
@@ -35,7 +35,7 @@
         <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar pb-12">
             
             <!-- Top Header -->
-            <header class="bg-white/40 backdrop-blur-xl border-b border-white/40 shadow-[0_4px_30px_rgba(0,0,0,0.02)] flex items-center justify-between px-8 py-5 sticky top-0 z-10 transition-custom">
+            <header class="bg-white border-b border-slate-200 flex items-center justify-between px-8 py-5 sticky top-0 z-10">
                 <div class="flex-1 w-full max-w-2xl flex relative opacity-0">
                     <!-- Placeholder to keep layout even -->
                 </div>
@@ -168,11 +168,66 @@
 
     <!-- Parameter Row Template -->
     <template id="param-row-template">
-        <div class="param-row flex items-center space-x-2">
-            <input type="text" class="pr-key flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40 shadow-sm transition-all" placeholder="Parameter Name (e.g. Hemoglobin)">
-            <i class="fas fa-arrow-right text-slate-300 text-xs flex-shrink-0"></i>
-            <input type="text" class="pr-val flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/40 shadow-sm transition-all" placeholder="Default Value (e.g. 14 g/dL)">
-            <button type="button" onclick="this.closest('.param-row').remove()" class="text-slate-300 hover:text-red-500 p-1.5 rounded-lg transition-colors focus:outline-none hover:bg-red-50 flex-shrink-0"><i class="fas fa-times"></i></button>
+        <div class="param-row bg-slate-50/50 p-4 rounded-xl border border-slate-100 mb-2">
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-1">Parameter Name</label>
+                    <input type="text" class="pr-name w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-brand-500/40 outline-none transition-all" placeholder="e.g. Hemoglobin">
+                </div>
+                <div class="w-24">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-1">Units</label>
+                    <input type="text" class="pr-units w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 focus:ring-2 focus:ring-brand-500/40 outline-none transition-all" placeholder="g/dL">
+                </div>
+                <div class="flex items-end h-[52px]">
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="checkbox" class="pr-is-gender w-4 h-4 text-brand-600 border-slate-300 rounded focus:ring-brand-500" onchange="toggleGenderFields(this)">
+                        <span class="ml-2 text-xs font-bold text-slate-500 group-hover:text-brand-600 transition-colors">Gender Specific</span>
+                    </label>
+                </div>
+                <div class="flex-shrink-0 ml-auto">
+                    <button type="button" onclick="this.closest('.param-row').remove()" class="text-slate-300 hover:text-red-500 p-2 rounded-lg transition-colors hover:bg-red-50"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>
+
+            <!-- Range Specifics -->
+            <div class="mt-3 pt-3 border-t border-slate-100 flex flex-wrap gap-4">
+                <!-- General Range (Visible by default) -->
+                <div class="range-general flex items-center gap-3">
+                    <div class="w-24">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-1">Min</label>
+                        <input type="number" step="any" class="pr-min w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-brand-700 focus:ring-2 focus:ring-brand-500/40 outline-none" placeholder="0.0">
+                    </div>
+                    <span class="text-slate-300 text-xs mt-4">—</span>
+                    <div class="w-24">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-1">Max</label>
+                        <input type="number" step="any" class="pr-max w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-brand-700 focus:ring-2 focus:ring-brand-500/40 outline-none" placeholder="0.0">
+                    </div>
+                </div>
+
+                <!-- Gender Specific Ranges (Hidden by default) -->
+                <div class="range-gender hidden flex-wrap gap-6">
+                    <div class="flex items-center gap-3 p-2 bg-blue-50/50 rounded-lg border border-blue-100">
+                        <span class="text-[10px] font-black text-blue-500 uppercase tracking-widest w-8">Male</span>
+                        <div class="w-20">
+                            <input type="number" step="any" class="pr-male-min w-full px-2 py-1.5 bg-white border border-blue-200 rounded-md text-xs font-bold text-blue-700 outline-none" placeholder="Min">
+                        </div>
+                        <span class="text-blue-200 text-xs">—</span>
+                        <div class="w-20">
+                            <input type="number" step="any" class="pr-male-max w-full px-2 py-1.5 bg-white border border-blue-200 rounded-md text-xs font-bold text-blue-700 outline-none" placeholder="Max">
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-2 bg-pink-50/50 rounded-lg border border-pink-100">
+                        <span class="text-[10px] font-black text-pink-500 uppercase tracking-widest w-8">Female</span>
+                        <div class="w-20">
+                            <input type="number" step="any" class="pr-female-min w-full px-2 py-1.5 bg-white border border-pink-200 rounded-md text-xs font-bold text-pink-700 outline-none" placeholder="Min">
+                        </div>
+                        <span class="text-pink-200 text-xs">—</span>
+                        <div class="w-20">
+                            <input type="number" step="any" class="pr-female-max w-full px-2 py-1.5 bg-white border border-pink-200 rounded-md text-xs font-bold text-pink-700 outline-none" placeholder="Max">
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </template>
 
@@ -184,8 +239,43 @@
             loadCommonLayout();
             checkAuth();
             loadTemplates();
-            // Start with one empty section
-            addSection();
+
+            // Auto-save listeners
+            const saveDraft = DraftManager.debounce(() => {
+                if (document.getElementById('template-id').value) return; // Don't draft in edit mode
+                const data = extractTemplateData();
+                if (data.name || data.sections.length > 0) {
+                    DraftManager.save('template', data);
+                }
+            }, 500);
+
+            document.getElementById('t-name').addEventListener('input', saveDraft);
+            document.getElementById('sections-container').addEventListener('input', saveDraft);
+
+            // Restore draft if not in edit mode
+            const urlParams = new URLSearchParams(window.location.search);
+            if (!urlParams.has('edit')) {
+                const draft = DraftManager.load('template');
+                if (draft) {
+                    document.getElementById('t-name').value = draft.name || '';
+                    if (draft.sections && draft.sections.length > 0) {
+                        document.getElementById('sections-container').innerHTML = '';
+                        draft.sections.forEach(sec => {
+                            const block = addSection();
+                            block.querySelector('.sec-name').value = sec.sectionName || '';
+                            block.querySelector('.sec-text').value = sec.defaultText || '';
+                            if (sec.parameters) {
+                                const addBtn = block.querySelector('button[onclick="addParamRow(this)"]');
+                                sec.parameters.forEach(p => addParamRow(addBtn, p));
+                            }
+                        });
+                    } else {
+                        addSection(); // Start with one empty section if no sections in draft
+                    }
+                } else {
+                    addSection(); // Start with one empty section if no draft
+                }
+            }
         });
 
         async function loadTemplates() {
@@ -240,11 +330,27 @@
                 const block = addSection();
                 block.querySelector('.sec-name').value = sec.sectionName;
                 block.querySelector('.sec-text').value = sec.defaultText || '';
-                // Populate param rows from defaultValues object
-                if (sec.defaultValues && typeof sec.defaultValues === 'object') {
+                // Populate param rows from parameters array
+                if (sec.parameters && Array.isArray(sec.parameters)) {
+                    const addBtn = block.querySelector('button[onclick="addParamRow(this)"]');
+                    sec.parameters.forEach(p => {
+                        addParamRow(addBtn, p);
+                    });
+                } else if (sec.defaultValues && typeof sec.defaultValues === 'object') {
+                    // Backward compatibility for old format
                     const addBtn = block.querySelector('button[onclick="addParamRow(this)"]');
                     for (const [k, v] of Object.entries(sec.defaultValues)) {
-                        addParamRow(addBtn, k, v);
+                        const legacyParam = { name: k };
+                        if (typeof v === 'object' && v !== null) {
+                            // Extract numbers if possible from string "14 - 16 g%"
+                            const rangeMatch = (v.normalRange || '').match(/([\d.]+)\s*[-–—]\s*([\d.]+)/);
+                            legacyParam.units = (v.normalRange || '').replace(/[\d.\s-–—]+/g, '').trim();
+                            legacyParam.normalRange = {
+                                min: rangeMatch ? parseFloat(rangeMatch[1]) : null,
+                                max: rangeMatch ? parseFloat(rangeMatch[2]) : null
+                            };
+                        }
+                        addParamRow(addBtn, legacyParam);
                     }
                 }
             });
@@ -267,58 +373,109 @@
             return wrapperDiv;
         }
 
-        function addParamRow(btn, key = '', val = '') {
+        function toggleGenderFields(checkbox) {
+            const row = checkbox.closest('.param-row');
+            const general = row.querySelector('.range-general');
+            const gender = row.querySelector('.range-gender');
+            if (checkbox.checked) {
+                general.classList.add('hidden');
+                gender.classList.remove('hidden');
+                gender.classList.add('flex');
+            } else {
+                general.classList.remove('hidden');
+                gender.classList.remove('flex');
+                gender.classList.add('hidden');
+            }
+        }
+
+        function addParamRow(btn, data = null) {
             const tpl = document.getElementById('param-row-template');
             const clone = tpl.content.cloneNode(true);
-            if (key) clone.querySelector('.pr-key').value = key;
-            if (val) clone.querySelector('.pr-val').value = val;
+            const row = clone.querySelector('.param-row');
+
+            if (data) {
+                row.querySelector('.pr-name').value = data.name || '';
+                row.querySelector('.pr-units').value = data.units || '';
+                if (data.isGenderSpecific) {
+                    const cb = row.querySelector('.pr-is-gender');
+                    cb.checked = true;
+                    toggleGenderFields(cb);
+                    if (data.normalRange) {
+                        if (data.normalRange.male) {
+                            row.querySelector('.pr-male-min').value = data.normalRange.male.min ?? '';
+                            row.querySelector('.pr-male-max').value = data.normalRange.male.max ?? '';
+                        }
+                        if (data.normalRange.female) {
+                            row.querySelector('.pr-female-min').value = data.normalRange.female.min ?? '';
+                            row.querySelector('.pr-female-max').value = data.normalRange.female.max ?? '';
+                        }
+                    }
+                } else if (data.normalRange) {
+                    row.querySelector('.pr-min').value = data.normalRange.min ?? '';
+                    row.querySelector('.pr-max').value = data.normalRange.max ?? '';
+                }
+            }
+
             // Insert before the Add button, inside the sec-params container
             const paramsContainer = btn.previousElementSibling;
             paramsContainer.appendChild(clone);
         }
 
+        function extractTemplateData() {
+            const name = document.getElementById('t-name').value;
+            const sectionBlocks = document.querySelectorAll('.section-block');
+            const sections = [];
+            
+            sectionBlocks.forEach(block => {
+                const secName = block.querySelector('.sec-name').value;
+                const secText = block.querySelector('.sec-text').value;
+                const parameters = [];
+                
+                block.querySelectorAll('.param-row').forEach(row => {
+                    const name = row.querySelector('.pr-name').value.trim();
+                    if (!name) return;
+
+                    const units = row.querySelector('.pr-units').value.trim();
+                    const isGenderSpecific = row.querySelector('.pr-is-gender').checked;
+                    
+                    const param = { name, units, isGenderSpecific, normalRange: {} };
+                    
+                    if (isGenderSpecific) {
+                        param.normalRange.male = {
+                            min: parseFloat(row.querySelector('.pr-male-min').value) || null,
+                            max: parseFloat(row.querySelector('.pr-male-max').value) || null
+                        };
+                        param.normalRange.female = {
+                            min: parseFloat(row.querySelector('.pr-female-min').value) || null,
+                            max: parseFloat(row.querySelector('.pr-female-max').value) || null
+                        };
+                    } else {
+                        param.normalRange.min = parseFloat(row.querySelector('.pr-min').value) || null;
+                        param.normalRange.max = parseFloat(row.querySelector('.pr-max').value) || null;
+                    }
+                    parameters.push(param);
+                });
+                
+                sections.push({
+                    sectionName: secName,
+                    defaultText: secText,
+                    parameters: parameters.length > 0 ? parameters : undefined
+                });
+            });
+
+            return { name, sections };
+        }
+
         async function saveTemplate() {
             const id = document.getElementById('template-id').value;
-            const name = document.getElementById('t-name').value;
+            const { name, sections } = extractTemplateData();
             
             if (!name) { 
                 document.getElementById('t-name').focus();
                 return UI.showToast('Template Master Name is required', 'error'); 
             }
 
-            const sectionBlocks = document.querySelectorAll('.section-block');
-            const sections = [];
-            
-            let hasError = false;
-
-            sectionBlocks.forEach(block => {
-                const secName = block.querySelector('.sec-name').value;
-                if(!secName) {
-                    hasError = true;
-                    block.querySelector('.sec-name').classList.add('border-red-500', 'bg-red-50');
-                    return;
-                } else {
-                    block.querySelector('.sec-name').classList.remove('border-red-500', 'bg-red-50');
-                }
-
-                const secText = block.querySelector('.sec-text').value;
-                
-                // Collect parameters from key-value rows
-                const defaultValues = {};
-                block.querySelectorAll('.param-row').forEach(row => {
-                    const k = row.querySelector('.pr-key').value.trim();
-                    const v = row.querySelector('.pr-val').value.trim();
-                    if (k) defaultValues[k] = v;
-                });
-                
-                sections.push({
-                    sectionName: secName,
-                    defaultText: secText,
-                    defaultValues: Object.keys(defaultValues).length > 0 ? defaultValues : undefined
-                });
-            });
-
-            if(hasError && sections.length === 0) return UI.showToast('Please provide valid section details', 'error');
+            if (sections.length === 0) return UI.showToast('Please provide valid section details', 'error');
 
             UI.toggleLoader('btn-save-template', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Saving...');
 
@@ -333,11 +490,12 @@
                     document.getElementById('editor-subtitle').innerHTML = `Currently modifying <span class="font-bold text-brand-600">${name}</span>`;
                     UI.showToast('New template created successfully', 'success');
                 }
+                DraftManager.clear('template');
                 loadTemplates();
             } catch (err) {
                 UI.showToast(err.message, 'error');
             } finally {
-                UI.toggleLoader('btn-save-template', false, '<i class="fas fa-save mr-2"></i> Save Template');
+                UI.toggleLoader('btn-save-template', false, 'Save Template Master');
             }
         }
 
