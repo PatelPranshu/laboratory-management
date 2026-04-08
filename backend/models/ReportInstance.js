@@ -52,6 +52,10 @@ const ReportInstanceSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  referredBy: {
+    type: String,
+    required: [true, 'Referring doctor/clinic is required']
+  },
   sections: [ReportSectionSchema],
   status: {
     type: String,

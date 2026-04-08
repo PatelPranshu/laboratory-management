@@ -6,8 +6,8 @@ const mongoose = require('mongoose');
 const { pickFields } = require('../middlewares/validate');
 
 // Allowed fields for report create/update — prevents mass assignment
-const REPORT_CREATE_FIELDS = ['patientId', 'date', 'sections', 'status'];
-const REPORT_UPDATE_FIELDS = ['date', 'sections', 'status'];
+const REPORT_CREATE_FIELDS = ['patientId', 'date', 'referredBy', 'sections', 'status'];
+const REPORT_UPDATE_FIELDS = ['date', 'referredBy', 'sections', 'status'];
 
 // @desc    Get all reports
 // @route   GET /api/reports

@@ -151,8 +151,8 @@ exports.generateReportPdf = async (report, patient, settings) => {
   const reportId = report._id ? report._id.toString().slice(-6).toUpperCase() : 'N/A';
   content.push({
     columns: [
-      { text: `Patient Name: ${patient.name || 'N/A'}\nAge/Gender: ${patient.age || 'N/A'} / ${patient.gender || 'N/A'}\nPhone: ${patient.phone || 'N/A'}`, width: '*' },
-      { text: `Date: ${reportDate}\nReport ID: ${reportId}`, width: '*', alignment: 'right' }
+      { text: `Patient Name: ${patient.name || 'N/A'}\nAge/Gender: ${patient.age || 'N/A'} / ${patient.gender || 'N/A'}\nPhone: ${patient.phone || 'N/A'}`, width: '*', style: 'patientInfo' },
+      { text: `Date: ${reportDate}\nReport ID: ${reportId}\nReferred By: ${report.referredBy || 'N/A'}`, width: '*', alignment: 'right', style: 'patientInfo' }
     ],
     margin: [0, 0, 0, 20]
   });
