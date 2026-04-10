@@ -153,14 +153,6 @@
                         </h2>
                     </div>
                     <div class="p-8 space-y-8">
-                         <!-- Referred By (Mandatory) -->
-                         <div class="max-w-md">
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Referred By <span class="text-red-500">*</span></label>
-                            <div class="relative group">
-                                <i class="fas fa-user-md absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
-                                <input type="text" id="report-referred-by" placeholder="Dr. Name or Clinic Name..." class="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:bg-white text-sm font-medium text-slate-800 transition-all shadow-inner">
-                            </div>
-                         </div>
 
                          <div>
                             <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Select Templates <span class="text-xs font-normal text-slate-400 lowercase italic">(Combine multiple tests)</span></label>
@@ -187,9 +179,55 @@
                          <!-- Report Sections Injected Here -->
                      </div>
                 </div>
+                </div>
+                
+                <!-- Authorization & Verification Panel -->
+                <div class="glass-card mb-6 shadow-md border-2 border-brand-100">
+                    <div class="px-7 py-5 border-b border-slate-100/50 bg-white/40 flex justify-between items-center bg-brand-50/30">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center">
+                            <span class="flex items-center justify-center w-6 h-6 rounded-full bg-brand-100 text-brand-600 text-xs mr-3"><i class="fas fa-check"></i></span> 
+                            Authorization & Verification
+                        </h2>
+                    </div>
+                    <div class="p-8">
+                        <div class="max-w-md" id="referral-container">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3" id="referred-by-label">Assigned Verifier / Referred By <span class="text-red-500">*</span></label>
+                            <div class="relative group">
+                                <i class="fas fa-user-md absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors z-10"></i>
+                                <select id="report-referred-by" onchange="handleSignatureSelection()" class="w-full pl-12 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:bg-white text-sm font-bold text-slate-800 transition-all shadow-inner appearance-none">
+                                    <option value="" disabled selected>Loading doctors...</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Signature Display (Hidden for Techs initially) -->
+                            <div id="signature-preview-container" class="mt-4 hidden animate-fade-in">
+                                <div class="p-4 border border-emerald-100 bg-emerald-50 rounded-xl flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-signature text-emerald-500 text-xl mr-3"></i>
+                                        <div>
+                                            <p class="text-xs font-bold text-emerald-700 uppercase tracking-wider">Signature Attached</p>
+                                            <p class="text-sm font-medium text-emerald-600" id="signature-assigned-name">Dr. Name</p>
+                                        </div>
+                                    </div>
+                                    <img id="signature-image-preview" src="" class="h-10 object-contain rounded drop-shadow-sm" alt="signature">
+                                </div>
+                                <input type="hidden" id="report-referred-by-id">
+                            </div>
+
+                            <div id="draft-warning-container" class="mt-4 hidden p-4 border border-yellow-200 bg-yellow-50 rounded-xl flex items-start text-yellow-700 animate-fade-in shadow-inner">
+                                <i class="fas fa-info-circle mt-0.5 mr-3 flex-shrink-0"></i>
+                                <div>
+                                    <p class="text-sm font-bold mb-1">Verification Required</p>
+                                    <p class="text-xs font-medium">As a Lab Technician, you cannot sign this report. It will be saved as a draft and sent to the selected doctor for verification.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </main>
-    </div>
 
     <!-- Template for Report Section -->
     <template id="report-sec-template">
@@ -263,6 +301,7 @@
              loadCommonLayout();
              checkAuth();
              await loadTemplatesCheckboxes();
+             await loadSignatures();
 
              // Check URL params
              const urlParams = new URLSearchParams(window.location.search);
@@ -631,7 +670,14 @@
                  document.getElementById('report-id').value = r._id;
                  document.getElementById('report-status').value = r.status;
                  if (typeof updateStatusBadgeUI === 'function') updateStatusBadgeUI(r.status);
-                 document.getElementById('report-referred-by').value = r.referredBy || '';
+                 
+                 // Handle Referral / Signature
+                 if (r.referredByDoctorId) {
+                     document.getElementById('report-referred-by').value = r.referredByDoctorId._id || r.referredByDoctorId;
+                     handleSignatureSelection();
+                 } else if (r.referredBy) {
+                     // Backward compatibility or custom text
+                 }
                  
                  if(r.patientId) selectPatient(r.patientId); // Handle case if patient was deleted
                  
@@ -688,10 +734,26 @@
             const patientId = document.getElementById('sp-id').value;
             if (!patientId) return UI.showToast('Please select a patient first', 'error');
 
-            const referredBy = document.getElementById('report-referred-by').value.trim();
-            if (!referredBy) return UI.showToast('Referring doctor/clinic is required', 'error');
+            const verifierSelect = document.getElementById('report-referred-by');
+            const referredByDoctorId = verifierSelect.value;
+            let referredBy = '';
 
-            const status = 'draft';
+            if (referredByDoctorId) {
+                 const selectedOption = verifierSelect.options[verifierSelect.selectedIndex];
+                 referredBy = selectedOption.text;
+            }
+
+            if (!referredBy) return UI.showToast('Assigned Verifier / Referring Doctor is required', 'error');
+
+            // Determine status initially from frontend, backend handles truth.
+            let status = 'draft';
+            if (referredByDoctorId && document.getElementById('signature-assigned-name').textContent !== 'None') {
+                const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
+                if (user.role !== 'LabTech') {
+                    status = 'saved';
+                }
+            }
+
             const reportId = document.getElementById('report-id').value;
 
             // Gather sections
@@ -740,24 +802,30 @@
 
             try {
                 let savedReport;
+                const payload = { patientId, status, sections, referredBy, templateIds };
+                if (referredByDoctorId) {
+                    payload.referredByDoctorId = referredByDoctorId;
+                    payload.verifierId = referredByDoctorId;
+                }
+
                 if(reportId) {
-                    const res = await api.request(`/reports/${reportId}`, 'PUT', { status, sections, referredBy, templateIds });
+                    const res = await api.request(`/reports/${reportId}`, 'PUT', payload);
                     savedReport = res.data;
                     UI.showToast('Report updated successfully', 'success');
                 } else {
-                    const res = await api.request('/reports', 'POST', { patientId, status, sections, referredBy, templateIds });
+                    const res = await api.request('/reports', 'POST', payload);
                     savedReport = res.data;
                     document.getElementById('report-id').value = savedReport._id;
                     document.getElementById('report-status').value = savedReport.status;
                     document.getElementById('page-title').textContent = 'Edit Diagnostic Report';
-                    UI.showToast('Report saved as DRAFT', 'success');
+                    UI.showToast(savedReport.status === 'saved' ? 'Report saved & signed' : 'Report saved as DRAFT', 'success');
                 }
 
                 document.getElementById('last-saved-info').textContent = `Document saved: ${new Date().toLocaleTimeString()}`;
                 DraftManager.clear('report');
 
                 // Switch to Share Mode
-                toggleActionState('saved');
+                toggleActionState(savedReport.status);
 
             } catch (err) {
                 UI.showToast(err.message, 'error');

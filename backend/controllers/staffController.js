@@ -242,3 +242,64 @@ exports.getStaff = async (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to get staff list' });
   }
 };
+
+// @desc    Remove Staff Member
+// @route   DELETE /api/staff/:id
+// @access  Private (Admin only)
+exports.removeStaff = async (req, res) => {
+  try {
+    const staffMember = await User.findById(req.params.id);
+    if (!staffMember) {
+      return res.status(404).json({ success: false, error: 'Staff member not found' });
+    }
+
+    if (staffMember.parentAdminId.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Not authorized to delete this staff member' });
+    }
+
+    if (staffMember._id.toString() === req.user.id) {
+      return res.status(400).json({ success: false, error: 'Cannot delete your own admin account' });
+    }
+
+    await staffMember.deleteOne();
+    res.status(200).json({ success: true, data: {} });
+  } catch (error) {
+    console.error('removeStaff error:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to remove staff member' });
+  }
+};
+
+// @desc    Reset Staff Password
+// @route   PUT /api/staff/:id/reset-password
+// @access  Private (Admin only)
+exports.resetPassword = async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ success: false, error: 'Please provide a new password' });
+    }
+
+    const RegExpPass = /^(?=.*[A-Z])(?=.*[0-9]).{8,}$/;
+    if (!RegExpPass.test(password)) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters with 1 uppercase and 1 number' });
+    }
+
+    const staffMember = await User.findById(req.params.id);
+    if (!staffMember) {
+      return res.status(404).json({ success: false, error: 'Staff member not found' });
+    }
+
+    if (staffMember.parentAdminId.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Not authorized to reset password for this staff member' });
+    }
+
+    staffMember.password = password;
+    staffMember.mustChangePassword = true; 
+    await staffMember.save();
+
+    res.status(200).json({ success: true, message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('resetPassword error:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to reset password' });
+  }
+};

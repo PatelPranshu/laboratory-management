@@ -5,7 +5,8 @@ const {
   createReport,
   updateReport,
   generatePdf,
-  sendReport
+  sendReport,
+  getPendingReports
 } = require('../controllers/reportController');
 
 const { protect, authorize } = require('../middlewares/authMiddleware');
@@ -16,6 +17,8 @@ const router = express.Router();
 router.route('/')
   .get(protect, getReports)
   .post(protect, createReport);
+
+router.get('/pending', protect, getPendingReports);
 
 router.route('/:id')
   .get(protect, validateObjectId, getReport)

@@ -52,6 +52,14 @@ const ReportInstanceSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   },
+  creatorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  verifierId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   date: {
     type: Date,
     default: Date.now
@@ -59,6 +67,10 @@ const ReportInstanceSchema = new mongoose.Schema({
   referredBy: {
     type: String,
     required: [true, 'Referring doctor/clinic is required']
+  },
+  referredByDoctorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Signature'
   },
   templateIds: [{
     type: mongoose.Schema.Types.ObjectId,

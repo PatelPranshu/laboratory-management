@@ -16,12 +16,12 @@ async function fetchStaff() {
         
         const tbody = document.getElementById('staff-table-body');
         if (!data.success) {
-            tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">Failed to load staff</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-red-500">Failed to load staff</td></tr>`;
             return;
         }
 
         if (data.data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-500 border border-dashed border-slate-300 bg-slate-50/50 rounded-xl m-4 block">No team members found.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-500 border border-dashed border-slate-300 bg-slate-50/50 rounded-xl m-4 block">No team members found.</td></tr>`;
             return;
         }
 
@@ -50,13 +50,55 @@ async function fetchStaff() {
                         ${escapeHtml(user.accountStatus || 'Unknown')}
                     </span>
                 </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button onclick="resetStaffPassword('${user._id}', '${escapeHtml(user.name)}')" class="text-indigo-600 hover:text-indigo-900 mr-3" title="Reset Password"><i class="fas fa-key"></i></button>
+                    ${user.role !== 'Admin' ? `<button onclick="deleteStaff('${user._id}', '${escapeHtml(user.name)}')" class="text-red-500 hover:text-red-700" title="Remove User"><i class="fas fa-trash"></i></button>` : `<span class="text-slate-300 pointer-events-none" title="Cannot delete root admin"><i class="fas fa-trash"></i></span>`}
+                </td>
             </tr>
         `).join('');
 
     } catch (err) {
-        document.getElementById('staff-table-body').innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-red-500">Error loading staff</td></tr>`;
+        document.getElementById('staff-table-body').innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-red-500">Error loading staff</td></tr>`;
     }
 }
+
+// Actions
+window.deleteStaff = async function(id, name) {
+    if(!confirm(`Are you extremely sure you want to delete ${name}? This action cannot be undone.`)) return;
+    try {
+        const res = await fetch(`${API_URL}/staff/${id}`, { method: 'DELETE', headers });
+        const data = await res.json();
+        if(data.success) {
+            UI.showToast(`Removed ${name}`, 'success');
+            fetchStaff();
+        } else {
+            UI.showToast(data.error || 'Failed to remove', 'error');
+        }
+    } catch(err) {
+        UI.showToast('Network Error', 'error');
+    }
+};
+
+window.resetStaffPassword = async function(id, name) {
+    const newPass = prompt(`Enter a new temporary password for ${name}.\n(Must be at least 8 chars, 1 uppercase, 1 number)`);
+    if(!newPass) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/staff/${id}/reset-password`, { 
+            method: 'PUT', 
+            headers,
+            body: JSON.stringify({ password: newPass })
+        });
+        const data = await res.json();
+        if(data.success) {
+            UI.showToast(`Password updated. The user must change it on their next login.`, 'success');
+        } else {
+            UI.showToast(data.error || 'Validation Failed', 'error');
+        }
+    } catch(err) {
+        UI.showToast('Network Error', 'error');
+    }
+};
 
 // Modals
 function openInviteModal() {

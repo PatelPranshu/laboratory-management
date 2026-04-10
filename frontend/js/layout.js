@@ -70,6 +70,18 @@ function loadCommonLayout() {
                     <i class="fas fa-plus-circle w-6 group-hover:text-brand-100 transition-colors"></i> 
                     <span class="font-medium ml-2">Create Report</span>
                 </a>
+                ${(u && (u.role === 'Admin' || u.role === 'Doctor' || u.role === 'LabTech')) ? `
+                <a href="pending-reports.html" data-page="pending-reports" class="nav-link flex items-center px-4 py-3.5 text-indigo-100/70 hover:bg-white/5 hover:text-white rounded-xl transition-custom group">
+                    <i class="fas fa-clock w-6 group-hover:text-brand-100 transition-colors"></i> 
+                    <span class="font-medium ml-2">Pending Reports</span>
+                </a>
+                ` : ''}
+                ${(u && (u.role === 'Admin' || u.role === 'Doctor')) ? `
+                <a href="add-sign.html" data-page="add-sign" class="nav-link flex items-center px-4 py-3.5 text-indigo-100/70 hover:bg-white/5 hover:text-white rounded-xl transition-custom group">
+                    <i class="fas fa-signature w-6 group-hover:text-brand-100 transition-colors"></i> 
+                    <span class="font-medium ml-2">Signatures</span>
+                </a>
+                ` : ''}
                 ${(u && u.role === 'Admin') ? `
                 <a href="design.html" data-page="design" class="nav-link flex items-center px-4 py-3.5 text-indigo-100/70 hover:bg-white/5 hover:text-white rounded-xl transition-custom group">
                     <i class="fas fa-paint-brush w-6 group-hover:text-brand-100 transition-colors"></i> 

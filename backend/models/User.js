@@ -58,6 +58,9 @@ const UserSchema = new mongoose.Schema({
   },
   signatureUrl: {
     type: String
+  },
+  doctorName: {
+    type: String
   }
 }, { timestamps: true });
 

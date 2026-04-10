@@ -65,9 +65,9 @@ exports.updatePrintSettings = async (req, res) => {
 // @access  Private
 exports.uploadImage = async (req, res) => {
   try {
-    // Only Doctor should upload brand settings
-    if (req.user.role !== 'Doctor') {
-      return res.status(403).json({ success: false, error: 'Only doctors can upload branding images' });
+    // Only Admin and Doctor should upload brand/signature settings
+    if (req.user.role !== 'Admin' && req.user.role !== 'Doctor') {
+      return res.status(403).json({ success: false, error: 'Not authorized to upload images' });
     }
 
     if (!req.file) {
@@ -122,8 +122,8 @@ exports.uploadImage = async (req, res) => {
 // @access  Private
 exports.deleteImage = async (req, res) => {
   try {
-    if (req.user.role !== 'Doctor') {
-      return res.status(403).json({ success: false, error: 'Only doctors can manage branding images' });
+    if (req.user.role !== 'Admin' && req.user.role !== 'Doctor') {
+      return res.status(403).json({ success: false, error: 'Not authorized to manage images' });
     }
 
     const { imageUrl } = req.body;

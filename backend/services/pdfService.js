@@ -123,12 +123,17 @@ exports.generateReportPdf = async (report, patient, settings) => {
   // Pre-download images as base64 (pdfmake can't reliably fetch remote URLs)
   let headerImageData = null;
   let footerImageData = null;
+  let signatureImageData = null;
 
   if (settings && settings.headerImageURL) {
     headerImageData = await downloadImageAsBase64(settings.headerImageURL);
   }
   if (settings && settings.footerImageURL) {
     footerImageData = await downloadImageAsBase64(settings.footerImageURL);
+  }
+  
+  if (report.referredByDoctorId && report.referredByDoctorId.signatureUrl) {
+    signatureImageData = await downloadImageAsBase64(report.referredByDoctorId.signatureUrl);
   }
 
   // Header Image
@@ -312,6 +317,24 @@ exports.generateReportPdf = async (report, patient, settings) => {
       footerConfig.width = contentWidth;
     }
     content.push(footerConfig);
+  }
+  
+  // Verify & Sign Section
+  if (signatureImageData) {
+      content.push({
+          columns: [
+              { width: '*', text: '' }, // spacer 
+              {
+                  width: 150,
+                  alignment: 'center',
+                  margin: [0, 20, 0, 0],
+                  stack: [
+                      { image: signatureImageData, fit: [150, 60], alignment: 'center' },
+                      { text: `Referred By / Verified By\n${report.referredByDoctorId.doctorName}`, fontSize: fontSize - 2, bold: true, margin: [0, 5, 0, 0], color: '#334155' }
+                  ]
+              }
+          ]
+      });
   }
 
   const docDefinition = {

@@ -6,8 +6,8 @@ const mongoose = require('mongoose');
 const { pickFields } = require('../middlewares/validate');
 
 // Allowed fields for report create/update — prevents mass assignment
-const REPORT_CREATE_FIELDS = ['patientId', 'date', 'referredBy', 'sections', 'status', 'templateIds'];
-const REPORT_UPDATE_FIELDS = ['date', 'referredBy', 'sections', 'status', 'templateIds'];
+const REPORT_CREATE_FIELDS = ['patientId', 'date', 'referredBy', 'sections', 'status', 'templateIds', 'creatorId', 'verifierId', 'referredByDoctorId'];
+const REPORT_UPDATE_FIELDS = ['date', 'referredBy', 'sections', 'status', 'templateIds', 'creatorId', 'verifierId', 'referredByDoctorId'];
 
 const getAdminId = (req) => {
   return req.user.role === 'Admin' ? req.user.id : req.user.parentAdminId;
@@ -95,7 +95,14 @@ exports.createReport = async (req, res) => {
     // Whitelist fields FIRST, then set doctorId to prevent override
     const sanitizedBody = pickFields(req.body, REPORT_CREATE_FIELDS);
     sanitizedBody.doctorId = adminId;
-    sanitizedBody.createdBy = req.user.id;
+    sanitizedBody.createdBy = req.user.id; // backward comp
+    sanitizedBody.creatorId = req.user.id;
+
+    if (sanitizedBody.referredByDoctorId) {
+        sanitizedBody.status = 'saved';
+    } else {
+        sanitizedBody.status = 'draft';
+    }
     
     // Add audit log
     sanitizedBody.auditLogs = [{
@@ -132,6 +139,12 @@ exports.updateReport = async (req, res) => {
     // Whitelist fields — prevent doctorId/auditLogs manipulation
     const sanitizedBody = pickFields(req.body, REPORT_UPDATE_FIELDS);
 
+    if (sanitizedBody.referredByDoctorId) {
+        sanitizedBody.status = 'saved';
+    } else {
+        sanitizedBody.status = 'draft';
+    }
+
     // Append audit log (don't allow client to overwrite)
     sanitizedBody.auditLogs = [...report.auditLogs, { action: 'Modified', userId: req.user.id }];
 
@@ -157,7 +170,8 @@ exports.generatePdf = async (req, res) => {
     // Even for generating PDF, we might restrict LabTech if they shouldn't see others, 
     // but the route restricts generatePdf to Admin/Doctor anyway.
     const report = await ReportInstance.findOne(query)
-      .populate('patientId');
+      .populate('patientId')
+      .populate('referredByDoctorId');
 
     if (!report) {
       return res.status(404).json({ success: false, error: 'Report not found' });
@@ -165,6 +179,10 @@ exports.generatePdf = async (req, res) => {
 
     if (!report.patientId) {
       return res.status(404).json({ success: false, error: 'Associated patient not found' });
+    }
+
+    if (report.status === 'draft') {
+      return res.status(403).json({ success: false, error: 'Cannot download a draft report. It must be signed / saved first.' });
     }
 
     const settings = await PrintSettings.findOne({ doctorId: adminId });
@@ -206,8 +224,14 @@ exports.sendReport = async (req, res) => {
     // Handled by route middleware authorize('Admin', 'Doctor')
 
     const adminId = getAdminId(req);
-    const report = await ReportInstance.findOne({ _id: req.params.id, doctorId: adminId });
+    const report = await ReportInstance.findOne({ _id: req.params.id, doctorId: adminId })
+      .populate('patientId')
+      .populate('referredByDoctorId');
     if (!report) return res.status(404).json({ success: false, error: 'Report not found' });
+
+    if (report.status === 'draft') {
+      return res.status(403).json({ success: false, error: 'Cannot send a draft report. It must be signed / saved first.' });
+    }
 
     const { method } = req.body;
 
@@ -229,5 +253,37 @@ exports.sendReport = async (req, res) => {
   } catch (error) {
     console.error('sendReport error:', error.message);
     res.status(500).json({ success: false, error: 'Failed to send report' });
+  }
+};
+
+// @desc    Get pending reports
+// @route   GET /api/reports/pending
+// @access  Private
+exports.getPendingReports = async (req, res) => {
+  try {
+    const adminId = getAdminId(req);
+    
+    let query = {
+      doctorId: adminId,
+      status: 'draft'
+    };
+
+    if (req.user.role === 'Doctor') {
+      query.verifierId = req.user.id;
+    } else if (req.user.role === 'LabTech') {
+       // Optional: LabTech can only see their own drafted items
+      query.creatorId = req.user.id;
+    }
+
+    const reports = await ReportInstance.find(query)
+      .populate('patientId', 'name phone age gender')
+      .populate('creatorId', 'name role email')
+      .populate('verifierId', 'name role email')
+      .sort('-createdAt');
+
+    res.status(200).json({ success: true, count: reports.length, data: reports });
+  } catch (error) {
+    console.error('getPendingReports error:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to retrieve pending reports' });
   }
 };
