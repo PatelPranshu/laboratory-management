@@ -3,6 +3,10 @@ const BASE_URL = (() => {
   const hostname = window.location.hostname;
   
   // Production URL mapping
+  if (hostname === 'www.mypatholabs.tech' || hostname === 'mypatholabs.tech') {
+    return 'https://api.mypatholabs.tech/api';
+  }
+
   if (hostname === 'laboratory-management-six.vercel.app') {
     return 'https://mylaboratory.onrender.com/api';
   }
@@ -18,6 +22,8 @@ const BASE_URL = (() => {
   }
   return `http://${hostname}:5000/api`;
 })();
+
+const API_URL = BASE_URL; // Global alias for scripts using old naming convention
 
 const api = {
   getToken() {

@@ -4,6 +4,7 @@ const Invitation = require('../models/Invitation');
 const PrintSettings = require('../models/PrintSettings');
 const { isValidEmail, isStrongPassword } = require('../middlewares/validate');
 const jwt = require('jsonwebtoken');
+const { sendInvitationEmail } = require('../services/emailService');
 
 // Generate JWT Helper
 const generateToken = (id) => {
@@ -51,12 +52,22 @@ exports.inviteStaff = async (req, res) => {
       parentAdminId: req.user.id
     });
 
-    // In a real production environment, send email via nodemailer here
-    console.log(`[STAFF INVITATION CREATED] Role: ${role} | Email: ${email}`);
-    console.log(`[STAFF INVITATION LINK] http://localhost:5000/register-staff.html?token=${token}`);
-    console.log(`[NOTE] Use the frontend URL in production, typically replacing localhost:5000`);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
+    const inviteLink = `${frontendUrl}/register-staff.html?token=${token}`;
 
-    res.status(200).json({ success: true, message: 'Invitation sent' });
+    try {
+      await sendInvitationEmail(email, role, inviteLink);
+      // Ensure we immediately notify the admin
+      res.status(200).json({ success: true, message: 'Invitation email successfully sent!' });
+    } catch (emailError) {
+      // If email delivery fails, the invite is still valid in the DB, so we inform the client.
+      console.error(`[STAFF] Email delivery failed. Invitation still accessible via link: ${inviteLink}`);
+      res.status(200).json({ 
+        success: true, 
+        message: 'Invitation generated successfully, but the automatic email failed to send. You may share the link manually.',
+        warning: 'Email delivery failed'
+      });
+    }
   } catch (error) {
     console.error('inviteStaff error:', error.message);
     res.status(500).json({ success: false, error: 'Failed to invite staff' });
