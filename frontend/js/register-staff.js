@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
-        const res = await fetch(`${API_URL}/staff/verify-invite/${token}`);
+        const res = await fetch(`${BASE_URL}/staff/verify-invite/${token}`);
         const data = await res.json();
 
         if (data.success) {
@@ -60,15 +60,10 @@ async function handleRegistration(e) {
         const payload = { token, name, password };
         if (signatureUrl) payload.signatureUrl = signatureUrl;
 
-        const res = await fetch(`${API_URL}/staff/complete-registration`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        // Use the centralized api.request which handles BASE_URL natively
+        const data = await api.request('/staff/complete-registration', 'POST', payload);
 
-        const data = await res.json();
-
-        if (data.success) {
+        if (data && data.success) {
             // Save to localStorage
             localStorage.setItem('lis_token', data.token);
             localStorage.setItem('lis_user', JSON.stringify(data.user));
@@ -78,10 +73,11 @@ async function handleRegistration(e) {
                 window.location.href = 'dashboard.html';
             }, 1000);
         } else {
-            UI.showToast(data.error || 'Failed to complete registration', 'error');
+            UI.showToast((data && data.error) || 'Failed to complete registration', 'error');
         }
     } catch (err) {
-        UI.showToast('Network error', 'error');
+        console.error('Registration Error:', err);
+        UI.showToast(err.message || 'Network error', 'error');
     } finally {
         UI.toggleLoader('btn-submit', false, 'Create Account <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>');
     }
