@@ -46,7 +46,13 @@ async function handleRegistration(e) {
     const token = document.getElementById('invite-token').value;
     const name = document.getElementById('name').value;
     const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
     const signatureUrl = document.getElementById('signature-url') ? document.getElementById('signature-url').value : null;
+
+    if (password !== confirmPassword) {
+        UI.showToast('Passwords do not match.', 'error');
+        return;
+    }
 
     UI.toggleLoader('btn-submit', true);
 

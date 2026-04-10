@@ -20,7 +20,8 @@ const BASE_URL = (() => {
   if (window.location.protocol !== 'file:' && !isLocal) {
     return `${window.location.origin}/api`;
   }
-  return `http://${hostname}:5000/api`;
+  const host = hostname || '127.0.0.1';
+  return `http://${host}:5000/api`;
 })();
 
 const API_URL = BASE_URL; // Global alias for scripts using old naming convention
