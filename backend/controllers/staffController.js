@@ -61,7 +61,7 @@ exports.inviteStaff = async (req, res) => {
       res.status(200).json({ success: true, message: 'Invitation email successfully sent!' });
     } catch (emailError) {
       // If email delivery fails, the invite is still valid in the DB, so we inform the client.
-      console.error(`[STAFF] Email delivery failed. Invitation still accessible via link: ${inviteLink}`);
+      console.error(`[STAFF] Email delivery failed for invitation to ${email}. Invitation is still valid in DB.`);
       res.status(200).json({ 
         success: true, 
         message: 'Invitation generated successfully, but the automatic email failed to send. You may share the link manually.',

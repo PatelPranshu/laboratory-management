@@ -12,23 +12,26 @@ exports.getSummary = async (req, res) => {
     // Convert to ObjectId for aggregation pipeline (aggregations don't auto-cast strings)
     const adminObjectId = new mongoose.Types.ObjectId(adminId);
 
-    let query = { doctorId: adminId };
+    let patientQuery = { doctorId: adminId };
+    let reportQuery = { doctorId: adminId };
+
+    // LabTechs see all lab patients but only their own reports
     if (req.user.role === 'LabTech') {
-      query.createdBy = req.user.id;
+      reportQuery.createdBy = req.user.id;
     }
 
-    const totalPatients = await Patient.countDocuments(query);
-    const totalReports = await ReportInstance.countDocuments(query);
-    const pendingReports = await ReportInstance.countDocuments({ ...query, status: { $in: ['draft', 'saved'] } });
-    const sentReports = await ReportInstance.countDocuments({ ...query, status: 'sent' });
+    const totalPatients = await Patient.countDocuments(patientQuery);
+    const totalReports = await ReportInstance.countDocuments(reportQuery);
+    const pendingReports = await ReportInstance.countDocuments({ ...reportQuery, status: { $in: ['draft', 'saved'] } });
+    const sentReports = await ReportInstance.countDocuments({ ...reportQuery, status: 'sent' });
 
     // Last 5 patients added
-    const recentPatients = await Patient.find(query)
+    const recentPatients = await Patient.find(patientQuery)
       .sort({ createdAt: -1 })
       .limit(5);
 
     // Last 5 reports generated
-    const recentReports = await ReportInstance.find(query)
+    const recentReports = await ReportInstance.find(reportQuery)
       .populate('patientId', 'name')
       .sort({ createdAt: -1 })
       .limit(5);

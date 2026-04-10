@@ -12,20 +12,28 @@ exports.addSignature = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Doctor name and signature URL are required' });
     }
 
-    let parentAdminId;
-    let doctorId = null;
-
-    if (req.user.role === 'Admin') {
-      parentAdminId = req.user.id;
-    } else if (req.user.role === 'Doctor') {
-      parentAdminId = req.user.parentAdminId;
-      doctorId = req.user.id;
-      // Doctors can only add their own signature
-      if (req.body.doctorName.trim() !== req.user.name) {
-         // allow slight variations, or strictly enforce it or just use their user.name directly
-         // We will enforce using their user name
+    // Validate URL format — only allow HTTPS URLs to prevent XSS/injection
+    try {
+      const parsed = new URL(signatureUrl);
+      if (!['https:', 'http:'].includes(parsed.protocol)) {
+        return res.status(400).json({ success: false, error: 'Signature URL must use HTTPS' });
       }
+    } catch (e) {
+      return res.status(400).json({ success: false, error: 'Invalid signature URL format' });
+    }
+
+    // Resolve the Lab ID (Standardized)
+    let labId;
+    if (req.user.role === 'Admin') {
+      labId = req.user.id;
     } else {
+      labId = req.user.parentAdminId || req.user.id; // Fallback for primary/solo accounts
+    }
+    
+    let doctorId = null;
+    if (req.user.role === 'Doctor') {
+      doctorId = req.user.id;
+    } else if (req.user.role !== 'Admin') {
       return res.status(403).json({ success: false, error: 'Not authorized to add signatures' });
     }
 
@@ -42,7 +50,7 @@ exports.addSignature = async (req, res) => {
     const signature = await Signature.create({
       doctorName: req.user.role === 'Doctor' ? req.user.name : doctorName,
       signatureUrl,
-      parentAdminId,
+      parentAdminId: labId,
       doctorId
     });
 
@@ -58,10 +66,10 @@ exports.addSignature = async (req, res) => {
 // @access  Private (All staff)
 exports.getSignatures = async (req, res) => {
   try {
-    // Find parentAdminId for the current user
-    let adminId = req.user.role === 'Admin' ? req.user.id : req.user.parentAdminId;
+    // Find parentAdminId for the current user (Standardized fallback)
+    let labId = req.user.role === 'Admin' ? req.user.id : (req.user.parentAdminId || req.user.id);
 
-    const signatures = await Signature.find({ parentAdminId: adminId });
+    const signatures = await Signature.find({ parentAdminId: labId });
     res.status(200).json({ success: true, count: signatures.length, data: signatures });
   } catch (error) {
     console.error('getSignatures error:', error.message);

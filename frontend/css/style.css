@@ -18,13 +18,10 @@ body {
   border: 1px solid #f1f5f9;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
-  will-change: transform, box-shadow; /* Hint to hardware acceleration */
+  transition: border-color 0.15s ease;
 }
 
 .glass-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
   border-color: #e2e8f0;
 }
 
@@ -63,34 +60,39 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-/* Toast Performance */
+/* Toast Performance & Aesthetics */
 #toast-container {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: 32px;
+  right: 32px;
   z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
 }
 
 .toast {
-  padding: 12px 20px;
-  border-radius: 10px;
-  margin-top: 10px;
-  font-size: 0.875rem;
+  pointer-events: auto;
+  min-width: 280px;
+  max-width: 400px;
+  font-family: 'Outfit', sans-serif;
   color: white;
-  font-weight: 600;
-  min-width: 240px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  animation: slideInLite 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.toast.success { background: #10b981; }
-.toast.error { background: #ef4444; }
-.toast.info { background: #0ea5e9; }
-.toast.warning { background: #f59e0b; }
+.toast.success { background: #059669; border-left: 4px solid #047857; }
+.toast.error { background: #dc2626; border-left: 4px solid #b91c1c; }
+.toast.info { background: #0284c7; border-left: 4px solid #0369a1; }
+.toast.warning { background: #d97706; border-left: 4px solid #b45309; }
 
-@keyframes slideInLite {
-  from { transform: translateY(10px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+@keyframes slideInUp {
+  from { transform: translateX(100%) scale(0.9); opacity: 0; }
+  to { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+.animate-slide-in {
+  animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .fade-out {

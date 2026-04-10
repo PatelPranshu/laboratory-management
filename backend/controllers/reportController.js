@@ -3,14 +3,16 @@ const Patient = require('../models/Patient');
 const PrintSettings = require('../models/PrintSettings');
 const pdfService = require('../services/pdfService');
 const mongoose = require('mongoose');
+const Signature = require('../models/Signature');
 const { pickFields } = require('../middlewares/validate');
 
 // Allowed fields for report create/update — prevents mass assignment
-const REPORT_CREATE_FIELDS = ['patientId', 'date', 'referredBy', 'sections', 'status', 'templateIds', 'creatorId', 'verifierId', 'referredByDoctorId'];
-const REPORT_UPDATE_FIELDS = ['date', 'referredBy', 'sections', 'status', 'templateIds', 'creatorId', 'verifierId', 'referredByDoctorId'];
+// creatorId, verifierId, referredByDoctorId are set SERVER-SIDE only to prevent spoofing
+const REPORT_CREATE_FIELDS = ['patientId', 'date', 'referredBy', 'sections', 'templateIds', 'referredByDoctorId'];
+const REPORT_UPDATE_FIELDS = ['date', 'referredBy', 'sections', 'templateIds', 'referredByDoctorId'];
 
 const getAdminId = (req) => {
-  return req.user.role === 'Admin' ? req.user.id : req.user.parentAdminId;
+  return req.user.role === 'Admin' ? req.user.id : (req.user.parentAdminId || req.user.id);
 };
 
 // @desc    Get all reports
@@ -95,13 +97,34 @@ exports.createReport = async (req, res) => {
     // Whitelist fields FIRST, then set doctorId to prevent override
     const sanitizedBody = pickFields(req.body, REPORT_CREATE_FIELDS);
     sanitizedBody.doctorId = adminId;
-    sanitizedBody.createdBy = req.user.id; // backward comp
+    sanitizedBody.createdBy = req.user.id;
     sanitizedBody.creatorId = req.user.id;
 
-    if (sanitizedBody.referredByDoctorId) {
-        sanitizedBody.status = 'saved';
+    // Server-side status determination — LabTechs ALWAYS create drafts
+    if (req.user.role === 'LabTech') {
+      sanitizedBody.status = 'draft';
+      if (sanitizedBody.referredByDoctorId) {
+        sanitizedBody.verifierId = sanitizedBody.referredByDoctorId;
+      }
+    } else if (sanitizedBody.referredByDoctorId) {
+      // PROMPT FIX: If signature not exist then show it as draft
+      const signature = await Signature.findOne({ 
+        $or: [
+          { doctorId: sanitizedBody.referredByDoctorId },
+          { _id: sanitizedBody.referredByDoctorId } // Fallback for ID-based lookup
+        ],
+        parentAdminId: adminId
+      });
+
+      if (signature) {
+          sanitizedBody.status = 'saved';
+          sanitizedBody.verifierId = sanitizedBody.referredByDoctorId;
+      } else {
+          sanitizedBody.status = 'draft';
+          sanitizedBody.verifierId = sanitizedBody.referredByDoctorId;
+      }
     } else {
-        sanitizedBody.status = 'draft';
+      sanitizedBody.status = 'draft';
     }
     
     // Add audit log
@@ -139,10 +162,31 @@ exports.updateReport = async (req, res) => {
     // Whitelist fields — prevent doctorId/auditLogs manipulation
     const sanitizedBody = pickFields(req.body, REPORT_UPDATE_FIELDS);
 
-    if (sanitizedBody.referredByDoctorId) {
-        sanitizedBody.status = 'saved';
+    // Server-side status determination — LabTechs ALWAYS stay draft
+    if (req.user.role === 'LabTech') {
+      sanitizedBody.status = 'draft';
+      if (sanitizedBody.referredByDoctorId) {
+        sanitizedBody.verifierId = sanitizedBody.referredByDoctorId;
+      }
+    } else if (sanitizedBody.referredByDoctorId) {
+      // Check for signature presence
+      const signature = await Signature.findOne({ 
+        $or: [
+          { doctorId: sanitizedBody.referredByDoctorId },
+          { _id: sanitizedBody.referredByDoctorId }
+        ],
+        parentAdminId: adminId 
+      });
+
+      if (signature) {
+          sanitizedBody.status = 'saved';
+          sanitizedBody.verifierId = sanitizedBody.referredByDoctorId;
+      } else {
+          sanitizedBody.status = 'draft';
+          sanitizedBody.verifierId = sanitizedBody.referredByDoctorId;
+      }
     } else {
-        sanitizedBody.status = 'draft';
+      sanitizedBody.status = 'draft';
     }
 
     // Append audit log (don't allow client to overwrite)
@@ -192,13 +236,10 @@ exports.generatePdf = async (req, res) => {
     const patientObj = report.patientId.toObject ? report.patientId.toObject() : report.patientId;
     
     const pdfBuffer = await pdfService.generateReportPdf(reportObj, patientObj, settings ? settings.toObject() : null);
-    
-    // Update status to 'saved' if it was a draft
-    if (report.status === 'draft') {
-        report.status = 'saved';
-        report.auditLogs.push({ action: 'Downloaded PDF', userId: req.user.id });
-        await report.save();
-    }
+
+    // Add audit log for download
+    report.auditLogs.push({ action: 'Downloaded PDF', userId: req.user.id });
+    await report.save();
 
     // Sanitize filename — remove special chars
     const safeName = (report.patientId.name || 'Patient').replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_');

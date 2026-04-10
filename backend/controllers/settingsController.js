@@ -3,6 +3,11 @@ const cloudinary = require('cloudinary').v2;
 const streamifier = require('streamifier');
 const { pickFields } = require('../middlewares/validate');
 
+// Resolve the lab admin ID regardless of the caller's role
+const getAdminId = (req) => {
+  return req.user.role === 'Admin' ? req.user.id : req.user.parentAdminId;
+};
+
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -21,7 +26,7 @@ const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 // @access  Private
 exports.getPrintSettings = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
+    const doctorId = getAdminId(req);
     let settings = await PrintSettings.findOne({ doctorId });
 
     if (!settings) {
@@ -40,7 +45,7 @@ exports.getPrintSettings = async (req, res) => {
 // @access  Private
 exports.updatePrintSettings = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
+    const doctorId = getAdminId(req);
 
     // Whitelist allowed fields
     const sanitizedBody = pickFields(req.body, SETTINGS_FIELDS);
@@ -132,7 +137,7 @@ exports.deleteImage = async (req, res) => {
     }
 
     // Verify this image belongs to the user's print settings
-    const doctorId = req.user.id;
+    const doctorId = getAdminId(req);
     const settings = await PrintSettings.findOne({ doctorId });
     if (!settings) {
       return res.status(404).json({ success: false, error: 'Print settings not found' });

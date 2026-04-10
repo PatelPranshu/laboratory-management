@@ -1,107 +1,153 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signatures - MyPathoLabs</title>
+    <title>Manage Signatures - MyPathoLabs</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-</head>
-<body class="bg-slate-100 font-sans text-slate-800 antialiased selection:bg-brand-200 selection:text-brand-900">
-    
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3"></div>
 
-    <div class="flex h-screen overflow-hidden bg-slate-100">
-        <!-- Sidebar Injected via JS -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'Inter', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased selection:bg-brand-500 selection:text-white h-full">
+    
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[60] flex flex-col gap-3"></div>
+
+    <div class="flex h-screen overflow-hidden bg-slate-50">
         
-        <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar pb-12">
-            <!-- Header -->
-            <header class="bg-white border-b border-slate-200 flex items-center justify-between px-8 py-5 sticky top-0 z-10">
-                <div class="flex-1 w-full max-w-2xl flex relative opacity-0"></div>
-                <!-- Breadcrumbs -->
-                <nav class="flex absolute left-8 top-1/2 transform -translate-y-1/2" aria-label="Breadcrumb">
-                  <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
-                    <li class="inline-flex items-center text-slate-500 hover:text-brand-600 transition-colors">
-                      <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-2"></i>Dashboard</a>
-                    </li>
-                    <li>
-                      <div class="flex items-center">
-                        <i class="fas fa-chevron-right text-slate-400 text-xs mx-2"></i>
-                        <span class="text-slate-800 font-bold">Signatures</span>
-                      </div>
-                    </li>
-                  </ol>
+        <!-- Sidebar is injected by layout.js -->
+        
+        <!-- Main Content -->
+        <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar">
+            
+            <!-- Page Header -->
+            <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 py-5 sticky top-0 z-10 flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight flex items-center">
+                        <i class="fas fa-signature text-brand-500 mr-3"></i>
+                        Signature Management
+                    </h1>
+                </div>
+                <nav class="hidden md:flex items-center space-x-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    <a href="dashboard.html" class="hover:text-brand-600 transition-colors">Home</a>
+                    <i class="fas fa-chevron-right text-[8px] mx-1"></i>
+                    <span class="text-slate-600">Settings</span>
+                    <i class="fas fa-chevron-right text-[8px] mx-1"></i>
+                    <span class="text-brand-600">Signatures</span>
                 </nav>
             </header>
 
-            <div class="px-8 py-8 max-w-[1200px] mx-auto">
-                <div class="mb-8">
-                    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center mt-2 group">
-                        <i class="fas fa-signature text-brand-500 mr-3 group-hover:scale-110 transition-transform"></i>
-                        Manage Signatures
-                    </h1>
-                    <p class="text-slate-500 mt-2 text-sm max-w-xl leading-relaxed">Add and manage doctor signatures for verifying lab reports.</p>
+            <div class="px-8 py-8 max-w-[1400px] mx-auto">
+                <div class="mb-10">
+                    <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Setup Reporting Team</h2>
+                    <p class="text-slate-500 mt-2 text-sm font-medium">Add signatures for doctors and lab staff to authorize medical reports.</p>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
                     
-                    <!-- Upload Form -->
-                    <div class="lg:col-span-1" id="add-signature-container">
-                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sticky top-28">
-                            <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
-                                <i class="fas fa-plus-circle text-brand-500 mr-2"></i> Add New Signature
-                            </h2>
-                            <form id="signature-form" onsubmit="addSignature(event)">
+                    <!-- Left: Upload Section -->
+                    <div class="xl:col-span-4" id="add-signature-container">
+                        <div class="glass-card p-8">
+                            <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                                <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mr-3">
+                                    <i class="fas fa-plus text-xs"></i>
+                                </div>
+                                Create New Identity
+                            </h3>
+                            
+                            <form id="signature-form" class="space-y-6" onsubmit="addSignature(event)">
                                 <div class="space-y-4">
                                     <div>
-                                        <label class="block text-sm font-bold text-slate-700 mb-1.5" for="doctor-name">Doctor Name</label>
-                                        <input type="text" id="doctor-name" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring focus:ring-brand-500/20 transition-all text-sm font-medium disabled:bg-slate-100 disabled:text-slate-500" placeholder="e.g. Dr. John Doe">
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1" for="doctor-name">Official Name</label>
+                                        <input type="text" id="doctor-name" required class="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all font-semibold text-slate-700 disabled:bg-slate-100 disabled:text-slate-400" placeholder="e.g. Dr. Jane Smith">
                                     </div>
+
                                     <div>
-                                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Signature Image</label>
+                                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Digital Signature</label>
                                         
-                                        <!-- Image Preview Container -->
-                                        <div id="signature-preview-container" class="mb-4 h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center overflow-hidden transition-colors hover:border-brand-300">
-                                            <img id="signature-preview" src="" class="max-h-full object-contain hidden" alt="Signature Preview">
-                                            <span id="signature-placeholder" class="text-slate-400 text-center">
-                                                <i class="fas fa-signature text-3xl mb-2 block"></i>
-                                                <span class="text-xs font-medium">No Image Uploaded</span>
-                                            </span>
+                                        <!-- Interactive Preview Area -->
+                                        <div id="signature-preview-container" class="relative group h-40 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden transition-all hover:border-brand-500/50 hover:bg-brand-50/10 cursor-pointer" onclick="document.getElementById('signature-file').click()">
+                                            <img id="signature-preview" src="" class="max-h-full max-w-full object-contain hidden z-10" alt="Preview">
+                                            
+                                            <div id="signature-placeholder" class="text-center py-6">
+                                                <div class="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center mx-auto mb-3 text-slate-400 group-hover:text-brand-500 transition-colors">
+                                                    <i class="fas fa-upload"></i>
+                                                </div>
+                                                <p class="text-xs font-bold text-slate-500 group-hover:text-slate-700">Click to upload image</p>
+                                                <p class="text-[9px] text-slate-400 mt-1 uppercase tracking-tighter">PNG with transparency preferred</p>
+                                            </div>
+
+                                            <!-- Overlay shown on image hover -->
+                                            <div class="absolute inset-0 bg-brand-900/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20 hidden" id="preview-hover-overlay">
+                                                <span class="text-white text-[10px] font-bold uppercase tracking-widest"><i class="fas fa-sync mr-1"></i> Replace Image</span>
+                                            </div>
                                         </div>
 
-                                        <div class="flex items-center space-x-3">
+                                        <div class="flex items-center mt-4 space-x-3">
                                             <input type="file" id="signature-file" accept="image/*" class="hidden" onchange="uploadSignature()">
-                                            <button type="button" onclick="document.getElementById('signature-file').click()" id="btn-upload-trigger" class="flex-1 bg-white border border-slate-200 text-sm font-bold text-slate-700 py-2.5 rounded-xl shadow-sm hover:bg-slate-50 hover:shadow transition-all transform hover:-translate-y-0.5">
-                                                <i class="fas fa-cloud-upload-alt mr-2 text-brand-500"></i> Upload Signature
+                                            
+                                            <button type="button" onclick="document.getElementById('signature-file').click()" id="btn-upload-trigger" class="flex-1 bg-white border border-slate-200 text-xs font-bold text-slate-700 py-3 rounded-xl shadow-sm hover:shadow transition-all group active:scale-95">
+                                                Select File
                                             </button>
-                                            <button type="button" onclick="clearSignatureImage()" id="btn-clear-signature" class="hidden text-red-500 hover:text-red-700 text-sm font-bold hover:bg-red-50 px-4 py-2.5 rounded-xl transition-colors">
+
+                                            <button type="button" onclick="clearSignatureImage()" id="btn-clear-signature" class="hidden w-12 h-12 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all">
                                                 <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </div>
                                         <input type="hidden" id="signature-url">
-                                        <p class="text-[10px] text-slate-500 mt-2">Upload a clean, transparent PNG of the signature.</p>
                                     </div>
-                                    <button type="button" onclick="addSignature(event)" id="btn-add-sign" class="w-full bg-brand-500 text-white font-bold rounded-xl py-2.5 mt-2 hover:bg-brand-600 transition-all shadow-md hover:-translate-y-0.5">
-                                        Save Signature
-                                    </button>
                                 </div>
+
+                                <button type="button" onclick="addSignature(event)" id="btn-add-sign" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-2xl py-4 shadow-lg shadow-brand-500/20 transition-all active:scale-95 flex items-center justify-center">
+                                    <span>Finalize & Link</span>
+                                    <i class="fas fa-arrow-right ml-2 text-[10px] opacity-50"></i>
+                                </button>
                             </form>
                         </div>
                     </div>
 
-                    <!-- Signatures List -->
-                    <div class="lg:col-span-2">
-                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div class="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
-                                <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Available Signatures</h3>
+                    <!-- Right: Signatures Display -->
+                    <div class="xl:col-span-8">
+                        <div class="glass-card h-full min-h-[600px] flex flex-col overflow-hidden">
+                            <div class="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-800 tracking-tight">Authorized Signatories</h3>
+                                    <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mt-1">Verified lab members</p>
+                                </div>
+                                <div class="bg-brand-100 text-brand-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight" id="signatures-count-badge">Loading...</div>
                             </div>
-                            <div class="p-6">
-                                <div id="signatures-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <!-- Dynamic content -->
-                                    <div class="col-span-full text-center py-8 text-slate-400"><i class="fas fa-spinner fa-spin mr-2"></i> Loading signatures...</div>
+                            
+                            <div class="p-8 flex-1">
+                                <div id="signatures-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6 h-full items-start">
+                                    <!-- Dynamic Loading Skeleton -->
+                                    <div class="col-span-full flex flex-col items-center justify-center py-20 opacity-40">
+                                        <i class="fas fa-circle-notch fa-spin text-3xl text-brand-500 mb-4"></i>
+                                        <p class="text-sm font-bold tracking-widest uppercase text-slate-400">Fetching Database...</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -112,10 +158,11 @@
         </main>
     </div>
 
-    <!-- Centralized JS -->
+    <!-- Scripts -->
+    <script src="js/layout.js"></script>
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
-    <script src="js/layout.js"></script>
     <script src="js/signatures.js"></script>
 </body>
 </html>
+

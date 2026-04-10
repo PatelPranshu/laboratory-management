@@ -24,9 +24,21 @@ async function fetchSignatures() {
     try {
         const res = await api.request('/signatures');
         const grid = document.getElementById('signatures-grid');
+        const countBadge = document.getElementById('signatures-count-badge');
         
+        if (countBadge) {
+            countBadge.textContent = `${res.data ? res.data.length : 0} Members`;
+        }
+
         if (!res.data || res.data.length === 0) {
-            grid.innerHTML = `<div class="col-span-full text-center py-12 px-4 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50"><i class="fas fa-signature text-4xl text-slate-300 mb-3 block"></i><p class="text-slate-500 font-bold">No signatures found.</p></div>`;
+            grid.innerHTML = `
+            <div class="col-span-full flex flex-col items-center justify-center py-20 bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-200">
+                <div class="w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-4 text-slate-300">
+                    <i class="fas fa-signature text-2xl"></i>
+                </div>
+                <p class="text-sm font-bold text-slate-500">No authorized signatures yet</p>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Start by adding your first verifier</p>
+            </div>`;
             
             if (user.role === 'Doctor') {
                  document.getElementById('add-signature-container').classList.remove('hidden');
@@ -42,18 +54,28 @@ async function fetchSignatures() {
             }
 
             return `
-            <div class="border border-slate-200 rounded-xl p-5 relative group hover:border-brand-300 transition-colors bg-white shadow-sm flex flex-col justify-between">
-                <div>
-                    <h4 class="font-bold text-slate-800 text-lg mb-4 flex items-center"><i class="fas fa-user-md text-slate-400 mr-2 text-sm"></i>${escapeHtml(sig.doctorName)}</h4>
-                    <div class="h-20 flex items-center justify-center p-2 border border-slate-100 rounded-lg bg-slate-50 mb-4 relative overflow-hidden group-hover:bg-white transition-colors">
-                        <img src="${escapeHtml(sig.signatureUrl)}" alt="Signature" class="max-h-16 object-contain" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'text-xs text-red-500\\'>Invalid Image URL</span>';">
+            <div class="glass-card p-6 flex flex-col group/card relative overflow-hidden">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 text-white flex items-center justify-center font-bold shadow-lg shadow-brand-500/20 mr-3">
+                            ${sig.doctorName.charAt(0)}
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 tracking-tight">${escapeHtml(sig.doctorName)}</h4>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Medical Officer</p>
+                        </div>
                     </div>
+                    ${user.role === 'Admin' ? `
+                    <button onclick="deleteSignature('${sig._id}')" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover/card:opacity-100" title="Revoke Access">
+                        <i class="fas fa-trash-alt text-xs"></i>
+                    </button>
+                    ` : ''}
                 </div>
-                ${user.role === 'Admin' ? `
-                <button onclick="deleteSignature('${sig._id}')" class="w-full flex items-center justify-center px-4 py-2 border border-red-100 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-bold text-sm mt-auto">
-                    <i class="fas fa-trash-alt mr-2"></i> Delete
-                </button>
-                ` : ''}
+                
+                <div class="bg-white border border-slate-100 rounded-2xl p-4 h-24 flex items-center justify-center shadow-inner relative overflow-hidden group/sig">
+                    <img src="${escapeHtml(sig.signatureUrl)}" alt="Signature" class="max-h-full object-contain transition-transform group-hover/sig:scale-110" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'text-[10px] font-bold text-red-400 uppercase tracking-widest\\'>Invalid Image</span>';">
+                    <div class="absolute inset-0 bg-slate-900/5 opacity-0 group-hover/sig:opacity-100 transition-opacity"></div>
+                </div>
             </div>
             `;
         }).join('');
@@ -177,7 +199,8 @@ window.clearSignatureImage = clearSignatureImage;
 window.addSignature = addSignature;
 
 window.deleteSignature = async function(id) {
-    if (!confirm('Are you sure you want to delete this signature?')) return;
+    const confirmed = await UI.showConfirm('Revoke Signature', 'Are you sure you want to delete this signature? This action cannot be undone.', 'Revoke', 'danger');
+    if (!confirmed) return;
     
     try {
         const data = await api.request(`/signatures/${id}`, 'DELETE');

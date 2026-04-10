@@ -34,7 +34,7 @@ function loadCommonLayout() {
             <!-- Sidebar Header -->
             <div class="h-24 flex items-center justify-start border-b border-white/5 px-6 group/logo cursor-default">
                 <div class="relative">
-                    <div class="bg-white/10 p-2.5 rounded-2xl shadow-md border border-white/10 mr-4 shrink-0 transition-transform duration-300 group-hover/logo:scale-105">
+                    <div class="bg-white/10 p-2.5 rounded-2xl shadow-md border border-white/10 mr-4 shrink-0 transition-transform duration-300">
                         <i class="fa-solid fa-microscope text-2xl text-brand-100"></i>
                     </div>
                 </div>
@@ -92,7 +92,7 @@ function loadCommonLayout() {
 
             <div class="p-5 border-t border-white/5 bg-black/5">
                 <a href="profile.html" class="flex items-center mb-5 p-2 -mx-2 rounded-xl transition-all hover:bg-white/5 active:scale-95 group no-underline">
-                    <div class="w-10 h-10 flex-shrink-0 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-sm font-bold shadow-lg border border-white/20 group-hover:shadow-brand-500/20 transition-all">
+                    <div class="w-10 h-10 flex-shrink-0 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-sm font-bold shadow-lg border border-white/20 transition-all">
                         <i class="fas fa-user-md text-white"></i>
                     </div>
                     <div class="ml-3 overflow-hidden">
@@ -127,9 +127,6 @@ function loadCommonLayout() {
                 const icon = link.querySelector('i');
                 if(icon) {
                     icon.className = icon.className.replace('group-hover:text-brand-100', 'text-brand-100');
-                    if(!icon.className.includes('group-hover:scale-110')) {
-                       icon.className += ' group-hover:scale-110 transition-transform';
-                    }
                 }
             }
         });

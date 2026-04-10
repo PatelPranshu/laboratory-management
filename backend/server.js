@@ -70,26 +70,35 @@ const authLimiter = rateLimit({
   message: { success: false, error: 'Too many authentication attempts, please try again later' }
 });
 
-// Body parser with size limit to prevent abuse
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: false, limit: '10kb' }));
+// Body parser with safe limits
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
 // ---------- NoSQL Injection Sanitizer ----------
-function sanitizeObject(obj) {
-  if (obj && typeof obj === 'object') {
-    for (const key of Object.keys(obj)) {
-      if (key.startsWith('$') || key.includes('.')) {
-        delete obj[key];
-      } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-        sanitizeObject(obj[key]);
-      }
+/**
+ * Recursively removes any keys starting with '$' or containing '.' 
+ * to prevent NoSQL Injection attacks. Compatible with Express 5.
+ */
+const sanitizeData = (data) => {
+  if (data instanceof Array) {
+    for (let i = 0; i < data.length; i++) {
+      sanitizeData(data[i]);
     }
+  } else if (data !== null && typeof data === 'object') {
+    Object.keys(data).forEach((key) => {
+      if (key.startsWith('$') || key.includes('.')) {
+        delete data[key];
+      } else {
+        sanitizeData(data[key]);
+      }
+    });
   }
-}
+};
+
 app.use((req, res, next) => {
-  if (req.body) sanitizeObject(req.body);
-  if (req.params) sanitizeObject(req.params);
-  if (req.query) sanitizeObject(req.query);
+  if (req.body) sanitizeData(req.body);
+  if (req.query) sanitizeData(req.query);
+  if (req.params) sanitizeData(req.params);
   next();
 });
 

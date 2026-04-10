@@ -64,7 +64,8 @@ async function fetchStaff() {
 
 // Actions
 window.deleteStaff = async function(id, name) {
-    if(!confirm(`Are you extremely sure you want to delete ${name}? This action cannot be undone.`)) return;
+    const confirmed = await UI.showConfirm('Remove Team Member', `Are you extremely sure you want to delete ${name}? This action cannot be undone.`, 'Remove', 'danger');
+    if(!confirmed) return;
     try {
         const res = await fetch(`${API_URL}/staff/${id}`, { method: 'DELETE', headers });
         const data = await res.json();
@@ -80,7 +81,7 @@ window.deleteStaff = async function(id, name) {
 };
 
 window.resetStaffPassword = async function(id, name) {
-    const newPass = prompt(`Enter a new temporary password for ${name}.\n(Must be at least 8 chars, 1 uppercase, 1 number)`);
+    const newPass = await UI.showPrompt('Reset Password', `Enter a new temporary password for ${name}.\n(Requirement: 8+ chars, Uppercase, Number)`, 'Enter new password');
     if(!newPass) return;
     
     try {
