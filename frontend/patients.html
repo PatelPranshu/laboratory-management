@@ -116,7 +116,7 @@
                                     <th class="px-7 py-5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="patients-list" class="divide-y divide-slate-50 bg-white">
+                            <tbody id="patients-list" class="divide-y divide-slate-100 bg-white">
                                 <!-- Populated via JS -->
                                 <tr><td colspan="4" class="text-center py-20"><i class="fas fa-circle-notch fa-spin text-4xl text-brand-500"></i></td></tr>
                             </tbody>
@@ -161,72 +161,59 @@
                 </button>
             </div>
 
-            <div class="px-8 py-6">
+            <div class="px-8 py-5">
                 <form id="patient-form" onsubmit="savePatient(event)">
                     <input type="hidden" id="patient-id">
                     
-                    <div class="mb-5">
-                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Full Name <span class="text-red-500">*</span></label>
-                        <input type="text" id="p-name" required placeholder="John Doe" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
-                    </div>
-                    
-                    <div class="mb-5">
-                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Phone Number <span class="text-red-500">*</span></label>
-                        <input type="text" id="p-phone" required placeholder="+1 234 567 8900" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
-                    </div>
-
-                    <div class="flex space-x-5 mb-5">
-                        <div class="flex-1">
-                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Age <span class="text-red-500">*</span></label>
-                            <input type="number" id="p-age" required min="0" placeholder="e.g. 35" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+                        <div class="col-span-2">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                                 Full Name <span class="text-red-500 ml-1">*</span>
+                             </label>
+                             <input type="text" id="p-name" required placeholder="John Doe" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
                         </div>
-                        <div class="flex-1">
-                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Gender <span class="text-red-500">*</span></label>
-                            <select id="p-gender" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 cursor-pointer appearance-none">
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                            </select>
+
+                        <div class="col-span-1">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                                 Phone Number <span class="text-red-500 ml-1">*</span>
+                             </label>
+                             <input type="text" id="p-phone" required placeholder="+91 999 999 9999" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                        </div>
+
+                        <div class="col-span-1">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5">Email Address</label>
+                             <input type="email" id="p-email" placeholder="example@email.com" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                        </div>
+
+                        <div class="col-span-1">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                                 Age <span class="text-red-500 ml-1">*</span>
+                             </label>
+                             <input type="number" id="p-age" required min="0" placeholder="e.g. 35" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                        </div>
+
+                        <div class="col-span-1">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                                 Gender <span class="text-red-500 ml-1">*</span>
+                             </label>
+                             <select id="p-gender" required class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm cursor-pointer appearance-none">
+                                 <option value="Male">Male</option>
+                                 <option value="Female">Female</option>
+                                 <option value="Other">Other</option>
+                             </select>
+                        </div>
+
+                        <div class="col-span-2">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5">Address</label>
+                             <textarea id="p-address" rows="2" placeholder="Full residential address..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm resize-none"></textarea>
                         </div>
                     </div>
 
-                    <div class="mb-8">
-                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Address</label>
-                        <textarea id="p-address" rows="3" placeholder="Full residential address..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 resize-none"></textarea>
-                    </div>
-
-                    <div class="flex items-center justify-end space-x-4 pt-4 border-t border-slate-100">
+                    <div class="flex items-center justify-end space-x-4 pt-5 mt-4 border-t border-slate-100">
                         <button type="button" onclick="closeModal()" class="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 focus:outline-none transition-colors">Cancel</button>
-                        <button type="submit" id="btn-save-patient" class="px-6 py-2.5 rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 focus:outline-none transition-all">Save Patient</button>
+                        <button type="submit" id="btn-save-patient" class="px-7 py-2.5 rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 focus:outline-none transition-all">Save Patient</button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Patient History Modal -->
-    <div id="history-modal" class="fixed inset-0 bg-slate-900/40 hidden overflow-y-auto h-full w-full z-50 flex items-center justify-center transition-opacity">
-        <div class="relative mx-auto border-0 w-full max-w-2xl shadow-2xl rounded-2xl bg-white m-4 transform transition-transform scale-95 opacity-0 duration-300" id="history-modal-content">
-            
-            <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
-                <h3 class="text-xl font-bold text-slate-800 flex items-center">
-                    <i class="fas fa-history text-brand-500 mr-3"></i> Medical History
-                </h3>
-                <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-lg transition-colors focus:outline-none">
-                    <i class="fas fa-times text-lg"></i>
-                </button>
-            </div>
-
-            <div class="px-8 py-4 bg-slate-50 border-b border-slate-100">
-                <p class="text-sm font-medium text-slate-500">Patient: <span id="history-patient-name" class="text-slate-800 font-bold"></span></p>
-            </div>
-
-            <div class="px-8 py-6 max-h-[60vh] overflow-y-auto" id="history-reports-list">
-                <!-- History items injected here -->
-            </div>
-
-            <div class="px-8 py-4 border-t border-slate-100 flex justify-end bg-slate-50 rounded-b-2xl">
-                <button onclick="closeHistoryModal()" class="px-6 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Close</button>
             </div>
         </div>
     </div>
@@ -266,14 +253,14 @@
                     tbody.innerHTML = data.map(p => {
                         const reportActionBtn = `<a href="report-create.html?patient=${p._id}" class="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 rounded-lg transition-colors tooltip-container font-medium" title="Create New Report"><i class="fas fa-file-medical"></i></a>`;
                         return `
-                        <tr class="hover:bg-brand-50/40 transition-colors group">
+                        <tr onclick="window.location.href='patient-profile.html?id=${p._id}'" class="hover:bg-brand-50/40 transition-colors group cursor-pointer">
                             <td class="px-7 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-brand-100 to-indigo-100 text-brand-700 flex items-center justify-center font-bold shadow-sm border border-white">
                                         ${p.name.charAt(0)}
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-bold text-slate-800">${p.name}</div>
+                                        <a href="patient-profile.html?id=${p._id}" class="text-sm font-bold text-slate-800 hover:text-brand-600 transition-colors">${p.name}</a>
                                         <div class="text-xs text-slate-500 font-medium mt-0.5">ID: ${p._id.slice(-6).toUpperCase()}</div>
                                     </div>
                                 </div>
@@ -287,10 +274,10 @@
                                 <span class="px-2.5 py-1 text-xs font-bold bg-slate-100 text-slate-600 rounded-lg"><i class="fas fa-${p.gender.toLowerCase() === 'male' ? 'mars' : p.gender.toLowerCase() === 'female' ? 'venus' : 'genderless'} mr-1 opacity-70"></i>${p.gender}</span>
                             </td>
                             <td class="px-7 py-4 whitespace-nowrap text-right text-sm">
-                                <div class="flex justify-end space-x-2">
+                                <div class="flex justify-end space-x-2" onclick="event.stopPropagation()">
                                     ${reportActionBtn}
-                                    <button onclick="viewPatientHistory('${p._id}', '${p.name.replace(/'/g, "\\'")}')" class="p-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 rounded-lg transition-colors tooltip-container font-medium" title="Patient History"><i class="fas fa-history"></i></button>
-                                    <button onclick='editPatient(${JSON.stringify(p)})' class="p-2 bg-slate-50 text-slate-600 hover:bg-slate-200 hover:text-slate-800 rounded-lg transition-colors tooltip-container" title="Edit Info"><i class="fas fa-edit"></i></button>
+                                    <a href="patient-profile.html?id=${p._id}" class="p-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 rounded-lg transition-colors tooltip-container font-medium" title="View Patient Profile"><i class="fas fa-user-circle"></i></a>
+
                                     <button onclick="deletePatient('${p._id}')" class="p-2 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 rounded-lg transition-colors tooltip-container" title="Delete"><i class="fas fa-trash-alt"></i></button>
                                 </div>
                             </td>
@@ -394,6 +381,7 @@
             if (draft) {
                 document.getElementById('p-name').value = draft.name || '';
                 document.getElementById('p-phone').value = draft.phone || '';
+                document.getElementById('p-email').value = draft.email || '';
                 document.getElementById('p-age').value = draft.age || '';
                 document.getElementById('p-gender').value = draft.gender || 'Male';
                 document.getElementById('p-address').value = draft.address || '';
@@ -418,6 +406,7 @@
             document.getElementById('p-phone').value = p.phone;
             document.getElementById('p-age').value = p.age;
             document.getElementById('p-gender').value = p.gender;
+            document.getElementById('p-email').value = p.email || '';
             document.getElementById('p-address').value = p.address || '';
             document.getElementById('modal-title').innerHTML = '<i class="fas fa-user-edit text-brand-500 mr-3"></i> Edit Patient';
             
@@ -439,6 +428,7 @@
             const data = {
                 name: document.getElementById('p-name').value,
                 phone: document.getElementById('p-phone').value,
+                email: document.getElementById('p-email').value,
                 age: document.getElementById('p-age').value,
                 gender: document.getElementById('p-gender').value,
                 address: document.getElementById('p-address').value
@@ -473,78 +463,6 @@
                      UI.showToast(err.message, 'error');
                 }
             }
-        }
-
-        // --- History Modal Functions ---
-        async function viewPatientHistory(patientId, patientName) {
-            document.getElementById('history-patient-name').textContent = patientName;
-            const list = document.getElementById('history-reports-list');
-            list.innerHTML = `<div class="flex flex-col items-center py-12"><i class="fas fa-spinner fa-spin text-3xl text-brand-500 mb-4"></i><p class="text-sm font-medium text-slate-500">Fetching medical records...</p></div>`;
-            
-            openHistoryModal();
-
-            try {
-                const res = await api.request(`/reports?patientId=${patientId}&limit=50`);
-                const reports = res.data;
-
-                if (reports.length === 0) {
-                    list.innerHTML = `<div class="text-center py-12"><div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fas fa-folder-open text-slate-300 text-xl"></i></div><p class="text-sm font-medium text-slate-400">No history found for this patient.</p></div>`;
-                    return;
-                }
-
-                list.innerHTML = reports.map(r => {
-                    const tests = r.sections.map(s => s.sectionName).join(', ');
-                    const statusColors = {
-                        draft: 'bg-slate-100 text-slate-600 border-slate-200',
-                        saved: 'bg-brand-50 text-brand-700 border-brand-200',
-                        sent: 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    };
-                    const dateStr = new Date(r.date || r.createdAt).toLocaleDateString(undefined, {
-                        year: 'numeric', month: 'short', day: 'numeric'
-                    });
-
-                    return `
-                    <div class="bg-white border border-slate-100 rounded-xl p-5 mb-4 hover:border-brand-200 transition-colors shadow-sm">
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <h4 class="text-sm font-bold text-slate-800">${dateStr}</h4>
-                                <span class="px-2 py-0.5 mt-1 inline-flex text-[10px] font-bold rounded border ${statusColors[r.status] || statusColors.draft} uppercase tracking-wider">
-                                    ${r.status}
-                                </span>
-                            </div>
-                            <div class="flex space-x-2">
-                                ${r.status !== 'draft' ? `<a href="${BASE_URL}/reports/${r._id}/pdf?token=${localStorage.getItem('lis_token')}" target="_blank" class="p-2 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors font-medium" title="Download PDF"><i class="fas fa-file-pdf"></i></a>` : ''}
-                                <a href="report-create.html?edit=${r._id}" class="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors font-medium" title="Edit Report"><i class="fas fa-edit"></i></a>
-                            </div>
-                        </div>
-                        <div class="bg-slate-50 rounded-lg p-3">
-                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-tight mb-1">Tests Included</p>
-                            <p class="text-xs font-medium text-slate-600 line-clamp-2">${tests || 'No sections defined'}</p>
-                        </div>
-                    </div>`;
-                }).join('');
-
-            } catch (err) {
-                list.innerHTML = `<div class="text-center py-12 text-red-500 font-bold">Failed to load history data.</div>`;
-            }
-        }
-
-        function openHistoryModal() {
-            const modal = document.getElementById('history-modal');
-            const content = document.getElementById('history-modal-content');
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                content.classList.remove('scale-95', 'opacity-0');
-                content.classList.add('scale-100', 'opacity-100');
-            }, 10);
-        }
-
-        function closeHistoryModal() {
-            const modal = document.getElementById('history-modal');
-            const content = document.getElementById('history-modal-content');
-            content.classList.remove('scale-100', 'opacity-100');
-            content.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => { modal.classList.add('hidden'); }, 300);
         }
 
         async function exportCSV() {

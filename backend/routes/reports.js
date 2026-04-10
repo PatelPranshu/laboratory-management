@@ -24,7 +24,7 @@ router.route('/:id')
   .get(protect, validateObjectId, getReport)
   .put(protect, validateObjectId, updateReport);
 
-router.get('/:id/pdf', protect, validateObjectId, authorize('Admin', 'Doctor'), generatePdf);
-router.post('/:id/send', protect, validateObjectId, authorize('Admin', 'Doctor'), sendReport);
+router.get('/:id/pdf', protect, validateObjectId, authorize('Admin', 'Doctor', 'LabTech'), generatePdf);
+router.post('/:id/send', protect, validateObjectId, authorize('Admin', 'Doctor', 'LabTech'), sendReport);
 
 module.exports = router;

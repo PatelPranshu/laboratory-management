@@ -4,6 +4,8 @@ const PrintSettings = require('../models/PrintSettings');
 const pdfService = require('../services/pdfService');
 const mongoose = require('mongoose');
 const Signature = require('../models/Signature');
+const Notification = require('../models/Notification');
+const socketService = require('../services/socketService');
 const { pickFields } = require('../middlewares/validate');
 
 // Allowed fields for report create/update — prevents mass assignment
@@ -39,6 +41,7 @@ exports.getReports = async (req, res) => {
 
     const reports = await ReportInstance.find(query)
       .populate('patientId', 'name phone age gender')
+      .populate('referredByDoctorId', 'doctorName signatureUrl')
       .skip(startIndex)
       .limit(limit)
       .sort({ createdAt: -1 });
@@ -74,7 +77,8 @@ exports.getReport = async (req, res) => {
     }
     
     const report = await ReportInstance.findOne(query)
-      .populate('patientId', 'name phone age gender email');
+      .populate('patientId', 'name phone age gender email')
+      .populate('referredByDoctorId', 'doctorName signatureUrl');
 
     if (!report) {
       return res.status(404).json({ success: false, error: 'Report not found' });
@@ -134,6 +138,46 @@ exports.createReport = async (req, res) => {
     }];
 
     const report = await ReportInstance.create(sanitizedBody);
+
+    // Notify if created by LabTech
+    if (req.user.role === 'LabTech') {
+      try {
+        const io = socketService.getIO();
+        const notificationPayload = {
+          senderId: req.user.id,
+          type: 'NEW_REPORT',
+          title: 'Report Submitted for Review',
+          message: `A new report has been drafted by ${req.user.name || 'a Lab Technician'}.`,
+          referenceId: report._id
+        };
+
+        const recipients = [adminId];
+        let hasVerifierSignature = false;
+
+        // If verifier is provided and different from admin
+        if (report.verifierId && report.verifierId.toString() !== adminId.toString()) {
+           const sig = await Signature.findOne({ _id: report.verifierId });
+           if (sig && sig.doctorId) {
+               recipients.push(sig.doctorId.toString());
+               hasVerifierSignature = true;
+           } else if (!sig) {
+               recipients.push(report.verifierId.toString());
+           }
+        }
+
+        const notifications = recipients.map(rec => ({
+          ...notificationPayload,
+          recipientId: rec
+        }));
+
+        const inserted = await Notification.insertMany(notifications);
+        inserted.forEach(noti => {
+          io.to(`user_${noti.recipientId}`).emit('new_notification', noti);
+        });
+      } catch (err) {
+        console.error('Report Notification Error:', err.message);
+      }
+    }
 
     res.status(201).json({ success: true, data: report });
   } catch (error) {
@@ -320,6 +364,7 @@ exports.getPendingReports = async (req, res) => {
       .populate('patientId', 'name phone age gender')
       .populate('creatorId', 'name role email')
       .populate('verifierId', 'name role email')
+      .populate('referredByDoctorId', 'doctorName signatureUrl')
       .sort('-createdAt');
 
     res.status(200).json({ success: true, count: reports.length, data: reports });

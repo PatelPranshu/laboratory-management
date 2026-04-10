@@ -6,7 +6,7 @@
     <title>Create Report - MyPathoLabs</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <script>
         tailwind.config = {
@@ -18,168 +18,187 @@
                         }
                     },
                     fontFamily: {
-                        sans: ['Outfit', 'Inter', 'sans-serif'],
-                        inter: ['Inter', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
     <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .chip-checkbox:checked + label { background-color: #0284c7; color: white; border-color: #0284c7; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .chip-checkbox:checked + label { 
+            background-color: #f0f9ff; 
+            color: #0284c7; 
+            border-color: #bae6fd; 
+            font-weight: 600;
+        }
+        
         .ui-card { 
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 1.25rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-radius: 0.75rem; 
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
+        
         .locked-field {
             background-color: #f8fafc !important;
             color: #94a3b8 !important;
             cursor: not-allowed;
-            border-color: #f1f5f9 !important;
+            border-color: #e2e8f0 !important;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
         }
     </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 antialiased selection:bg-brand-500 selection:text-white h-full overflow-hidden">
+<body class="text-slate-800 antialiased selection:bg-brand-500 selection:text-white h-full overflow-hidden">
 
     <div id="toast-container" class="fixed bottom-6 right-6 z-[200] flex flex-col gap-3"></div>
 
-    <div class="flex h-screen bg-slate-50 overflow-hidden">
+    <div class="flex h-screen overflow-hidden">
         
         <!-- Sidebar injected by layout.js -->
 
-        <!-- Main Content -->
         <main class="flex-1 flex flex-col relative overflow-hidden h-full">
             
             <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between z-50 shrink-0">
                 <div class="flex items-center gap-4">
                     <div class="hidden sm:block">
-                        <nav class="flex text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
+                        <nav class="flex text-xs font-medium text-slate-500 mb-1">
                             <ol class="flex items-center space-x-2">
                                 <li class="hover:text-brand-600 transition-colors"><a href="dashboard.html">Dashboard</a></li>
-                                <li><i class="fas fa-chevron-right text-[10px] opacity-40"></i></li>
-                                <li class="text-slate-600">Report Creation</li>
+                                <li><i class="fas fa-chevron-right text-[10px] opacity-50"></i></li>
+                                <li class="text-slate-700 font-semibold">Report Creation</li>
                             </ol>
                         </nav>
-                        <h1 class="text-xl font-bold text-slate-900 tracking-tight" id="page-title">Generate Diagnostic Report</h1>
+                        <h1 class="text-xl font-bold text-slate-900 tracking-tight" id="page-title">Generate Report</h1>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-4">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-tighter mr-2 hidden lg:inline" id="last-saved-info">Report Not Saved</span>
-                    
-                    <button id="btn-save-report" onclick="saveReport()" class="px-8 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow-sm transition-all flex items-center shrink-0">
-                        <i class="fas fa-save mr-2"></i> Save Report
-                    </button>
+                    <!-- Custom Styled Verifier/Doctor selection -->
+                    <div class="relative group">
+                        <div id="doctor-dropdown-toggle" onclick="toggleDoctorDropdown()" class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 hover:border-brand-400 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all cursor-pointer min-w-[200px]">
+                            <i class="fas fa-user-md text-brand-500 text-sm"></i>
+                            <span id="selected-doctor-name" class="text-sm font-semibold text-slate-700 truncate">Select Authorizing Doctor</span>
+                            <i class="fas fa-chevron-down text-[10px] text-slate-400 ml-auto group-hover:text-brand-500 transition-colors"></i>
+                        </div>
+                        
+                        <input type="hidden" id="report-referred-by">
 
-                    <div id="header-post-save-actions" class="hidden flex items-center gap-2">
-                         <div id="header-status-wrapper" class="flex items-center bg-slate-100 text-slate-600 px-4 py-2 rounded-xl border border-slate-200">
-                             <span class="text-xs font-bold uppercase tracking-wider" id="header-status-badge">Saved</span>
+                        <div id="doctor-dropdown-menu" class="hidden absolute z-[100] top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden py-1.5 animate-fade-in-up">
+                            <ul id="doctor-list" class="max-h-60 overflow-y-auto custom-scrollbar">
+                                <li class="px-4 py-3 text-center text-slate-400 text-sm italic">Loading doctors...</li>
+                            </ul>
+                        </div>
+                        
+                    </div>
+                    
+                    <div id="signature-preview-container" class="hidden">
+                         <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg h-9 animate-fade-in-up">
+                             <img id="signature-image-preview" src="" class="h-6 object-contain" alt="sign">
                          </div>
-                         <button onclick="downloadPdf()" class="p-3 text-slate-500 hover:text-brand-600 transition-colors" title="Download PDF"><i class="fas fa-file-pdf text-lg"></i></button>
-                         <button onclick="sendReport('whatsapp')" class="p-3 text-slate-500 hover:text-emerald-600 transition-colors" title="WhatsApp"><i class="fab fa-whatsapp text-lg"></i></button>
                     </div>
 
-                    <div class="h-8 w-px bg-slate-200 mx-1 hidden sm:block"></div>
-                    <button type="button" onclick="handleHeaderCancel()" class="p-3 text-slate-400 hover:text-red-500 transition-colors"><i class="fas fa-times text-lg"></i></button>
+                    <div class="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+
+                    <span class="text-xs font-medium text-slate-400 hidden xl:inline" id="last-saved-info">Unsaved Draft</span>
+                    
+                    <button id="btn-save-report" onclick="saveReport()" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0">
+                        <i class="fas fa-check mr-2"></i> Save & Sign
+                    </button>
+
+                    <div id="header-post-save-actions" class="hidden flex items-center gap-3">
+                         <div id="header-status-wrapper" class="flex items-center bg-green-50 text-green-700 px-3 py-1.5 rounded-md border border-green-200">
+                             <span class="text-xs font-semibold" id="header-status-badge">Saved</span>
+                         </div>
+                         <button onclick="downloadPdf()" class="text-slate-400 hover:text-brand-600 transition-colors" title="Download PDF"><i class="fas fa-file-pdf text-xl"></i></button>
+                         <button onclick="sendReport('whatsapp')" class="text-slate-400 hover:text-emerald-600 transition-colors" title="WhatsApp"><i class="fab fa-whatsapp text-xl"></i></button>
+                    </div>
+
+                    <div class="h-6 w-px bg-slate-200 mx-2 hidden sm:block"></div>
+                    <button type="button" onclick="handleHeaderCancel()" class="text-slate-400 hover:text-slate-700 transition-colors" title="Close"><i class="fas fa-times text-xl"></i></button>
                 </div>
             </header>
 
-            <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50">
-                <div class="max-w-[1400px] mx-auto p-6 space-y-6">
+            <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/50">
+                <div class="max-w-[1200px] mx-auto p-6 space-y-6">
                     
                     <input type="hidden" id="report-id">
                     <input type="hidden" id="report-status">
 
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         
-                        <div class="lg:col-span-12 xl:col-span-5">
-                            <div class="ui-card p-6 flex flex-col justify-center min-h-[140px]">
-                                <div id="patient-selection-container">
-                                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Patient Selection</label>
-                                    <div class="relative">
-                                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                                        <input type="text" id="patient-search-input" placeholder="Search by name, ID or phone number..." class="w-full pl-12 pr-6 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:bg-white transition-all text-sm font-semibold">
-                                        <div id="patient-search-results" class="absolute z-50 top-full left-0 right-0 mt-3 bg-white border border-slate-200 rounded-2xl shadow-xl hidden max-h-80 overflow-y-auto"></div>
+                        <div class="ui-card p-5 col-span-1 flex flex-col justify-center">
+                            <div id="patient-selection-container">
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Patient Details</label>
+                                <div class="relative">
+                                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                    <input type="text" id="patient-search-input" placeholder="Search name, ID, phone..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-brand-500 transition-all text-sm">
+                                    <div id="patient-search-results" class="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
+                                </div>
+                            </div>
+
+                            <div id="selected-patient-card" class="hidden flex items-start justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center border border-brand-100">
+                                        <i class="fas fa-user text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-slate-900 text-lg leading-tight" id="sp-name">Patient Name</h3>
+                                        <p class="text-sm text-slate-500 mt-0.5" id="sp-details">Phone • Age/Gender</p>
+                                        <input type="hidden" id="sp-id">
                                     </div>
                                 </div>
+                                <button onclick="clearPatient()" class="text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors">
+                                    Change
+                                </button>
+                            </div>
+                        </div>
 
-                                <div id="selected-patient-card" class="hidden flex items-center justify-between py-2">
-                                    <div class="flex items-center gap-5">
-                                        <div class="w-14 h-14 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center border border-brand-100 shadow-sm">
-                                            <i class="fas fa-user-check text-xl"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-xs font-bold text-brand-600 uppercase tracking-widest mb-1">Active Patient</p>
-                                            <h3 class="font-bold text-slate-900 text-2xl tracking-tight leading-none" id="sp-name">Patient Name</h3>
-                                            <p class="text-sm font-semibold text-slate-400 mt-2" id="sp-details">Phone • Age/Gender</p>
-                                            <input type="hidden" id="sp-id">
-                                        </div>
-                                    </div>
-                                    <button onclick="clearPatient()" class="px-5 py-2.5 text-xs font-bold text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
-                                        <i class="fas fa-user-times mr-2"></i> Change
+                        <div class="ui-card p-5 col-span-2 flex flex-col gap-4 max-w-4xl h-fit">
+                            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <div class="flex items-center gap-3">
+                                    <label class="block text-sm font-bold text-slate-700">Report Templates</label>
+                                    <button onclick="toggleTemplateHeight()" id="btn-toggle-templates" class="text-xs font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1 transition-colors">
+                                        <i class="fas fa-chevron-down" id="template-expand-icon"></i> <span id="template-expand-text">Expand</span>
                                     </button>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="lg:col-span-12 xl:col-span-7">
-                            <div class="ui-card p-6 h-full flex flex-col space-y-6">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <div class="flex flex-col">
-                                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Report Templates</label>
-                                        <div id="templates-checkbox-container" class="flex flex-wrap gap-2 overflow-y-auto max-h-[100px] custom-scrollbar">
-                                            <p class="text-sm font-bold text-slate-300">Loading...</p>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex flex-col">
-                                         <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Authorized Verifier</label>
-                                         <div class="relative">
-                                            <select id="report-referred-by" onchange="handleSignatureSelection()" class="w-full pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-500/10 text-sm font-bold text-slate-700 transition-all appearance-none cursor-pointer">
-                                                <option value="" disabled selected>Select Doctor...</option>
-                                            </select>
-                                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                                                <i class="fas fa-chevron-down text-xs"></i>
-                                            </div>
-                                         </div>
-
-                                         <div id="signature-preview-container" class="hidden mt-3">
-                                             <div class="flex items-center gap-3 p-2 bg-emerald-50 rounded-xl border border-emerald-100">
-                                                 <img id="signature-image-preview" src="" class="h-8 object-contain" alt="sign">
-                                                 <span class="text-xs font-bold text-emerald-700 truncate" id="signature-assigned-name">Dr. Ready</span>
-                                             </div>
-                                         </div>
-                                    </div>
-                                </div>
-                                <div id="draft-warning-container" class="hidden p-3 bg-amber-50 rounded-xl border border-amber-100 flex items-center gap-3 text-amber-700">
-                                    <i class="fas fa-info-circle text-sm shrink-0"></i>
-                                    <p class="text-xs font-bold">Document will be saved as **Draft** pending review.</p>
+                                <div class="relative w-1/3">
+                                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                    <input type="text" id="template-search-input" oninput="filterTemplates()" placeholder="Filter..." class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:border-brand-500 transition-all text-xs">
                                 </div>
                             </div>
+                            <div id="templates-checkbox-container" class="flex flex-wrap gap-2 overflow-y-auto max-h-[85px] transition-all duration-300 ease-in-out custom-scrollbar p-1">
+                                <span class="text-sm text-slate-400">Loading templates...</span>
+                            </div>
                         </div>
-
+                    </div>
+                    
+                    <div id="draft-warning-container" class="hidden p-3 bg-amber-50 rounded-lg border border-amber-200 flex items-center gap-3 text-amber-700">
+                        <i class="fas fa-info-circle text-sm shrink-0"></i>
+                        <p class="text-sm font-medium">Document will be saved as **Draft** pending review.</p>
                     </div>
 
-                    <div class="ui-card shadow-sm flex flex-col min-h-[600px]">
-                        <div class="px-8 py-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
-                            <h2 class="text-base font-bold text-slate-900 tracking-tight flex items-center uppercase tracking-widest">
-                                <i class="fas fa-file-invoice text-brand-600 mr-3"></i>
+                    <div class="ui-card flex flex-col min-h-[500px]">
+                        <div class="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center rounded-t-xl shrink-0">
+                            <h2 class="text-lg font-bold text-slate-800 tracking-tight">
                                 Diagnostic Findings
                             </h2>
-                            <button onclick="addReportSection(false)" class="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-brand-600 hover:border-brand-600 transition-all shadow-sm">
-                                <i class="fas fa-folder-plus mr-2"></i> Add Section Group
+                            <button onclick="addReportSection(false)" class="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
+                                <i class="fas fa-plus text-brand-600 mr-1.5"></i> Add Section
                             </button>
                         </div>
 
-                        <div id="report-sections-container" class="p-8 space-y-10">
-                             <div class="flex flex-col items-center justify-center py-20 text-slate-200">
-                                <i class="fas fa-notes-medical text-6xl mb-4"></i>
-                                <p class="text-sm font-bold uppercase tracking-widest opacity-60">Preparing Editor...</p>
+                        <div id="report-sections-container" class="p-6 space-y-8 bg-slate-50/30">
+                             <div class="flex flex-col items-center justify-center py-16 text-slate-400">
+                                <i class="fas fa-flask text-4xl mb-3 opacity-50"></i>
+                                <p class="text-sm font-medium">Select a template or add a section to begin</p>
                              </div>
                         </div>
                     </div>
@@ -190,24 +209,31 @@
     </div>
 
     <template id="report-sec-template">
-        <div class="rep-section bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm relative transition-all">
-            <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-500"></div>
+        <div class="rep-section bg-white border border-slate-200 rounded-lg shadow-sm relative transition-all group mb-6">
             
-            <div class="bg-slate-50/50 px-6 py-5 border-b border-slate-100 flex justify-between items-center">
-                <input type="text" class="rs-name font-bold text-slate-900 bg-transparent border-0 focus:ring-0 p-0 w-3/4 text-lg placeholder:text-slate-300" placeholder="Section Header (e.g. Lipid Profile)">
-                <button onclick="this.closest('.rep-section').remove()" class="text-slate-300 hover:text-red-500 p-2.5 rounded-xl hover:bg-white transition-all"><i class="fas fa-times text-lg"></i></button>
+            <div class="bg-slate-50 px-5 py-3 border-b border-slate-200 flex justify-between items-center rounded-t-lg">
+                <input type="text" class="rs-name font-semibold text-slate-800 bg-transparent border-0 focus:ring-0 p-0 w-3/4 text-base placeholder:text-slate-400 placeholder:font-normal" placeholder="Section Heading (e.g., Lipid Profile)">
+                <button onclick="this.closest('.rep-section').remove()" class="text-slate-400 hover:text-red-500 transition-colors p-1"><i class="fas fa-trash text-sm"></i></button>
             </div>
             
-            <div class="p-6 space-y-6">
-                <div class="rs-params space-y-2"></div>
+            <div class="p-0">
+                <div class="grid grid-cols-12 gap-4 px-5 py-2.5 bg-white border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <div class="col-span-5">Parameter</div>
+                    <div class="col-span-2">Result</div>
+                    <div class="col-span-2">Unit</div>
+                    <div class="col-span-2">Ref. Range</div>
+                    <div class="col-span-1 text-right"></div>
+                </div>
+
+                <div class="rs-params flex flex-col"></div>
                 
-                <div class="pt-6 mt-4 border-t border-slate-50 flex flex-col md:flex-row md:items-center gap-6">
-                    <button onclick="addParamLine(this, null, false)" class="px-5 py-2.5 bg-brand-50 text-brand-700 rounded-xl text-xs font-bold hover:bg-brand-100 transition-all flex items-center w-fit">
-                        <i class="fas fa-plus-circle mr-2 text-sm"></i> Add Parameter Row
+                <div class="px-5 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-lg flex flex-col md:flex-row gap-4 items-start md:items-center">
+                    <button onclick="addParamLine(this, null, false)" class="text-sm font-medium text-brand-600 hover:text-brand-800 transition-colors flex items-center whitespace-nowrap">
+                        <i class="fas fa-plus-circle mr-1.5"></i> Add Row
                     </button>
                     
-                    <div class="flex-1">
-                         <textarea class="rs-text w-full px-5 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white text-sm font-medium text-slate-700 outline-none transition-all resize-none shadow-inner" rows="1" placeholder="Add specific clinical notes..."></textarea>
+                    <div class="flex-1 w-full">
+                         <textarea class="rs-text w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-brand-500 text-sm text-slate-700 outline-none transition-all resize-none shadow-sm placeholder:text-slate-400" rows="1" placeholder="Clinical notes or interpretation for this section..."></textarea>
                     </div>
                 </div>
             </div>
@@ -215,54 +241,86 @@
     </template>
 
     <template id="param-line-template">
-        <div class="param-line grid grid-cols-1 md:grid-cols-12 gap-3 items-center p-3 rounded-2xl border border-transparent hover:border-slate-100 hover:bg-slate-50 transition-all group">
-            <div class="md:col-span-5">
-                <input type="text" class="p-name w-full bg-transparent border-0 focus:ring-0 font-bold text-slate-800 text-sm p-0 placeholder:text-slate-300" placeholder="Parameter Name">
+        <div class="param-line grid grid-cols-12 gap-4 px-5 py-2.5 items-center border-b border-slate-50 hover:bg-slate-50 transition-colors">
+            <div class="col-span-5">
+                <input type="text" class="p-name w-full bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded px-2 py-1.5 font-medium text-slate-800 text-sm placeholder-slate-300 transition-all outline-none" placeholder="Parameter Name">
             </div>
-            <div class="md:col-span-3 flex items-center gap-2">
-                <input type="text" class="p-result w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-extrabold text-brand-700 focus:ring-2 focus:ring-brand-500 outline-none shadow-sm transition-all" placeholder="Result" oninput="checkAbnormal(this)">
-                <input type="text" class="p-units-input w-20 px-3 py-3 bg-slate-100 border border-slate-100 rounded-xl text-xs font-black text-slate-500 text-center uppercase" placeholder="Unit">
+            <div class="col-span-2">
+                <input type="text" class="p-result w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-sm font-semibold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm" placeholder="Value" oninput="checkAbnormal(this)">
             </div>
-            <div class="md:col-span-3">
-                <input type="text" class="p-normal-input w-full px-4 py-3 bg-emerald-50/50 border border-emerald-100 rounded-xl text-xs font-bold text-emerald-800 focus:bg-white outline-none" placeholder="Target Range" oninput="checkAbnormal(this)">
+            <div class="col-span-2">
+                <input type="text" class="p-units-input w-full px-2 py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-sm text-slate-600 transition-all outline-none" placeholder="Unit">
             </div>
-            <div class="md:col-span-1 flex justify-end">
-                <button onclick="this.closest('.param-line').remove()" class="text-slate-300 hover:text-red-500 p-2"><i class="fas fa-minus-circle text-lg"></i></button>
+            <div class="col-span-2">
+                <input type="text" class="p-normal-input w-full px-2 py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-sm text-slate-500 transition-all outline-none placeholder-slate-300" placeholder="Min - Max" oninput="checkAbnormal(this)">
+            </div>
+            <div class="col-span-1 flex justify-end">
+                <button onclick="this.closest('.param-line').remove()" class="text-slate-300 hover:text-red-500 transition-colors p-1.5"><i class="fas fa-times"></i></button>
             </div>
         </div>
     </template>
 
-    <div id="new-patient-modal" class="fixed inset-0 bg-slate-900/50 hidden z-[200] flex items-center justify-center backdrop-blur-sm">
-        <div class="relative mx-auto border-0 w-full max-w-xl shadow-2xl rounded-3xl bg-white m-4" id="new-patient-modal-content">
-            <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-3xl">
-                <h3 class="font-bold text-slate-900 text-lg">Patient Quick Registration</h3>
-                <button onclick="closePatientModal()" class="text-slate-400 hover:text-slate-600 transition-colors"><i class="fas fa-times text-xl"></i></button>
+    <div id="new-patient-modal" class="fixed inset-0 bg-slate-900/40 hidden overflow-y-auto h-full w-full z-[200] flex items-center justify-center transition-opacity backdrop-blur-sm">
+        <div class="relative mx-auto border-0 w-full max-w-xl shadow-2xl rounded-2xl bg-white m-4 transform transition-transform" id="new-patient-modal-content">
+            
+            <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+                <h3 class="text-xl font-bold text-slate-800 flex items-center">
+                    <i class="fas fa-user-plus text-brand-500 mr-3"></i> Quick Registration
+                </h3>
+                <button onclick="closePatientModal()" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-lg transition-colors focus:outline-none">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
             </div>
-            <div class="p-10">
-                <form id="new-patient-form" onsubmit="saveNewPatient(event)" class="space-y-6">
-                    <div class="grid grid-cols-2 gap-6">
+
+            <div class="px-8 py-5">
+                <form id="new-patient-form" onsubmit="saveNewPatient(event)">
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-4 text-left">
                         <div class="col-span-2">
-                             <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Display Name</label>
-                             <input type="text" id="new-p-name" required placeholder="Full Name" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-base font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-brand-500/10">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                                 Full Name <span class="text-red-500 ml-1">*</span>
+                             </label>
+                             <input type="text" id="new-p-name" required placeholder="John Doe" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
                         </div>
-                        <div>
-                             <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Primary Phone</label>
-                             <input type="text" id="new-p-phone" required placeholder="+91..." class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-base font-semibold outline-none focus:bg-white">
+
+                        <div class="col-span-1">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                                 Phone Number <span class="text-red-500 ml-1">*</span>
+                             </label>
+                             <input type="text" id="new-p-phone" required placeholder="+91 999 999 9999" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
                         </div>
-                        <div>
-                             <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Age and Bio</label>
-                             <div class="flex gap-3">
-                                <input type="number" id="new-p-age" required class="w-2/3 px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-base font-semibold outline-none focus:bg-white">
-                                <select id="new-p-gender" required class="w-1/3 px-3 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold outline-none">
-                                    <option value="Male">M</option>
-                                    <option value="Female">F</option>
-                                </select>
-                             </div>
+
+                        <div class="col-span-1">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5">Email Address</label>
+                             <input type="email" id="new-p-email" placeholder="example@email.com" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                        </div>
+
+                        <div class="col-span-1">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                                 Age <span class="text-red-500 ml-1">*</span>
+                             </label>
+                             <input type="number" id="new-p-age" required min="0" placeholder="e.g. 35" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                        </div>
+
+                        <div class="col-span-1">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                                 Gender <span class="text-red-500 ml-1">*</span>
+                             </label>
+                             <select id="new-p-gender" required class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm cursor-pointer appearance-none">
+                                 <option value="Male">Male</option>
+                                 <option value="Female">Female</option>
+                                 <option value="Other">Other</option>
+                             </select>
+                        </div>
+
+                        <div class="col-span-2">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5">Address</label>
+                             <textarea id="new-p-address" rows="2" placeholder="Full residential address..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm resize-none"></textarea>
                         </div>
                     </div>
-                    <div class="pt-8 border-t border-slate-50 flex justify-end gap-4">
-                        <button type="button" onclick="closePatientModal()" class="px-6 py-3 text-sm font-bold text-slate-400">Cancel</button>
-                        <button type="submit" id="btn-save-new-patient" class="px-10 py-3 bg-brand-600 text-white font-bold rounded-2xl shadow-lg text-sm">Register & Start</button>
+
+                    <div class="flex items-center justify-end space-x-4 pt-5 mt-4 border-t border-slate-100">
+                        <button type="button" onclick="closePatientModal()" class="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 focus:outline-none transition-colors">Cancel</button>
+                        <button type="submit" id="btn-save-new-patient" class="px-7 py-2.5 rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 focus:outline-none transition-all">Register & Start</button>
                     </div>
                 </form>
             </div>
@@ -290,7 +348,6 @@
                         if (draft.sections && draft.sections.length > 0) {
                             document.getElementById('report-sections-container').innerHTML = '';
                             draft.sections.forEach(sec => {
-                                // Logic for draft-derived sections: if sectionName matches a known template section name, we could lock it, but for drafts we'll keep it flexible for now.
                                 const block = addReportSection(false); 
                                 block.querySelector('.rs-name').value = sec.sectionName || ''; 
                                 block.querySelector('.rs-text').value = sec.text || '';
@@ -301,6 +358,18 @@
                     } else addReportSection(false);
                 }
                 setupPatientSearch();
+
+                // Dynamic Save Button Label based on Role
+                const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
+                const saveBtn = document.getElementById('btn-save-report');
+                if (saveBtn) {
+                    if (user.role === 'LabTech') {
+                        saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Save Draft';
+                    } else {
+                        saveBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Save & Sign';
+                    }
+                }
+
                 document.getElementById('report-sections-container').addEventListener('input', () => { toggleActionState('editing'); saveReportDraft(); });
             } catch (err) { console.error('Error:', err); UI.showToast('Initialization error.', 'error'); }
         });
@@ -309,10 +378,10 @@
              try {
                  const res = await api.request('/templates'); templatesData = res.data;
                  const container = document.getElementById('templates-checkbox-container'); container.innerHTML = '';
-                 if (templatesData.length === 0) { container.innerHTML = '<span class="text-xs text-slate-300 font-bold uppercase">No Templates Found</span>'; return; }
+                 if (templatesData.length === 0) { container.innerHTML = '<span class="text-sm text-slate-400 font-medium">No Templates Found</span>'; return; }
                  templatesData.forEach(t => {
                      const wrapper = document.createElement('div');
-                     wrapper.innerHTML = `<input type="checkbox" id="tpl-${t._id}" class="hidden chip-checkbox" value="${t._id}" onchange="toggleTemplate(this, '${t._id}')"><label for="tpl-${t._id}" class="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 bg-white cursor-pointer hover:border-brand-400 transition-all block truncate max-w-[150px]" title="${t.templateName}">${t.templateName}</label>`;
+                     wrapper.innerHTML = `<input type="checkbox" id="tpl-${t._id}" class="hidden chip-checkbox" value="${t._id}" onchange="toggleTemplate(this, '${t._id}')"><label for="tpl-${t._id}" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-600 bg-white cursor-pointer hover:border-brand-400 transition-all block truncate max-w-[150px]" title="${t.templateName}">${t.templateName}</label>`;
                      container.appendChild(wrapper.firstElementChild); container.appendChild(wrapper.lastElementChild);
                  });
              } catch (err) { }
@@ -320,19 +389,73 @@
 
         async function loadSignatures() {
             try {
-                const res = await api.request('/signatures'); const select = document.getElementById('report-referred-by'); select.innerHTML = '<option value="" disabled selected>Select Authorizing Doctor...</option>';
-                if (!res.data || res.data.length === 0) { select.innerHTML = '<option value="" disabled selected>No Signatures Configured</option>'; return; }
-                res.data.forEach(sig => { const opt = document.createElement('option'); opt.value = sig.doctorId || sig._id; opt.textContent = sig.doctorName; opt.dataset.url = sig.signatureUrl; select.appendChild(opt); });
+                const res = await api.request('/signatures'); 
+                const list = document.getElementById('doctor-list');
+                const hiddenInput = document.getElementById('report-referred-by');
+                
+                if (!res.data || res.data.length === 0) { 
+                    list.innerHTML = '<li class="px-4 py-3 text-center text-slate-400 text-sm italic">No signatures found</li>'; 
+                    return; 
+                }
+
+                list.innerHTML = res.data.map(sig => `
+                    <li onclick="selectDoctor('${sig.doctorId || sig._id}', '${sig.doctorName}', '${sig.signatureUrl}')" 
+                        class="px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-600 cursor-pointer transition-all flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-400 font-bold">${sig.doctorName.charAt(0)}</div>
+                        <span>${sig.doctorName}</span>
+                    </li>
+                `).join('');
             } catch (err) { }
         }
 
-        function handleSignatureSelection() {
-            const select = document.getElementById('report-referred-by'), selectedOpt = select.options[select.selectedIndex], container = document.getElementById('signature-preview-container'), img = document.getElementById('signature-image-preview'), nameLabel = document.getElementById('signature-assigned-name'), warning = document.getElementById('draft-warning-container');
-            if (selectedOpt && selectedOpt.dataset.url) {
-                img.src = selectedOpt.dataset.url; nameLabel.textContent = selectedOpt.textContent; container.classList.remove('hidden');
-                const user = JSON.parse(localStorage.getItem('lis_user') || '{}'); if (user.role === 'LabTech') warning.classList.remove('hidden'); else warning.classList.add('hidden');
+        function toggleDoctorDropdown() {
+            const menu = document.getElementById('doctor-dropdown-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function selectDoctor(id, name, url) {
+            document.getElementById('report-referred-by').value = id;
+            document.getElementById('selected-doctor-name').textContent = name;
+            document.getElementById('doctor-dropdown-menu').classList.add('hidden');
+            
+            const container = document.getElementById('signature-preview-container');
+            const img = document.getElementById('signature-image-preview');
+            const warning = document.getElementById('draft-warning-container');
+            
+            if (url) {
+                img.src = url;
+                container.classList.remove('hidden');
+                const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
+                if (user.role === 'LabTech' && warning) warning.classList.remove('hidden');
+                else if (warning) warning.classList.add('hidden');
                 toggleActionState('editing');
-            } else { container.classList.add('hidden'); warning.classList.add('hidden'); }
+            }
+        }
+
+        // Global click handler to close dropdown
+        document.addEventListener('click', (e) => {
+            const toggle = document.getElementById('doctor-dropdown-toggle');
+            const menu = document.getElementById('doctor-dropdown-menu');
+            if (toggle && !toggle.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        function handleSignatureSelection() {
+            // Deprecated in favor of selectDoctor, but keeping placeholder if needed by other logic
+        }
+
+        function filterTemplates() {
+            const query = document.getElementById('template-search-input').value.toLowerCase();
+            document.querySelectorAll('#templates-checkbox-container label').forEach(label => {
+                const text = label.textContent.toLowerCase();
+                const input = document.getElementById(label.getAttribute('for'));
+                if (text.includes(query)) {
+                    label.classList.remove('hidden');
+                } else {
+                    label.classList.add('hidden');
+                }
+            });
         }
 
         function setupPatientSearch() {
@@ -340,13 +463,13 @@
             let debounce, abortController = null;
             input.addEventListener('input', (e) => {
                 clearTimeout(debounce); const query = e.target.value.trim(); if (query.length < 2) { results.classList.add('hidden'); return; }
-                results.innerHTML = `<div class="p-8 text-center text-slate-400 font-bold uppercase tracking-widest text-xs animate-pulse">Searching Patient Base...</div>`; results.classList.remove('hidden');
+                results.innerHTML = `<div class="p-4 text-center text-slate-400 font-medium text-sm animate-pulse">Searching...</div>`; results.classList.remove('hidden');
                 debounce = setTimeout(async () => {
                     if (abortController) abortController.abort(); abortController = new AbortController();
                     try {
                         const res = await api.request(`/patients?search=${encodeURIComponent(query)}&limit=8`, 'GET', null, abortController.signal);
-                        if (res.data.length === 0) results.innerHTML = `<div class="p-8 text-center"><p class="text-sm font-bold text-slate-500">No Patient Profile Matches</p><button type="button" onclick="openPatientModal()" class="text-xs font-bold text-brand-600 mt-4 uppercase">Register New Profile</button></div>`;
-                        else results.innerHTML = res.data.map(p => `<div class="px-6 py-4 hover:bg-brand-50 cursor-pointer border-b border-slate-50 last:border-0 transition-all flex items-center gap-4" onclick='selectPatient(${JSON.stringify(p)})'><div class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-bold text-sm text-brand-600">${p.name.charAt(0)}</div><div class="truncate"><p class="font-bold text-slate-900 text-sm italic">${p.name}</p><p class="text-xs text-slate-500 font-bold tracking-tight">${p.phone} • ${p.age}y / ${p.gender.charAt(0)}</p></div></div>`).join('');
+                        if (res.data.length === 0) results.innerHTML = `<div class="p-4 text-center"><p class="text-sm text-slate-500">No Match Found</p><button type="button" onclick="openPatientModal()" class="text-sm font-medium text-brand-600 mt-2">Register New Profile</button></div>`;
+                        else results.innerHTML = res.data.map(p => `<div class="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-all flex items-center gap-3" onclick='selectPatient(${JSON.stringify(p)})'><div class="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center font-medium text-sm text-brand-600">${p.name.charAt(0)}</div><div class="truncate"><p class="font-medium text-slate-800 text-sm">${p.name}</p><p class="text-xs text-slate-500">${p.phone} • ${p.age}y / ${p.gender.charAt(0)}</p></div></div>`).join('');
                     } catch (err) { if (err.name !== 'AbortError') results.classList.add('hidden'); }
                 }, 400);
             });
@@ -359,12 +482,49 @@
             document.querySelectorAll('.p-result').forEach(input => checkAbnormal(input));
         }
 
-        function handleHeaderCancel() { if (currentPatient) clearPatient(); else window.location.href = 'dashboard.html'; }
+        function handleHeaderCancel() { 
+            // 1. Clear Patient
+            currentPatient = null;
+            document.getElementById('sp-id').value = '';
+            document.getElementById('selected-patient-card').classList.add('hidden');
+            document.getElementById('patient-selection-container').classList.remove('hidden');
+            document.getElementById('patient-search-input').value = '';
+
+            // 2. Clear Report Sections
+            const container = document.getElementById('report-sections-container');
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-16 text-slate-400">
+                    <i class="fas fa-flask text-4xl mb-3 opacity-50"></i>
+                    <p class="text-sm font-medium">Select a template or add a section to begin</p>
+                </div>`;
+
+            // 3. Reset IDs & Status
+            document.getElementById('report-id').value = '';
+            document.getElementById('report-status').value = '';
+            document.getElementById('last-saved-info').textContent = 'Unsaved Draft';
+
+            // 4. Reset Template Checkboxes
+            document.querySelectorAll('#templates-checkbox-container input').forEach(cb => cb.checked = false);
+
+            // 5. Reset Verifier (Doctor)
+            document.getElementById('report-referred-by').value = '';
+            document.getElementById('selected-doctor-name').textContent = 'Select Authorizing Doctor';
+            document.getElementById('signature-preview-container').classList.add('hidden');
+            document.getElementById('draft-warning-container').classList.add('hidden');
+
+            // 6. Clear Draft from LocalStorage
+            DraftManager.clear('report');
+
+            // 7. Reset UI Action state
+            toggleActionState('editing');
+
+            UI.showToast('Page Cleared', 'success');
+        }
         function clearPatient() { currentPatient = null; document.getElementById('sp-id').value = ''; document.getElementById('selected-patient-card').classList.add('hidden'); document.getElementById('patient-selection-container').classList.remove('hidden'); document.querySelectorAll('.p-result').forEach(input => checkAbnormal(input)); }
 
         function addReportSection(isTemplate = false) {
             const tpl = document.getElementById('report-sec-template'), clone = tpl.content.cloneNode(true), container = document.getElementById('report-sections-container'); 
-            if (container.querySelector('.fa-notes-medical')) container.innerHTML = ''; 
+            if (container.querySelector('.fa-flask')) container.innerHTML = ''; 
             
             const block = clone.querySelector('.rep-section');
             if (isTemplate) {
@@ -410,7 +570,7 @@
         }
 
         function checkAbnormal(inputEl) {
-            const line = inputEl.closest('.param-line'); if (!line) return; const resultStr = line.querySelector('.p-result').value.trim(), rangeStr = line.querySelector('.p-normal-input').value.trim(), resultMatch = resultStr.match(/([\d.]+)/), resultInput = line.querySelector('.p-result'); resultInput.classList.remove('font-extrabold', 'text-red-700', 'border-red-400', 'bg-red-50'); if (!resultMatch) return; const resultNum = parseFloat(resultMatch[1]);
+            const line = inputEl.closest('.param-line'); if (!line) return; const resultStr = line.querySelector('.p-result').value.trim(), rangeStr = line.querySelector('.p-normal-input').value.trim(), resultMatch = resultStr.match(/([\d.]+)/), resultInput = line.querySelector('.p-result'); resultInput.classList.remove('text-red-600', 'border-red-300', 'bg-red-50'); if (!resultMatch) return; const resultNum = parseFloat(resultMatch[1]);
             let min = null, max = null;
             if (line.dataset.paramData) {
                 const param = JSON.parse(line.dataset.paramData);
@@ -418,10 +578,10 @@
                     const gender = currentPatient.gender.toLowerCase();
                     if (gender === 'male' && param.normalRange.male) { min = param.normalRange.male.min; max = param.normalRange.male.max; }
                     else if (gender === 'female' && param.normalRange.female) { min = param.normalRange.female.min; max = param.normalRange.female.max; }
-                    if (min !== null && max !== null) { if (resultNum < min || resultNum > max) resultInput.classList.add('font-extrabold', 'text-red-700', 'border-red-400', 'bg-red-50'); return; }
+                    if (min !== null && max !== null) { if (resultNum < min || resultNum > max) resultInput.classList.add('text-red-600', 'border-red-300', 'bg-red-50'); return; }
                 }
             }
-            const rangeMatch = rangeStr.match(/([\d.]+)\s*[-–—]\s*([\d.]+)/); if (rangeMatch) { min = parseFloat(rangeMatch[1]); max = parseFloat(rangeMatch[2]); if (resultNum < min || resultNum > max) resultInput.classList.add('font-extrabold', 'text-red-700', 'border-red-400', 'bg-red-50'); }
+            const rangeMatch = rangeStr.match(/([\d.]+)\s*[-–—]\s*([\d.]+)/); if (rangeMatch) { min = parseFloat(rangeMatch[1]); max = parseFloat(rangeMatch[2]); if (resultNum < min || resultNum > max) resultInput.classList.add('text-red-600', 'border-red-300', 'bg-red-50'); }
         }
 
         function toggleTemplate(checkbox, templateId) {
@@ -441,15 +601,14 @@
         async function loadExistingReport(id) {
              try {
                  const res = await api.request(`/reports/${id}`), r = res.data; document.getElementById('report-id').value = r._id; document.getElementById('report-status').value = r.status; if (typeof updateStatusBadgeUI === 'function') updateStatusBadgeUI(r.status);
-                 if (r.referredByDoctorId) { document.getElementById('report-referred-by').value = r.referredByDoctorId._id || r.referredByDoctorId; handleSignatureSelection(); }
+                  if (r.referredByDoctorId) { 
+                      const sig = r.referredByDoctorId;
+                      selectDoctor(sig._id, sig.doctorName, sig.signatureUrl); 
+                  }
                  if(r.patientId) selectPatient(r.patientId);
                  if (r.templateIds) document.querySelectorAll('#templates-checkbox-container input').forEach(cb => { if (r.templateIds.includes(cb.value)) cb.checked = true; });
                  const container = document.getElementById('report-sections-container'); container.innerHTML = '';
                  r.sections.forEach(sec => { 
-                     // When loading existing reports, we treat them as "locked" if they have a template origin, although for simplicity we could keep them editable.
-                     // The user requested that "user select custom temples" should be locked.
-                     // I'll check if the report's templateIds contains any of its sections origins? Not straightforward.
-                     // For now, I'll allow editing of loaded reports unless I track section-specific template IDs in the DB.
                      const block = addReportSection(false); 
                      block.querySelector('.rs-name').value = sec.sectionName; 
                      block.querySelector('.rs-text').value = sec.text || ''; 
@@ -461,9 +620,10 @@
 
         async function saveReport() {
             const patientId = document.getElementById('sp-id').value; if (!patientId) return UI.showToast('Please select a patient.', 'error');
-            const verifierSelect = document.getElementById('report-referred-by'), referredByDoctorId = verifierSelect.value;
-            let referredBy = (verifierSelect.selectedIndex >= 0) ? verifierSelect.options[verifierSelect.selectedIndex].text : '';
-            if (!referredBy || referredBy.startsWith('Select')) return UI.showToast('verifier selection is mandatory.', 'error');
+            const referredByDoctorId = document.getElementById('report-referred-by').value;
+            const referredBy = document.getElementById('selected-doctor-name').textContent;
+            
+            if (!referredByDoctorId || referredBy === 'Select Authorizing Doctor') return UI.showToast('Verifier selection is mandatory.', 'error');
             const sections = []; document.querySelectorAll('.rep-section').forEach(secBlock => {
                   const sName = secBlock.querySelector('.rs-name').value; if(!sName) return; const sText = secBlock.querySelector('.rs-text').value, parameters = [];
                   secBlock.querySelectorAll('.param-line').forEach(pl => { if (!pl.dataset.paramData) return; const p = JSON.parse(pl.dataset.paramData); p.name = pl.querySelector('.p-name').value; p.result = pl.querySelector('.p-result').value; p.units = pl.querySelector('.p-units-input').value; if (!p.isGenderSpecific) { const mMatch = pl.querySelector('.p-normal-input').value.match(/([\d.]+)\s*[-–—]\s*([\d.]+)/); if (mMatch) p.normalRange = { min: parseFloat(mMatch[1]), max: parseFloat(mMatch[2]) }; } parameters.push(p); });
@@ -471,22 +631,38 @@
             });
             if (sections.length === 0) return UI.showToast('Findings cannot be empty.', 'error');
             const templateIds = Array.from(document.querySelectorAll('#templates-checkbox-container input:checked')).map(cb => cb.value), reportId = document.getElementById('report-id').value;
+            
+            const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
+            const saveLabel = (user.role === 'LabTech') ? '<i class="fas fa-save mr-2"></i> Save Draft' : '<i class="fas fa-check mr-2"></i> Save & Sign';
+            
             UI.toggleLoader('btn-save-report', true, 'Processing...');
             try {
                 const res = await api.request(reportId ? `/reports/${reportId}` : '/reports', reportId ? 'PUT' : 'POST', { patientId, sections, referredBy, templateIds, referredByDoctorId, verifierId: referredByDoctorId }); const savedReport = res.data;
                 document.getElementById('report-id').value = savedReport._id; document.getElementById('report-status').value = savedReport.status; UI.showToast(savedReport.status === 'saved' ? 'Finalized & Signed' : 'Saved as Draft', 'success'); document.getElementById('last-saved-info').textContent = `Document Locked: ${new Date().toLocaleTimeString()}`; DraftManager.clear('report'); toggleActionState(savedReport.status);
-            } catch (err) { UI.showToast(err.message, 'error'); } finally { UI.toggleLoader('btn-save-report', false, '<i class="fas fa-save mr-2"></i> Save Report'); }
+            } catch (err) { UI.showToast(err.message, 'error'); } finally { UI.toggleLoader('btn-save-report', false, saveLabel); }
         }
 
         function toggleActionState(state) {
             const saveBtn = document.getElementById('btn-save-report'), shareActions = document.getElementById('header-post-save-actions'); if (!saveBtn || !shareActions) return;
-            if (state === 'saved') { saveBtn.classList.add('hidden'); const user = JSON.parse(localStorage.getItem('lis_user') || '{}'); if (user.role !== 'LabTech') shareActions.classList.remove('hidden'); else shareActions.innerHTML = '<span class="text-xs font-black text-emerald-600 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100 uppercase tracking-widest">Document Pending Review</span>'; updateStatusBadgeUI(document.getElementById('report-status').value || 'saved'); }
-            else { saveBtn.classList.remove('hidden'); shareActions.classList.add('hidden'); }
+            if (state === 'saved') { 
+                saveBtn.classList.add('hidden'); 
+                const user = JSON.parse(localStorage.getItem('lis_user') || '{}'); 
+                
+                // Show share actions for EVERYONE if the report is signed/saved
+                shareActions.classList.remove('hidden');
+                
+                // Update badge and loader UI
+                updateStatusBadgeUI(document.getElementById('report-status').value || 'saved'); 
+            }
+            else { 
+                saveBtn.classList.remove('hidden'); 
+                shareActions.classList.add('hidden'); 
+            }
         }
 
         function updateStatusBadgeUI(status) {
             const badge = document.getElementById('header-status-badge'), wrapper = document.getElementById('header-status-wrapper'); if (!badge || !wrapper) return;
-            badge.textContent = status.toUpperCase(); wrapper.className = (status.toLowerCase() === 'draft') ? 'bg-slate-100 text-slate-600 px-4 py-2 rounded-xl border border-slate-200' : 'bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl border border-emerald-100';
+            badge.textContent = status.toUpperCase(); wrapper.className = (status.toLowerCase() === 'draft') ? 'bg-slate-50 text-slate-600 px-3 py-1.5 rounded-md border border-slate-200' : 'bg-green-50 text-green-700 px-3 py-1.5 rounded-md border border-green-200';
         }
 
         function downloadPdf() { const id = document.getElementById('report-id').value, token = localStorage.getItem('lis_token'); fetch(`${BASE_URL}/reports/${id}/pdf`, { headers: { 'Authorization': `Bearer ${token}` } }).then(res => res.blob()).then(blob => { const url = window.URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = `Diagnostic_Report_${id.slice(-6)}.pdf`; a.click(); }); }
@@ -503,9 +679,30 @@
             if (draft.patient || draft.referredBy || draft.sections.length > 0) DraftManager.save('report', draft);
         }, 1000);
 
+        function toggleTemplateHeight() {
+            const container = document.getElementById('templates-checkbox-container');
+            const icon = document.getElementById('template-expand-icon');
+            const text = document.getElementById('template-expand-text');
+            const isExpanded = container.classList.contains('max-h-[500px]');
+            
+            if (isExpanded) {
+                container.classList.remove('max-h-[500px]');
+                container.classList.add('max-h-[85px]');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+                text.textContent = 'Expand';
+            } else {
+                container.classList.remove('max-h-[85px]');
+                container.classList.add('max-h-[500px]');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+                text.textContent = 'Collapse';
+            }
+        }
+
         function openPatientModal() { document.getElementById('new-patient-form').reset(); document.getElementById('new-patient-modal').classList.remove('hidden'); }
         function closePatientModal() { document.getElementById('new-patient-modal').classList.add('hidden'); }
-        async function saveNewPatient(e) { e.preventDefault(); try { const res = await api.request(`/patients`, 'POST', { name: document.getElementById('new-p-name').value, phone: document.getElementById('new-p-phone').value, age: document.getElementById('new-p-age').value, gender: document.getElementById('new-p-gender').value }); selectPatient(res.data); closePatientModal(); } catch (err) { UI.showToast(err.message, 'error'); } }
+        async function saveNewPatient(e) { e.preventDefault(); try { const res = await api.request(`/patients`, 'POST', { name: document.getElementById('new-p-name').value, phone: document.getElementById('new-p-phone').value, email: document.getElementById('new-p-email').value, age: document.getElementById('new-p-age').value, gender: document.getElementById('new-p-gender').value, address: document.getElementById('new-p-address').value }); selectPatient(res.data); closePatientModal(); } catch (err) { UI.showToast(err.message, 'error'); } }
     </script>
 </body>
 </html>

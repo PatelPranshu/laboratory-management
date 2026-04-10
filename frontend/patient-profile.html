@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Profile - MyPathoLabs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 900: '#0c4a6e',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .ui-card { 
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem; 
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-brand-500 selection:text-white h-full overflow-hidden">
+
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[200] flex flex-col gap-3"></div>
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <main class="flex-1 flex flex-col relative overflow-hidden h-full">
+            
+            <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between z-50 shrink-0">
+                <div class="flex items-center gap-4">
+                    <div>
+                        <nav class="flex text-xs font-medium text-slate-500 mb-1">
+                            <ol class="flex items-center space-x-2">
+                                <li class="hover:text-brand-600 transition-colors"><a href="dashboard.html">Dashboard</a></li>
+                                <li><i class="fas fa-chevron-right text-[10px] opacity-50"></i></li>
+                                <li class="hover:text-brand-600 transition-colors"><a href="patients.html">Patients</a></li>
+                                <li><i class="fas fa-chevron-right text-[10px] opacity-50"></i></li>
+                                <li class="text-slate-700 font-semibold truncate max-w-[150px]" id="breadcrumb-name">Patient Profile</li>
+                            </ol>
+                        </nav>
+                        <h1 class="text-xl font-bold text-slate-900 tracking-tight">Patient Overview</h1>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <button id="header-create-report" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg shadow-sm transition-all flex items-center">
+                        <i class="fas fa-file-medical mr-2"></i> Create Report
+                    </button>
+                    <div class="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+                    <button type="button" class="text-slate-400 hover:text-slate-700 transition-colors" title="Back to Directory" onclick="window.location.href='patients.html'"><i class="fas fa-times text-xl"></i></button>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/50">
+                <div class="max-w-[1400px] mx-auto p-6">
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        
+                        <div class="lg:col-span-4 flex flex-col gap-6">
+                            
+                            <div class="ui-card p-6 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-full h-1 bg-brand-500"></div>
+                                
+                                <div class="flex flex-col items-center text-center mb-6 mt-2">
+                                    <div class="w-24 h-24 rounded-full bg-brand-50 border-2 border-brand-100 flex items-center justify-center text-brand-600 text-3xl font-bold shadow-sm mb-4" id="p-avatar">
+                                        --
+                                    </div>
+                                    <h2 class="text-xl font-bold text-slate-900 leading-tight" id="p-name">Loading Patient...</h2>
+                                    <p class="text-sm font-medium text-slate-500 mt-1" id="p-basic-info">-- yrs • --</p>
+                                </div>
+
+                                <div class="space-y-4 pt-4 border-t border-slate-100">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded bg-slate-50 flex items-center justify-center text-slate-400 shrink-0"><i class="fas fa-phone-alt text-sm"></i></div>
+                                        <div>
+                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Primary Phone</p>
+                                            <p class="text-sm font-semibold text-slate-800" id="p-phone">--</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded bg-slate-50 flex items-center justify-center text-slate-400 shrink-0"><i class="fas fa-envelope text-sm"></i></div>
+                                        <div>
+                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</p>
+                                            <p class="text-sm font-semibold text-slate-800" id="p-email">--</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded bg-slate-50 flex items-center justify-center text-slate-400 shrink-0"><i class="fas fa-id-card text-sm"></i></div>
+                                        <div>
+                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Patient ID</p>
+                                            <p class="text-sm font-semibold text-slate-800 font-mono" id="p-id">--</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded bg-slate-50 flex items-center justify-center text-slate-400 shrink-0"><i class="fas fa-calendar-check text-sm"></i></div>
+                                        <div>
+                                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Registered On</p>
+                                            <p class="text-sm font-semibold text-slate-800" id="p-date">--</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-6 pt-6 border-t border-slate-100 grid grid-cols-2 gap-3">
+                                    <button onclick="openEditModal()" class="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
+                                        <i class="fas fa-pen mr-1.5 text-slate-400"></i> Edit Profile
+                                    </button>
+                                    <button id="internal-create-report" class="w-full px-4 py-2 bg-brand-50 border border-brand-100 rounded-lg text-sm font-medium text-brand-700 hover:bg-brand-100 transition-all shadow-sm">
+                                        <i class="fas fa-plus mr-1.5"></i> New Report
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="ui-card p-5 flex flex-col items-center justify-center text-center">
+                                    <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </div>
+                                    <p class="text-2xl font-bold text-slate-800" id="p-total-reports">0</p>
+                                    <p class="text-xs font-medium text-slate-500">Total Reports</p>
+                                </div>
+                                <div class="ui-card p-5 flex flex-col items-center justify-center text-center">
+                                    <div class="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mb-2">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <p class="text-2xl font-bold text-slate-800" id="p-pending-reports">0</p>
+                                    <p class="text-xs font-medium text-slate-500">Pending</p>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="lg:col-span-8 flex flex-col">
+                            <div class="ui-card flex flex-col h-full min-h-[600px]">
+                                <div class="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center rounded-t-xl shrink-0">
+                                    <h2 class="text-lg font-bold text-slate-800">Diagnostic History</h2>
+                                    <div class="relative">
+                                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                        <input type="text" id="search-reports" placeholder="Search past reports..." class="pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm outline-none focus:border-brand-500 transition-all w-64">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50/50 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider shrink-0">
+                                    <div class="col-span-2">Date</div>
+                                    <div class="col-span-4">Tests / Templates</div>
+                                    <div class="col-span-3">Referred By</div>
+                                    <div class="col-span-2">Status</div>
+                                    <div class="col-span-1 text-right">Actions</div>
+                                </div>
+
+                                <div class="flex-1 overflow-y-auto custom-scrollbar bg-white rounded-b-xl" id="reports-list">
+                                    <div class="flex flex-col items-center justify-center h-64 text-slate-400">
+                                        <i class="fas fa-circle-notch fa-spin text-2xl mb-3"></i>
+                                        <p class="text-sm font-medium">Fetching history...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit Patient Modal -->
+    <div id="edit-patient-modal" class="fixed inset-0 bg-slate-900/40 hidden overflow-y-auto h-full w-full z-[200] flex items-center justify-center transition-opacity backdrop-blur-sm">
+        <div class="relative mx-auto border-0 w-full max-w-xl shadow-2xl rounded-2xl bg-white m-4 transform transition-transform scale-95 opacity-0 duration-300" id="edit-patient-modal-content">
+            
+            <div class="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl shrink-0">
+                <h3 class="text-xl font-bold text-slate-800 flex items-center">
+                    <i class="fas fa-user-edit text-brand-500 mr-3"></i> Edit Patient Profile
+                </h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-lg transition-colors focus:outline-none">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <div class="px-8 py-5">
+                <form id="edit-patient-form" onsubmit="savePatientEdit(event)">
+                    <input type="hidden" id="edit-p-id">
+                    
+                    <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+                        <div class="col-span-2">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                                 Full Name <span class="text-red-500 ml-1">*</span>
+                             </label>
+                             <input type="text" id="edit-p-name" required placeholder="John Doe" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                        </div>
+                        
+                        <div class="col-span-1">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                                 Phone Number <span class="text-red-500 ml-1">*</span>
+                             </label>
+                             <input type="text" id="edit-p-phone" required placeholder="+91 999 999 9999" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                        </div>
+
+                        <div class="col-span-1">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5">Email Address</label>
+                             <input type="email" id="edit-p-email" placeholder="example@email.com" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                        </div>
+
+                        <div class="col-span-1">
+                            <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                                Age <span class="text-red-500 ml-1">*</span>
+                            </label>
+                            <input type="number" id="edit-p-age" required min="0" placeholder="e.g. 35" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                        </div>
+
+                        <div class="col-span-1">
+                            <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                                Gender <span class="text-red-500 ml-1">*</span>
+                            </label>
+                            <select id="edit-p-gender" required class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm cursor-pointer appearance-none">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="col-span-2">
+                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5">Address</label>
+                             <textarea id="edit-p-address" rows="2" placeholder="Full residential address..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm resize-none"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-5 mt-4 border-t border-slate-100">
+                        <button type="button" onclick="deletePatient()" class="text-sm font-bold text-red-500 hover:text-red-700 transition-colors flex items-center"><i class="fas fa-trash-alt mr-2"></i> Delete Record</button>
+                        <div class="flex space-x-3">
+                            <button type="button" onclick="closeEditModal()" class="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 focus:outline-none transition-colors">Cancel</button>
+                            <button type="submit" id="btn-save-edit" class="px-7 py-2.5 rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 focus:outline-none transition-all">Save Changes</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/layout.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let currentPatientId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadCommonLayout();
+            checkAuth();
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            currentPatientId = urlParams.get('id');
+
+            if (!currentPatientId) {
+                UI.showToast('No patient selected', 'error');
+                setTimeout(() => window.location.href = 'patients.html', 1500);
+                return;
+            }
+
+            // Bind create report navigation
+            const createHandler = () => window.location.href = `report-create.html?patient=${currentPatientId}`;
+            document.getElementById('header-create-report').onclick = createHandler;
+            document.getElementById('internal-create-report').onclick = createHandler;
+
+            await loadPatientProfile();
+            await loadPatientReports();
+        });
+
+        async function loadPatientProfile() {
+            try {
+                const res = await api.request(`/patients/${currentPatientId}`);
+                const p = res.data;
+
+                document.getElementById('breadcrumb-name').textContent = p.name;
+                document.getElementById('p-name').textContent = p.name;
+                document.getElementById('p-avatar').textContent = p.name.charAt(0).toUpperCase();
+                document.getElementById('p-basic-info').textContent = `${p.age} years • ${p.gender}`;
+                document.getElementById('p-phone').textContent = p.phone || 'N/A';
+                document.getElementById('p-email').textContent = p.email || 'No email provided';
+                document.getElementById('p-id').textContent = p._id.slice(-6).toUpperCase();
+                
+                const regDate = new Date(p.createdAt || Date.now());
+                document.getElementById('p-date').textContent = regDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+                // Populate edit modal
+                document.getElementById('edit-p-id').value = p._id;
+                document.getElementById('edit-p-name').value = p.name;
+                document.getElementById('edit-p-phone').value = p.phone;
+                document.getElementById('edit-p-email').value = p.email || '';
+                document.getElementById('edit-p-age').value = p.age;
+                document.getElementById('edit-p-gender').value = p.gender;
+                document.getElementById('edit-p-address').value = p.address || '';
+
+            } catch (err) {
+                UI.showToast('Failed to load patient data', 'error');
+            }
+        }
+
+        async function loadPatientReports() {
+            const list = document.getElementById('reports-list');
+            try {
+                const res = await api.request(`/reports?patientId=${currentPatientId}&limit=100`);
+                const reports = res.data;
+
+                let pendingCount = 0;
+
+                if (reports.length === 0) {
+                    list.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-64 text-slate-400">
+                            <i class="fas fa-folder-open text-3xl mb-3 opacity-50"></i>
+                            <p class="text-sm font-medium">No diagnostic history found.</p>
+                        </div>`;
+                    document.getElementById('p-total-reports').textContent = "0";
+                    document.getElementById('p-pending-reports').textContent = "0";
+                    return;
+                }
+
+                list.innerHTML = reports.map(r => {
+                    const d = new Date(r.date || r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    
+                    let testNames = "No sections defined";
+                    if(r.sections && r.sections.length > 0) {
+                        testNames = r.sections.map(s => s.sectionName).join(', ');
+                    }
+
+                    const isDraft = r.status.toLowerCase() === 'draft';
+                    if (isDraft) pendingCount++;
+
+                    const statusBadge = isDraft 
+                        ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200">DRAFT</span>`
+                        : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 uppercase tracking-wider">${r.status}</span>`;
+
+                    return `
+                    <div class="grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-50 items-center hover:bg-slate-50/80 transition-colors group">
+                        <div class="col-span-2 text-sm font-bold text-slate-700">${d}</div>
+                        <div class="col-span-4 text-sm text-slate-600 truncate pr-4" title="${testNames}">${testNames}</div>
+                        <div class="col-span-3 text-sm text-slate-500 font-medium truncate pr-4">${r.referredBy || 'Self'}</div>
+                        <div class="col-span-2">${statusBadge}</div>
+                        <div class="col-span-1 flex justify-end gap-2">
+                            <a href="report-create.html?edit=${r._id}" class="p-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-800 rounded-lg transition-colors shadow-sm" title="Edit/View Report">
+                                <i class="fas fa-edit text-base"></i>
+                            </a>
+                            ${r.status !== 'draft' ? `
+                                <a href="${BASE_URL}/reports/${r._id}/pdf?token=${localStorage.getItem('lis_token')}" target="_blank" class="p-2 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-800 rounded-lg transition-colors shadow-sm" title="View PDF">
+                                    <i class="fas fa-file-pdf text-base"></i>
+                                </a>
+                            ` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+
+                document.getElementById('p-total-reports').textContent = reports.length;
+                document.getElementById('p-pending-reports').textContent = pendingCount;
+
+            } catch (err) {
+                list.innerHTML = `<div class="p-12 text-center text-red-500 font-bold text-sm">Failed to load reports history.</div>`;
+            }
+        }
+
+        // Search Filter Logic for Reports
+        document.getElementById('search-reports').addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase();
+            const rows = document.getElementById('reports-list').querySelectorAll('.grid-cols-12');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+
+        function openEditModal() {
+            const modal = document.getElementById('edit-patient-modal');
+            const content = document.getElementById('edit-patient-modal-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeEditModal() {
+            const modal = document.getElementById('edit-patient-modal');
+            const content = document.getElementById('edit-patient-modal-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        async function savePatientEdit(e) {
+            e.preventDefault();
+            UI.toggleLoader('btn-save-edit', true, 'Saving...');
+            try {
+                const payload = {
+                    name: document.getElementById('edit-p-name').value,
+                    email: document.getElementById('edit-p-email').value,
+                    phone: document.getElementById('edit-p-phone').value,
+                    age: document.getElementById('edit-p-age').value,
+                    gender: document.getElementById('edit-p-gender').value,
+                    address: document.getElementById('edit-p-address').value
+                };
+                await api.request(`/patients/${currentPatientId}`, 'PUT', payload);
+                UI.showToast('Profile updated successfully', 'success');
+                closeEditModal();
+                loadPatientProfile();
+            } catch (err) {
+                UI.showToast(err.message, 'error');
+            } finally {
+                UI.toggleLoader('btn-save-edit', false, 'Save Changes');
+            }
+        }
+
+        async function deletePatient() {
+            const confirmed = await UI.showConfirm('Delete Patient Data', 'Are you sure you want to permanently delete this patient and all associated diagnostic reports?', 'Delete Forever', 'danger');
+            if (confirmed) {
+                try {
+                    await api.request(`/patients/${currentPatientId}`, 'DELETE');
+                    UI.showToast('Patient record deleted', 'success');
+                    setTimeout(() => window.location.href = 'patients.html', 1500);
+                } catch (err) {
+                    UI.showToast(err.message, 'error');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

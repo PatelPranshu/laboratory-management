@@ -6,6 +6,8 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
+const http = require('http');
+const socketService = require('./services/socketService');
 
 // Load env vars
 dotenv.config();
@@ -112,6 +114,7 @@ const dashboard = require('./routes/dashboard');
 const search = require('./routes/search');
 const staff = require('./routes/staff');
 const signatures = require('./routes/signatures');
+const notifications = require('./routes/notifications');
 
 // Mount routers (auth routes get stricter rate limiting)
 app.use('/api/auth', authLimiter, auth);
@@ -123,6 +126,7 @@ app.use('/api/settings', settings);
 app.use('/api/dashboard', dashboard);
 app.use('/api/search', search);
 app.use('/api/signatures', signatures);
+app.use('/api/notifications', authLimiter, notifications);
 
 app.get('/', (req, res) => {
   res.json({ success: true, message: 'LIS API is running' });
@@ -135,7 +139,10 @@ app.use(errorHandler);
 // ---------- Start Server ----------
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, '0.0.0.0', () => {
+const server = http.createServer(app);
+socketService.init(server);
+
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });
 

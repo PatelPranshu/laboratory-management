@@ -154,5 +154,200 @@ function loadCommonLayout() {
                 if (userNameEl) userNameEl.textContent = 'User';
             }
         }
+        
+        // Initialize Notification System
+        setTimeout(() => {
+            if (typeof initNotifications === 'function') initNotifications();
+        }, 100);
     }
+}
+
+// ---------------- Real-Time Notification System ---------------- //
+function initNotifications() {
+    const token = localStorage.getItem('lis_token');
+    if (!token) return;
+
+    // Wait for api.js to be available if not already
+    if (typeof api === 'undefined') {
+        setTimeout(initNotifications, 200);
+        return;
+    }
+
+    if (typeof io !== 'undefined') {
+        setupNotificationSystem(token);
+    } else {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.socket.io/4.8.1/socket.io.min.js';
+        script.onload = () => setupNotificationSystem(token);
+        document.head.appendChild(script);
+    }
+}
+
+function setupNotificationSystem(token) {
+    const header = document.querySelector('header');
+    if (!header) return;
+
+    // Find the rightmost flex container to append the bell
+    let targetContainer = header.querySelector('#header-actions') || 
+                          header.querySelector('.flex.items-center.gap-4:last-child') || 
+                          header.querySelector('.flex.space-x-4:last-child') ||
+                          header.querySelector('.flex.items-center.justify-end');
+    
+    // Fallback if no clean container found
+    if (!targetContainer) {
+        const wrap = document.createElement('div');
+        wrap.className = "ml-6 flex items-center space-x-4 shrink-0";
+        header.appendChild(wrap);
+        targetContainer = wrap;
+    } else {
+         // Append explicitly via code if it exists. Dashboard uses #header-actions.
+    }
+
+    // Check if bell already injected
+    if (document.getElementById('notification-wrapper')) return;
+
+    const notifHTML = `
+        <div class="relative ml-4 shrink-0 z-[100]" id="notification-wrapper">
+            <button id="notif-bell-btn" class="relative bg-white p-2.5 rounded-xl text-slate-500 hover:text-brand-600 shadow-sm border border-slate-100 transition-all focus:outline-none">
+                <i class="fas fa-bell"></i>
+                <span id="notif-badge" class="hidden absolute top-0 right-0 -mt-1 -mr-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white border-2 border-white shadow-sm">
+                    0
+                </span>
+            </button>
+            <div id="notif-dropdown" class="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 shadow-xl shadow-slate-200/50 rounded-xl z-[300] hidden overflow-hidden origin-top-right transition-all">
+                <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <h3 class="text-sm font-bold text-slate-800">Notifications</h3>
+                    <button id="notif-read-all" class="text-[11px] font-semibold text-brand-600 hover:text-brand-800 transition-colors">Mark all as read</button>
+                </div>
+                <div id="notif-list" class="max-h-[350px] overflow-y-auto custom-scrollbar bg-white">
+                    <div class="px-4 py-8 text-center text-sm font-medium text-slate-400">
+                        <i class="fas fa-circle-notch fa-spin mb-2"></i><br>Loading...
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    targetContainer.insertAdjacentHTML('beforeend', notifHTML);
+
+    const bellBtn = document.getElementById('notif-bell-btn');
+    const dropdown = document.getElementById('notif-dropdown');
+    const badge = document.getElementById('notif-badge');
+    const listEl = document.getElementById('notif-list');
+    const readAllBtn = document.getElementById('notif-read-all');
+
+    let notifications = [];
+    let unreadCount = 0;
+
+    bellBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#notification-wrapper')) {
+            dropdown.classList.add('hidden');
+        }
+    });
+
+    const renderList = () => {
+        if (notifications.length === 0) {
+            listEl.innerHTML = '<div class="px-4 py-8 flex flex-col items-center text-center text-sm font-medium text-slate-400"><i class="fas fa-bell-slash text-2xl mb-3 text-slate-200"></i>No notifications yet.</div>';
+            return;
+        }
+
+        listEl.innerHTML = notifications.map(n => `
+            <div class="p-4 border-b border-slate-50 last:border-0 hover:bg-brand-50/30 cursor-pointer transition-colors ${n.isRead ? 'opacity-70' : 'bg-brand-50/10'}" onclick="handleNotifClick('${n._id}', '${n.type}', '${n.referenceId}')">
+                <div class="flex gap-3">
+                    <div class="mt-0.5 rounded-full bg-slate-100 w-8 h-8 flex items-center justify-center shrink-0 ${!n.isRead ? 'text-brand-600 bg-brand-50' : 'text-slate-400'}">
+                        ${n.type === 'NEW_PATIENT' ? '<i class="fas fa-user-plus text-xs"></i>' : '<i class="fas fa-file-medical text-xs"></i>'}
+                    </div>
+                    <div>
+                        <p class="text-[13px] font-semibold text-slate-800 mb-0.5 ${!n.isRead ? 'text-brand-700' : ''}">${n.title}</p>
+                        <p class="text-[12px] text-slate-500 leading-snug">${n.message}</p>
+                        <p class="text-[10px] font-medium text-slate-400 mt-1.5"><i class="far fa-clock mr-1"></i>${new Date(n.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} • ${new Date(n.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    ${!n.isRead ? '<div class="w-2 h-2 rounded-full bg-brand-500 mt-2 ml-auto shrink-0 shadow-sm"></div>' : ''}
+                </div>
+            </div>
+        `).join('');
+    };
+
+    const updateBadge = () => {
+        if (unreadCount > 0) {
+            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    };
+
+    const fetchNotifs = async () => {
+        try {
+            const res = await api.request('/notifications');
+            notifications = res.data;
+            unreadCount = res.unreadCount;
+            renderList();
+            updateBadge();
+        } catch(e) {
+            console.error('Failed to load notifications', e);
+            listEl.innerHTML = '<div class="px-4 py-4 text-center text-sm font-medium text-red-400">Failed to load notifications.</div>';
+        }
+    };
+
+    fetchNotifs();
+
+    window.handleNotifClick = async (id, type, refId) => {
+        dropdown.classList.add('hidden');
+        try {
+            await api.request(`/notifications/read/${id}`, 'PUT');
+            const idx = notifications.findIndex(n => n._id === id);
+            if (idx > -1 && !notifications[idx].isRead) {
+               notifications[idx].isRead = true;
+               unreadCount = Math.max(0, unreadCount - 1);
+               updateBadge();
+               renderList();
+            }
+        } catch(e) {}
+        
+        if (type === 'NEW_PATIENT') window.location.href = `patient-profile.html?id=${refId}`;
+        if (type === 'NEW_REPORT') window.location.href = `report-create.html?edit=${refId}`;
+    };
+
+    readAllBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try {
+            readAllBtn.textContent = 'Marking...';
+            await api.request('/notifications/read-all', 'PUT');
+            notifications.forEach(n => n.isRead = true);
+            unreadCount = 0;
+            updateBadge();
+            renderList();
+            readAllBtn.textContent = 'Mark all as read';
+        } catch(e) {
+            readAllBtn.textContent = 'Error';
+            setTimeout(() => readAllBtn.textContent = 'Mark all as read', 2000);
+        }
+    });
+
+    let socketUrl = '';
+    if (typeof BASE_URL !== 'undefined') {
+        socketUrl = BASE_URL.replace('/api', '');
+    }
+    
+    // Connect Socket.IO
+    const socket = io(socketUrl, {
+        auth: { token }
+    });
+
+    socket.on('new_notification', (data) => {
+        notifications.unshift(data);
+        if (notifications.length > 50) notifications.pop();
+        unreadCount++;
+        renderList();
+        updateBadge();
+        if (typeof UI !== 'undefined' && UI.showToast) {
+            UI.showToast(data.title, 'success');
+        }
+    });
 }

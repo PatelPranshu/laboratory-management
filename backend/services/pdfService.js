@@ -159,7 +159,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
       { text: `Patient Name: ${patient.name || 'N/A'}\nAge/Gender: ${patient.age || 'N/A'} / ${patient.gender || 'N/A'}\nPhone: ${patient.phone || 'N/A'}`, width: '*', style: 'patientInfo' },
       { text: `Date: ${reportDate}\nReport ID: ${reportId}\nReferred By: ${report.referredBy || 'N/A'}`, width: '*', alignment: 'right', style: 'patientInfo' }
     ],
-    margin: [0, 0, 0, 20]
+    margin: [0, 0, 0, 2]
   });
 
   content.push({ canvas: [{ type: 'line', x1: 0, y1: 5, x2: contentWidth, y2: 5, lineWidth: 1 }] });
@@ -168,10 +168,10 @@ exports.generateReportPdf = async (report, patient, settings) => {
   // Initialize Master Table Body and Remarks Collection
   const masterTableBody = [
     [
-      { text: 'TEST', bold: true, decoration: 'underline', margin: [0, 2, 0, 2] },
-      { text: 'RESULT', bold: true, decoration: 'underline', margin: [0, 2, 0, 2] },
-      { text: 'UNITS', bold: true, decoration: 'underline', margin: [0, 2, 0, 2] },
-      { text: 'NORMAL VALUES', bold: true, decoration: 'underline', margin: [0, 2, 0, 2] }
+      { text: 'TEST', bold: true, decoration: 'underline', margin: [0, 0, 0, 2] },
+      { text: 'RESULT', bold: true, decoration: 'underline', margin: [0, 0, 0, 2] },
+      { text: 'UNITS', bold: true, decoration: 'underline', margin: [0, 0, 0, 2] },
+      { text: 'NORMAL VALUES', bold: true, decoration: 'underline', margin: [0, 0, 0, 2] }
     ]
   ];
 
@@ -288,22 +288,6 @@ exports.generateReportPdf = async (report, patient, settings) => {
     });
   }
 
-  // Adding Remarks / Description at the end
-  if (allRemarks.length > 0) {
-    content.push({ canvas: [{ type: 'line', x1: 0, y1: 5, x2: contentWidth, y2: 5, lineWidth: 0.5, lineColor: '#cbd5e1' }] });
-    content.push({ text: 'REMARKS / OBSERVATIONS', style: 'subheader', margin: [0, 10, 0, 5], fontSize: fontSize - 2, color: '#64748b' });
-    
-    allRemarks.forEach(rem => {
-      content.push({
-        text: [
-          { text: `${rem.title}: `, bold: true, fontSize: fontSize - 1 },
-          { text: rem.text, fontSize: fontSize - 1 }
-        ],
-        margin: [0, 2, 0, 4]
-      });
-    });
-  }
-
   // Footer Image (at the end of content)
   if (footerImageData) {
     const footerConfig = {
@@ -318,6 +302,22 @@ exports.generateReportPdf = async (report, patient, settings) => {
     }
     content.push(footerConfig);
   }
+
+  // Adding Remarks / Description at the end (Before Signature)
+  if (allRemarks.length > 0) {
+    content.push({ canvas: [{ type: 'line', x1: 0, y1: 5, x2: contentWidth, y2: 5, lineWidth: 0.5, lineColor: '#cbd5e1' }] });
+    content.push({ text: 'REMARKS / OBSERVATIONS', style: 'subheader', margin: [0, 10, 0, 5], fontSize: fontSize - 2, color: '#64748b' });
+    
+    allRemarks.forEach(rem => {
+      content.push({
+        text: [
+          { text: `${rem.title}: `, bold: true, fontSize: fontSize - 1 },
+          { text: rem.text, fontSize: fontSize - 1 }
+        ],
+        margin: [0, 2, 0, 4]
+      });
+    });
+  }
   
   // Verify & Sign Section
   if (signatureImageData) {
@@ -329,8 +329,9 @@ exports.generateReportPdf = async (report, patient, settings) => {
                   alignment: 'center',
                   margin: [0, 20, 0, 0],
                   stack: [
+                    { text: 'REFERRED BY / VERIFIED BY', fontSize: fontSize - 4, color: '#64748b', margin: [0, 8, 0, 0], bold: true, characterSpacing: 0.5 },
                       { image: signatureImageData, fit: [150, 60], alignment: 'center' },
-                      { text: `Referred By / Verified By\n${report.referredByDoctorId.doctorName}`, fontSize: fontSize - 2, bold: true, margin: [0, 5, 0, 0], color: '#334155' }
+                      { text: report.referredByDoctorId.doctorName.toUpperCase(), fontSize: fontSize + 2, bold: true, color: '#1e293b' }
                   ]
               }
           ]

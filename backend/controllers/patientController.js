@@ -1,5 +1,8 @@
 const Patient = require('../models/Patient');
 const ReportInstance = require('../models/ReportInstance');
+const User = require('../models/User');
+const Notification = require('../models/Notification');
+const socketService = require('../services/socketService');
 const { pickFields } = require('../middlewares/validate');
 
 // Allowed fields for patient create/update — prevents mass assignment
@@ -106,6 +109,33 @@ exports.createPatient = async (req, res) => {
     sanitizedBody.createdBy = req.user.id;
 
     const patient = await Patient.create(sanitizedBody);
+
+    try {
+      const io = socketService.getIO();
+      // Find all staff under this admin's lab, except the creator
+      const staffMembers = await User.find({ 
+        $or: [{ _id: doctorId }, { parentAdminId: doctorId }],
+        _id: { $ne: req.user.id }
+      });
+
+      const notifications = staffMembers.map(staff => ({
+        recipientId: staff._id,
+        senderId: req.user.id,
+        type: 'NEW_PATIENT',
+        title: 'New Patient Registered',
+        message: `${patient.name} has been registered.`,
+        referenceId: patient._id
+      }));
+
+      if (notifications.length > 0) {
+        const inserted = await Notification.insertMany(notifications);
+        inserted.forEach(noti => {
+          io.to(`user_${noti.recipientId}`).emit('new_notification', noti);
+        });
+      }
+    } catch (err) {
+      console.error('Patient Notification Error:', err.message);
+    }
 
     res.status(201).json({ success: true, data: patient });
   } catch (error) {
