@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 const http = require('http');
@@ -28,11 +29,11 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, Postman)
-    if (!origin) return callback(null, true);
+    // Allow requests with no origin (mobile apps, curl, Postman) ONLY in dev
+    if (!origin && process.env.NODE_ENV !== 'production') return callback(null, true);
     
     // Check if origin is in whitelist or if wildcard is present
-    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
+    if (allowedOrigins.indexOf(origin) !== -1 || (allowedOrigins.includes('*') && process.env.NODE_ENV !== 'production')) {
       return callback(null, true);
     }
     
@@ -77,30 +78,12 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
 // ---------- NoSQL Injection Sanitizer ----------
-/**
- * Recursively removes any keys starting with '$' or containing '.' 
- * to prevent NoSQL Injection attacks. Compatible with Express 5.
- */
-const sanitizeData = (data) => {
-  if (data instanceof Array) {
-    for (let i = 0; i < data.length; i++) {
-      sanitizeData(data[i]);
-    }
-  } else if (data !== null && typeof data === 'object') {
-    Object.keys(data).forEach((key) => {
-      if (key.startsWith('$') || key.includes('.')) {
-        delete data[key];
-      } else {
-        sanitizeData(data[key]);
-      }
-    });
-  }
-};
-
+// We wrap mongoSanitize to avoid reassigning req.query (which is read-only in Express 5).
+// The .sanitize() method mutates the properties safely in-place.
 app.use((req, res, next) => {
-  if (req.body) sanitizeData(req.body);
-  if (req.query) sanitizeData(req.query);
-  if (req.params) sanitizeData(req.params);
+  if (req.body) mongoSanitize.sanitize(req.body);
+  if (req.query) mongoSanitize.sanitize(req.query);
+  if (req.params) mongoSanitize.sanitize(req.params);
   next();
 });
 

@@ -26,6 +26,22 @@ const BASE_URL = (() => {
 
 const API_URL = BASE_URL; // Global alias for scripts using old naming convention
 
+/**
+ * SECURITY: XSS Mitigation Utility
+ * All user-generated content (e.g., patient names, lab notes, report fields)
+ * MUST be sanitized before being injected into the DOM via innerHTML.
+ * This prevents malicious scripts from reading `localStorage.getItem('lis_token')`.
+ */
+const sanitizeHTML = (str) => {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
 const api = {
   getToken() {
     return localStorage.getItem('lis_token');

@@ -2,10 +2,10 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { isValidEmail, isStrongPassword } = require('../middlewares/validate');
 
-// Generate JWT Helper — 7 day expiry (reduced from 30d)
+// Generate JWT Helper — 8 hour expiry
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '7d'
+    expiresIn: '8h'
   });
 };
 
