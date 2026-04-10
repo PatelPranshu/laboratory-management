@@ -30,29 +30,29 @@ async function fetchStaff() {
                 <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center">
                         <div class="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-50 flex items-center justify-center text-indigo-500 font-bold shadow-inner uppercase">
-                            ${escapeHtml(user.name.substring(0, 2))}
+                            ${sanitizeHTML(user.name.substring(0, 2))}
                         </div>
                         <div class="ml-4">
-                            <div class="text-sm font-bold text-slate-800">${escapeHtml(user.name)}</div>
+                            <div class="text-sm font-bold text-slate-800">${sanitizeHTML(user.name)}</div>
                         </div>
                     </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                    ${escapeHtml(user.email)}
+                    ${sanitizeHTML(user.email)}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-md bg-slate-100 text-slate-700">
-                        ${escapeHtml(user.role)}
+                        ${sanitizeHTML(user.role)}
                     </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                     <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-md ${user.accountStatus === 'Active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
-                        ${escapeHtml(user.accountStatus || 'Unknown')}
+                        ${sanitizeHTML(user.accountStatus || 'Unknown')}
                     </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button onclick="resetStaffPassword('${user._id}', '${escapeHtml(user.name)}')" class="text-indigo-600 hover:text-indigo-900 mr-3" title="Reset Password"><i class="fas fa-key"></i></button>
-                    ${user.role !== 'Admin' ? `<button onclick="deleteStaff('${user._id}', '${escapeHtml(user.name)}')" class="text-red-500 hover:text-red-700" title="Remove User"><i class="fas fa-trash"></i></button>` : `<span class="text-slate-300 pointer-events-none" title="Cannot delete root admin"><i class="fas fa-trash"></i></span>`}
+                    <button onclick="resetStaffPassword('${user._id}', '${sanitizeHTML(user.name)}')" class="text-indigo-600 hover:text-indigo-900 mr-3" title="Reset Password"><i class="fas fa-key"></i></button>
+                    ${user.role !== 'Admin' ? `<button onclick="deleteStaff('${user._id}', '${sanitizeHTML(user.name)}')" class="text-red-500 hover:text-red-700" title="Remove User"><i class="fas fa-trash"></i></button>` : `<span class="text-slate-300 pointer-events-none" title="Cannot delete root admin"><i class="fas fa-trash"></i></span>`}
                 </td>
             </tr>
         `).join('');

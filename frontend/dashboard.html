@@ -229,14 +229,14 @@
                         <td class="px-7 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-brand-100 to-indigo-100 text-brand-700 flex items-center justify-center font-bold shadow-sm border border-white">
-                                    ${p.name.charAt(0)}
+                                    ${sanitizeHTML(p.name.charAt(0))}
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-bold text-slate-800">${p.name}</div>
+                                    <div class="text-sm font-bold text-slate-800">${sanitizeHTML(p.name)}</div>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-7 py-4 whitespace-nowrap text-sm text-slate-500 font-medium">${p.phone}</td>
+                        <td class="px-7 py-4 whitespace-nowrap text-sm text-slate-500 font-medium">${sanitizeHTML(p.phone)}</td>
                         <td class="px-7 py-4 whitespace-nowrap text-sm text-slate-500">${new Date(p.createdAt).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'})}</td>
                     </tr>
                 `).join('') || `<tr><td colspan="3" class="px-7 py-8 text-center text-sm text-slate-500">No recent patients. Get started by adding one.</td></tr>`;
@@ -251,9 +251,9 @@
                     };
                     return `
                     <tr class="hover:bg-brand-50/30 transition-colors">
-                        <td class="px-7 py-4 whitespace-nowrap text-sm font-bold text-slate-800">${r.patientId ? r.patientId.name : 'Unknown Patient'}</td>
+                        <td class="px-7 py-4 whitespace-nowrap text-sm font-bold text-slate-800">${r.patientId ? sanitizeHTML(r.patientId.name) : 'Unknown Patient'}</td>
                         <td class="px-7 py-4 whitespace-nowrap">
-                            <span class="px-3 py-1 inline-flex text-xs font-bold rounded-lg border ${statusColors[r.status] || statusColors.draft} shadow-sm">${r.status.toUpperCase()}</span>
+                            <span class="px-3 py-1 inline-flex text-xs font-bold rounded-lg border ${statusColors[r.status] || statusColors.draft} shadow-sm">${sanitizeHTML(r.status.toUpperCase())}</span>
                         </td>
                         <td class="px-7 py-4 whitespace-nowrap text-right text-sm font-medium">
                             ${r.status !== 'draft' ? `<a href="${BASE_URL}/reports/${r._id}/pdf?token=${localStorage.getItem('lis_token')}" target="_blank" class="p-2 text-brand-600 hover:bg-brand-50 hover:text-brand-800 rounded-lg transition-colors mr-1 tooltip-container" title="View PDF"><i class="fas fa-file-pdf"></i></a>` : ''}

@@ -263,8 +263,8 @@ function setupNotificationSystem(token) {
                         ${n.type === 'NEW_PATIENT' ? '<i class="fas fa-user-plus text-xs"></i>' : '<i class="fas fa-file-medical text-xs"></i>'}
                     </div>
                     <div>
-                        <p class="text-[13px] font-semibold text-slate-800 mb-0.5 ${!n.isRead ? 'text-brand-700' : ''}">${n.title}</p>
-                        <p class="text-[12px] text-slate-500 leading-snug">${n.message}</p>
+                        <p class="text-[13px] font-semibold text-slate-800 mb-0.5 ${!n.isRead ? 'text-brand-700' : ''}">${sanitizeHTML(n.title)}</p>
+                        <p class="text-[12px] text-slate-500 leading-snug">${sanitizeHTML(n.message)}</p>
                         <p class="text-[10px] font-medium text-slate-400 mt-1.5"><i class="far fa-clock mr-1"></i>${new Date(n.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} • ${new Date(n.createdAt).toLocaleDateString()}</p>
                     </div>
                     ${!n.isRead ? '<div class="w-2 h-2 rounded-full bg-brand-500 mt-2 ml-auto shrink-0 shadow-sm"></div>' : ''}

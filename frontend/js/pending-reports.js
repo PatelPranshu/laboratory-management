@@ -21,20 +21,20 @@ async function fetchPendingReports() {
                     ${new Date(report.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                 </td>
                 <td class="px-8 py-6 whitespace-nowrap">
-                    <div class="font-bold text-slate-900 text-base tracking-tight">${escapeHtml(report.patientId?.name || 'Unknown Patient')}</div>
+                    <div class="font-bold text-slate-900 text-base tracking-tight">${sanitizeHTML(report.patientId?.name || 'Unknown Patient')}</div>
                     <div class="text-xs font-bold text-slate-400 mt-1 uppercase tracking-tighter">${report.patientId?.age || '?'} yrs • ${report.patientId?.gender || 'Unknown'}</div>
                 </td>
                 <td class="px-8 py-6 whitespace-nowrap">
                     <div class="flex items-center gap-2">
-                        <span class="text-sm font-bold text-slate-700">${escapeHtml(report.creatorId?.name || 'System')}</span>
-                        <span class="text-[9px] font-black bg-slate-100 text-slate-400 rounded-md px-2 py-0.5 uppercase tracking-widest border border-slate-200">${escapeHtml(report.creatorId?.role || 'User')}</span>
+                        <span class="text-sm font-bold text-slate-700">${sanitizeHTML(report.creatorId?.name || 'System')}</span>
+                        <span class="text-[9px] font-black bg-slate-100 text-slate-400 rounded-md px-2 py-0.5 uppercase tracking-widest border border-slate-200">${sanitizeHTML(report.creatorId?.role || 'User')}</span>
                     </div>
                 </td>
                 <td class="px-8 py-6 whitespace-nowrap">
                     ${report.verifierId ? `
                         <div class="flex items-center text-slate-800">
                             <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mr-3 border border-emerald-100"><i class="fas fa-user-md text-sm"></i></div>
-                            <span class="text-sm font-bold">${escapeHtml(report.verifierId.name)}</span>
+                            <span class="text-sm font-bold">${sanitizeHTML(report.verifierId.name)}</span>
                         </div>
                     ` : `
                         <span class="text-xs font-bold text-amber-500 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-100"><i class="fas fa-exclamation-triangle mr-2"></i>Unassigned</span>

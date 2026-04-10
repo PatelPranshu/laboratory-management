@@ -337,7 +337,7 @@
                     
                     let testNames = "No sections defined";
                     if(r.sections && r.sections.length > 0) {
-                        testNames = r.sections.map(s => s.sectionName).join(', ');
+                        testNames = r.sections.map(s => sanitizeHTML(s.sectionName)).join(', ');
                     }
 
                     const isDraft = r.status.toLowerCase() === 'draft';
@@ -345,13 +345,13 @@
 
                     const statusBadge = isDraft 
                         ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200">DRAFT</span>`
-                        : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 uppercase tracking-wider">${r.status}</span>`;
+                        : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 uppercase tracking-wider">${sanitizeHTML(r.status)}</span>`;
 
                     return `
                     <div class="grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-50 items-center hover:bg-slate-50/80 transition-colors group">
                         <div class="col-span-2 text-sm font-bold text-slate-700">${d}</div>
                         <div class="col-span-4 text-sm text-slate-600 truncate pr-4" title="${testNames}">${testNames}</div>
-                        <div class="col-span-3 text-sm text-slate-500 font-medium truncate pr-4">${r.referredBy || 'Self'}</div>
+                        <div class="col-span-3 text-sm text-slate-500 font-medium truncate pr-4">${sanitizeHTML(r.referredBy || 'Self')}</div>
                         <div class="col-span-2">${statusBadge}</div>
                         <div class="col-span-1 flex justify-end gap-2">
                             <a href="report-create.html?edit=${r._id}" class="p-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-800 rounded-lg transition-colors shadow-sm" title="Edit/View Report">

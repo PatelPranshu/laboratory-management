@@ -61,7 +61,7 @@ async function fetchSignatures() {
                             ${sig.doctorName.charAt(0)}
                         </div>
                         <div>
-                            <h4 class="font-bold text-slate-800 tracking-tight">${escapeHtml(sig.doctorName)}</h4>
+                            <h4 class="font-bold text-slate-800 tracking-tight">${sanitizeHTML(sig.doctorName)}</h4>
                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Medical Officer</p>
                         </div>
                     </div>
@@ -73,7 +73,7 @@ async function fetchSignatures() {
                 </div>
                 
                 <div class="bg-white border border-slate-100 rounded-2xl p-4 h-24 flex items-center justify-center shadow-inner relative overflow-hidden group/sig">
-                    <img src="${escapeHtml(sig.signatureUrl)}" alt="Signature" class="max-h-full object-contain transition-transform group-hover/sig:scale-110" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'text-[10px] font-bold text-red-400 uppercase tracking-widest\\'>Invalid Image</span>';">
+                    <img src="${sanitizeHTML(sig.signatureUrl)}" alt="Signature" class="max-h-full object-contain transition-transform group-hover/sig:scale-110" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'text-[10px] font-bold text-red-400 uppercase tracking-widest\\'>Invalid Image</span>';">
                     <div class="absolute inset-0 bg-slate-900/5 opacity-0 group-hover/sig:opacity-100 transition-opacity"></div>
                 </div>
             </div>

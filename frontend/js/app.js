@@ -22,12 +22,10 @@ class DraftManager {
 
 /**
  * Escape HTML entities to prevent XSS when injecting user content into the DOM.
+ * Standardized to use sanitizeHTML from api.js.
  */
 function escapeHtml(str) {
-  if (!str) return '';
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+  return typeof sanitizeHTML === 'function' ? sanitizeHTML(str) : str;
 }
 
 class UI {
@@ -43,7 +41,7 @@ class UI {
     toast.className = `toast ${type} shadow-lg !font-bold py-3.5 px-6 rounded-2xl flex items-center gap-3 animate-slide-in`;
     
     const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
-    toast.innerHTML = `<i class="fas ${icon} text-lg opacity-80"></i><span>${escapeHtml(message)}</span>`;
+    toast.innerHTML = `<i class="fas ${icon} text-lg opacity-80"></i><span>${sanitizeHTML(message)}</span>`;
 
     container.appendChild(toast);
 
@@ -85,8 +83,8 @@ class UI {
                 <div class="w-16 h-16 rounded-2xl ${iconColor} flex items-center justify-center mx-auto mb-6">
                     <i class="fas ${icon} text-3xl"></i>
                 </div>
-                <h3 class="text-xl font-bold text-center text-slate-900 mb-2 tracking-tight">${escapeHtml(title)}</h3>
-                <p class="text-center text-slate-500 mb-8 text-sm font-medium leading-relaxed">${escapeHtml(message)}</p>
+                <h3 class="text-xl font-bold text-center text-slate-900 mb-2 tracking-tight">${sanitizeHTML(title)}</h3>
+                <p class="text-center text-slate-500 mb-8 text-sm font-medium leading-relaxed">${sanitizeHTML(message)}</p>
                 <button id="ui-alert-ok" class="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-black transition-all shadow-sm">Got it</button>
             </div>
         `;
@@ -124,11 +122,11 @@ class UI {
             <div class="w-16 h-16 rounded-2xl ${iconStyles} flex items-center justify-center mx-auto mb-6">
                 <i class="fas ${icon} text-3xl"></i>
             </div>
-            <h3 class="text-xl font-bold text-center text-slate-900 mb-2 tracking-tight">${escapeHtml(title)}</h3>
-            <p class="text-center text-slate-500 mb-8 text-sm font-medium leading-relaxed">${escapeHtml(message)}</p>
+            <h3 class="text-xl font-bold text-center text-slate-900 mb-2 tracking-tight">${sanitizeHTML(title)}</h3>
+            <p class="text-center text-slate-500 mb-8 text-sm font-medium leading-relaxed">${sanitizeHTML(message)}</p>
             <div class="flex gap-3">
                 <button id="ui-btn-cancel" class="flex-1 py-4 bg-slate-50 text-slate-500 font-bold rounded-2xl hover:bg-slate-100 transition-all">Cancel</button>
-                <button id="ui-btn-confirm" class="flex-1 py-4 ${confirmBtnClass} font-bold rounded-2xl shadow-sm transition-all">${escapeHtml(confirmText)}</button>
+                <button id="ui-btn-confirm" class="flex-1 py-4 ${confirmBtnClass} font-bold rounded-2xl shadow-sm transition-all">${sanitizeHTML(confirmText)}</button>
             </div>
         </div>
       `;
@@ -167,10 +165,10 @@ class UI {
                   <div class="w-16 h-16 rounded-2xl ${iconStyles} flex items-center justify-center mx-auto mb-6">
                       <i class="fas fa-edit text-3xl"></i>
                   </div>
-                  <h3 class="text-xl font-bold text-center text-slate-900 mb-2 tracking-tight">${escapeHtml(title)}</h3>
-                  <p class="text-center text-slate-500 mb-6 text-sm font-medium leading-relaxed">${escapeHtml(message)}</p>
+                  <h3 class="text-xl font-bold text-center text-slate-900 mb-2 tracking-tight">${sanitizeHTML(title)}</h3>
+                  <p class="text-center text-slate-500 mb-6 text-sm font-medium leading-relaxed">${sanitizeHTML(message)}</p>
                   
-                  <input type="text" id="ui-prompt-input" placeholder="${escapeHtml(placeholder)}" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500/10 text-base font-bold text-slate-800 outline-none mb-6 transition-all">
+                  <input type="text" id="ui-prompt-input" placeholder="${sanitizeHTML(placeholder)}" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500/10 text-base font-bold text-slate-800 outline-none mb-6 transition-all">
 
                   <div class="flex gap-3">
                       <button id="ui-prompt-cancel" class="flex-1 py-4 bg-slate-50 text-slate-500 font-bold rounded-2xl hover:bg-slate-100 transition-all">Cancel</button>

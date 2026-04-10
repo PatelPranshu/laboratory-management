@@ -270,18 +270,20 @@
                     return;
                 }
 
-                list.innerHTML = data.map(t => `
-                    <li class="px-5 py-3 hover:bg-slate-50 cursor-pointer flex justify-between items-center transition-all border-l-2 border-transparent hover:border-brand-500 group" onclick="prepareTemplateLoad(${JSON.stringify(t)})">
+                list.innerHTML = data.map(t => {
+                    const tJson = JSON.stringify(t).replace(/'/g, "\\'");
+                    return `
+                    <li class="px-5 py-3 hover:bg-slate-50 cursor-pointer flex justify-between items-center transition-all border-l-2 border-transparent hover:border-brand-500 group" onclick='prepareTemplateLoad(${tJson})'>
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center text-sm group-hover:bg-brand-50 group-hover:text-brand-600 transition-colors border border-slate-200"><i class="fas fa-file-alt"></i></div>
                             <div class="truncate max-w-[180px]">
-                                <p class="font-medium text-slate-800 text-sm group-hover:text-brand-700 transition-colors truncate">${t.templateName}</p>
+                                <p class="font-medium text-slate-800 text-sm group-hover:text-brand-700 transition-colors truncate">${sanitizeHTML(t.templateName)}</p>
                                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tight mt-0.5">${t.sections.length} ${t.sections.length === 1 ? 'section' : 'sections'}</p>
                             </div>
                         </div>
                         <button onclick="deleteTemplate(event, '${t._id}')" class="text-slate-300 hover:text-red-500 focus:outline-none p-1.5 rounded transition-colors opacity-0 group-hover:opacity-100" title="Delete Template"><i class="fas fa-trash text-sm"></i></button>
                     </li>
-                `).join('');
+                `}).join('');
             } catch (err) {
                  UI.showToast('Failed to load templates from server', 'error');
                  list.innerHTML = `<li class="p-6 text-center text-red-500 font-medium text-sm">Error connecting to server.</li>`;

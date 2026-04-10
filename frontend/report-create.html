@@ -381,7 +381,7 @@
                  if (templatesData.length === 0) { container.innerHTML = '<span class="text-sm text-slate-400 font-medium">No Templates Found</span>'; return; }
                  templatesData.forEach(t => {
                      const wrapper = document.createElement('div');
-                     wrapper.innerHTML = `<input type="checkbox" id="tpl-${t._id}" class="hidden chip-checkbox" value="${t._id}" onchange="toggleTemplate(this, '${t._id}')"><label for="tpl-${t._id}" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-600 bg-white cursor-pointer hover:border-brand-400 transition-all block truncate max-w-[150px]" title="${t.templateName}">${t.templateName}</label>`;
+                     wrapper.innerHTML = `<input type="checkbox" id="tpl-${t._id}" class="hidden chip-checkbox" value="${t._id}" onchange="toggleTemplate(this, '${t._id}')"><label for="tpl-${t._id}" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-600 bg-white cursor-pointer hover:border-brand-400 transition-all block truncate max-w-[150px]" title="${sanitizeHTML(t.templateName)}">${sanitizeHTML(t.templateName)}</label>`;
                      container.appendChild(wrapper.firstElementChild); container.appendChild(wrapper.lastElementChild);
                  });
              } catch (err) { }
@@ -399,10 +399,10 @@
                 }
 
                 list.innerHTML = res.data.map(sig => `
-                    <li onclick="selectDoctor('${sig.doctorId || sig._id}', '${sig.doctorName}', '${sig.signatureUrl}')" 
+                    <li onclick="selectDoctor('${sig.doctorId || sig._id}', '${sanitizeHTML(sig.doctorName)}', '${sanitizeHTML(sig.signatureUrl)}')" 
                         class="px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-600 cursor-pointer transition-all flex items-center gap-3">
-                        <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-400 font-bold">${sig.doctorName.charAt(0)}</div>
-                        <span>${sig.doctorName}</span>
+                        <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-400 font-bold">${sanitizeHTML(sig.doctorName.charAt(0))}</div>
+                        <span>${sanitizeHTML(sig.doctorName)}</span>
                     </li>
                 `).join('');
             } catch (err) { }
@@ -469,7 +469,10 @@
                     try {
                         const res = await api.request(`/patients?search=${encodeURIComponent(query)}&limit=8`, 'GET', null, abortController.signal);
                         if (res.data.length === 0) results.innerHTML = `<div class="p-4 text-center"><p class="text-sm text-slate-500">No Match Found</p><button type="button" onclick="openPatientModal()" class="text-sm font-medium text-brand-600 mt-2">Register New Profile</button></div>`;
-                        else results.innerHTML = res.data.map(p => `<div class="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-all flex items-center gap-3" onclick='selectPatient(${JSON.stringify(p)})'><div class="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center font-medium text-sm text-brand-600">${p.name.charAt(0)}</div><div class="truncate"><p class="font-medium text-slate-800 text-sm">${p.name}</p><p class="text-xs text-slate-500">${p.phone} • ${p.age}y / ${p.gender.charAt(0)}</p></div></div>`).join('');
+                        else results.innerHTML = res.data.map(p => {
+                            const pJson = JSON.stringify(p).replace(/'/g, "\\'");
+                            return `<div class="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-all flex items-center gap-3" onclick='selectPatient(${pJson})'><div class="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center font-medium text-sm text-brand-600">${sanitizeHTML(p.name.charAt(0))}</div><div class="truncate"><p class="font-medium text-slate-800 text-sm">${sanitizeHTML(p.name)}</p><p class="text-xs text-slate-500">${sanitizeHTML(p.phone)} • ${sanitizeHTML(p.age)}y / ${sanitizeHTML(p.gender.charAt(0))}</p></div></div>`;
+                        }).join('');
                     } catch (err) { if (err.name !== 'AbortError') results.classList.add('hidden'); }
                 }, 400);
             });
