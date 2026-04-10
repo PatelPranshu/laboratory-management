@@ -66,7 +66,7 @@
                         <button onclick="exportCSV()" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-5 py-2.5 rounded-xl shadow-sm transition-all flex items-center font-bold">
                             <i class="fas fa-file-csv mr-2 text-brand-500"></i> Export CSV
                         </button>
-                        <button onclick="openModal()" class="bg-brand-600 hover:bg-brand-500 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-brand-500/30 transition-all flex items-center font-bold">
+                        <button onclick="openModal()" class="bg-brand-600 hover:bg-brand-500 text-white px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center font-bold">
                             <i class="fas fa-plus mr-2"></i> Add Patient
                         </button>
                     </div>
@@ -97,7 +97,7 @@
 
                         <!-- Action Button -->
                         <div class="md:col-span-2">
-                            <button onclick="applySearch()" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-2 py-[11px] rounded-xl transition-all font-bold shadow-lg shadow-brand-500/20 text-[11px] flex items-center justify-center group tracking-tighter">
+                            <button onclick="applySearch()" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-2 py-[11px] rounded-xl transition-all font-bold shadow-md text-[11px] flex items-center justify-center group tracking-tighter">
                                 <i class="fas fa-filter mr-1.5 text-brand-200 group-hover:text-white transition-colors"></i> Apply
                             </button>
                         </div>
@@ -463,7 +463,8 @@
         }
 
         async function deletePatient(id) {
-            if (confirm('Are you sure you want to delete this patient? This action cannot be undone.')) {
+            const confirmed = await UI.showConfirm('Delete Patient', 'Are you sure you want to delete this patient? This action cannot be undone.', 'Delete', 'danger');
+            if (confirmed) {
                 try {
                     await api.request(`/patients/${id}`, 'DELETE');
                     UI.showToast('Patient deleted', 'success');

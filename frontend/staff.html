@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Management - MyPathoLabs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 antialiased text-slate-800 selection:bg-brand-500 selection:text-white">
+
+    <div class="flex h-screen overflow-hidden bg-slate-100">
+        
+        <!-- Sidebar Layout Injected via JS -->
+
+        <!-- Main Content -->
+        <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar pb-12">
+            
+            <!-- Top Header -->
+            <header class="bg-white border-b border-slate-200 flex items-center justify-between px-8 py-5 sticky top-0 z-10">
+                <div class="flex-1 w-full max-w-2xl flex relative opacity-0"></div>
+                <!-- Breadcrumbs -->
+                <nav class="flex absolute left-8 top-1/2 transform -translate-y-1/2" aria-label="Breadcrumb">
+                  <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+                    <li class="inline-flex items-center text-slate-500 hover:text-brand-600 transition-colors">
+                      <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-2"></i>Dashboard</a>
+                    </li>
+                    <li>
+                      <div class="flex items-center">
+                        <i class="fas fa-chevron-right text-slate-400 text-xs mx-2"></i>
+                        <span class="text-slate-800 font-bold">Team Management</span>
+                      </div>
+                    </li>
+                  </ol>
+                </nav>
+            </header>
+
+            <div class="px-8 py-8 max-w-[1600px] mx-auto">
+                
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center mt-2 group">
+                            <i class="fas fa-user-shield text-brand-500 mr-3 group-hover:scale-110 transition-transform"></i>
+                            Team Management
+                        </h1>
+                        <p class="text-slate-500 mt-2 text-sm max-w-xl leading-relaxed">Manage your secure laboratory staff portal.</p>
+                    </div>
+                    <div class="flex space-x-4">
+                        <button onclick="openInviteModal()" class="px-5 py-2.5 bg-white text-brand-600 border border-brand-200 rounded-xl font-bold shadow-sm hover:shadow-md hover:bg-brand-50 transform hover:-translate-y-0.5 transition-all text-sm flex items-center gap-2">
+                            <i class="fas fa-envelope"></i> Invite Doctor
+                        </button>
+                        <button onclick="openTechModal()" class="px-5 py-2.5 bg-gradient-to-br from-brand-500 to-brand-600 text-white border border-transparent rounded-xl font-bold shadow-md transform hover:-translate-y-0.5 transition-all text-sm flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Add Technician
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
+                    <div class="overflow-x-auto min-h-[400px]">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-slate-500 bg-slate-50/80 uppercase font-bold tracking-wider">
+                                <tr>
+                                    <th scope="col" class="px-6 py-4">Name</th>
+                                    <th scope="col" class="px-6 py-4">Email</th>
+                                    <th scope="col" class="px-6 py-4">Role</th>
+                                    <th scope="col" class="px-6 py-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="staff-table-body" class="divide-y divide-slate-100">
+                                <tr><td colspan="4" class="px-6 py-8 text-center text-slate-500"><i class="fas fa-spinner fa-spin mr-2"></i>Loading staff...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals (Hidden by default) -->
+    <div id="invite-modal" class="fixed inset-0 bg-slate-900/40 z-50 items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 overflow-hidden transform scale-95 transition-transform duration-300">
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-envelope text-brand-500 mr-2"></i>Invite Doctor</h3>
+                <button onclick="closeInviteModal()" class="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer p-1"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="invite-form" onsubmit="handleInvite(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5" for="invite-email">Doctor's Email</label>
+                        <input type="email" id="invite-email" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring focus:ring-brand-500/20 transition-all text-sm font-medium" placeholder="doctor@example.com">
+                    </div>
+                    <div class="mt-6">
+                        <button type="submit" id="btn-invite" class="w-full bg-brand-500 text-white font-bold rounded-xl py-2.5 hover:bg-brand-600 transition-all focus:ring focus:ring-brand-500/30">Send Invitation</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="tech-modal" class="fixed inset-0 bg-slate-900/40 z-50 items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 overflow-hidden transform scale-95 transition-transform duration-300">
+            <div class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="text-lg font-bold text-slate-800"><i class="fas fa-user-plus text-brand-500 mr-2"></i>Add Lab Technician</h3>
+                <button onclick="closeTechModal()" class="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer p-1"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="p-6">
+                <form id="tech-form" onsubmit="handleTechAdd(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Full Name</label>
+                        <input type="text" id="tech-name" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring focus:ring-brand-500/20 transition-all text-sm font-medium" placeholder="Tech Name">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Email</label>
+                        <input type="email" id="tech-email" required class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring focus:ring-brand-500/20 transition-all text-sm font-medium" placeholder="tech@example.com">
+                    </div>
+                    <div class="mb-4 text-xs text-brand-600 bg-brand-50 p-3 rounded-xl border border-brand-100">
+                        <i class="fas fa-info-circle mr-1"></i> A temporary password will be given. They must change it upon their first login.
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-slate-700 mb-1.5">Temporary Password</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="tech-password" required minlength="8" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring focus:ring-brand-500/20 transition-all text-sm font-medium" placeholder="Min. 8 chars, 1 uppercase, 1 number">
+                            <button type="button" onclick="generateTempPassword()" class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 rounded-xl transition-colors shrink-0 font-bold text-sm" title="Auto Generate">
+                                <i class="fas fa-magic"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <button type="submit" id="btn-tech" class="w-full bg-brand-500 text-white font-bold rounded-xl py-2.5 hover:bg-brand-600 transition-all focus:ring focus:ring-brand-500/30">Create Technician</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Centralized JS -->
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/layout.js"></script>
+    
+    <script>
+        checkAuth();
+        // Access control: only Admin
+        const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
+        if (user.role !== 'Admin') {
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+    <script src="js/staff.js"></script>
+</body>
+</html>

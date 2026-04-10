@@ -14,7 +14,7 @@ exports.getPatients = async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit, 10) || 10, 100); // Cap at 100
     const startIndex = (page - 1) * limit;
     
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
+    const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
 
     // Build Query
     let query = { doctorId };
@@ -73,8 +73,12 @@ exports.getPatients = async (req, res) => {
 // @access  Private
 exports.getPatient = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
-    const patient = await Patient.findOne({ _id: req.params.id, doctorId });
+    const adminId = getAdminId(req);
+    let query = { _id: req.params.id, doctorId: adminId };
+    if (req.user.role === 'LabTech') {
+      query.createdBy = req.user.id;
+    }
+    const patient = await Patient.findOne(query);
 
     if (!patient) {
       return res.status(404).json({ success: false, error: 'Patient not found' });
@@ -92,7 +96,7 @@ exports.getPatient = async (req, res) => {
 // @access  Private
 exports.createPatient = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
+    const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
 
     // Whitelist fields — prevent mass assignment of doctorId or other internal fields
     const sanitizedBody = pickFields(req.body, PATIENT_FIELDS);
@@ -112,7 +116,7 @@ exports.createPatient = async (req, res) => {
 // @access  Private
 exports.updatePatient = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
+    const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
     let patient = await Patient.findOne({ _id: req.params.id, doctorId });
 
     if (!patient) {
@@ -139,7 +143,7 @@ exports.updatePatient = async (req, res) => {
 // @access  Private
 exports.deletePatient = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
+    const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
     const patient = await Patient.findOne({ _id: req.params.id, doctorId });
 
     if (!patient) {

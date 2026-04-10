@@ -101,9 +101,11 @@ const reports = require('./routes/reports');
 const settings = require('./routes/settings');
 const dashboard = require('./routes/dashboard');
 const search = require('./routes/search');
+const staff = require('./routes/staff');
 
 // Mount routers (auth routes get stricter rate limiting)
 app.use('/api/auth', authLimiter, auth);
+app.use('/api/staff', authLimiter, staff);
 app.use('/api/patients', patients);
 app.use('/api/templates', templates);
 app.use('/api/reports', reports);

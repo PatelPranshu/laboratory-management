@@ -24,7 +24,7 @@ const UserSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: {
-      values: ['Doctor', 'LabTech'],
+      values: ['Admin', 'Doctor', 'LabTech'],
       message: '{VALUE} is not a valid role'
     },
     default: 'Doctor'
@@ -43,9 +43,21 @@ const UserSchema = new mongoose.Schema({
     enum: ['active', 'inactive', 'trial'],
     default: 'trial'
   },
-  parentDoctorId: {
+  parentAdminId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  },
+  accountStatus: {
+    type: String,
+    enum: ['Pending', 'Active', 'Suspended'],
+    default: 'Pending'
+  },
+  mustChangePassword: {
+    type: Boolean,
+    default: false
+  },
+  signatureUrl: {
+    type: String
   }
 }, { timestamps: true });
 

@@ -17,10 +17,11 @@ function sanitizeForHtml(str) {
 
 function loadCommonLayout() {
     let labName = 'MyPathoLabs';
+    let u = null;
     const userStr = localStorage.getItem('lis_user');
     if (userStr) {
         try {
-            const u = JSON.parse(userStr);
+            u = JSON.parse(userStr);
             if (u.labName) labName = u.labName;
         } catch(e) {}
     }
@@ -29,19 +30,16 @@ function loadCommonLayout() {
     const safeLabName = sanitizeForHtml(labName);
 
     const sidebarHTML = `
-        <aside class="w-72 bg-gradient-sidebar text-white flex flex-col shadow-2xl relative z-20 shrink-0">
-            <!-- Decorative blur -->
-            <div class="absolute top-0 left-0 w-full h-32 bg-white/5 backdrop-blur-3xl -z-10"></div>
-            
-            <div class="h-24 flex items-center justify-start border-b border-white/10 px-6 group/logo cursor-default">
+        <aside class="w-72 bg-gradient-sidebar text-white flex flex-col shadow-lg relative z-20 shrink-0">
+            <!-- Sidebar Header -->
+            <div class="h-24 flex items-center justify-start border-b border-white/5 px-6 group/logo cursor-default">
                 <div class="relative">
-                    <div class="bg-gradient-to-br from-brand-400/20 to-indigo-500/20 p-2.5 rounded-2xl backdrop-blur-xl shadow-lg border border-white/20 mr-4 shrink-0 transition-all duration-500 group-hover/logo:scale-110 group-hover/logo:rotate-6 group-hover/logo:border-brand-300/40">
-                        <i class="fa-solid fa-microscope text-2xl text-brand-100 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"></i>
+                    <div class="bg-white/10 p-2.5 rounded-2xl shadow-md border border-white/10 mr-4 shrink-0 transition-transform duration-300 group-hover/logo:scale-105">
+                        <i class="fa-solid fa-microscope text-2xl text-brand-100"></i>
                     </div>
-                    <div class="absolute inset-0 bg-brand-400/10 rounded-2xl blur-xl animate-pulse -z-10 group-hover/logo:bg-brand-400/20"></div>
                 </div>
                 <div class="flex flex-col min-w-0">
-                    <div class="text-lg font-black tracking-tighter text-white truncate leading-none uppercase group-hover/logo:tracking-tight transition-all duration-500" title="MyPathoLabs">
+                    <div class="text-lg font-black tracking-tighter text-white truncate leading-none uppercase transition-all duration-300" title="MyPathoLabs">
                         MyPatho<span class="text-brand-300 font-bold block mt-0.5 text-sm tracking-widest">Labs</span>
                     </div>
                 </div>
@@ -56,28 +54,38 @@ function loadCommonLayout() {
                     <i class="fas fa-users w-6 group-hover:text-brand-100 transition-colors"></i> 
                     <span class="font-medium ml-2">Patients</span>
                 </a>
+                ${(u && (u.role === 'Admin' || u.role === 'Doctor')) ? `
                 <a href="templates.html" data-page="templates" class="nav-link flex items-center px-4 py-3.5 text-indigo-100/70 hover:bg-white/5 hover:text-white rounded-xl transition-custom group">
                     <i class="fas fa-file-invoice w-6 group-hover:text-brand-100 transition-colors"></i> 
                     <span class="font-medium ml-2">Custom Reports</span>
                 </a>
+                ` : ''}
+                ${(u && u.role === 'Admin') ? `
+                <a href="staff.html" data-page="staff" class="nav-link flex items-center px-4 py-3.5 text-indigo-100/70 hover:bg-white/5 hover:text-white rounded-xl transition-custom group">
+                    <i class="fas fa-user-shield w-6 group-hover:text-brand-100 transition-colors"></i> 
+                    <span class="font-medium ml-2">Team Management</span>
+                </a>
+                ` : ''}
                 <a href="report-create.html" data-page="report-create" class="nav-link flex items-center px-4 py-3.5 text-indigo-100/70 hover:bg-white/5 hover:text-white rounded-xl transition-custom group">
                     <i class="fas fa-plus-circle w-6 group-hover:text-brand-100 transition-colors"></i> 
                     <span class="font-medium ml-2">Create Report</span>
                 </a>
+                ${(u && u.role === 'Admin') ? `
                 <a href="design.html" data-page="design" class="nav-link flex items-center px-4 py-3.5 text-indigo-100/70 hover:bg-white/5 hover:text-white rounded-xl transition-custom group">
                     <i class="fas fa-paint-brush w-6 group-hover:text-brand-100 transition-colors"></i> 
                     <span class="font-medium ml-2">Design Report</span>
                 </a>
+                ` : ''}
             </nav>
 
-            <div class="p-5 border-t border-white/10 bg-black/10 backdrop-blur-sm">
+            <div class="p-5 border-t border-white/5 bg-black/5">
                 <a href="profile.html" class="flex items-center mb-5 p-2 -mx-2 rounded-xl transition-all hover:bg-white/5 active:scale-95 group no-underline">
                     <div class="w-10 h-10 flex-shrink-0 rounded-full bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center text-sm font-bold shadow-lg border border-white/20 group-hover:shadow-brand-500/20 transition-all">
                         <i class="fas fa-user-md text-white"></i>
                     </div>
                     <div class="ml-3 overflow-hidden">
                         <p class="text-sm font-bold text-white truncate w-32" id="nav-user-name">Loading...</p>
-                        <p class="text-[10px] font-bold text-indigo-300/60 uppercase tracking-widest flex items-center">
+                        <p class="text-[10px] font-bold text-indigo-300/60 uppercase tracking-widest flex items-center" id="nav-user-role">
                             Admin <i class="fas fa-chevron-right ml-1 text-[8px] opacity-0 group-hover:opacity-100 group-hover:ml-2 transition-all"></i>
                         </p>
                     </div>
@@ -100,8 +108,8 @@ function loadCommonLayout() {
         
         navLinks.forEach(link => {
             if (link.dataset.page === currentPage) {
-                // Active classes
-                link.className = "nav-link flex items-center px-4 py-3.5 bg-white/10 backdrop-blur-md border border-white/20 shadow-inner text-white rounded-xl transition-custom group";
+                // Active classes (removed backdrop-blur)
+                link.className = "nav-link flex items-center px-4 py-3.5 bg-white/10 border border-white/10 shadow-sm text-white rounded-xl transition-custom group";
                 
                 // Active icon classes
                 const icon = link.querySelector('i');
@@ -123,13 +131,18 @@ function loadCommonLayout() {
         // Re-inject user name if checkAuth already ran — use textContent (safe)
         const user = localStorage.getItem('lis_user');
         const userNameEl = document.getElementById('nav-user-name');
-        if (userNameEl && user) {
+        const userRoleEl = document.getElementById('nav-user-role');
+        if (user) {
             try {
                 const u = JSON.parse(user);
                 const displayName = u.name || (u.email ? u.email.split('@')[0] : 'User');
-                userNameEl.textContent = `Dr. ${displayName}`;
+                if (userNameEl) userNameEl.textContent = displayName;
+                if (userRoleEl) {
+                    const roleText = u.role === 'Admin' ? 'Admin' : (u.role === 'Doctor' ? 'Doctor / Pathologist' : 'Lab Technician');
+                    userRoleEl.innerHTML = `${roleText} <i class="fas fa-chevron-right ml-1 text-[8px] opacity-0 group-hover:opacity-100 group-hover:ml-2 transition-all"></i>`;
+                }
             } catch(e) {
-                userNameEl.textContent = 'User';
+                if (userNameEl) userNameEl.textContent = 'User';
             }
         }
     }

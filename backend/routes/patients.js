@@ -7,7 +7,7 @@ const {
   deletePatient
 } = require('../controllers/patientController');
 
-const { protect } = require('../middlewares/authMiddleware');
+const { protect, authorize } = require('../middlewares/authMiddleware');
 const { validateObjectId } = require('../middlewares/validate');
 
 const router = express.Router();
@@ -19,6 +19,6 @@ router.route('/')
 router.route('/:id')
   .get(protect, validateObjectId, getPatient)
   .put(protect, validateObjectId, updatePatient)
-  .delete(protect, validateObjectId, deletePatient);
+  .delete(protect, validateObjectId, authorize('Admin'), deletePatient);
 
 module.exports = router;

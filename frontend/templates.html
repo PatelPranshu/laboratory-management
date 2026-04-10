@@ -501,7 +501,8 @@
 
         async function deleteTemplate(e, id) {
              e.stopPropagation(); // prevent loading to editor
-             if (confirm('Are you ABSOLUTELY sure you want to delete this template? Future reports cannot use it.')) {
+             const confirmed = await UI.showConfirm('Delete Template', 'Are you ABSOLUTELY sure you want to delete this template? Future reports cannot use it.', 'Delete', 'danger');
+             if (confirmed) {
                  try {
                      await api.request(`/templates/${id}`, 'DELETE');
                      UI.showToast('Template permanently deleted', 'success');

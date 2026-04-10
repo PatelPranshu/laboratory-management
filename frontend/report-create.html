@@ -70,7 +70,7 @@
                         
                         <div id="action-wrapper" class="relative">
                             <!-- State 1: Save Button -->
-                            <button id="btn-save-report" onclick="saveReport()" class="px-8 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-lg shadow-brand-500/20 transform hover:-translate-y-0.5 transition-all flex items-center justify-center whitespace-nowrap">
+                            <button id="btn-save-report" onclick="saveReport()" class="px-8 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow-md transform hover:-translate-y-0.5 transition-all flex items-center justify-center whitespace-nowrap">
                                 <i class="fas fa-save mr-2"></i> Save Report
                             </button>
 
@@ -635,6 +635,12 @@
                  
                  if(r.patientId) selectPatient(r.patientId); // Handle case if patient was deleted
                  
+                 if (r.templateIds && Array.isArray(r.templateIds)) {
+                     document.querySelectorAll('#templates-checkbox-container input[type="checkbox"]').forEach(cb => {
+                         if (r.templateIds.includes(cb.value)) cb.checked = true;
+                     });
+                 }
+                 
                  const container = document.getElementById('report-sections-container');
                  container.innerHTML = '';
 
@@ -728,16 +734,18 @@
 
             if (sections.length === 0) return UI.showToast('Report must contain at least one section with a name', 'error');
 
+            const templateIds = Array.from(document.querySelectorAll('#templates-checkbox-container input[type="checkbox"]:checked')).map(cb => cb.value);
+
             UI.toggleLoader('btn-save-report', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Saving...');
 
             try {
                 let savedReport;
                 if(reportId) {
-                    const res = await api.request(`/reports/${reportId}`, 'PUT', { status, sections, referredBy });
+                    const res = await api.request(`/reports/${reportId}`, 'PUT', { status, sections, referredBy, templateIds });
                     savedReport = res.data;
                     UI.showToast('Report updated successfully', 'success');
                 } else {
-                    const res = await api.request('/reports', 'POST', { patientId, status, sections, referredBy });
+                    const res = await api.request('/reports', 'POST', { patientId, status, sections, referredBy, templateIds });
                     savedReport = res.data;
                     document.getElementById('report-id').value = savedReport._id;
                     document.getElementById('report-status').value = savedReport.status;
@@ -772,8 +780,18 @@
 
             if (state === 'saved') {
                 saveBtn.classList.add('hidden');
-                shareActions.classList.remove('hidden');
-                shareActions.classList.add('flex');
+                
+                // Hide share actions for LabTech
+                const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
+                if (user.role !== 'LabTech') {
+                    shareActions.classList.remove('hidden');
+                    shareActions.classList.add('flex');
+                } else {
+                    // Show a message for LabTech instead of share buttons
+                    shareActions.innerHTML = '<span class="text-xs text-brand-600 font-bold ml-4"><i class="fas fa-check-circle mr-1"></i> Draft Saved. Pending Review!</span>';
+                    shareActions.classList.remove('hidden');
+                    shareActions.classList.add('flex');
+                }
                 
                 // Set badge appearance based on report-status input (if we have one set already)
                 const currentStatus = document.getElementById('report-status').value || 'saved';

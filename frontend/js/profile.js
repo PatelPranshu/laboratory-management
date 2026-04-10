@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 name: user.name,
                 role: user.role,
                 labName: user.labName,
-                parentDoctorId: user.parentDoctorId
+                parentAdminId: user.parentAdminId
             }));
 
         } catch (err) {

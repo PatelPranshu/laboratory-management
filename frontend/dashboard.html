@@ -46,7 +46,7 @@
                     </button>
 
                     <!-- Date Filter Panel (Popover) -->
-                    <div id="date-filter-panel" class="absolute top-14 right-0 w-80 bg-white shadow-2xl rounded-2xl hidden overflow-hidden z-30 border border-slate-100 p-5 animate-fade-in backdrop-blur-xl">
+                    <div id="date-filter-panel" class="absolute top-14 right-0 w-80 bg-white shadow-xl rounded-2xl hidden overflow-hidden z-30 border border-slate-100 p-5 animate-fade-in">
                         <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-50">
                             <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Search Filters</h4>
                             <button id="clear-filters" class="text-[10px] font-bold text-brand-600 hover:text-brand-800 uppercase tracking-widest transition-colors">Reset</button>
@@ -63,7 +63,7 @@
                         </div>
                     </div>
 
-                    <div id="search-results" class="absolute top-14 left-0 w-full bg-white shadow-2xl rounded-xl hidden overflow-hidden z-20 border border-slate-100"></div>
+                    <div id="search-results" class="absolute top-14 left-0 w-full bg-white shadow-lg rounded-xl hidden overflow-hidden z-20 border border-slate-100"></div>
                 </div>
                 <div class="ml-6 flex items-center space-x-4">
                     <button class="relative bg-white p-2.5 rounded-xl text-slate-500 hover:text-brand-600 shadow-sm border border-slate-100 transition-all">
@@ -175,7 +175,7 @@
                 // Render KPI
                 const statsHTML = `
                     <div class="glass-card relative overflow-hidden group">
-                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-brand-500 opacity-5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-brand-500 opacity-5 rounded-full"></div>
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Patients</p>
@@ -188,7 +188,7 @@
                     </div>
 
                     <div class="glass-card relative overflow-hidden group">
-                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-orange-500 opacity-5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-orange-500 opacity-5 rounded-full"></div>
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Pending Reports</p>
@@ -201,7 +201,7 @@
                     </div>
 
                     <div class="glass-card relative overflow-hidden group">
-                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-emerald-500 opacity-5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-emerald-500 opacity-5 rounded-full"></div>
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Sent Reports</p>
@@ -214,7 +214,7 @@
                     </div>
 
                     <div class="glass-card relative overflow-hidden group">
-                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-500 opacity-5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-500 opacity-5 rounded-full"></div>
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Reports</p>
@@ -302,7 +302,7 @@
 
                 // Show localized loading spinner
                 resultsBox.innerHTML = `
-                    <div class="px-5 py-8 text-center bg-white/80 backdrop-blur-md">
+                    <div class="px-5 py-8 text-center bg-white">
                         <i class="fas fa-circle-notch fa-spin text-2xl text-brand-500 mb-2"></i>
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Scanning Database...</p>
                     </div>

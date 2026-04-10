@@ -311,8 +311,9 @@
             }
         }
 
-        function resetLayout() {
-            if (confirm("Are you sure you want to revert layout preferences to default? (Make sure to click Save Settings afterwards)")) {
+        async function resetLayout() {
+            const confirmed = await UI.showConfirm('Reset Layout', 'Are you sure you want to revert layout preferences to default? (Make sure to click Save Settings afterwards)', 'Reset', 'brand');
+            if (confirmed) {
                  document.getElementById('m-top').value = 20;
                  document.getElementById('m-bottom').value = 20;
                  document.getElementById('m-left').value = 20;

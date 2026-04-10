@@ -6,8 +6,12 @@ const mongoose = require('mongoose');
 const { pickFields } = require('../middlewares/validate');
 
 // Allowed fields for report create/update — prevents mass assignment
-const REPORT_CREATE_FIELDS = ['patientId', 'date', 'referredBy', 'sections', 'status'];
-const REPORT_UPDATE_FIELDS = ['date', 'referredBy', 'sections', 'status'];
+const REPORT_CREATE_FIELDS = ['patientId', 'date', 'referredBy', 'sections', 'status', 'templateIds'];
+const REPORT_UPDATE_FIELDS = ['date', 'referredBy', 'sections', 'status', 'templateIds'];
+
+const getAdminId = (req) => {
+  return req.user.role === 'Admin' ? req.user.id : req.user.parentAdminId;
+};
 
 // @desc    Get all reports
 // @route   GET /api/reports
@@ -18,9 +22,12 @@ exports.getReports = async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit, 10) || 10, 100);
     const startIndex = (page - 1) * limit;
 
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
+    const adminId = getAdminId(req);
     
-    let query = { doctorId };
+    let query = { doctorId: adminId };
+    if (req.user.role === 'LabTech') {
+      query.createdBy = req.user.id;
+    }
     if (req.query.patientId) {
       // Validate patientId format before using in query
       if (mongoose.Types.ObjectId.isValid(req.query.patientId)) {
@@ -58,8 +65,13 @@ exports.getReports = async (req, res) => {
 // @access  Private
 exports.getReport = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
-    const report = await ReportInstance.findOne({ _id: req.params.id, doctorId })
+    const adminId = getAdminId(req);
+    let query = { _id: req.params.id, doctorId: adminId };
+    if (req.user.role === 'LabTech') {
+      query.createdBy = req.user.id;
+    }
+    
+    const report = await ReportInstance.findOne(query)
       .populate('patientId', 'name phone age gender email');
 
     if (!report) {
@@ -78,11 +90,12 @@ exports.getReport = async (req, res) => {
 // @access  Private
 exports.createReport = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
+    const adminId = getAdminId(req);
 
     // Whitelist fields FIRST, then set doctorId to prevent override
     const sanitizedBody = pickFields(req.body, REPORT_CREATE_FIELDS);
-    sanitizedBody.doctorId = doctorId;
+    sanitizedBody.doctorId = adminId;
+    sanitizedBody.createdBy = req.user.id;
     
     // Add audit log
     sanitizedBody.auditLogs = [{
@@ -104,8 +117,13 @@ exports.createReport = async (req, res) => {
 // @access  Private
 exports.updateReport = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
-    let report = await ReportInstance.findOne({ _id: req.params.id, doctorId });
+    const adminId = getAdminId(req);
+    let query = { _id: req.params.id, doctorId: adminId };
+    if (req.user.role === 'LabTech') {
+      query.createdBy = req.user.id;
+    }
+
+    let report = await ReportInstance.findOne(query);
 
     if (!report) {
       return res.status(404).json({ success: false, error: 'Report not found' });
@@ -134,8 +152,11 @@ exports.updateReport = async (req, res) => {
 // @access  Private
 exports.generatePdf = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
-    const report = await ReportInstance.findOne({ _id: req.params.id, doctorId })
+    const adminId = getAdminId(req);
+    let query = { _id: req.params.id, doctorId: adminId };
+    // Even for generating PDF, we might restrict LabTech if they shouldn't see others, 
+    // but the route restricts generatePdf to Admin/Doctor anyway.
+    const report = await ReportInstance.findOne(query)
       .populate('patientId');
 
     if (!report) {
@@ -146,7 +167,7 @@ exports.generatePdf = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Associated patient not found' });
     }
 
-    const settings = await PrintSettings.findOne({ doctorId });
+    const settings = await PrintSettings.findOne({ doctorId: adminId });
     
     // Convert Mongoose docs to plain objects to avoid serialization issues in pdfmake
     const reportObj = report.toObject();
@@ -182,12 +203,10 @@ exports.generatePdf = async (req, res) => {
 // @access  Private
 exports.sendReport = async (req, res) => {
   try {
-    // Only allow Doctor to send reports
-    if (req.user.role !== 'Doctor') {
-      return res.status(403).json({ success: false, error: 'Only doctors can send reports' });
-    }
+    // Handled by route middleware authorize('Admin', 'Doctor')
 
-    const report = await ReportInstance.findOne({ _id: req.params.id, doctorId: req.user.id });
+    const adminId = getAdminId(req);
+    const report = await ReportInstance.findOne({ _id: req.params.id, doctorId: adminId });
     if (!report) return res.status(404).json({ success: false, error: 'Report not found' });
 
     const { method } = req.body;

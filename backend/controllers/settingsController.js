@@ -21,7 +21,7 @@ const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 // @access  Private
 exports.getPrintSettings = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
+    const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
     let settings = await PrintSettings.findOne({ doctorId });
 
     if (!settings) {
@@ -40,7 +40,7 @@ exports.getPrintSettings = async (req, res) => {
 // @access  Private
 exports.updatePrintSettings = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
+    const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
 
     // Whitelist allowed fields
     const sanitizedBody = pickFields(req.body, SETTINGS_FIELDS);

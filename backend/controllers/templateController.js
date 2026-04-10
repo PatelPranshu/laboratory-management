@@ -9,7 +9,7 @@ const TEMPLATE_FIELDS = ['templateName', 'sections'];
 // @access  Private
 exports.getTemplates = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
+    const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
     const templates = await ReportTemplate.find({ doctorId });
 
     res.status(200).json({ success: true, count: templates.length, data: templates });
@@ -24,7 +24,7 @@ exports.getTemplates = async (req, res) => {
 // @access  Private
 exports.getTemplate = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
+    const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
     const template = await ReportTemplate.findOne({ _id: req.params.id, doctorId });
 
     if (!template) {

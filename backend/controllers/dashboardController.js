@@ -7,23 +7,28 @@ const mongoose = require('mongoose');
 // @access  Private
 exports.getSummary = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
+    const adminId = req.user.role === 'Admin' ? req.user.id : req.user.parentAdminId;
 
     // Convert to ObjectId for aggregation pipeline (aggregations don't auto-cast strings)
-    const doctorObjectId = new mongoose.Types.ObjectId(doctorId);
+    const adminObjectId = new mongoose.Types.ObjectId(adminId);
 
-    const totalPatients = await Patient.countDocuments({ doctorId });
-    const totalReports = await ReportInstance.countDocuments({ doctorId });
-    const pendingReports = await ReportInstance.countDocuments({ doctorId, status: { $in: ['draft', 'saved'] } });
-    const sentReports = await ReportInstance.countDocuments({ doctorId, status: 'sent' });
+    let query = { doctorId: adminId };
+    if (req.user.role === 'LabTech') {
+      query.createdBy = req.user.id;
+    }
+
+    const totalPatients = await Patient.countDocuments(query);
+    const totalReports = await ReportInstance.countDocuments(query);
+    const pendingReports = await ReportInstance.countDocuments({ ...query, status: { $in: ['draft', 'saved'] } });
+    const sentReports = await ReportInstance.countDocuments({ ...query, status: 'sent' });
 
     // Last 5 patients added
-    const recentPatients = await Patient.find({ doctorId })
+    const recentPatients = await Patient.find(query)
       .sort({ createdAt: -1 })
       .limit(5);
 
     // Last 5 reports generated
-    const recentReports = await ReportInstance.find({ doctorId })
+    const recentReports = await ReportInstance.find(query)
       .populate('patientId', 'name')
       .sort({ createdAt: -1 })
       .limit(5);
@@ -32,10 +37,13 @@ exports.getSummary = async (req, res) => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
-    // Aggregate reports grouped by day for the last 7 days
-    // BUG FIX: Use ObjectId type for doctorId in aggregate $match
+    const weeklyMatchQuery = { doctorId: adminObjectId, createdAt: { $gte: sevenDaysAgo } };
+    if (req.user.role === 'LabTech') {
+      weeklyMatchQuery.createdBy = new mongoose.Types.ObjectId(req.user.id);
+    }
+
     const weeklyReportsAgg = await ReportInstance.aggregate([
-      { $match: { doctorId: doctorObjectId, createdAt: { $gte: sevenDaysAgo } } },
+      { $match: weeklyMatchQuery },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },

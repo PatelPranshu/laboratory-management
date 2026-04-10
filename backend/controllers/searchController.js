@@ -6,7 +6,7 @@ const ReportInstance = require('../models/ReportInstance');
 // @access  Private
 exports.globalSearch = async (req, res) => {
   try {
-    const doctorId = req.user.role === 'LabTech' ? req.user.parentDoctorId : req.user.id;
+    const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
     const { query, fromDate, toDate } = req.query;
 
     // 1. Initial match criteria (for indexing)

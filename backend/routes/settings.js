@@ -8,7 +8,7 @@ const {
   deleteImage
 } = require('../controllers/settingsController');
 
-const { protect } = require('../middlewares/authMiddleware');
+const { protect, authorize } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
@@ -35,9 +35,9 @@ const upload = multer({
 
 router.route('/print')
   .get(protect, getPrintSettings)
-  .put(protect, updatePrintSettings);
+  .put(protect, authorize('Admin'), updatePrintSettings);
 
-router.post('/upload', protect, upload.single('image'), uploadImage);
-router.post('/delete-image', protect, deleteImage);
+router.post('/upload', protect, authorize('Admin'), upload.single('image'), uploadImage);
+router.post('/delete-image', protect, authorize('Admin'), deleteImage);
 
 module.exports = router;

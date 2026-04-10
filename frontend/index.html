@@ -41,12 +41,11 @@
         
         <!-- Left Side: Branding -->
         <div class="hidden lg:flex flex-col justify-between w-5/12 p-12 bg-indigo-950 text-white relative overflow-hidden">
-            <!-- Decorative elements -->
-            <div class="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-[120px] -mr-32 -mt-32"></div>
-            <div class="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[120px] -ml-32 -mb-32"></div>
+            <!-- Simplified background -->
+            <div class="absolute inset-0 bg-brand-500/5"></div>
             
             <div class="relative z-10">
-                <div class="inline-flex items-center justify-center p-4 bg-gradient-to-br from-white/10 to-white/5 rounded-[2rem] mb-10 border border-white/10 backdrop-blur-xl shadow-2xl group transition-all duration-500 hover:scale-110 hover:rotate-3">
+                <div class="inline-flex items-center justify-center p-4 bg-white/10 rounded-[2rem] mb-10 border border-white/10 shadow-xl group transition-transform duration-300 hover:scale-105">
                     <i class="fa-solid fa-microscope text-4xl text-brand-300 drop-shadow-[0_0_15px_rgba(14,165,233,0.5)] transition-all duration-500 group-hover:text-brand-100"></i>
                 </div>
                 <h1 class="text-5xl font-black mb-6 tracking-tighter leading-none uppercase">
@@ -68,7 +67,7 @@
         </div>
 
         <!-- Right Side: Forms -->
-        <div class="w-full lg:w-7/12 p-8 sm:p-14 transition-custom flex flex-col justify-center bg-white/50" id="form-container">
+        <div class="w-full lg:w-7/12 p-8 sm:p-14 transition-custom flex flex-col justify-center bg-white" id="form-container">
             
             <!-- Login Form -->
             <div id="login-form" class="w-full max-w-md mx-auto form-transition">
@@ -143,7 +142,7 @@
                                 <input type="text" id="reg-labName" required placeholder="MyPathoLabs Central" class="block w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-800 shadow-sm text-sm">
                             </div>
                         </div>
-                        <div>
+                        <div class="md:col-span-2">
                             <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Email Address</label>
                              <div class="relative group">
                                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -152,21 +151,7 @@
                                 <input type="email" id="reg-email" required placeholder="admin@lab.com" class="block w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-800 shadow-sm text-sm">
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Primary Role</label>
-                            <div class="relative group">
-                                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                                    <i class="fas fa-user-tag text-slate-400 text-sm group-focus-within:text-brand-500 transition-colors"></i>
-                                </div>
-                                <select id="reg-role" class="block w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-800 shadow-sm appearance-none cursor-pointer text-sm">
-                                    <option value="Doctor">Doctor / Lab Admin</option>
-                                    <option value="LabTech">Lab Technician</option>
-                                </select>
-                                <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Role selection removed: public registrations are exclusively Admin -->
                         <div>
                             <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Password</label>
                             <div class="relative group">
@@ -279,7 +264,9 @@
                     localStorage.setItem('lis_user', JSON.stringify(res.user));
                     
                     UI.showToast('Login Successful! Redirecting...', 'success');
-                    setTimeout(() => window.location.href = 'dashboard.html', 1000);
+                    setTimeout(() => {
+                        window.location.href = res.user.mustChangePassword ? 'reset-password.html' : 'dashboard.html';
+                    }, 1000);
                     
                 } else if (type === 'register') {
                     UI.toggleLoader('btn-register', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Creating Account...');
@@ -288,7 +275,7 @@
                     const email = document.getElementById('reg-email').value;
                     const password = document.getElementById('reg-password').value;
                     const confirmPassword = document.getElementById('reg-confirm-password').value;
-                    const role = document.getElementById('reg-role').value;
+                    const role = 'Admin'; // Only Admins can register publicly
 
                     if (password !== confirmPassword) {
                         UI.showToast('Passwords do not match', 'error');

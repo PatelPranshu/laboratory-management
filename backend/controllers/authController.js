@@ -14,7 +14,7 @@ const generateToken = (id) => {
 // @access  Public (first Doctor only) / Private (LabTech requires parent Doctor token)
 exports.register = async (req, res) => {
   try {
-    const { email, password, role, labName, name, parentDoctorId } = req.body;
+    const { email, password, role, labName, name, parentAdminId } = req.body;
 
     // --- Input Validation ---
     if (!email || !password || !labName || !name) {
@@ -33,20 +33,20 @@ exports.register = async (req, res) => {
     }
 
     // --- Role Validation ---
-    const allowedRoles = ['Doctor', 'LabTech'];
-    const userRole = allowedRoles.includes(role) ? role : 'Doctor';
+    let userRole = role;
+
+    // --- Check if first user ---
+    const totalUsers = await User.countDocuments();
+    if (totalUsers === 0) {
+      userRole = 'Admin';
+    } else {
+      const allowedRoles = ['Admin', 'Doctor', 'LabTech'];
+      userRole = allowedRoles.includes(role) ? role : 'Doctor';
+    }
 
     // --- Registration Restrictions ---
-    if (userRole === 'LabTech') {
-      // LabTech MUST have a parentDoctorId
-      if (!parentDoctorId) {
-        return res.status(400).json({ success: false, error: 'Lab Technician accounts require a parent Doctor ID' });
-      }
-      // Verify the parent doctor exists
-      const parentDoctor = await User.findById(parentDoctorId);
-      if (!parentDoctor || parentDoctor.role !== 'Doctor') {
-        return res.status(400).json({ success: false, error: 'Invalid parent Doctor ID' });
-      }
+    if (userRole !== 'Admin') {
+      return res.status(403).json({ success: false, error: 'Only Lab Admins can register publicly. Staff must be invited.' });
     }
 
     // --- Check existing user ---
@@ -61,14 +61,15 @@ exports.register = async (req, res) => {
       name: name.trim(),
       password,
       role: userRole,
-      labName: labName.trim()
+      labName: labName.trim(),
+      accountStatus: 'Active' // Admins are active immediately
     };
 
-    if (userRole === 'LabTech' && parentDoctorId) {
-      userFields.parentDoctorId = parentDoctorId;
-    }
-
     const user = await User.create(userFields);
+    
+    // Auto-create blank PrintSettings for the new Lab Admin
+    const PrintSettings = require('../models/PrintSettings');
+    await PrintSettings.create({ doctorId: user._id });
 
     res.status(201).json({
       success: true,
@@ -78,7 +79,9 @@ exports.register = async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role,
-        labName: user.labName
+        labName: user.labName,
+        accountStatus: user.accountStatus,
+        mustChangePassword: user.mustChangePassword
       }
     });
   } catch (error) {
@@ -111,6 +114,10 @@ exports.login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
+    
+    if (user.accountStatus !== 'Active') {
+      return res.status(403).json({ success: false, error: `Account is ${user.accountStatus}` });
+    }
 
     res.status(200).json({
       success: true,
@@ -121,7 +128,9 @@ exports.login = async (req, res) => {
         name: user.name,
         role: user.role,
         labName: user.labName,
-        parentDoctorId: user.parentDoctorId
+        parentAdminId: user.parentAdminId,
+        accountStatus: user.accountStatus,
+        mustChangePassword: user.mustChangePassword
       }
     });
 
@@ -209,5 +218,57 @@ exports.updateProfile = async (req, res) => {
   } catch (error) {
     console.error('UpdateProfile error:', error.message);
     res.status(500).json({ success: false, error: 'Failed to update profile' });
+  }
+};
+
+// @desc    Reset password (force change)
+// @route   POST /api/auth/reset-password
+// @access  Private
+exports.resetPassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, error: 'Please provide both current and new passwords' });
+    }
+
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    // Check current password
+    const isMatch = await user.matchPassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, error: 'Incorrect current password' });
+    }
+
+    if (!isStrongPassword(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        error: 'New password must be at least 8 characters with at least 1 uppercase letter and 1 number'
+      });
+    }
+
+    user.password = newPassword;
+    user.mustChangePassword = false;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      token: generateToken(user._id),
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        labName: user.labName,
+        accountStatus: user.accountStatus,
+        mustChangePassword: user.mustChangePassword
+      }
+    });
+  } catch (error) {
+    console.error('resetPassword error:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to reset password' });
   }
 };

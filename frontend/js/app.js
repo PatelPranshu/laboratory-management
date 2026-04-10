@@ -65,6 +65,56 @@ class UI {
       btn.innerHTML = originalText;
     }
   }
+
+  static async showConfirm(title, message, confirmText = 'Confirm', type = 'danger') {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div');
+      overlay.className = 'fixed inset-0 bg-slate-900/40 z-[100] flex items-center justify-center opacity-0 transition-opacity duration-300';
+      overlay.id = 'ui-confirm-modal';
+      
+      const modal = document.createElement('div');
+      modal.className = 'bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden transform scale-95 transition-transform duration-300 border border-slate-100';
+      
+      const iconClass = type === 'danger' ? 'text-red-500 bg-red-50' : 'text-brand-500 bg-brand-50';
+      const icon = type === 'danger' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+      const btnClass = type === 'danger' ? 'bg-red-500 hover:bg-red-600 focus:ring-red-500 shadow-red-500/30' : 'bg-brand-500 hover:bg-brand-600 focus:ring-brand-500 shadow-brand-500/30';
+      
+      modal.innerHTML = `
+        <div class="p-6">
+            <div class="flex items-center justify-center w-14 h-14 rounded-full ${iconClass} mb-5 mx-auto ring-4 ring-white shadow-sm">
+                <i class="fas ${icon} text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-center text-slate-800 mb-2">${escapeHtml(title)}</h3>
+            <p class="text-center text-slate-500 mb-6 text-sm">${escapeHtml(message)}</p>
+            <div class="flex space-x-3">
+                <button id="ui-btn-cancel" class="flex-1 py-2.5 px-4 rounded-xl text-sm text-slate-700 font-bold bg-slate-100 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all duration-200">Cancel</button>
+                <button id="ui-btn-confirm" class="flex-1 py-2.5 px-4 rounded-xl text-sm text-white font-bold ${btnClass} focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">${escapeHtml(confirmText)}</button>
+            </div>
+        </div>
+      `;
+      
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      // Trigger animation
+      requestAnimationFrame(() => {
+          overlay.classList.remove('opacity-0');
+          modal.classList.remove('scale-95');
+      });
+
+      const close = (result) => {
+          overlay.classList.add('opacity-0');
+          modal.classList.add('scale-95');
+          setTimeout(() => {
+              overlay.remove();
+              resolve(result);
+          }, 300);
+      };
+
+      modal.querySelector('#ui-btn-cancel').addEventListener('click', () => close(false));
+      modal.querySelector('#ui-btn-confirm').addEventListener('click', () => close(true));
+    });
+  }
 }
 
 // Check Authentication logic (run on every protected page)
@@ -77,13 +127,23 @@ function checkAuth() {
   } else {
     // Populate user info in nav — use textContent to prevent XSS
     const userNameEl = document.getElementById('nav-user-name');
-    if (userNameEl) {
+    let u;
+    if (user) {
       try {
-        const u = JSON.parse(user);
-        const displayName = u.email ? u.email.split('@')[0] : 'User';
-        userNameEl.textContent = `Dr. ${displayName}`;
+        u = JSON.parse(user);
+        
+        // Security check for password reset enforcement
+        if (u.mustChangePassword && !window.location.pathname.endsWith('reset-password.html')) {
+          window.location.href = 'reset-password.html';
+          return;
+        }
+
+        if (userNameEl) {
+          const displayName = u.email ? u.email.split('@')[0] : 'User';
+          userNameEl.textContent = `Dr. ${displayName}`;
+        }
       } catch(e) {
-        userNameEl.textContent = 'User';
+        if (userNameEl) userNameEl.textContent = 'User';
       }
     }
   }

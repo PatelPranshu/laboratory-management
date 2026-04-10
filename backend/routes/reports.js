@@ -8,7 +8,7 @@ const {
   sendReport
 } = require('../controllers/reportController');
 
-const { protect } = require('../middlewares/authMiddleware');
+const { protect, authorize } = require('../middlewares/authMiddleware');
 const { validateObjectId } = require('../middlewares/validate');
 
 const router = express.Router();
@@ -21,7 +21,7 @@ router.route('/:id')
   .get(protect, validateObjectId, getReport)
   .put(protect, validateObjectId, updateReport);
 
-router.get('/:id/pdf', protect, validateObjectId, generatePdf);
-router.post('/:id/send', protect, validateObjectId, sendReport);
+router.get('/:id/pdf', protect, validateObjectId, authorize('Admin', 'Doctor'), generatePdf);
+router.post('/:id/send', protect, validateObjectId, authorize('Admin', 'Doctor'), sendReport);
 
 module.exports = router;

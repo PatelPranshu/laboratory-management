@@ -14,11 +14,11 @@ const router = express.Router();
 
 router.route('/')
   .get(protect, getTemplates)
-  .post(protect, authorize('Doctor'), createTemplate);
+  .post(protect, authorize('Admin', 'Doctor'), createTemplate);
 
 router.route('/:id')
   .get(protect, validateObjectId, getTemplate)
-  .put(protect, validateObjectId, authorize('Doctor'), updateTemplate)
-  .delete(protect, validateObjectId, authorize('Doctor'), deleteTemplate);
+  .put(protect, validateObjectId, authorize('Admin', 'Doctor'), updateTemplate)
+  .delete(protect, validateObjectId, authorize('Admin', 'Doctor'), deleteTemplate);
 
 module.exports = router;
