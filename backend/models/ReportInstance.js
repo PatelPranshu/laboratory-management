@@ -66,9 +66,14 @@ const ReportInstanceSchema = new mongoose.Schema({
   },
   referredBy: {
     type: String,
-    required: [true, 'Referring doctor/clinic is required']
+    trim: true,
+    default: 'Self'
   },
-  referredByDoctorId: {
+  performedBy: {
+    type: String,
+    required: [true, 'Performing technician/doctor is required']
+  },
+  performedByLabTechId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Signature'
   },

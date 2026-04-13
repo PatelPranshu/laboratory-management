@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const SignatureSchema = new mongoose.Schema({
-  doctorName: {
+  fullName: {
     type: String,
-    required: [true, 'Doctor name is required']
+    required: [true, 'Name is required']
   },
   signatureUrl: {
     type: String,
@@ -14,7 +14,7 @@ const SignatureSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  doctorId: { 
+  userId: { 
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }

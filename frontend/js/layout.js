@@ -76,7 +76,7 @@ function loadCommonLayout() {
                     <span class="font-medium ml-2">Pending Reports</span>
                 </a>
                 ` : ''}
-                ${(u && (u.role === 'Admin' || u.role === 'Doctor')) ? `
+                ${(u && (u.role === 'Admin' || u.role === 'Doctor' || u.role === 'LabTech')) ? `
                 <a href="add-sign.html" data-page="add-sign" class="nav-link flex items-center px-4 py-3.5 text-indigo-100/70 hover:bg-white/5 hover:text-white rounded-xl transition-custom group">
                     <i class="fas fa-signature w-6 group-hover:text-brand-100 transition-colors"></i> 
                     <span class="font-medium ml-2">Signatures</span>

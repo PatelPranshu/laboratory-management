@@ -98,6 +98,7 @@ const search = require('./routes/search');
 const staff = require('./routes/staff');
 const signatures = require('./routes/signatures');
 const notifications = require('./routes/notifications');
+const referrals = require('./routes/referralRoutes');
 
 // Mount routers (auth routes get stricter rate limiting)
 app.use('/api/auth', authLimiter, auth);
@@ -109,7 +110,8 @@ app.use('/api/settings', settings);
 app.use('/api/dashboard', dashboard);
 app.use('/api/search', search);
 app.use('/api/signatures', signatures);
-app.use('/api/notifications', authLimiter, notifications);
+app.use('/api/notifications', notifications);
+app.use('/api/referrals', referrals);
 
 app.get('/', (req, res) => {
   res.json({ success: true, message: 'LIS API is running' });

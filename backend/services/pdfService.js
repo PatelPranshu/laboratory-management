@@ -132,8 +132,8 @@ exports.generateReportPdf = async (report, patient, settings) => {
     footerImageData = await downloadImageAsBase64(settings.footerImageURL);
   }
   
-  if (report.referredByDoctorId && report.referredByDoctorId.signatureUrl) {
-    signatureImageData = await downloadImageAsBase64(report.referredByDoctorId.signatureUrl);
+  if (report.performedByLabTechId && report.performedByLabTechId.signatureUrl) {
+    signatureImageData = await downloadImageAsBase64(report.performedByLabTechId.signatureUrl);
   }
 
   // Header Image
@@ -157,9 +157,9 @@ exports.generateReportPdf = async (report, patient, settings) => {
   content.push({
     columns: [
       { text: `Patient Name: ${patient.name || 'N/A'}\nAge/Gender: ${patient.age || 'N/A'} / ${patient.gender || 'N/A'}\nPhone: ${patient.phone || 'N/A'}`, width: '*', style: 'patientInfo' },
-      { text: `Date: ${reportDate}\nReport ID: ${reportId}\nReferred By: ${report.referredBy || 'N/A'}`, width: '*', alignment: 'right', style: 'patientInfo' }
+      { text: `Date: ${reportDate}\nReport ID: ${reportId}\nReferred by: ${report.referredBy || 'Self'}`, width: '*', alignment: 'right', style: 'patientInfo' }
     ],
-    margin: [0, 0, 0, 2]
+    margin: [0, 5, 0, 10]
   });
 
   content.push({ canvas: [{ type: 'line', x1: 0, y1: 5, x2: contentWidth, y2: 5, lineWidth: 1 }] });
@@ -320,7 +320,9 @@ exports.generateReportPdf = async (report, patient, settings) => {
   }
   
   // Verify & Sign Section
-  if (signatureImageData) {
+  if (signatureImageData && report.performedByLabTechId) {
+      const signerName = (report.performedByLabTechId.fullName || report.performedByLabTechId.doctorName || report.performedBy || 'Authorized Signatory').toUpperCase();
+      
       content.push({
           columns: [
               { width: '*', text: '' }, // spacer 
@@ -329,9 +331,9 @@ exports.generateReportPdf = async (report, patient, settings) => {
                   alignment: 'center',
                   margin: [0, 20, 0, 0],
                   stack: [
-                    { text: 'REFERRED BY / VERIFIED BY', fontSize: fontSize - 4, color: '#64748b', margin: [0, 8, 0, 0], bold: true, characterSpacing: 0.5 },
+                    { text: 'PERFORMED BY / VERIFIED BY', fontSize: fontSize - 4, color: '#64748b', margin: [0, 8, 0, 0], bold: true, characterSpacing: 0.5 },
                       { image: signatureImageData, fit: [150, 60], alignment: 'center' },
-                      { text: report.referredByDoctorId.doctorName.toUpperCase(), fontSize: fontSize + 2, bold: true, color: '#1e293b' }
+                      { text: signerName, fontSize: fontSize + 2, bold: true, color: '#1e293b' }
                   ]
               }
           ]
@@ -344,6 +346,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
     styles: {
       header: { fontSize: fontSize + 6, bold: true },
       subheader: { fontSize: fontSize + 2, bold: true },
+      patientInfo: { lineHeight: 1.4 }
     },
     defaultStyle: {
       font: 'Roboto',

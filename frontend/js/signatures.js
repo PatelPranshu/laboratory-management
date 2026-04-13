@@ -1,23 +1,21 @@
 document.addEventListener('DOMContentLoaded', () => {
-    loadCommonLayout();
-    checkAccess();
-    fetchSignatures();
+    // Only init if layout coordinator didn't already
+    if (!window.tabSwitcherInitialized) {
+        checkAccess();
+        fetchSignatures();
+    }
 });
 
 const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
 
 function checkAccess() {
-    if (user.role === 'LabTech') {
-        window.location.href = 'dashboard.html'; // Techs can't manage this UI
-        return;
-    }
+    // If Admin, they can manage any signature
+    if (user.role === 'Admin') return;
     
-    // Doctor restrictions
-    if (user.role === 'Doctor') {
-        const nameInput = document.getElementById('doctor-name');
-        nameInput.value = user.name;
-        nameInput.disabled = true; // Lock their name
-    }
+    // For staff (Doctor/LabTech), lock their name
+    const nameInput = document.getElementById('doctor-name');
+    nameInput.value = user.name;
+    nameInput.disabled = true;
 }
 
 async function fetchSignatures() {
@@ -40,52 +38,58 @@ async function fetchSignatures() {
                 <p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Start by adding your first verifier</p>
             </div>`;
             
-            if (user.role === 'Doctor') {
-                 document.getElementById('add-signature-container').classList.remove('hidden');
-            }
+            if (user.role !== 'Admin') {
+                  const form = document.getElementById('form-signatures');
+                  if (form) form.classList.remove('hidden');
+             }
             return;
         }
 
         let hasOwnSignature = false;
 
         grid.innerHTML = res.data.map(sig => {
-            if (user.role === 'Doctor' && sig.doctorId === user.id) {
+            const name = sig.fullName || sig.doctorName || 'Unknown';
+            const signatureUserId = sig.userId || sig.doctorId;
+
+            if (user.role !== 'Admin' && signatureUserId === user.id) {
                 hasOwnSignature = true;
             }
 
             return `
-            <div class="glass-card p-6 flex flex-col group/card relative overflow-hidden">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center">
-                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 text-white flex items-center justify-center font-bold shadow-lg shadow-brand-500/20 mr-3">
-                            ${sig.doctorName.charAt(0)}
+            <div class="group/card relative bg-white border border-slate-100 p-4 rounded-xl shadow-sm hover:shadow-md transition-all flex flex-col gap-4 overflow-hidden">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500/10 to-brand-600/5 text-brand-600 flex items-center justify-center font-black text-sm border border-brand-100/50">
+                            ${name.charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                            <h4 class="font-bold text-slate-800 tracking-tight">${sanitizeHTML(sig.doctorName)}</h4>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Medical Officer</p>
+                        <div class="min-w-0">
+                            <h4 class="font-bold text-slate-800 text-[13px] leading-tight break-words" title="${sanitizeHTML(name)}">${sanitizeHTML(name)}</h4>
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Authorized Verifier</p>
                         </div>
                     </div>
-                    ${user.role === 'Admin' ? `
-                    <button onclick="deleteSignature('${sig._id}')" class="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover/card:opacity-100" title="Revoke Access">
-                        <i class="fas fa-trash-alt text-xs"></i>
+                    ${(user.role === 'Admin' || signatureUserId === user.id) ? `
+                    <button onclick="deleteSignature('${sig._id}')" class="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:bg-rose-50 hover:text-rose-500 transition-all opacity-0 group-hover/card:opacity-100" title="Revoke Access">
+                        <i class="fas fa-trash-alt text-[10px]"></i>
                     </button>
                     ` : ''}
                 </div>
                 
-                <div class="bg-white border border-slate-100 rounded-2xl p-4 h-24 flex items-center justify-center shadow-inner relative overflow-hidden group/sig">
-                    <img src="${sanitizeHTML(sig.signatureUrl)}" alt="Signature" class="max-h-full object-contain transition-transform group-hover/sig:scale-110" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'text-[10px] font-bold text-red-400 uppercase tracking-widest\\'>Invalid Image</span>';">
-                    <div class="absolute inset-0 bg-slate-900/5 opacity-0 group-hover/sig:opacity-100 transition-opacity"></div>
+                <div class="bg-slate-50 border border-slate-100 rounded-lg p-3 h-20 flex items-center justify-center relative overflow-hidden group/sig grayscale-[0.5] hover:grayscale-0 transition-all">
+                    <img src="${sanitizeHTML(sig.signatureUrl)}" alt="Signature" class="max-h-full object-contain transition-transform group-hover/sig:scale-105" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\\'text-[9px] font-bold text-red-400 uppercase tracking-widest\\'>Invalid Image</span>';">
                 </div>
             </div>
             `;
         }).join('');
 
-        // Hide add form for Doctor if they already uploaded one
-        if (user.role === 'Doctor' && hasOwnSignature) {
-            document.getElementById('add-signature-container').classList.add('hidden');
-        } else if (user.role === 'Doctor') {
-            document.getElementById('add-signature-container').classList.remove('hidden');
-        }
+         // Hide add form for staff if they already uploaded one
+         const formSign = document.getElementById('form-signatures');
+         if (formSign) {
+             if (user.role !== 'Admin' && hasOwnSignature) {
+                 formSign.classList.add('hidden');
+             } else {
+                 formSign.classList.remove('hidden');
+             }
+         }
 
     } catch (err) {
         document.getElementById('signatures-grid').innerHTML = `<div class="col-span-full text-center text-red-500">Error loading signatures</div>`;
@@ -97,14 +101,13 @@ async function uploadSignature() {
     const file = input.files[0];
     if (!file) return;
 
-    const btn = document.getElementById('btn-upload-trigger');
-    const originalText = btn.innerHTML;
-    UI.toggleLoader('btn-upload-trigger', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Uploading...');
-
-    const formData = new FormData();
-    formData.append('image', file);
-
+    const loader = document.getElementById('upload-loader');
+    
     try {
+        if (loader) loader.classList.remove('hidden');
+        const formData = new FormData();
+        formData.append('image', file);
+
         const res = await api.request('/settings/upload', 'POST', formData);
         const url = res.data.url;
         document.getElementById('signature-url').value = url;
@@ -114,30 +117,31 @@ async function uploadSignature() {
         UI.showToast(err.message, 'error');
         input.value = ''; // Reset
     } finally {
-        UI.toggleLoader('btn-upload-trigger', false, originalText);
+        if (loader) loader.classList.add('hidden');
     }
 }
 
 function updateSignatureUI(url) {
     const preview = document.getElementById('signature-preview');
     const placeholder = document.getElementById('signature-placeholder');
-    const uploadBtn = document.getElementById('btn-upload-trigger');
     const clearBtn = document.getElementById('btn-clear-signature');
-
+    
     if (url) {
         preview.src = url;
         preview.classList.remove('hidden');
         placeholder.classList.add('hidden');
-        uploadBtn.classList.add('hidden');
-        clearBtn.classList.remove('hidden');
+        if (clearBtn) clearBtn.classList.remove('hidden');
     } else {
         preview.src = '';
         preview.classList.add('hidden');
         placeholder.classList.remove('hidden');
-        uploadBtn.classList.remove('hidden');
-        clearBtn.classList.add('hidden');
+        if (clearBtn) clearBtn.classList.add('hidden');
         document.getElementById('signature-file').value = '';
     }
+    
+    // Always hide the specialized hover overlay when an image is first set
+    const overlay = document.getElementById('preview-hover-overlay');
+    if (url && overlay) overlay.classList.remove('hidden');
 }
 
 async function clearSignatureImage() {
@@ -159,25 +163,25 @@ async function clearSignatureImage() {
 async function addSignature(e) {
     if (e) e.preventDefault();
     
-    let doctorName = document.getElementById('doctor-name').value;
-    if (user.role === 'Doctor') doctorName = user.name; // Enforce
+    let fullName = document.getElementById('doctor-name').value;
+    if (user.role !== 'Admin') fullName = user.name; // Enforce
     
     const signatureUrl = document.getElementById('signature-url').value;
 
-    if (!doctorName) return UI.showToast('Please enter doctor name', 'error');
+    if (!fullName) return UI.showToast('Please enter your official name', 'error');
     if (!signatureUrl) return UI.showToast('Please upload a signature image first', 'error');
     
     UI.toggleLoader('btn-add-sign', true);
     
     try {
-        const payload = { doctorName, signatureUrl };
+        const payload = { fullName, signatureUrl };
         const data = await api.request('/signatures', 'POST', payload);
         
         if (data.success) {
             UI.showToast('Signature saved and linked successfully', 'success');
             
             // UI Cleanup
-            document.getElementById('doctor-name').value = user.role === 'Doctor' ? user.name : '';
+            document.getElementById('doctor-name').value = user.role !== 'Admin' ? user.name : '';
             document.getElementById('signature-url').value = '';
             document.getElementById('signature-file').value = '';
             updateSignatureUI(null);

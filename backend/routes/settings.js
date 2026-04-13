@@ -37,7 +37,7 @@ router.route('/print')
   .get(protect, getPrintSettings)
   .put(protect, authorize('Admin'), updatePrintSettings);
 
-router.post('/upload', protect, authorize('Admin'), upload.single('image'), uploadImage);
-router.post('/delete-image', protect, authorize('Admin'), deleteImage);
+router.post('/upload', protect, authorize('Admin', 'Doctor', 'LabTech'), upload.single('image'), uploadImage);
+router.post('/delete-image', protect, authorize('Admin', 'Doctor', 'LabTech'), deleteImage);
 
 module.exports = router;

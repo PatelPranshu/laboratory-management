@@ -4,14 +4,13 @@ const PrintSettings = require('../models/PrintSettings');
 const pdfService = require('../services/pdfService');
 const mongoose = require('mongoose');
 const Signature = require('../models/Signature');
-const Notification = require('../models/Notification');
-const socketService = require('../services/socketService');
+const { sendNotification } = require('../utils/notifier');
 const { pickFields } = require('../middlewares/validate');
 
 // Allowed fields for report create/update — prevents mass assignment
-// creatorId, verifierId, referredByDoctorId are set SERVER-SIDE only to prevent spoofing
-const REPORT_CREATE_FIELDS = ['patientId', 'date', 'referredBy', 'sections', 'templateIds', 'referredByDoctorId'];
-const REPORT_UPDATE_FIELDS = ['date', 'referredBy', 'sections', 'templateIds', 'referredByDoctorId'];
+// creatorId, verifierId, performedByLabTechId are set SERVER-SIDE only to prevent spoofing
+const REPORT_CREATE_FIELDS = ['patientId', 'date', 'referredBy', 'performedBy', 'sections', 'templateIds', 'performedByLabTechId'];
+const REPORT_UPDATE_FIELDS = ['date', 'referredBy', 'performedBy', 'sections', 'templateIds', 'performedByLabTechId'];
 
 const getAdminId = (req) => {
   return req.user.role === 'Admin' ? req.user.id : (req.user.parentAdminId || req.user.id);
@@ -41,7 +40,7 @@ exports.getReports = async (req, res) => {
 
     const reports = await ReportInstance.find(query)
       .populate('patientId', 'name phone age gender')
-      .populate('referredByDoctorId', 'doctorName signatureUrl')
+      .populate('performedByLabTechId', 'fullName doctorName signatureUrl')
       .skip(startIndex)
       .limit(limit)
       .sort({ createdAt: -1 });
@@ -78,7 +77,7 @@ exports.getReport = async (req, res) => {
     
     const report = await ReportInstance.findOne(query)
       .populate('patientId', 'name phone age gender email')
-      .populate('referredByDoctorId', 'doctorName signatureUrl');
+      .populate('performedByLabTechId', 'fullName doctorName signatureUrl');
 
     if (!report) {
       return res.status(404).json({ success: false, error: 'Report not found' });
@@ -104,28 +103,23 @@ exports.createReport = async (req, res) => {
     sanitizedBody.createdBy = req.user.id;
     sanitizedBody.creatorId = req.user.id;
 
-    // Server-side status determination — LabTechs ALWAYS create drafts
-    if (req.user.role === 'LabTech') {
-      sanitizedBody.status = 'draft';
-      if (sanitizedBody.referredByDoctorId) {
-        sanitizedBody.verifierId = sanitizedBody.referredByDoctorId;
-      }
-    } else if (sanitizedBody.referredByDoctorId) {
-      // PROMPT FIX: If signature not exist then show it as draft
+    // Unified status determination — Any role can save as 'saved' if a signature is present
+    if (sanitizedBody.performedByLabTechId) {
       const signature = await Signature.findOne({ 
         $or: [
-          { doctorId: sanitizedBody.referredByDoctorId },
-          { _id: sanitizedBody.referredByDoctorId } // Fallback for ID-based lookup
+          { userId: sanitizedBody.performedByLabTechId },
+          { _id: sanitizedBody.performedByLabTechId }
         ],
         parentAdminId: adminId
       });
 
       if (signature) {
           sanitizedBody.status = 'saved';
-          sanitizedBody.verifierId = sanitizedBody.referredByDoctorId;
+          sanitizedBody.performedByLabTechId = signature._id;
+          sanitizedBody.verifierId = signature._id;
       } else {
           sanitizedBody.status = 'draft';
-          sanitizedBody.verifierId = sanitizedBody.referredByDoctorId;
+          sanitizedBody.verifierId = sanitizedBody.performedByLabTechId;
       }
     } else {
       sanitizedBody.status = 'draft';
@@ -139,45 +133,13 @@ exports.createReport = async (req, res) => {
 
     const report = await ReportInstance.create(sanitizedBody);
 
-    // Notify if created by LabTech
-    if (req.user.role === 'LabTech') {
-      try {
-        const io = socketService.getIO();
-        const notificationPayload = {
-          senderId: req.user.id,
-          type: 'NEW_REPORT',
-          title: 'Report Submitted for Review',
-          message: `A new report has been drafted by ${req.user.name || 'a Lab Technician'}.`,
-          referenceId: report._id
-        };
-
-        const recipients = [adminId];
-        let hasVerifierSignature = false;
-
-        // If verifier is provided and different from admin
-        if (report.verifierId && report.verifierId.toString() !== adminId.toString()) {
-           const sig = await Signature.findOne({ _id: report.verifierId });
-           if (sig && sig.doctorId) {
-               recipients.push(sig.doctorId.toString());
-               hasVerifierSignature = true;
-           } else if (!sig) {
-               recipients.push(report.verifierId.toString());
-           }
-        }
-
-        const notifications = recipients.map(rec => ({
-          ...notificationPayload,
-          recipientId: rec
-        }));
-
-        const inserted = await Notification.insertMany(notifications);
-        inserted.forEach(noti => {
-          io.to(`user_${noti.recipientId}`).emit('new_notification', noti);
-        });
-      } catch (err) {
-        console.error('Report Notification Error:', err.message);
-      }
-    }
+    // Send Notification
+    await sendNotification(req.user.id, adminId, {
+      type: 'NEW_REPORT',
+      title: report.status === 'saved' ? 'Finalized Report Signed' : 'New Report Created',
+      message: `Report for patient ${report.patientId ? 'is ready' : 'was created'}.`,
+      referenceId: report._id
+    });
 
     res.status(201).json({ success: true, data: report });
   } catch (error) {
@@ -206,28 +168,24 @@ exports.updateReport = async (req, res) => {
     // Whitelist fields — prevent doctorId/auditLogs manipulation
     const sanitizedBody = pickFields(req.body, REPORT_UPDATE_FIELDS);
 
-    // Server-side status determination — LabTechs ALWAYS stay draft
-    if (req.user.role === 'LabTech') {
-      sanitizedBody.status = 'draft';
-      if (sanitizedBody.referredByDoctorId) {
-        sanitizedBody.verifierId = sanitizedBody.referredByDoctorId;
-      }
-    } else if (sanitizedBody.referredByDoctorId) {
+    // Unified status determination — Any role can save as 'saved' if a signature is present
+    if (sanitizedBody.performedByLabTechId) {
       // Check for signature presence
       const signature = await Signature.findOne({ 
         $or: [
-          { doctorId: sanitizedBody.referredByDoctorId },
-          { _id: sanitizedBody.referredByDoctorId }
+          { userId: sanitizedBody.performedByLabTechId },
+          { _id: sanitizedBody.performedByLabTechId }
         ],
         parentAdminId: adminId 
       });
 
       if (signature) {
           sanitizedBody.status = 'saved';
-          sanitizedBody.verifierId = sanitizedBody.referredByDoctorId;
+          sanitizedBody.performedByLabTechId = signature._id;
+          sanitizedBody.verifierId = signature._id;
       } else {
           sanitizedBody.status = 'draft';
-          sanitizedBody.verifierId = sanitizedBody.referredByDoctorId;
+          sanitizedBody.verifierId = sanitizedBody.performedByLabTechId;
       }
     } else {
       sanitizedBody.status = 'draft';
@@ -236,10 +194,21 @@ exports.updateReport = async (req, res) => {
     // Append audit log (don't allow client to overwrite)
     sanitizedBody.auditLogs = [...report.auditLogs, { action: 'Modified', userId: req.user.id }];
 
+    const oldStatus = report.status;
     report = await ReportInstance.findByIdAndUpdate(req.params.id, sanitizedBody, {
       returnDocument: 'after',
       runValidators: true
     });
+
+    // Notify if the report was finalized (signed) during this update
+    if (oldStatus === 'draft' && report.status === 'saved') {
+      await sendNotification(req.user.id, adminId, {
+        type: 'NEW_REPORT',
+        title: 'Report Finalized & Signed',
+        message: `Clinical findings for the report have been finalized.`,
+        referenceId: report._id
+      });
+    }
 
     res.status(200).json({ success: true, data: report });
   } catch (error) {
@@ -259,7 +228,7 @@ exports.generatePdf = async (req, res) => {
     // but the route restricts generatePdf to Admin/Doctor anyway.
     const report = await ReportInstance.findOne(query)
       .populate('patientId')
-      .populate('referredByDoctorId');
+      .populate('performedByLabTechId', 'fullName doctorName signatureUrl');
 
     if (!report) {
       return res.status(404).json({ success: false, error: 'Report not found' });
@@ -311,7 +280,7 @@ exports.sendReport = async (req, res) => {
     const adminId = getAdminId(req);
     const report = await ReportInstance.findOne({ _id: req.params.id, doctorId: adminId })
       .populate('patientId')
-      .populate('referredByDoctorId');
+      .populate('performedByLabTechId', 'fullName doctorName signatureUrl');
     if (!report) return res.status(404).json({ success: false, error: 'Report not found' });
 
     if (report.status === 'draft') {
@@ -364,7 +333,7 @@ exports.getPendingReports = async (req, res) => {
       .populate('patientId', 'name phone age gender')
       .populate('creatorId', 'name role email')
       .populate('verifierId', 'name role email')
-      .populate('referredByDoctorId', 'doctorName signatureUrl')
+      .populate('performedByLabTechId', 'fullName doctorName signatureUrl')
       .sort('-createdAt');
 
     res.status(200).json({ success: true, count: reports.length, data: reports });

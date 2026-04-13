@@ -3,16 +3,16 @@ const User = require('../models/User');
 
 // @desc    Add a new signature
 // @route   POST /api/signatures
-// @access  Private (Admin or Doctor)
+// @access  Private (Admin, Doctor, LabTech)
 exports.addSignature = async (req, res) => {
   try {
-    const { doctorName, signatureUrl } = req.body;
+    const { fullName, signatureUrl } = req.body;
 
-    if (!signatureUrl || !doctorName) {
-      return res.status(400).json({ success: false, error: 'Doctor name and signature URL are required' });
+    if (!signatureUrl || (!fullName && req.user.role === 'Admin')) {
+      return res.status(400).json({ success: false, error: 'Name and signature URL are required' });
     }
 
-    // Validate URL format — only allow HTTPS URLs to prevent XSS/injection
+    // Validate URL format
     try {
       const parsed = new URL(signatureUrl);
       if (!['https:', 'http:'].includes(parsed.protocol)) {
@@ -22,36 +22,34 @@ exports.addSignature = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid signature URL format' });
     }
 
-    // Resolve the Lab ID (Standardized)
-    let labId;
-    if (req.user.role === 'Admin') {
-      labId = req.user.id;
-    } else {
-      labId = req.user.parentAdminId || req.user.id; // Fallback for primary/solo accounts
-    }
+    // Resolve the Lab ID
+    let labId = req.user.role === 'Admin' ? req.user.id : (req.user.parentAdminId || req.user.id);
     
-    let doctorId = null;
-    if (req.user.role === 'Doctor') {
-      doctorId = req.user.id;
-    } else if (req.user.role !== 'Admin') {
-      return res.status(403).json({ success: false, error: 'Not authorized to add signatures' });
+    // For non-admins, they can only manage their own signature
+    if (req.user.role !== 'Admin') {
+      const existingSign = await Signature.findOne({ userId: req.user.id });
+      if (existingSign) {
+        existingSign.signatureUrl = signatureUrl;
+        existingSign.fullName = req.user.name; // Always sync name with profile
+        await existingSign.save();
+        return res.status(200).json({ success: true, data: existingSign });
+      }
+
+      const signature = await Signature.create({
+        fullName: req.user.name,
+        signatureUrl,
+        parentAdminId: labId,
+        userId: req.user.id
+      });
+      return res.status(201).json({ success: true, data: signature });
     }
 
-    // Optionally check if a doctor already has a signature
-    if (req.user.role === 'Doctor') {
-        const existingSign = await Signature.findOne({ doctorId: req.user.id });
-        if (existingSign) {
-            existingSign.signatureUrl = signatureUrl;
-            await existingSign.save();
-            return res.status(200).json({ success: true, data: existingSign });
-        }
-    }
-
+    // For Admins adding/updating signatures manually
     const signature = await Signature.create({
-      doctorName: req.user.role === 'Doctor' ? req.user.name : doctorName,
+      fullName,
       signatureUrl,
       parentAdminId: labId,
-      doctorId
+      // userId might be null if admin is adding a generic signature or for a user not yet linked
     });
 
     res.status(201).json({ success: true, data: signature });
@@ -69,8 +67,25 @@ exports.getSignatures = async (req, res) => {
     // Find parentAdminId for the current user (Standardized fallback)
     let labId = req.user.role === 'Admin' ? req.user.id : (req.user.parentAdminId || req.user.id);
 
-    const signatures = await Signature.find({ parentAdminId: labId });
-    res.status(200).json({ success: true, count: signatures.length, data: signatures });
+    // Resolve the query (Admin sees all, Staff sees only their own)
+    const query = { parentAdminId: labId };
+    if (req.user.role !== 'Admin') {
+        query.$or = [
+            { userId: req.user.id },
+            { doctorId: req.user.id } // Backwards compatibility for old records
+        ];
+    }
+
+    const signatures = await Signature.find(query).lean();
+    
+    // Backwards compatibility mapping
+    const mappedSignatures = signatures.map(sig => ({
+      ...sig,
+      fullName: sig.fullName || sig.doctorName || 'Unknown',
+      userId: sig.userId || sig.doctorId || sig._id
+    }));
+    
+    res.status(200).json({ success: true, count: mappedSignatures.length, data: mappedSignatures });
   } catch (error) {
     console.error('getSignatures error:', error.message);
     res.status(500).json({ success: false, error: 'Server Error' });
@@ -88,9 +103,14 @@ exports.deleteSignature = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Signature not found' });
     }
 
-    // Ensure the caller is an Admin and owns the signature
-    if (req.user.role !== 'Admin' || signature.parentAdminId.toString() !== req.user.id) {
-       return res.status(403).json({ success: false, error: 'Not authorized to delete this signature' });
+    // Authorization Logic:
+    // 1. Admins can delete any signature in their lab
+    // 2. Staff can only delete their own signature
+    const isAdminOfLab = req.user.role === 'Admin' && signature.parentAdminId.toString() === req.user.id;
+    const isRecordOwner = (signature.userId || signature.doctorId)?.toString() === req.user.id;
+
+    if (!isAdminOfLab && !isRecordOwner) {
+       return res.status(403).json({ success: false, error: 'Not authorized to delete this signature. You can only delete your own identity.' });
     }
 
     await signature.deleteOne();

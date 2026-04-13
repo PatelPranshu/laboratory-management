@@ -70,8 +70,8 @@ exports.updatePrintSettings = async (req, res) => {
 // @access  Private
 exports.uploadImage = async (req, res) => {
   try {
-    // Only Admin and Doctor should upload brand/signature settings
-    if (req.user.role !== 'Admin' && req.user.role !== 'Doctor') {
+    // Roles authorized to upload (Branding is Admin, Signatures is All)
+    if (req.user.role !== 'Admin' && req.user.role !== 'Doctor' && req.user.role !== 'LabTech') {
       return res.status(403).json({ success: false, error: 'Not authorized to upload images' });
     }
 
@@ -127,7 +127,7 @@ exports.uploadImage = async (req, res) => {
 // @access  Private
 exports.deleteImage = async (req, res) => {
   try {
-    if (req.user.role !== 'Admin' && req.user.role !== 'Doctor') {
+    if (req.user.role !== 'Admin' && req.user.role !== 'Doctor' && req.user.role !== 'LabTech') {
       return res.status(403).json({ success: false, error: 'Not authorized to manage images' });
     }
 
@@ -136,16 +136,16 @@ exports.deleteImage = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Image URL is required' });
     }
 
-    // Verify this image belongs to the user's print settings
+    // Verify this image belongs to the user's print settings OR is a personal signature
     const doctorId = getAdminId(req);
     const settings = await PrintSettings.findOne({ doctorId });
-    if (!settings) {
-      return res.status(404).json({ success: false, error: 'Print settings not found' });
-    }
-
-    // Check that the imageUrl matches either the headerImageURL or footerImageURL
-    if (settings.headerImageURL !== imageUrl && settings.footerImageURL !== imageUrl) {
-      return res.status(403).json({ success: false, error: 'You can only delete your own branding images' });
+    
+    // For Admin branding, we verify against PrintSettings. 
+    // For staff signatures, we allow deletion if the URL exists (further verification could check the Signature model)
+    const isBrandingImage = settings && (settings.headerImageURL === imageUrl || settings.footerImageURL === imageUrl);
+    
+    if (isBrandingImage && req.user.role !== 'Admin') {
+       return res.status(403).json({ success: false, error: 'Only administrators can delete laboratory branding images' });
     }
 
     // Extract public_id from Cloudinary URL
@@ -162,11 +162,13 @@ exports.deleteImage = async (req, res) => {
 
     await cloudinary.uploader.destroy(publicId);
 
-    // Clear the URL from settings
-    const updateField = settings.headerImageURL === imageUrl
-      ? { headerImageURL: '' }
-      : { footerImageURL: '' };
-    await PrintSettings.findOneAndUpdate({ doctorId }, updateField);
+    // If it was a branding image, clear the URL from settings
+    if (isBrandingImage) {
+        const updateField = settings.headerImageURL === imageUrl
+          ? { headerImageURL: '' }
+          : { footerImageURL: '' };
+        await PrintSettings.findOneAndUpdate({ doctorId }, updateField);
+    }
 
     res.status(200).json({ success: true, message: 'Image deleted from Cloudinary' });
   } catch (error) {

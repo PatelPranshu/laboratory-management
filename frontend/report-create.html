@@ -81,33 +81,28 @@
                 </div>
 
                 <div class="flex items-center gap-4">
-                    <!-- Custom Styled Verifier/Doctor selection -->
-                    <div class="relative group">
-                        <div id="doctor-dropdown-toggle" onclick="toggleDoctorDropdown()" class="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 hover:border-brand-400 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all cursor-pointer min-w-[200px]">
-                            <i class="fas fa-user-md text-brand-500 text-sm"></i>
-                            <span id="selected-doctor-name" class="text-sm font-semibold text-slate-700 truncate">Select Authorizing Doctor</span>
-                            <i class="fas fa-chevron-down text-[10px] text-slate-400 ml-auto group-hover:text-brand-500 transition-colors"></i>
+                    <div class="hidden xl:flex items-center relative gap-2 group">
+                        <div id="referral-dropdown-toggle" onclick="toggleReferralDropdown()" class="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 gap-2 transition-all hover:border-brand-300 cursor-pointer min-w-[150px]">
+                            <i class="fas fa-user-md text-slate-400 text-xs group-hover:text-brand-500"></i>
+                            <div class="flex flex-col flex-1 min-w-0">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tight leading-none mb-0.5">Referred By</span>
+                                <span id="selected-referral-name" class="text-xs font-bold text-slate-700 truncate">Select Referrer</span>
+                            </div>
+                            <i class="fas fa-chevron-down text-[10px] text-slate-400"></i>
                         </div>
                         
                         <input type="hidden" id="report-referred-by">
 
-                        <div id="doctor-dropdown-menu" class="hidden absolute z-[100] top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden py-1.5 animate-fade-in-up">
-                            <ul id="doctor-list" class="max-h-60 overflow-y-auto custom-scrollbar">
-                                <li class="px-4 py-3 text-center text-slate-400 text-sm italic">Loading doctors...</li>
+                        <div id="referral-dropdown-menu" class="hidden absolute top-full right-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-xl z-[100] overflow-hidden py-1.5 animate-fade-in-up">
+                            <ul id="referral-list" class="max-h-60 overflow-y-auto custom-scrollbar">
+                                <li class="px-4 py-3 text-center text-slate-400 text-sm italic">Loading sources...</li>
                             </ul>
                         </div>
-                        
-                    </div>
-                    
-                    <div id="signature-preview-container" class="hidden">
-                         <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg h-9 animate-fade-in-up">
-                             <img id="signature-image-preview" src="" class="h-6 object-contain" alt="sign">
-                         </div>
                     </div>
 
                     <div class="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
 
-                    <span class="text-xs font-medium text-slate-400 hidden xl:inline" id="last-saved-info">Unsaved Draft</span>
+                    <span class="text-xs font-medium text-slate-400 hidden xl:inline" id="last-saved-info">Unsaved Report</span>
                     
                     <button id="btn-save-report" onclick="saveReport()" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0">
                         <i class="fas fa-check mr-2"></i> Save & Sign
@@ -180,10 +175,7 @@
                         </div>
                     </div>
                     
-                    <div id="draft-warning-container" class="hidden p-3 bg-amber-50 rounded-lg border border-amber-200 flex items-center gap-3 text-amber-700">
-                        <i class="fas fa-info-circle text-sm shrink-0"></i>
-                        <p class="text-sm font-medium">Document will be saved as **Draft** pending review.</p>
-                    </div>
+
 
                     <div class="ui-card flex flex-col min-h-[500px]">
                         <div class="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center rounded-t-xl shrink-0">
@@ -200,6 +192,39 @@
                                 <i class="fas fa-flask text-4xl mb-3 opacity-50"></i>
                                 <p class="text-sm font-medium">Select a template or add a section to begin</p>
                              </div>
+                        </div>
+                    </div>
+
+                    <!-- Authorizing Doctor Selection At Bottom -->
+                    <div class="ui-card p-6">
+                        <div class="flex flex-col md:flex-row items-center gap-8">
+                            <div class="flex-1 w-full">
+                                <label class="block text-sm font-bold text-slate-700 mb-3">Performed By</label>
+                                <div class="relative group max-w-md">
+                                    <div id="doctor-dropdown-toggle" onclick="toggleDoctorDropdown()" class="flex items-center gap-3 bg-white border border-slate-300 rounded-lg px-4 py-2.5 hover:border-brand-400 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all cursor-pointer">
+                                        <i class="fas fa-user-md text-brand-500 text-lg"></i>
+                                        <span id="selected-doctor-name" class="text-sm font-semibold text-slate-700 truncate">Performed By</span>
+                                        <i class="fas fa-chevron-down text-xs text-slate-400 ml-auto group-hover:text-brand-500 transition-colors"></i>
+                                    </div>
+                                    
+                                    <input type="hidden" id="report-performed-by">
+            
+                                    <div id="doctor-dropdown-menu" class="hidden absolute z-[100] bottom-full left-0 right-0 mb-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden py-1.5 animate-fade-in-up">
+                                        <ul id="doctor-list" class="max-h-60 overflow-y-auto custom-scrollbar">
+                                            <li class="px-4 py-3 text-center text-slate-400 text-sm italic">Loading doctors...</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="signature-preview-container" class="hidden shrink-0">
+                                 <div class="flex flex-col items-center gap-3">
+                                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Digital Signature Preview</p>
+                                     <div class="bg-slate-50 border border-slate-200 p-2 rounded-xl h-20 w-48 flex items-center justify-center shadow-inner">
+                                         <img id="signature-image-preview" src="" class="max-h-full max-w-full object-contain" alt="sign">
+                                     </div>
+                                 </div>
+                            </div>
                         </div>
                     </div>
 
@@ -335,7 +360,7 @@
         
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                loadCommonLayout(); checkAuth(); await loadTemplatesCheckboxes(); await loadSignatures();
+                loadCommonLayout(); checkAuth(); await loadTemplatesCheckboxes(); await loadSignatures(); await loadReferrals();
                 const urlParams = new URLSearchParams(window.location.search);
                 const editId = urlParams.get('edit'), patientId = urlParams.get('patient');
                 
@@ -353,21 +378,22 @@
                                 block.querySelector('.rs-text').value = sec.text || '';
                                 if (sec.parameters) sec.parameters.forEach(p => addParamLine(block.querySelector('button'), p, false));
                             });
-                        } else addReportSection(false);
-                        if (draft.templateIds) document.querySelectorAll('#templates-checkbox-container input').forEach(cb => { if (draft.templateIds.includes(cb.value)) cb.checked = true; });
+                        } else {
+                            addReportSection(false);
+                        }
+                        
+                        if (draft.referredBy) {
+                            selectReferral(draft.referredBy);
+                        }
                     } else addReportSection(false);
                 }
                 setupPatientSearch();
 
-                // Dynamic Save Button Label based on Role
+                // Unified Save Button Label for all Roles
                 const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
                 const saveBtn = document.getElementById('btn-save-report');
                 if (saveBtn) {
-                    if (user.role === 'LabTech') {
-                        saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Save Draft';
-                    } else {
-                        saveBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Save & Sign';
-                    }
+                    saveBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Save & Sign';
                 }
 
                 document.getElementById('report-sections-container').addEventListener('input', () => { toggleActionState('editing'); saveReportDraft(); });
@@ -389,32 +415,85 @@
 
         async function loadSignatures() {
             try {
+                const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
                 const res = await api.request('/signatures'); 
                 const list = document.getElementById('doctor-list');
-                const hiddenInput = document.getElementById('report-referred-by');
+                const toggle = document.getElementById('doctor-dropdown-toggle');
                 
                 if (!res.data || res.data.length === 0) { 
                     list.innerHTML = '<li class="px-4 py-3 text-center text-slate-400 text-sm italic">No signatures found</li>'; 
                     return; 
                 }
 
-                list.innerHTML = res.data.map(sig => `
-                    <li onclick="selectDoctor('${sig.doctorId || sig._id}', '${sanitizeHTML(sig.doctorName)}', '${sanitizeHTML(sig.signatureUrl)}')" 
+                list.innerHTML = res.data.map(sig => {
+                    const name = sig.fullName || sig.doctorName || 'Unknown';
+                    const sId = sig._id || sig.userId || sig.doctorId;
+                    return `
+                    <li onclick="selectDoctor('${sId}', '${sanitizeHTML(name)}', '${sanitizeHTML(sig.signatureUrl)}')" 
                         class="px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-600 cursor-pointer transition-all flex items-center gap-3">
-                        <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-400 font-bold">${sanitizeHTML(sig.doctorName.charAt(0))}</div>
-                        <span>${sanitizeHTML(sig.doctorName)}</span>
+                        <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-400 font-bold">${sanitizeHTML(name.charAt(0))}</div>
+                        <span>${sanitizeHTML(name)}</span>
                     </li>
-                `).join('');
+                `}).join('');
+
+                // Auto-selection & Interaction locking for Staff
+                if (user.role !== 'Admin' && res.data.length > 0) {
+                    const sig = res.data[0];
+                    const name = sig.fullName || sig.doctorName || 'Unknown';
+                    const sId = sig._id || sig.userId || sig.doctorId;
+                    selectDoctor(sId, name, sig.signatureUrl);
+                    
+                    // Lock dropdown visually and functionally
+                    if (toggle) {
+                        toggle.onclick = null;
+                        toggle.classList.add('opacity-80', 'cursor-not-allowed', 'pointer-events-none');
+                        toggle.querySelector('i.fa-chevron-down')?.remove();
+                    }
+                }
             } catch (err) { }
         }
+
+        async function loadReferrals() {
+            try {
+                const res = await api.request('/referrals');
+                const list = document.getElementById('referral-list');
+                if (!list || !res.data) return;
+                
+                if (res.data.length === 0) {
+                    list.innerHTML = '<li class="px-4 py-3 text-center text-slate-400 text-sm italic">No referral sources found</li>';
+                    return;
+                }
+
+                list.innerHTML = res.data.map(ref => `
+                    <li onclick="selectReferral('${sanitizeHTML(ref.name)}')" 
+                        class="px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-600 cursor-pointer transition-all flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center text-[10px] text-emerald-600 font-bold">${sanitizeHTML(ref.name.charAt(0).toUpperCase())}</div>
+                        <span>${sanitizeHTML(ref.name)}</span>
+                    </li>
+                `).join('');
+            } catch (err) { console.error('Error loading referrals:', err); }
+        }
+        
 
         function toggleDoctorDropdown() {
             const menu = document.getElementById('doctor-dropdown-menu');
             menu.classList.toggle('hidden');
         }
 
+        function toggleReferralDropdown() {
+            const menu = document.getElementById('referral-dropdown-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function selectReferral(name) {
+            document.getElementById('report-referred-by').value = name;
+            document.getElementById('selected-referral-name').textContent = name;
+            document.getElementById('referral-dropdown-menu').classList.add('hidden');
+            toggleActionState('editing');
+        }
+
         function selectDoctor(id, name, url) {
-            document.getElementById('report-referred-by').value = id;
+            document.getElementById('report-performed-by').value = id;
             document.getElementById('selected-doctor-name').textContent = name;
             document.getElementById('doctor-dropdown-menu').classList.add('hidden');
             
@@ -432,12 +511,18 @@
             }
         }
 
-        // Global click handler to close dropdown
+        // Global click handler to close dropdowns
         document.addEventListener('click', (e) => {
-            const toggle = document.getElementById('doctor-dropdown-toggle');
-            const menu = document.getElementById('doctor-dropdown-menu');
-            if (toggle && !toggle.contains(e.target) && !menu.contains(e.target)) {
-                menu.classList.add('hidden');
+            const dToggle = document.getElementById('doctor-dropdown-toggle');
+            const dMenu = document.getElementById('doctor-dropdown-menu');
+            if (dToggle && !dToggle.contains(e.target) && !dMenu.contains(e.target)) {
+                dMenu.classList.add('hidden');
+            }
+
+            const rToggle = document.getElementById('referral-dropdown-toggle');
+            const rMenu = document.getElementById('referral-dropdown-menu');
+            if (rToggle && !rToggle.contains(e.target) && !rMenu.contains(e.target)) {
+                rMenu.classList.add('hidden');
             }
         });
 
@@ -510,8 +595,8 @@
             document.querySelectorAll('#templates-checkbox-container input').forEach(cb => cb.checked = false);
 
             // 5. Reset Verifier (Doctor)
-            document.getElementById('report-referred-by').value = '';
-            document.getElementById('selected-doctor-name').textContent = 'Select Authorizing Doctor';
+            document.getElementById('report-performed-by').value = '';
+            document.getElementById('selected-doctor-name').textContent = 'Performed By';
             document.getElementById('signature-preview-container').classList.add('hidden');
             document.getElementById('draft-warning-container').classList.add('hidden');
 
@@ -604,12 +689,15 @@
         async function loadExistingReport(id) {
              try {
                  const res = await api.request(`/reports/${id}`), r = res.data; document.getElementById('report-id').value = r._id; document.getElementById('report-status').value = r.status; if (typeof updateStatusBadgeUI === 'function') updateStatusBadgeUI(r.status);
-                  if (r.referredByDoctorId) { 
-                      const sig = r.referredByDoctorId;
-                      selectDoctor(sig._id, sig.doctorName, sig.signatureUrl); 
+                  if (r.performedByLabTechId) { 
+                      const sig = r.performedByLabTechId;
+                      selectDoctor(sig._id, sig.fullName || sig.doctorName, sig.signatureUrl); 
                   }
-                 if(r.patientId) selectPatient(r.patientId);
-                 if (r.templateIds) document.querySelectorAll('#templates-checkbox-container input').forEach(cb => { if (r.templateIds.includes(cb.value)) cb.checked = true; });
+                  if(r.patientId) selectPatient(r.patientId);
+                  if (r.referredBy) {
+                      selectReferral(r.referredBy);
+                  }
+                  if (r.templateIds) document.querySelectorAll('#templates-checkbox-container input').forEach(cb => { if (r.templateIds.includes(cb.value)) cb.checked = true; });
                  const container = document.getElementById('report-sections-container'); container.innerHTML = '';
                  r.sections.forEach(sec => { 
                      const block = addReportSection(false); 
@@ -623,10 +711,10 @@
 
         async function saveReport() {
             const patientId = document.getElementById('sp-id').value; if (!patientId) return UI.showToast('Please select a patient.', 'error');
-            const referredByDoctorId = document.getElementById('report-referred-by').value;
-            const referredBy = document.getElementById('selected-doctor-name').textContent;
+            const performedByLabTechId = document.getElementById('report-performed-by').value;
+            const performedBy = document.getElementById('selected-doctor-name').textContent;
             
-            if (!referredByDoctorId || referredBy === 'Select Authorizing Doctor') return UI.showToast('Verifier selection is mandatory.', 'error');
+            if (!performedByLabTechId || performedBy === 'Performed By') return UI.showToast('Performer selection is mandatory.', 'error');
             const sections = []; document.querySelectorAll('.rep-section').forEach(secBlock => {
                   const sName = secBlock.querySelector('.rs-name').value; if(!sName) return; const sText = secBlock.querySelector('.rs-text').value, parameters = [];
                   secBlock.querySelectorAll('.param-line').forEach(pl => { if (!pl.dataset.paramData) return; const p = JSON.parse(pl.dataset.paramData); p.name = pl.querySelector('.p-name').value; p.result = pl.querySelector('.p-result').value; p.units = pl.querySelector('.p-units-input').value; if (!p.isGenderSpecific) { const mMatch = pl.querySelector('.p-normal-input').value.match(/([\d.]+)\s*[-–—]\s*([\d.]+)/); if (mMatch) p.normalRange = { min: parseFloat(mMatch[1]), max: parseFloat(mMatch[2]) }; } parameters.push(p); });
@@ -636,11 +724,13 @@
             const templateIds = Array.from(document.querySelectorAll('#templates-checkbox-container input:checked')).map(cb => cb.value), reportId = document.getElementById('report-id').value;
             
             const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
-            const saveLabel = (user.role === 'LabTech') ? '<i class="fas fa-save mr-2"></i> Save Draft' : '<i class="fas fa-check mr-2"></i> Save & Sign';
+            const saveLabel = '<i class="fas fa-check mr-2"></i> Save & Sign';
             
             UI.toggleLoader('btn-save-report', true, 'Processing...');
             try {
-                const res = await api.request(reportId ? `/reports/${reportId}` : '/reports', reportId ? 'PUT' : 'POST', { patientId, sections, referredBy, templateIds, referredByDoctorId, verifierId: referredByDoctorId }); const savedReport = res.data;
+                const referredBy = document.getElementById('report-referred-by').value;
+                if (!referredBy) return UI.showToast('Please select a referring source.', 'error');
+                const res = await api.request(reportId ? `/reports/${reportId}` : '/reports', reportId ? 'PUT' : 'POST', { patientId, sections, performedBy, templateIds, performedByLabTechId, verifierId: performedByLabTechId, referredBy }); const savedReport = res.data;
                 document.getElementById('report-id').value = savedReport._id; document.getElementById('report-status').value = savedReport.status; UI.showToast(savedReport.status === 'saved' ? 'Finalized & Signed' : 'Saved as Draft', 'success'); document.getElementById('last-saved-info').textContent = `Document Locked: ${new Date().toLocaleTimeString()}`; DraftManager.clear('report'); toggleActionState(savedReport.status);
             } catch (err) { UI.showToast(err.message, 'error'); } finally { UI.toggleLoader('btn-save-report', false, saveLabel); }
         }
@@ -678,8 +768,8 @@
                   secBlock.querySelectorAll('.param-line').forEach(pl => { if (!pl.dataset.paramData) return; const p = JSON.parse(pl.dataset.paramData); p.name = pl.querySelector('.p-name').value; p.result = pl.querySelector('.p-result').value; p.units = pl.querySelector('.p-units-input').value; parameters.push(p); });
                   sections.push({ sectionName: sName, text: sText, parameters });
             });
-            const draft = { patient: currentPatient, referredBy: document.getElementById('report-referred-by').value, templateIds: Array.from(document.querySelectorAll('#templates-checkbox-container input:checked')).map(cb => cb.value), sections };
-            if (draft.patient || draft.referredBy || draft.sections.length > 0) DraftManager.save('report', draft);
+            const draft = { patient: currentPatient, performedBy: document.getElementById('report-performed-by').value, referredBy: document.getElementById('report-referred-by').value, templateIds: Array.from(document.querySelectorAll('#templates-checkbox-container input:checked')).map(cb => cb.value), sections };
+            if (draft.patient || draft.performedBy || draft.sections.length > 0) DraftManager.save('report', draft);
         }, 1000);
 
         function toggleTemplateHeight() {
