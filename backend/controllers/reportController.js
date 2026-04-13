@@ -9,8 +9,8 @@ const { pickFields } = require('../middlewares/validate');
 
 // Allowed fields for report create/update — prevents mass assignment
 // creatorId, verifierId, performedByLabTechId are set SERVER-SIDE only to prevent spoofing
-const REPORT_CREATE_FIELDS = ['patientId', 'date', 'referredBy', 'performedBy', 'sections', 'templateIds', 'performedByLabTechId'];
-const REPORT_UPDATE_FIELDS = ['date', 'referredBy', 'performedBy', 'sections', 'templateIds', 'performedByLabTechId'];
+const REPORT_CREATE_FIELDS = ['patientId', 'date', 'referredBy', 'performedBy', 'sections', 'templateIds', 'performedByLabTechId', 'status'];
+const REPORT_UPDATE_FIELDS = ['date', 'referredBy', 'performedBy', 'sections', 'templateIds', 'performedByLabTechId', 'status'];
 
 const getAdminId = (req) => {
   return req.user.role === 'Admin' ? req.user.id : (req.user.parentAdminId || req.user.id);
@@ -103,8 +103,16 @@ exports.createReport = async (req, res) => {
     sanitizedBody.createdBy = req.user.id;
     sanitizedBody.creatorId = req.user.id;
 
-    // Unified status determination — Any role can save as 'saved' if a signature is present
-    if (sanitizedBody.performedByLabTechId) {
+    // Handle empty string IDs
+    if (sanitizedBody.performedByLabTechId === '') sanitizedBody.performedByLabTechId = null;
+
+    // Determine final status
+    // If client explicitly requested 'draft', keep it as draft
+    const requestedStatus = req.body.status;
+    
+    if (requestedStatus === 'draft') {
+      sanitizedBody.status = 'draft';
+    } else if (sanitizedBody.performedByLabTechId) {
       const signature = await Signature.findOne({ 
         $or: [
           { userId: sanitizedBody.performedByLabTechId },
@@ -114,15 +122,25 @@ exports.createReport = async (req, res) => {
       });
 
       if (signature) {
-          sanitizedBody.status = 'saved';
-          sanitizedBody.performedByLabTechId = signature._id;
-          sanitizedBody.verifierId = signature._id;
+        sanitizedBody.status = 'saved';
+        sanitizedBody.performedByLabTechId = signature._id;
+        sanitizedBody.verifierId = signature._id;
       } else {
-          sanitizedBody.status = 'draft';
-          sanitizedBody.verifierId = sanitizedBody.performedByLabTechId;
+        sanitizedBody.status = 'draft';
+        sanitizedBody.verifierId = sanitizedBody.performedByLabTechId;
       }
     } else {
       sanitizedBody.status = 'draft';
+    }
+
+    // Validation for non-drafts
+    if (sanitizedBody.status === 'saved') {
+      if (!sanitizedBody.performedBy) {
+        return res.status(400).json({ success: false, error: 'Performing technician/doctor name is required for finalized reports' });
+      }
+      if (!sanitizedBody.referredBy) {
+        return res.status(400).json({ success: false, error: 'Referring source is required for finalized reports' });
+      }
     }
     
     // Add audit log
@@ -168,9 +186,15 @@ exports.updateReport = async (req, res) => {
     // Whitelist fields — prevent doctorId/auditLogs manipulation
     const sanitizedBody = pickFields(req.body, REPORT_UPDATE_FIELDS);
 
-    // Unified status determination — Any role can save as 'saved' if a signature is present
-    if (sanitizedBody.performedByLabTechId) {
-      // Check for signature presence
+    // Handle empty string IDs
+    if (sanitizedBody.performedByLabTechId === '') sanitizedBody.performedByLabTechId = null;
+
+    // Determine final status
+    const requestedStatus = req.body.status;
+    
+    if (requestedStatus === 'draft') {
+      sanitizedBody.status = 'draft';
+    } else if (sanitizedBody.performedByLabTechId) {
       const signature = await Signature.findOne({ 
         $or: [
           { userId: sanitizedBody.performedByLabTechId },
@@ -189,6 +213,17 @@ exports.updateReport = async (req, res) => {
       }
     } else {
       sanitizedBody.status = 'draft';
+    }
+
+    // Validation for non-drafts
+    if (sanitizedBody.status === 'saved') {
+      if (!sanitizedBody.performedBy && !report.performedBy) {
+        return res.status(400).json({ success: false, error: 'Performing technician/doctor name is required for finalized reports' });
+      }
+      // referredBy has a default in model, but good to check if it's being cleared
+      if (sanitizedBody.referredBy === '') {
+        return res.status(400).json({ success: false, error: 'Referring source is required for finalized reports' });
+      }
     }
 
     // Append audit log (don't allow client to overwrite)

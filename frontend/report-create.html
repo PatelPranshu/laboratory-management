@@ -104,7 +104,11 @@
 
                     <span class="text-xs font-medium text-slate-400 hidden xl:inline" id="last-saved-info">Unsaved Report</span>
                     
-                    <button id="btn-save-report" onclick="saveReport()" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0">
+                    <button id="btn-save-draft" onclick="saveReport(true)" class="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0">
+                        <i class="fas fa-save mr-2 text-slate-400"></i> Save Draft
+                    </button>
+
+                    <button id="btn-save-report" onclick="saveReport(false)" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0">
                         <i class="fas fa-check mr-2"></i> Save & Sign
                     </button>
 
@@ -709,46 +713,92 @@
              } catch(err) { }
         }
 
-        async function saveReport() {
+        async function saveReport(isDraft = false) {
             const patientId = document.getElementById('sp-id').value; if (!patientId) return UI.showToast('Please select a patient.', 'error');
-            const performedByLabTechId = document.getElementById('report-performed-by').value;
-            const performedBy = document.getElementById('selected-doctor-name').textContent;
             
-            if (!performedByLabTechId || performedBy === 'Performed By') return UI.showToast('Performer selection is mandatory.', 'error');
-            const sections = []; document.querySelectorAll('.rep-section').forEach(secBlock => {
-                  const sName = secBlock.querySelector('.rs-name').value; if(!sName) return; const sText = secBlock.querySelector('.rs-text').value, parameters = [];
-                  secBlock.querySelectorAll('.param-line').forEach(pl => { if (!pl.dataset.paramData) return; const p = JSON.parse(pl.dataset.paramData); p.name = pl.querySelector('.p-name').value; p.result = pl.querySelector('.p-result').value; p.units = pl.querySelector('.p-units-input').value; if (!p.isGenderSpecific) { const mMatch = pl.querySelector('.p-normal-input').value.match(/([\d.]+)\s*[-–—]\s*([\d.]+)/); if (mMatch) p.normalRange = { min: parseFloat(mMatch[1]), max: parseFloat(mMatch[2]) }; } parameters.push(p); });
-                  sections.push({ sectionName: sName, text: sText, parameters: parameters.length > 0 ? parameters : undefined });
-            });
-            if (sections.length === 0) return UI.showToast('Findings cannot be empty.', 'error');
-            const templateIds = Array.from(document.querySelectorAll('#templates-checkbox-container input:checked')).map(cb => cb.value), reportId = document.getElementById('report-id').value;
-            
-            const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
-            const saveLabel = '<i class="fas fa-check mr-2"></i> Save & Sign';
-            
-            UI.toggleLoader('btn-save-report', true, 'Processing...');
-            try {
-                const referredBy = document.getElementById('report-referred-by').value;
+            const performedByLabTechIdRaw = document.getElementById('report-performed-by').value;
+            const performedByLabTechId = performedByLabTechIdRaw === '' ? null : performedByLabTechIdRaw;
+            const performedBy = document.getElementById('selected-doctor-name').textContent === 'Performed By' ? '' : document.getElementById('selected-doctor-name').textContent;
+            const referredBy = document.getElementById('report-referred-by').value;
+
+            // Strict validation ONLY for Final Save
+            if (!isDraft) {
+                if (!performedByLabTechId || !performedBy) return UI.showToast('Performer selection is mandatory for signing.', 'error');
                 if (!referredBy) return UI.showToast('Please select a referring source.', 'error');
-                const res = await api.request(reportId ? `/reports/${reportId}` : '/reports', reportId ? 'PUT' : 'POST', { patientId, sections, performedBy, templateIds, performedByLabTechId, verifierId: performedByLabTechId, referredBy }); const savedReport = res.data;
-                document.getElementById('report-id').value = savedReport._id; document.getElementById('report-status').value = savedReport.status; UI.showToast(savedReport.status === 'saved' ? 'Finalized & Signed' : 'Saved as Draft', 'success'); document.getElementById('last-saved-info').textContent = `Document Locked: ${new Date().toLocaleTimeString()}`; DraftManager.clear('report'); toggleActionState(savedReport.status);
-            } catch (err) { UI.showToast(err.message, 'error'); } finally { UI.toggleLoader('btn-save-report', false, saveLabel); }
+            }
+
+            const sections = []; document.querySelectorAll('.rep-section').forEach(secBlock => {
+                  const sName = secBlock.querySelector('.rs-name').value; if(!sName && !isDraft) return; 
+                  const sText = secBlock.querySelector('.rs-text').value, parameters = [];
+                  secBlock.querySelectorAll('.param-line').forEach(pl => { 
+                      if (!pl.dataset.paramData) return; 
+                      const p = JSON.parse(pl.dataset.paramData); 
+                      p.name = pl.querySelector('.p-name').value; 
+                      p.result = pl.querySelector('.p-result').value; 
+                      p.units = pl.querySelector('.p-units-input').value; 
+                      if (!p.isGenderSpecific) { 
+                          const mMatch = pl.querySelector('.p-normal-input').value.match(/([\d.]+)\s*[-–—]\s*([\d.]+)/); 
+                          if (mMatch) p.normalRange = { min: parseFloat(mMatch[1]), max: parseFloat(mMatch[2]) }; 
+                      } 
+                      parameters.push(p); 
+                  });
+                  if (sName || parameters.length > 0 || sText) {
+                      sections.push({ sectionName: sName || 'Untitled Section', text: sText, parameters: parameters.length > 0 ? parameters : undefined });
+                  }
+            });
+
+            if (!isDraft && sections.length === 0) return UI.showToast('Findings cannot be empty.', 'error');
+            
+            const templateIds = Array.from(document.querySelectorAll('#templates-checkbox-container input:checked')).map(cb => cb.value), reportId = document.getElementById('report-id').value;
+            const saveBtnId = isDraft ? 'btn-save-draft' : 'btn-save-report';
+            const originalLabel = isDraft ? '<i class="fas fa-save mr-2 text-slate-400"></i> Save Draft' : '<i class="fas fa-check mr-2"></i> Save & Sign';
+
+            UI.toggleLoader(saveBtnId, true, 'Saving...');
+            try {
+                const payload = { 
+                    patientId, 
+                    sections, 
+                    performedBy, 
+                    templateIds, 
+                    performedByLabTechId, 
+                    verifierId: performedByLabTechId, 
+                    referredBy,
+                    status: isDraft ? 'draft' : undefined 
+                };
+                
+                const res = await api.request(reportId ? `/reports/${reportId}` : '/reports', reportId ? 'PUT' : 'POST', payload); 
+                const savedReport = res.data;
+                
+                document.getElementById('report-id').value = savedReport._id; 
+                document.getElementById('report-status').value = savedReport.status; 
+                
+                UI.showToast(savedReport.status === 'saved' ? 'Finalized & Signed' : 'Saved as Draft', 'success'); 
+                document.getElementById('last-saved-info').textContent = `Last Saved: ${new Date().toLocaleTimeString()}`; 
+                
+                DraftManager.clear('report'); 
+                toggleActionState(savedReport.status);
+            } catch (err) { 
+                UI.showToast(err.message || 'Failed to save report', 'error'); 
+            } finally { 
+                UI.toggleLoader(saveBtnId, false, originalLabel); 
+            }
         }
 
         function toggleActionState(state) {
-            const saveBtn = document.getElementById('btn-save-report'), shareActions = document.getElementById('header-post-save-actions'); if (!saveBtn || !shareActions) return;
+            const saveBtn = document.getElementById('btn-save-report'), 
+                  draftBtn = document.getElementById('btn-save-draft'),
+                  shareActions = document.getElementById('header-post-save-actions'); 
+            if (!saveBtn || !shareActions) return;
+
             if (state === 'saved') { 
                 saveBtn.classList.add('hidden'); 
-                const user = JSON.parse(localStorage.getItem('lis_user') || '{}'); 
-                
-                // Show share actions for EVERYONE if the report is signed/saved
+                if (draftBtn) draftBtn.classList.add('hidden');
                 shareActions.classList.remove('hidden');
-                
-                // Update badge and loader UI
                 updateStatusBadgeUI(document.getElementById('report-status').value || 'saved'); 
             }
             else { 
                 saveBtn.classList.remove('hidden'); 
+                if (draftBtn) draftBtn.classList.remove('hidden');
                 shareActions.classList.add('hidden'); 
             }
         }

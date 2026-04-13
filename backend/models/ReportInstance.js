@@ -71,7 +71,7 @@ const ReportInstanceSchema = new mongoose.Schema({
   },
   performedBy: {
     type: String,
-    required: [true, 'Performing technician/doctor is required']
+    trim: true
   },
   performedByLabTechId: {
     type: mongoose.Schema.Types.ObjectId,
