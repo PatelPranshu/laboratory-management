@@ -1,5 +1,6 @@
 const Signature = require('../models/Signature');
 const User = require('../models/User');
+const { deleteFromCloudinary } = require('../utils/cloudinary');
 
 // @desc    Add a new signature
 // @route   POST /api/signatures
@@ -29,6 +30,10 @@ exports.addSignature = async (req, res) => {
     if (req.user.role !== 'Admin') {
       const existingSign = await Signature.findOne({ userId: req.user.id });
       if (existingSign) {
+        // Delete old image from Cloudinary if URL changed
+        if (existingSign.signatureUrl && existingSign.signatureUrl !== signatureUrl) {
+          await deleteFromCloudinary(existingSign.signatureUrl);
+        }
         existingSign.signatureUrl = signatureUrl;
         existingSign.fullName = req.user.name; // Always sync name with profile
         await existingSign.save();
@@ -111,6 +116,11 @@ exports.deleteSignature = async (req, res) => {
 
     if (!isAdminOfLab && !isRecordOwner) {
        return res.status(403).json({ success: false, error: 'Not authorized to delete this signature. You can only delete your own identity.' });
+    }
+
+    // Delete image from Cloudinary
+    if (signature.signatureUrl) {
+      await deleteFromCloudinary(signature.signatureUrl);
     }
 
     await signature.deleteOne();

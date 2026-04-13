@@ -1,5 +1,5 @@
 const PrintSettings = require('../models/PrintSettings');
-const cloudinary = require('cloudinary').v2;
+const { cloudinary, deleteFromCloudinary } = require('../utils/cloudinary');
 const streamifier = require('streamifier');
 const { pickFields } = require('../middlewares/validate');
 
@@ -8,12 +8,7 @@ const getAdminId = (req) => {
   return req.user.role === 'Admin' ? req.user.id : req.user.parentAdminId;
 };
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+// Cloudinary is now configured in ../utils/cloudinary.js
 
 // Allowed fields for print settings update
 const SETTINGS_FIELDS = ['headerImageURL', 'footerImageURL', 'layoutPreferences'];
@@ -55,6 +50,14 @@ exports.updatePrintSettings = async (req, res) => {
     if (!settings) {
        settings = await PrintSettings.create({ doctorId, ...sanitizedBody });
     } else {
+       // Cleanup old images if they are being replaced
+       if (sanitizedBody.headerImageURL && settings.headerImageURL && sanitizedBody.headerImageURL !== settings.headerImageURL) {
+           await deleteFromCloudinary(settings.headerImageURL);
+       }
+       if (sanitizedBody.footerImageURL && settings.footerImageURL && sanitizedBody.footerImageURL !== settings.footerImageURL) {
+           await deleteFromCloudinary(settings.footerImageURL);
+       }
+
        settings = await PrintSettings.findOneAndUpdate({ doctorId }, sanitizedBody, { returnDocument: 'after', runValidators: true });
     }
 
@@ -148,19 +151,8 @@ exports.deleteImage = async (req, res) => {
        return res.status(403).json({ success: false, error: 'Only administrators can delete laboratory branding images' });
     }
 
-    // Extract public_id from Cloudinary URL
-    // URL format: https://res.cloudinary.com/<cloud>/image/upload/v123/lis_app/filename.ext
-    const urlParts = imageUrl.split('/');
-    const uploadIndex = urlParts.indexOf('upload');
-    if (uploadIndex === -1) {
-      return res.status(400).json({ success: false, error: 'Invalid Cloudinary URL' });
-    }
-    const pathAfterUpload = urlParts.slice(uploadIndex + 1);
-    const pathWithoutVersion = pathAfterUpload.filter(p => !p.match(/^v\d+$/));
-    const publicIdWithExt = pathWithoutVersion.join('/');
-    const publicId = publicIdWithExt.replace(/\.[^/.]+$/, '');
-
-    await cloudinary.uploader.destroy(publicId);
+    // Delete from Cloudinary using utility
+    await deleteFromCloudinary(imageUrl);
 
     // If it was a branding image, clear the URL from settings
     if (isBrandingImage) {
