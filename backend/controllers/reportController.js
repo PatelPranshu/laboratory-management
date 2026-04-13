@@ -149,7 +149,7 @@ exports.createReport = async (req, res) => {
     await sendNotification(req.user.id, adminId, {
       type: 'NEW_REPORT',
       title: report.status === 'saved' ? 'Finalized Report Signed' : 'New Report Created',
-      message: `Report for patient ${report.patientId ? 'is ready' : 'was created'}.`,
+      message: `Report for patient ${report.patientId ? 'is ready' : 'was created'} by ${req.user.name}.`,
       referenceId: report._id
     });
 
@@ -231,7 +231,7 @@ exports.updateReport = async (req, res) => {
       await sendNotification(req.user.id, adminId, {
         type: 'NEW_REPORT',
         title: 'Report Finalized & Signed',
-        message: `Clinical findings for the report have been finalized.`,
+        message: `Clinical findings for the report have been finalized by ${req.user.name}.`,
         referenceId: report._id
       });
     }

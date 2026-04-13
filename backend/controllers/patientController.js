@@ -113,7 +113,7 @@ exports.createPatient = async (req, res) => {
     await sendNotification(req.user.id, doctorId, {
       type: 'NEW_PATIENT',
       title: 'New Patient Registered',
-      message: `${patient.name} has been registered.`,
+      message: `${patient.name} has been registered by ${req.user.name}.`,
       referenceId: patient._id
     });
 
