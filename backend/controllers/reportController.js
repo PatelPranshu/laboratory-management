@@ -28,9 +28,6 @@ exports.getReports = async (req, res) => {
     const adminId = getAdminId(req);
     
     let query = { doctorId: adminId };
-    if (req.user.role === 'LabTech') {
-      query.createdBy = req.user.id;
-    }
     if (req.query.patientId) {
       // Validate patientId format before using in query
       if (mongoose.Types.ObjectId.isValid(req.query.patientId)) {
@@ -71,9 +68,6 @@ exports.getReport = async (req, res) => {
   try {
     const adminId = getAdminId(req);
     let query = { _id: req.params.id, doctorId: adminId };
-    if (req.user.role === 'LabTech') {
-      query.createdBy = req.user.id;
-    }
     
     const report = await ReportInstance.findOne(query)
       .populate('patientId', 'name phone age gender email')
@@ -173,9 +167,6 @@ exports.updateReport = async (req, res) => {
   try {
     const adminId = getAdminId(req);
     let query = { _id: req.params.id, doctorId: adminId };
-    if (req.user.role === 'LabTech') {
-      query.createdBy = req.user.id;
-    }
 
     let report = await ReportInstance.findOne(query);
 
@@ -263,6 +254,7 @@ exports.generatePdf = async (req, res) => {
     // but the route restricts generatePdf to Admin/Doctor anyway.
     const report = await ReportInstance.findOne(query)
       .populate('patientId')
+      .populate('templateIds', 'templateName')
       .populate('performedByLabTechId', 'fullName doctorName signatureUrl');
 
     if (!report) {
@@ -359,10 +351,8 @@ exports.getPendingReports = async (req, res) => {
 
     if (req.user.role === 'Doctor') {
       query.verifierId = req.user.id;
-    } else if (req.user.role === 'LabTech') {
-       // Optional: LabTech can only see their own drafted items
-      query.creatorId = req.user.id;
     }
+
 
     const reports = await ReportInstance.find(query)
       .populate('patientId', 'name phone age gender')

@@ -79,7 +79,7 @@ const ReportInstanceSchema = new mongoose.Schema({
   },
   templateIds: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Template'
+    ref: 'ReportTemplate'
   }],
   sections: [ReportSectionSchema],
   status: {

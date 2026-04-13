@@ -15,11 +15,6 @@ exports.getSummary = async (req, res) => {
     let patientQuery = { doctorId: adminId };
     let reportQuery = { doctorId: adminId };
 
-    // LabTechs see all lab patients but only their own reports
-    if (req.user.role === 'LabTech') {
-      reportQuery.createdBy = req.user.id;
-    }
-
     const totalPatients = await Patient.countDocuments(patientQuery);
     const totalReports = await ReportInstance.countDocuments(reportQuery);
     const pendingReports = await ReportInstance.countDocuments({ ...reportQuery, status: { $in: ['draft', 'saved'] } });
@@ -41,9 +36,6 @@ exports.getSummary = async (req, res) => {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
     const weeklyMatchQuery = { doctorId: adminObjectId, createdAt: { $gte: sevenDaysAgo } };
-    if (req.user.role === 'LabTech') {
-      weeklyMatchQuery.createdBy = new mongoose.Types.ObjectId(req.user.id);
-    }
 
     const weeklyReportsAgg = await ReportInstance.aggregate([
       { $match: weeklyMatchQuery },

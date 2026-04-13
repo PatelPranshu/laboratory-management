@@ -154,24 +154,65 @@ exports.generateReportPdf = async (report, patient, settings) => {
   // Patient Info
   const reportDate = report.date ? new Date(report.date).toLocaleDateString() : new Date().toLocaleDateString();
   const reportId = report._id ? report._id.toString().slice(-6).toUpperCase() : 'N/A';
+  
+  // Template names for "Test Name" section
+  const templateNames = (report.templateIds || [])
+    .map(t => typeof t === 'object' && t.templateName ? t.templateName : null)
+    .filter(name => name !== null)
+    .join(', ') || 'N/A';
+
   content.push({
-    columns: [
-      { text: `Patient Name: ${patient.name || 'N/A'}\nAge/Gender: ${patient.age || 'N/A'} / ${patient.gender || 'N/A'}\nPhone: ${patient.phone || 'N/A'}`, width: '*', style: 'patientInfo' },
-      { text: `Date: ${reportDate}\nReport ID: ${reportId}\nReferred by: ${report.referredBy || 'Self'}`, width: '*', alignment: 'right', style: 'patientInfo' }
-    ],
-    margin: [0, 5, 0, 10]
+    table: {
+      widths: ['20%', '30%', '20%', '30%'],
+      body: [
+        [
+          { text: 'Patient Name:', bold: true, color: '#334155' },
+          { text: (patient.name || 'N/A').toUpperCase(), bold: true },
+          { text: 'Report ID:', bold: true, color: '#334155' },
+          { text: reportId }
+        ],
+        [
+          { text: 'Age / Gender:', bold: true, color: '#334155' },
+          { text: `${patient.age || 'N/A'} / ${patient.gender || 'N/A'}` },
+          { text: 'Report Date:', bold: true, color: '#334155' },
+          { text: reportDate }
+        ],
+        [
+          { text: 'Phone:', bold: true, color: '#334155' },
+          { text: patient.phone || 'N/A' },
+          { text: 'Referred By:', bold: true, color: '#334155' },
+          { text: (report.referredBy || 'Self').toUpperCase(), bold: true }
+        ],
+        [
+          { text: 'Test Name:', bold: true, color: '#334155' },
+          { text: templateNames, colSpan: 3, bold: true, color: '#0f172a' },
+          {}, {}
+        ]
+      ]
+    },
+    layout: {
+      hLineWidth: () => 0.5,
+      vLineWidth: () => 0.5,
+      hLineColor: () => '#cbd5e1',
+      vLineColor: () => '#cbd5e1',
+      paddingLeft: () => 5,
+      paddingRight: () => 5,
+      paddingTop: () => 4,
+      paddingBottom: () => 4
+    },
+    margin: [0, 5, 0, 15]
   });
 
-  content.push({ canvas: [{ type: 'line', x1: 0, y1: 5, x2: contentWidth, y2: 5, lineWidth: 1 }] });
-  content.push({text: '\n'});
+  content.push({ canvas: [{ type: 'line', x1: 0, y1: 0, x2: contentWidth, y2: 0, lineWidth: 2, lineColor: '#1e293b' }] });
+  content.push({text: '\n', fontSize: 5});
 
   // Initialize Master Table Body and Remarks Collection
   const masterTableBody = [
     [
-      { text: 'TEST', bold: true, decoration: 'underline', margin: [0, 0, 0, 2] },
-      { text: 'RESULT', bold: true, decoration: 'underline', margin: [0, 0, 0, 2] },
-      { text: 'UNITS', bold: true, decoration: 'underline', margin: [0, 0, 0, 2] },
-      { text: 'NORMAL VALUES', bold: true, decoration: 'underline', margin: [0, 0, 0, 2] }
+      { text: 'TEST DESCRIPTION', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
+      { text: 'RESULT', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
+      { text: 'UNITS', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
+      { text: 'REFERENCE RANGE', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] }
     ]
   ];
 
@@ -186,8 +227,9 @@ exports.generateReportPdf = async (report, patient, settings) => {
           text: sec.sectionName.toUpperCase(), 
           colSpan: 4, 
           bold: true, 
-          decoration: 'underline', 
-          margin: [0, sIdx === 0 ? 5 : 15, 0, 5] 
+          fillColor: '#f8fafc',
+          color: '#0f172a',
+          margin: [0, sIdx === 0 ? 2 : 8, 0, 2] 
         },
         {}, {}, {}
       ]);
@@ -213,9 +255,9 @@ exports.generateReportPdf = async (report, patient, settings) => {
         if (p.isGenderSpecific) {
           const m = p.normalRange?.male;
           const f = p.normalRange?.female;
-          const maleRange = `Male: ${m?.min ?? '?'}-${m?.max ?? '?'} ${unitsStr}`;
-          const femaleRange = `Female: ${f?.min ?? '?'}-${f?.max ?? '?'} ${unitsStr}`;
-          normalRangeStr = `${maleRange}\n${femaleRange}`;
+          const maleRange = (m && m.min != null && m.max != null) ? `Male: ${m.min}-${m.max} ${unitsStr}` : '';
+          const femaleRange = (f && f.min != null && f.max != null) ? `Female: ${f.min}-${f.max} ${unitsStr}` : '';
+          normalRangeStr = [maleRange, femaleRange].filter(r => r).join('\n');
 
           const gender = (patient.gender || '').toLowerCase();
           if (gender === 'male' && m) {
@@ -225,15 +267,15 @@ exports.generateReportPdf = async (report, patient, settings) => {
           }
         } else if (p.normalRange) {
           const nr = p.normalRange;
-          normalRangeStr = `${nr.min ?? '?'}-${nr.max ?? '?'} ${unitsStr}`;
+          normalRangeStr = (nr && nr.min != null && nr.max != null) ? `${nr.min}-${nr.max} ${unitsStr}` : '';
           isAbnormal = checkNumericAbnormal(resultStr, nr.min, nr.max);
         }
 
         masterTableBody.push([
-          { text: p.name || '', margin: [0, 2, 0, 2] },
-          { text: resultStr, bold: isAbnormal, margin: [0, 2, 0, 2] },
-          { text: unitsStr, margin: [0, 2, 0, 2] },
-          { text: normalRangeStr, fontSize: fontSize - 2, margin: [0, 2, 0, 2] }
+          { text: p.name || '', margin: [0, 0, 0, 0] },
+          { text: resultStr, bold: isAbnormal, margin: [0, 0, 0, 0] },
+          { text: unitsStr, margin: [0, 0, 0, 0] },
+          { text: normalRangeStr, fontSize: fontSize - 3, margin: [0, 0, 0, 0] }
         ]);
       });
     } else if (sec.values) {
@@ -255,10 +297,10 @@ exports.generateReportPdf = async (report, patient, settings) => {
         const isAbnormal = isOutsideRangeLegacy(resultStr, normalRangeStr);
 
         masterTableBody.push([
-          { text: String(key), margin: [0, 2, 0, 2] },
-          { text: resultStr, bold: isAbnormal, margin: [0, 2, 0, 2] },
-          { text: '', margin: [0, 2, 0, 2] },
-          { text: normalRangeStr, fontSize: fontSize - 2, margin: [0, 2, 0, 2] }
+          { text: String(key), margin: [0, 0, 0, 0] },
+          { text: resultStr, bold: isAbnormal, margin: [0, 0, 0, 0] },
+          { text: '', margin: [0, 0, 0, 0] },
+          { text: normalRangeStr, fontSize: fontSize - 3, margin: [0, 0, 0, 0] }
         ]);
       }
     }
@@ -267,6 +309,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
   // Push the Master Table to content
   if (masterTableBody.length > 1) {
     content.push({
+      fontSize: fontSize - 1, // Reduces the global font size for the whole table
       table: {
         headerRows: 1,
         // Using proportional widths to ensure fit regardless of content length
@@ -275,14 +318,16 @@ exports.generateReportPdf = async (report, patient, settings) => {
       },
       layout: {
         hLineWidth: function (i, node) {
-          // Lines: Top, Below Header, and Bottom
-          return (i === 0 || i === 1 || i === node.table.body.length) ? 1 : 0;
+          return (i === 0 || i === 1 || i === node.table.body.length) ? 1.5 : 0.5;
         },
         vLineWidth: () => 0,
+        hLineColor: function (i, node) {
+          return (i === 0 || i === 1 || i === node.table.body.length) ? '#475569' : '#e2e8f0';
+        },
         paddingLeft: () => 5,
         paddingRight: () => 5,
-        paddingTop: () => 4,
-        paddingBottom: () => 4
+        paddingTop: () => 2,     // Significantly reduces top padding of rows
+        paddingBottom: () => 2   // Significantly reduces bottom padding of rows
       },
       margin: [0, 10, 0, 10]
     });
@@ -319,30 +364,65 @@ exports.generateReportPdf = async (report, patient, settings) => {
     });
   }
   
-  // Verify & Sign Section
+  // End of Report Marker
+  content.push({
+      text: '*** END OF REPORT ***',
+      alignment: 'center',
+      bold: true,
+      margin: [0, 25, 0, 15],
+      fontSize: fontSize - 2,
+      color: '#475569'
+  });
+
+  // Verify & Sign Section with Legal Disclaimer
   if (signatureImageData && report.performedByLabTechId) {
       const signerName = (report.performedByLabTechId.fullName || report.performedByLabTechId.doctorName || report.performedBy || 'Authorized Signatory').toUpperCase();
       
       content.push({
           columns: [
-              { width: '*', text: '' }, // spacer 
+              { 
+                  width: '*', 
+                  text: 'Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated and authenticated document.',
+                  fontSize: fontSize - 4,
+                  color: '#64748b',
+                  italics: true,
+                  margin: [0, 30, 10, 0]
+              }, 
               {
-                  width: 150,
+                  width: 200,
                   alignment: 'center',
-                  margin: [0, 20, 0, 0],
+                  margin: [0, 10, 0, 0],
                   stack: [
-                    { text: 'PERFORMED BY / VERIFIED BY', fontSize: fontSize - 4, color: '#64748b', margin: [0, 8, 0, 0], bold: true, characterSpacing: 0.5 },
-                      { image: signatureImageData, fit: [150, 60], alignment: 'center' },
-                      { text: signerName, fontSize: fontSize + 2, bold: true, color: '#1e293b' }
+                      { image: signatureImageData, fit: [120, 60], alignment: 'center' },
+                      { text: signerName, fontSize: fontSize + 1, bold: true, color: '#1e293b' },
+                      { text: 'VERIFIED BY / AUTHORIZED SIGNATORY', fontSize: fontSize - 4, color: '#64748b', margin: [0, 4, 0, 0], bold: true, characterSpacing: 0.5 }
                   ]
               }
           ]
+      });
+  } else {
+      // Fallback Disclaimer if no signature
+      content.push({
+          text: 'Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated document.',
+          fontSize: fontSize - 4,
+          color: '#64748b',
+          italics: true,
+          margin: [0, 10, 0, 0]
       });
   }
 
   const docDefinition = {
     content: content,
-    pageMargins: [ml, mt, mr, mb],
+    pageMargins: [ml, mt, mr, mb + 20], // Adjusted bottom margin to accommodate footer
+    footer: function(currentPage, pageCount) {
+      return {
+        columns: [
+          { text: `Printed on: ${new Date().toLocaleString()}`, alignment: 'left', fontSize: 8, color: '#94a3b8', margin: [ml, 0, 0, 0] },
+          { text: `Page ${currentPage} of ${pageCount}`, alignment: 'right', fontSize: 8, color: '#94a3b8', margin: [0, 0, mr, 0] }
+        ],
+        margin: [0, 10, 0, 0]
+      };
+    },
     styles: {
       header: { fontSize: fontSize + 6, bold: true },
       subheader: { fontSize: fontSize + 2, bold: true },

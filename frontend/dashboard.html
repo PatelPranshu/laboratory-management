@@ -112,7 +112,7 @@
                                         <th class="px-7 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date Added</th>
                                     </tr>
                                 </thead>
-                                <tbody id="recent-patients-list" class="divide-y divide-slate-50">
+                                <tbody id="recent-patients-list" class="divide-y divide-slate-200">
                                     <!-- Populated by JS -->
                                 </tbody>
                             </table>
@@ -133,7 +133,7 @@
                                         <th class="px-7 py-4 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="recent-reports-list" class="divide-y divide-slate-50">
+                                <tbody id="recent-reports-list" class="divide-y divide-slate-100">
                                     <!-- Populated by JS -->
                                 </tbody>
                             </table>
@@ -225,7 +225,7 @@
                 // Render Recent Patients
                 const patientsList = document.getElementById('recent-patients-list');
                 patientsList.innerHTML = data.recentPatients.map(p => `
-                    <tr class="hover:bg-brand-50/30 transition-colors">
+                    <tr class="hover:bg-brand-50/30 transition-colors cursor-pointer" onclick="window.location.href='patient-profile.html?id=${p._id}'">
                         <td class="px-7 py-4 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-brand-100 to-indigo-100 text-brand-700 flex items-center justify-center font-bold shadow-sm border border-white">
@@ -251,7 +251,9 @@
                     };
                     return `
                     <tr class="hover:bg-brand-50/30 transition-colors">
-                        <td class="px-7 py-4 whitespace-nowrap text-sm font-bold text-slate-800">${r.patientId ? sanitizeHTML(r.patientId.name) : 'Unknown Patient'}</td>
+                        <td class="px-7 py-4 whitespace-nowrap text-sm font-bold text-slate-800">
+                            ${r.patientId ? `<a href="patient-profile.html?id=${r.patientId._id}" class="hover:text-brand-600 transition-colors">${sanitizeHTML(r.patientId.name)}</a>` : 'Unknown Patient'}
+                        </td>
                         <td class="px-7 py-4 whitespace-nowrap">
                             <span class="px-3 py-1 inline-flex text-xs font-bold rounded-lg border ${statusColors[r.status] || statusColors.draft} shadow-sm">${sanitizeHTML(r.status.toUpperCase())}</span>
                         </td>
