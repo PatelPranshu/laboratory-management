@@ -395,7 +395,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
                   stack: [
                       { image: signatureImageData, fit: [120, 60], alignment: 'center' },
                       { text: signerName, fontSize: fontSize + 1, bold: true, color: '#1e293b' },
-                      { text: 'VERIFIED BY / AUTHORIZED SIGNATORY', fontSize: fontSize - 4, color: '#64748b', margin: [0, 4, 0, 0], bold: true, characterSpacing: 0.5 }
+                      { text: 'PERFORMED BY / AUTHORIZED SIGNATORY', fontSize: fontSize - 4, color: '#64748b', margin: [0, 4, 0, 0], bold: true, characterSpacing: 0.5 }
                   ]
               }
           ]
