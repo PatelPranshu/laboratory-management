@@ -401,6 +401,20 @@
                 }
 
                 document.getElementById('report-sections-container').addEventListener('input', () => { toggleActionState('editing'); saveReportDraft(); });
+
+                // Auto-focus feature for 'Result' inputs
+                document.getElementById('report-sections-container').addEventListener('keydown', (e) => {
+                    if (e.target.classList.contains('p-result') && e.key === 'Enter') {
+                        e.preventDefault();
+                        const inputs = Array.from(document.querySelectorAll('.p-result'));
+                        const index = inputs.indexOf(e.target);
+                        if (index > -1 && index < inputs.length - 1) {
+                            inputs[index + 1].focus();
+                        } else {
+                            e.target.blur();
+                        }
+                    }
+                });
             } catch (err) { console.error('Error:', err); UI.showToast('Initialization error.', 'error'); }
         });
 
