@@ -11,12 +11,61 @@ class DraftManager {
     static clear(key) {
         localStorage.removeItem(`lis_draft_${key}`);
     }
+    /**
+     * Returns the context-aware draft key for report-create.
+     * Uses the patient ID if available, otherwise 'new'.
+     */
+    static getReportKey(patientId) {
+        return patientId ? `report_draft_${patientId}` : 'report_draft_new';
+    }
     static debounce(func, wait = 300) {
         let timeout;
         return function(...args) {
             clearTimeout(timeout);
             timeout = setTimeout(() => func.apply(this, args), wait);
         };
+    }
+}
+
+// ---------- Cross-Tab Authentication Sync ----------
+// If another tab logs out (removes lis_token/lis_user), this tab
+// immediately redirects to the login page to prevent stale sessions.
+window.addEventListener('storage', (e) => {
+    if ((e.key === 'lis_token' || e.key === 'lis_user') && e.newValue === null) {
+        // Token/user was removed in another tab — force logout here
+        window.location.href = 'index.html';
+    }
+});
+
+// ---------- Tab Focus Refresh Utility ----------
+// Throttled data reload when the user switches back to a stale tab.
+// Pages register their reload function via TabFocusRefresh.register().
+class TabFocusRefresh {
+    static _handlers = [];
+    static _lastRefresh = 0;
+    static _cooldownMs = 10000; // 10-second throttle
+    static _initialized = false;
+
+    /**
+     * Register a callback to be called when the tab regains focus.
+     * Typically called once per page during DOMContentLoaded.
+     * @param {Function} fn - The data-fetching function to re-run.
+     */
+    static register(fn) {
+        if (typeof fn !== 'function') return;
+        TabFocusRefresh._handlers.push(fn);
+
+        if (!TabFocusRefresh._initialized) {
+            TabFocusRefresh._initialized = true;
+            window.addEventListener('focus', () => {
+                const now = Date.now();
+                if (now - TabFocusRefresh._lastRefresh < TabFocusRefresh._cooldownMs) return;
+                TabFocusRefresh._lastRefresh = now;
+                TabFocusRefresh._handlers.forEach(handler => {
+                    try { handler(); } catch (err) { console.warn('[TabFocusRefresh]', err); }
+                });
+            });
+        }
     }
 }
 

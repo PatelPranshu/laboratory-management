@@ -1,6 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     loadCommonLayout();
     fetchPendingReports();
+
+    // Auto-refresh pending reports when user switches back to this tab (10s throttle)
+    if (typeof TabFocusRefresh !== 'undefined') {
+        TabFocusRefresh.register(fetchPendingReports);
+    }
 });
 
 const user = JSON.parse(localStorage.getItem('lis_user') || '{}');

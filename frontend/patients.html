@@ -230,6 +230,11 @@
             loadCommonLayout();
             checkAuth();
             loadPatients(1);
+
+            // Auto-refresh patients list when user switches back to this tab (10s throttle)
+            if (typeof TabFocusRefresh !== 'undefined') {
+                TabFocusRefresh.register(() => loadPatients(currentPage));
+            }
         });
 
         async function loadPatients(page = 1) {

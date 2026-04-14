@@ -159,6 +159,11 @@
             // Set current date
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', options);
+
+            // Auto-refresh dashboard when user switches back to this tab (10s throttle)
+            if (typeof TabFocusRefresh !== 'undefined') {
+                TabFocusRefresh.register(loadDashboardData);
+            }
         });
 
         async function loadDashboardData() {
