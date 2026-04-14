@@ -330,14 +330,25 @@ function setupNotificationSystem(token) {
         }
     });
 
-    let socketUrl = '';
-    if (typeof BASE_URL !== 'undefined') {
-        socketUrl = BASE_URL.replace('/api', '');
-    }
-    
-    // Connect Socket.IO
+    // Use the explicit SOCKET_URL from api.js (avoids fragile string manipulation)
+    const socketUrl = (typeof SOCKET_URL !== 'undefined') ? SOCKET_URL : '';
+
+    // Connect Socket.IO with production-ready settings
     const socket = io(socketUrl, {
-        auth: { token }
+        auth: { token },
+        transports: ['websocket', 'polling'], // Prefer WebSocket, fall back to polling
+        reconnectionAttempts: 10,              // Don't retry forever
+        reconnectionDelay: 2000,               // Start with 2s delay
+        reconnectionDelayMax: 30000,           // Cap at 30s
+        timeout: 15000                         // Connection timeout
+    });
+
+    socket.on('connect', () => {
+        console.log('[Notifications] Socket connected');
+    });
+
+    socket.on('connect_error', (err) => {
+        console.warn('[Notifications] Socket connection error:', err.message);
     });
 
     socket.on('new_notification', (data) => {

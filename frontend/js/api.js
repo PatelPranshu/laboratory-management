@@ -26,6 +26,36 @@ const BASE_URL = (() => {
 
 const API_URL = BASE_URL; // Global alias for scripts using old naming convention
 
+// Socket.IO server URL — explicitly maps each environment to the correct origin
+const SOCKET_URL = (() => {
+  const hostname = window.location.hostname;
+
+  // Production: backend is on api.mypatholabs.tech
+  if (hostname === 'www.mypatholabs.tech' || hostname === 'mypatholabs.tech') {
+    return 'https://api.mypatholabs.tech';
+  }
+
+  // Staging / Vercel preview → Render backend
+  if (hostname === 'laboratory-management-six.vercel.app') {
+    return 'https://mylaboratory.onrender.com';
+  }
+
+  // Local development
+  const isLocal = hostname === 'localhost' ||
+                  hostname === '127.0.0.1' ||
+                  hostname.startsWith('192.168.') ||
+                  hostname.startsWith('10.') ||
+                  hostname.startsWith('172.');
+
+  if (isLocal || window.location.protocol === 'file:') {
+    const host = hostname || '127.0.0.1';
+    return `http://${host}:5000`;
+  }
+
+  // Generic fallback — same origin (works when backend serves frontend)
+  return window.location.origin;
+})();
+
 /**
  * SECURITY: XSS Mitigation Utility
  * All user-generated content (e.g., patient names, lab notes, report fields)
