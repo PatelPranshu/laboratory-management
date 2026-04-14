@@ -212,7 +212,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
       { text: 'TEST DESCRIPTION', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
       { text: 'RESULT', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
       { text: 'UNITS', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
-      { text: 'REFERENCE RANGE', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] }
+      { text: 'NORMAL VALUES', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] }
     ]
   ];
 
