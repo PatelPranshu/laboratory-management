@@ -1,5 +1,16 @@
 // Global App logic and UI helpers
 
+// Automatically inject microscope favicon to all pages
+(function injectUniversalFavicon() {
+    if (document.querySelector('link[rel="icon"]')) return;
+    const favicon = document.createElement('link');
+    favicon.rel = 'icon';
+    favicon.type = 'image/svg+xml';
+    // Clean microscope SVG data URI
+    favicon.href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%230284c7' d='M416 0C398.3 0 384 14.3 384 32v83.6l-50.5 60.6c-17.7 21.2-17.7 51.6 0 72.8l50.5 60.6V448c0 17.7 14.3 32 32 32s32-14.3 32-32V32c0-17.7-14.3-32-32-32zM192 128V32c0-17.7-14.3-32-32-32s-32 14.3-32 32v96H96c-17.7 0-32 14.3-32 32v64c0 17.7 14.3 32 32 32h32v48c0 17.7 14.3 32 32 32h64c17.7 0 32-14.3 32-32V256h32c17.7 0 32-14.3 32-32V160c0-17.7-14.3-32-32-32H192zM64 480c0 17.7 14.3 32 32 32h320c17.7 0 32-14.3 32-32s-14.3-32-32-32H96c-17.7 0-32 14.3-32 32z'/%3E%3C/svg%3E";
+    document.head.appendChild(favicon);
+})();
+
 class DraftManager {
     static save(key, data) {
         localStorage.setItem(`lis_draft_${key}`, JSON.stringify(data));

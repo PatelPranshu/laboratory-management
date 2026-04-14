@@ -114,6 +114,26 @@ function loadCommonLayout() {
     if (container) {
         container.insertAdjacentHTML('afterbegin', sidebarHTML);
         
+        // Inject logo into top header if not already there (for mobile/tablet visibility)
+        const header = document.querySelector('header');
+        if (header && !header.querySelector('.header-logo')) {
+            // Find search bar or breadcrumbs to insert before
+            const searchBar = header.querySelector('.flex-1.w-full.max-w-2xl') || header.querySelector('nav');
+            const logoHTML = `
+                <div class="header-logo flex items-center lg:hidden mr-4 shrink-0 cursor-pointer" onclick="window.location.href='dashboard.html'">
+                    <div class="bg-brand-600 p-1.5 rounded-lg shadow-sm mr-2.5">
+                        <i class="fa-solid fa-microscope text-white text-[10px]"></i>
+                    </div>
+                    <span class="text-xs font-black tracking-tighter text-slate-800 uppercase">MyPatho<span class="text-brand-600">Labs</span></span>
+                </div>
+            `;
+            if (searchBar) {
+                searchBar.insertAdjacentHTML('beforebegin', logoHTML);
+            } else {
+                header.insertAdjacentHTML('afterbegin', logoHTML);
+            }
+        }
+
         // Apply active class based on current URL
         const currentPage = window.location.pathname.split('/').pop().replace('.html', '') || 'dashboard';
         const navLinks = document.querySelectorAll('.nav-link');
@@ -158,8 +178,22 @@ function loadCommonLayout() {
         // Initialize Notification System
         setTimeout(() => {
             if (typeof initNotifications === 'function') initNotifications();
+            injectFavicon();
         }, 100);
     }
+}
+
+/**
+ * Injects a microscope favicon if not present
+ */
+function injectFavicon() {
+    if (document.querySelector('link[rel="icon"]')) return;
+    const favicon = document.createElement('link');
+    favicon.rel = 'icon';
+    favicon.type = 'image/svg+xml';
+    // Clean microscope SVG
+    favicon.href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%230284c7' d='M416 0C398.3 0 384 14.3 384 32v83.6l-50.5 60.6c-17.7 21.2-17.7 51.6 0 72.8l50.5 60.6V448c0 17.7 14.3 32 32 32s32-14.3 32-32V32c0-17.7-14.3-32-32-32zM192 128V32c0-17.7-14.3-32-32-32s-32 14.3-32 32v96H96c-17.7 0-32 14.3-32 32v64c0 17.7 14.3 32 32 32h32v48c0 17.7 14.3 32 32 32h64c17.7 0 32-14.3 32-32V256h32c17.7 0 32-14.3 32-32V160c0-17.7-14.3-32-32-32H192zM64 480c0 17.7 14.3 32 32 32h320c17.7 0 32-14.3 32-32s-14.3-32-32-32H96c-17.7 0-32 14.3-32 32z'/%3E%3C/svg%3E";
+    document.head.appendChild(favicon);
 }
 
 // ---------------- Real-Time Notification System ---------------- //
