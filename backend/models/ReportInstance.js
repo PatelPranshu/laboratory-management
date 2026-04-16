@@ -5,6 +5,10 @@ const ReportSectionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  templateId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ReportTemplate'
+  },
   text: {
     type: String
   },

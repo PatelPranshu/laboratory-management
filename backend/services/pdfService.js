@@ -12,7 +12,7 @@ const fonts = {
 };
 
 pdfmake.setFonts(fonts);
-pdfmake.setUrlAccessPolicy(function() { return false; });
+pdfmake.setUrlAccessPolicy(function () { return false; });
 
 /**
  * Downloads an image from a URL and returns it as a base64 data URI.
@@ -35,7 +35,7 @@ function downloadImageAsBase64(url) {
       response.on('data', (chunk) => chunks.push(chunk));
       response.on('end', () => {
         const buffer = Buffer.concat(chunks);
-        
+
         // Detect actual image format from magic bytes (don't trust content-type header)
         let mimeType = null;
         if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
@@ -46,7 +46,7 @@ function downloadImageAsBase64(url) {
           console.warn(`Unsupported image format for PDF (only PNG/JPEG supported). URL: ${url}`);
           return resolve(null);
         }
-        
+
         const base64 = buffer.toString('base64');
         resolve(`data:${mimeType};base64,${base64}`);
       });
@@ -206,132 +206,233 @@ exports.generateReportPdf = async (report, patient, settings) => {
   content.push({ canvas: [{ type: 'line', x1: 0, y1: 0, x2: contentWidth, y2: 0, lineWidth: 2, lineColor: '#1e293b' }] });
   content.push({text: '\n', fontSize: 5});
 
-  // Initialize Master Table Body and Remarks Collection
-  const masterTableBody = [
-    [
-      { text: 'TEST DESCRIPTION', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
-      { text: 'RESULT', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
-      { text: 'UNITS', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
-      { text: 'NORMAL VALUES', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] }
-    ]
-  ];
-
-  const allRemarks = [];
-
   const sections = report.sections || [];
-  sections.forEach((sec, sIdx) => {
-    // 1. Add Section Title as a spanning row
-    if (sec.sectionName) {
-      masterTableBody.push([
-        { 
-          text: sec.sectionName.toUpperCase(), 
-          colSpan: 4, 
-          bold: true, 
-          fillColor: '#f8fafc',
-          color: '#0f172a',
-          margin: [0, sIdx === 0 ? 2 : 8, 0, 2] 
-        },
-        {}, {}, {}
-      ]);
-    }
+  const remarksByTemplate = {};
 
-    // 2. Collect Remarks (Description) for the end of the report
-    if (sec.text) {
-      allRemarks.push({
+  // 1. Filter out completely empty sections so they don't break our grouping logic
+  const filteredSections = sections.filter((sec, sIdx) => {
+    if (sec.text && sec.text.trim()) {
+      const tid = sec.templateId ? sec.templateId.toString() : 'unassigned';
+      if (!remarksByTemplate[tid]) remarksByTemplate[tid] = [];
+      remarksByTemplate[tid].push({
         title: (sec.sectionName || `Section ${sIdx + 1}`).toUpperCase(),
         text: sec.text
       });
     }
-    
-    // 3. Process Parameters (Structured Array)
+
     const params = sec.parameters || [];
-    if (params.length > 0) {
-      params.forEach(p => {
-        const resultStr = p.result || '';
-        const unitsStr = p.units || '';
-        let normalRangeStr = '';
-        let isAbnormal = false;
-
-        if (p.isGenderSpecific) {
-          const m = p.normalRange?.male;
-          const f = p.normalRange?.female;
-          const maleRange = (m && m.min != null && m.max != null) ? `Male: ${m.min}-${m.max} ${unitsStr}` : '';
-          const femaleRange = (f && f.min != null && f.max != null) ? `Female: ${f.min}-${f.max} ${unitsStr}` : '';
-          normalRangeStr = [maleRange, femaleRange].filter(r => r).join('\n');
-
-          const gender = (patient.gender || '').toLowerCase();
-          if (gender === 'male' && m) {
-            isAbnormal = checkNumericAbnormal(resultStr, m.min, m.max);
-          } else if (gender === 'female' && f) {
-            isAbnormal = checkNumericAbnormal(resultStr, f.min, f.max);
-          }
-        } else if (p.normalRange) {
-          const nr = p.normalRange;
-          normalRangeStr = (nr && nr.min != null && nr.max != null) ? `${nr.min}-${nr.max} ${unitsStr}` : '';
-          isAbnormal = checkNumericAbnormal(resultStr, nr.min, nr.max);
-        }
-
-        masterTableBody.push([
-          { text: p.name || '', margin: [0, 0, 0, 0] },
-          { text: resultStr, bold: isAbnormal, margin: [0, 0, 0, 0] },
-          { text: unitsStr, margin: [0, 0, 0, 0] },
-          { text: normalRangeStr, fontSize: fontSize - 3, margin: [0, 0, 0, 0] }
-        ]);
-      });
-    } else if (sec.values) {
-      // Backward compatibility for old format
-      const valuesObj = sec.values.toJSON ? sec.values.toJSON() : (typeof sec.values === 'object' ? sec.values : {});
-      for (const [key, val] of Object.entries(valuesObj)) {
-        if (key === '_id' || key === '$__' || key === '$isNew' || key === 'parameters') continue;
-
-        let resultStr = '';
-        let normalRangeStr = '';
-
-        if (typeof val === 'object' && val !== null) {
-          resultStr = String(val.value || '');
-          normalRangeStr = String(val.normalRange || '');
-        } else {
-          resultStr = String(val);
-        }
-
-        const isAbnormal = isOutsideRangeLegacy(resultStr, normalRangeStr);
-
-        masterTableBody.push([
-          { text: String(key), margin: [0, 0, 0, 0] },
-          { text: resultStr, bold: isAbnormal, margin: [0, 0, 0, 0] },
-          { text: '', margin: [0, 0, 0, 0] },
-          { text: normalRangeStr, fontSize: fontSize - 3, margin: [0, 0, 0, 0] }
-        ]);
-      }
-    }
+    const valuesObj = (sec.values && typeof sec.values.toJSON === 'function') 
+      ? sec.values.toJSON() 
+      : (typeof sec.values === 'object' && sec.values !== null ? sec.values : {});
+    
+    const legacyCount = Object.keys(valuesObj).filter(k => k !== '_id' && k !== '$__' && k !== '$isNew' && k !== 'parameters').length;
+    return params.length > 0 || legacyCount > 0;
   });
 
-  // Push the Master Table to content
-  if (masterTableBody.length > 1) {
-    content.push({
-      fontSize: fontSize - 1, // Reduces the global font size for the whole table
-      table: {
-        headerRows: 1,
-        // Using proportional widths to ensure fit regardless of content length
-        widths: ['38%', '15%', '15%', '32%'], 
-        body: masterTableBody
-      },
-      layout: {
-        hLineWidth: function (i, node) {
-          return (i === 0 || i === 1 || i === node.table.body.length) ? 1.5 : 0.5;
-        },
-        vLineWidth: () => 0,
-        hLineColor: function (i, node) {
-          return (i === 0 || i === 1 || i === node.table.body.length) ? '#475569' : '#e2e8f0';
-        },
-        paddingLeft: () => 5,
-        paddingRight: () => 5,
-        paddingTop: () => 2,     // Significantly reduces top padding of rows
-        paddingBottom: () => 2   // Significantly reduces bottom padding of rows
-      },
-      margin: [0, 10, 0, 10]
+  // 2. Group sections strictly by template ID
+  const groupedBlocks = [];
+  let currentBlock = null;
+
+  filteredSections.forEach((sec) => {
+    const currentTid = sec.templateId ? sec.templateId.toString() : 'unassigned';
+    if (!currentBlock || currentBlock.templateId !== currentTid) {
+      currentBlock = {
+        templateId: currentTid,
+        sections: []
+      };
+      groupedBlocks.push(currentBlock);
+    }
+    currentBlock.sections.push(sec);
+  });
+
+  // 3. Render blocks: Each block is a separate Test Type (Template)
+  groupedBlocks.forEach((block, blockIdx) => {
+
+    // Extract the actual template/test name from report data
+    let currentTemplateName = 'TEST RESULTS';
+    if (block.templateId !== 'unassigned') {
+      const tmpl = (report.templateIds || []).find(t => t && typeof t === 'object' && t._id && t._id.toString() === block.templateId);
+      if (tmpl && tmpl.templateName) {
+        currentTemplateName = tmpl.templateName.toUpperCase();
+      }
+    }
+
+    block.sections.forEach((sec, sIdx) => {
+      const isFirstSection = (sIdx === 0);
+      const isLastSection = (sIdx === block.sections.length - 1);
+      const sectionTableBody = [];
+
+      // Add the master header ONLY on the very first section of this test type
+      if (isFirstSection) {
+        // NEW: Test Type Title Row
+        sectionTableBody.push([
+          { 
+            text: currentTemplateName, 
+            colSpan: 4, 
+            alignment: 'center', 
+            bold: true, 
+            fillColor: '#e2e8f0', // Slightly darker to distinguish from column headers
+            color: '#0f172a',
+            margin: [0, 4, 0, 4],
+            fontSize: fontSize
+          },
+          {}, {}, {}
+        ]);
+        
+        sectionTableBody.push([
+          { text: 'TEST DESCRIPTION', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
+          { text: 'RESULT', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
+          { text: 'UNITS', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
+          { text: 'NORMAL VALUES', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] }
+        ]);
+      }
+
+      // Add Section Title row
+      if (sec.sectionName) {
+        sectionTableBody.push([
+          { 
+            text: sec.sectionName.toUpperCase(), 
+            colSpan: 4, 
+            bold: true, 
+            fillColor: '#f8fafc',
+            color: '#0f172a',
+            margin: [0, isFirstSection ? 2 : 6, 0, 2] 
+          },
+          {}, {}, {}
+        ]);
+      }
+
+      // Process Parameters (Structured Array)
+      const params = sec.parameters || [];
+      if (params.length > 0) {
+        params.forEach(p => {
+          const resultStr = p.result || '';
+          const unitsStr = p.units || '';
+          let normalRangeStr = '';
+          let isAbnormal = false;
+
+          if (p.isGenderSpecific) {
+            const m = p.normalRange?.male;
+            const f = p.normalRange?.female;
+            const maleRange = (m && m.min != null && m.max != null) ? `Male: ${m.min}-${m.max} ${unitsStr}` : '';
+            const femaleRange = (f && f.min != null && f.max != null) ? `Female: ${f.min}-${f.max} ${unitsStr}` : '';
+            normalRangeStr = [maleRange, femaleRange].filter(r => r).join('\n');
+
+            const gender = (patient.gender || '').toLowerCase();
+            if (gender === 'male' && m) {
+              isAbnormal = checkNumericAbnormal(resultStr, m.min, m.max);
+            } else if (gender === 'female' && f) {
+              isAbnormal = checkNumericAbnormal(resultStr, f.min, f.max);
+            }
+          } else if (p.normalRange) {
+            const nr = p.normalRange;
+            normalRangeStr = (nr && nr.min != null && nr.max != null) ? `${nr.min}-${nr.max} ${unitsStr}` : '';
+            isAbnormal = checkNumericAbnormal(resultStr, nr.min, nr.max);
+          }
+
+          sectionTableBody.push([
+            { text: p.name || '', margin: [0, 0, 0, 0] },
+            { text: resultStr, bold: isAbnormal, margin: [0, 0, 0, 0] },
+            { text: unitsStr, margin: [0, 0, 0, 0] },
+            { text: normalRangeStr, fontSize: fontSize - 3, margin: [0, 0, 0, 0] }
+          ]);
+        });
+      } else if (sec.values) {
+        // Backward compatibility for old format
+        const valuesObj = (sec.values && typeof sec.values.toJSON === 'function') 
+          ? sec.values.toJSON() 
+          : (typeof sec.values === 'object' && sec.values !== null ? sec.values : {});
+
+        for (const [key, val] of Object.entries(valuesObj)) {
+          if (key === '_id' || key === '$__' || key === '$isNew' || key === 'parameters') continue;
+
+          let resultStr = '';
+          let normalRangeStr = '';
+
+          if (typeof val === 'object' && val !== null) {
+            resultStr = String(val.value || '');
+            normalRangeStr = String(val.normalRange || '');
+          } else {
+            resultStr = String(val);
+          }
+
+          const isAbnormal = isOutsideRangeLegacy(resultStr, normalRangeStr);
+
+          sectionTableBody.push([
+            { text: String(key), margin: [0, 0, 0, 0] },
+            { text: resultStr, bold: isAbnormal, margin: [0, 0, 0, 0] },
+            { text: '', margin: [0, 0, 0, 0] },
+            { text: normalRangeStr, fontSize: fontSize - 3, margin: [0, 0, 0, 0] }
+          ]);
+        }
+      }
+
+      // Add to content within an unbreakable stack (per section)
+      content.push({
+        stack: [
+          {
+            fontSize: fontSize - 1,
+            table: {
+              headerRows: isFirstSection ? 2 : 0, // UPDATED: Now pinning 2 rows (Title + Columns)
+              widths: ['38%', '15%', '15%', '32%'], 
+              body: sectionTableBody
+            },
+            layout: {
+              hLineWidth: function (i, node) {
+                if (isFirstSection && i === 0) return 1.5; // Top line of template
+                if (isFirstSection && i === 1) return 1.5; // Line under Test Type title
+                if (isFirstSection && i === 2) return 1.5; // Line under column headers
+                if (!isFirstSection && i === 0) return 0;  // Connects seamlessly to previous section
+                if (isLastSection && i === node.table.body.length) return 1.5; // Bottom line of template
+                return 0.5; // Internal dividing lines
+              },
+              vLineWidth: () => 0,
+              hLineColor: function (i, node) {
+                if (isFirstSection && i === 0) return '#475569';
+                if (isFirstSection && i === 1) return '#475569';
+                if (isFirstSection && i === 2) return '#475569';
+                if (!isFirstSection && i === 0) return '#e2e8f0';
+                if (isLastSection && i === node.table.body.length) return '#475569';
+                return '#e2e8f0';
+              },
+              paddingLeft: () => 5,
+              paddingRight: () => 5,
+              paddingTop: () => 2,
+              paddingBottom: () => 2
+            }
+          }
+        ],
+        margin: [0, isFirstSection ? 10 : 0, 0, isLastSection ? 10 : 0], 
+        unbreakable: true,
+        pageBreak: (isFirstSection && blockIdx > 0) ? 'before' : undefined 
+      });
+
     });
-  }
+
+  // NEW: Append Remarks specific to this Test Type (Template)
+    const blockRemarks = remarksByTemplate[block.templateId];
+    if (blockRemarks && blockRemarks.length > 0) {
+      const remarksContent = [];
+      remarksContent.push({ canvas: [{ type: 'line', x1: 0, y1: 5, x2: contentWidth, y2: 5, lineWidth: 0.5, lineColor: '#cbd5e1' }] });
+      remarksContent.push({ text: 'REMARKS / OBSERVATIONS', style: 'subheader', margin: [0, 8, 0, 4], fontSize: fontSize - 2, color: '#64748b' });
+      
+      blockRemarks.forEach(rem => {
+        remarksContent.push({
+          text: [
+            { text: `${rem.title}: `, bold: true, fontSize: fontSize - 1 },
+            { text: rem.text, fontSize: fontSize - 1 }
+          ],
+          margin: [0, 2, 0, 4]
+        });
+      });
+
+      content.push({
+        stack: remarksContent,
+        unbreakable: true,
+        margin: [0, 0, 0, 10]
+      });
+    }
+  });
 
   // Footer Image (at the end of content)
   if (footerImageData) {
@@ -348,24 +449,10 @@ exports.generateReportPdf = async (report, patient, settings) => {
     content.push(footerConfig);
   }
 
-  // Adding Remarks / Description at the end (Before Signature)
-  if (allRemarks.length > 0) {
-    content.push({ canvas: [{ type: 'line', x1: 0, y1: 5, x2: contentWidth, y2: 5, lineWidth: 0.5, lineColor: '#cbd5e1' }] });
-    content.push({ text: 'REMARKS / OBSERVATIONS', style: 'subheader', margin: [0, 10, 0, 5], fontSize: fontSize - 2, color: '#64748b' });
-    
-    allRemarks.forEach(rem => {
-      content.push({
-        text: [
-          { text: `${rem.title}: `, bold: true, fontSize: fontSize - 1 },
-          { text: rem.text, fontSize: fontSize - 1 }
-        ],
-        margin: [0, 2, 0, 4]
-      });
-    });
-  }
-  
+  const endOfReportBlock = [];
+
   // End of Report Marker
-  content.push({
+  endOfReportBlock.push({
       text: '*** END OF REPORT ***',
       alignment: 'center',
       bold: true,
@@ -378,7 +465,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
   if (signatureImageData && report.performedByLabTechId) {
       const signerName = (report.performedByLabTechId.fullName || report.performedByLabTechId.doctorName || report.performedBy || 'Authorized Signatory').toUpperCase();
       
-      content.push({
+      endOfReportBlock.push({
           columns: [
               { 
                   width: '*', 
@@ -402,7 +489,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
       });
   } else {
       // Fallback Disclaimer if no signature
-      content.push({
+      endOfReportBlock.push({
           text: 'Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated document.',
           fontSize: fontSize - 4,
           color: '#64748b',
@@ -411,9 +498,16 @@ exports.generateReportPdf = async (report, patient, settings) => {
       });
   }
 
+  // Group everything into an unbreakable wrapper
+  content.push({
+    stack: endOfReportBlock,
+    unbreakable: true, // Prevents elements separating across multiple pages
+    margin: [0, 10, 0, 0]
+  });
+
   const docDefinition = {
     content: content,
-    pageMargins: [ml, mt, mr, mb + 20], // Adjusted bottom margin to accommodate footer
+    pageMargins: [ml, mt, mr, mb + 20], 
     footer: function(currentPage, pageCount) {
       return {
         columns: [
