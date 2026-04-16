@@ -30,7 +30,10 @@ function loadCommonLayout() {
     const safeLabName = sanitizeForHtml(labName);
 
     const sidebarHTML = `
-        <aside class="w-72 bg-gradient-sidebar text-white flex flex-col shadow-lg relative z-20 shrink-0">
+        <!-- Sidebar Backdrop -->
+        <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/50 z-40 hidden opacity-0 transition-opacity duration-300" onclick="closeMobileSidebar()"></div>
+
+        <aside id="main-sidebar" class="fixed inset-y-0 left-0 lg:relative lg:translate-x-0 -translate-x-full w-72 bg-gradient-sidebar text-white flex flex-col shadow-lg z-50 shrink-0 transition-transform duration-300 ease-in-out">
             <!-- Sidebar Header -->
             <div class="h-24 flex items-center justify-start border-b border-white/5 px-6 group/logo cursor-default">
                 <div class="relative">
@@ -114,9 +117,16 @@ function loadCommonLayout() {
     if (container) {
         container.insertAdjacentHTML('afterbegin', sidebarHTML);
         
-        // Inject logo into top header if not already there (for mobile/tablet visibility)
+        // Inject logo and hamburger into top header
         const header = document.querySelector('header');
         if (header && !header.querySelector('.header-logo')) {
+            // Hamburger Menu Button (Mobile Only)
+            const hamburgerBtn = `
+                <button id="mobile-sidebar-toggle" class="lg:hidden p-2 -ml-2 mr-2 text-slate-500 hover:text-brand-600 focus:outline-none transition-colors" onclick="toggleMobileSidebar()">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            `;
+            
             // Find search bar or breadcrumbs to insert before
             const searchBar = header.querySelector('.flex-1.w-full.max-w-2xl') || header.querySelector('nav');
             const logoHTML = `
@@ -127,10 +137,11 @@ function loadCommonLayout() {
                     <span class="text-xs font-black tracking-tighter text-slate-800 uppercase">MyPatho<span class="text-brand-600">Labs</span></span>
                 </div>
             `;
+            
             if (searchBar) {
-                searchBar.insertAdjacentHTML('beforebegin', logoHTML);
+                searchBar.insertAdjacentHTML('beforebegin', hamburgerBtn + logoHTML);
             } else {
-                header.insertAdjacentHTML('afterbegin', logoHTML);
+                header.insertAdjacentHTML('afterbegin', hamburgerBtn + logoHTML);
             }
         }
 
@@ -395,4 +406,36 @@ function setupNotificationSystem(token) {
             UI.showToast(data.title, 'success');
         }
     });
+}
+// ---------------- Responsive Navigation Helpers ---------------- //
+function toggleMobileSidebar() {
+    const sidebar = document.getElementById('main-sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    
+    if (!sidebar || !backdrop) return;
+    
+    const isOpen = !sidebar.classList.contains('-translate-x-full');
+    
+    if (isOpen) {
+        closeMobileSidebar();
+    } else {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+        setTimeout(() => backdrop.classList.add('opacity-100'), 10);
+        document.body.style.overflow = 'hidden'; // Prevent scrolling while open
+    }
+}
+
+function closeMobileSidebar() {
+    const sidebar = document.getElementById('main-sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    
+    if (!sidebar || !backdrop) return;
+    
+    sidebar.classList.add('-translate-x-full');
+    backdrop.classList.remove('opacity-100');
+    setTimeout(() => {
+        backdrop.classList.add('hidden');
+        document.body.style.overflow = '';
+    }, 300);
 }

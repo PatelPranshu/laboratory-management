@@ -66,7 +66,7 @@
 
         <main class="flex-1 flex flex-col relative overflow-hidden h-full">
             
-            <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between z-50 shrink-0">
+            <header class="bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between z-50 shrink-0">
                 <div class="flex items-center gap-4">
                     <div class="hidden sm:block">
                         <nav class="flex text-xs font-medium text-slate-500 mb-1">
@@ -80,9 +80,9 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-4" id="header-actions">
                     <div class="hidden xl:flex items-center relative gap-2 group">
-                        <div id="referral-dropdown-toggle" onclick="toggleReferralDropdown()" class="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 gap-2 transition-all hover:border-brand-300 cursor-pointer min-w-[150px]">
+                        <div id="referral-dropdown-toggle" onclick="toggleReferralDropdown()" class="hidden sm:flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 gap-2 transition-all hover:border-brand-300 cursor-pointer min-w-[150px]">
                             <i class="fas fa-user-md text-slate-400 text-xs group-hover:text-brand-500"></i>
                             <div class="flex flex-col flex-1 min-w-0">
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tight leading-none mb-0.5">Referred By</span>
@@ -104,12 +104,12 @@
 
                     <span class="text-xs font-medium text-slate-400 hidden xl:inline" id="last-saved-info">Unsaved Report</span>
                     
-                    <button id="btn-save-draft" onclick="saveReport(true)" class="px-5 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0">
-                        <i class="fas fa-save mr-2 text-slate-400"></i> Save Draft
+                    <button id="btn-save-draft" onclick="saveReport(true)" class="p-2.5 sm:px-5 sm:py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0" title="Save Draft">
+                        <i class="fas fa-save sm:mr-2 text-slate-400"></i> <span class="hidden sm:inline">Save Draft</span>
                     </button>
 
-                    <button id="btn-save-report" onclick="saveReport(false)" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0">
-                        <i class="fas fa-check mr-2"></i> Save & Sign
+                    <button id="btn-save-report" onclick="saveReport(false)" class="p-2.5 sm:px-5 sm:py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0" title="Save & Sign">
+                        <i class="fas fa-check sm:mr-2"></i> <span class="hidden sm:inline">Save & Sign</span>
                     </button>
 
                     <div id="header-post-save-actions" class="hidden flex items-center gap-3">
@@ -126,55 +126,55 @@
             </header>
 
             <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/50">
-                <div class="max-w-[1200px] mx-auto p-6 space-y-6">
+                <div class="max-w-[1200px] mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
                     
                     <input type="hidden" id="report-id">
                     <input type="hidden" id="report-status">
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         
-                        <div class="ui-card p-5 col-span-1 flex flex-col justify-center">
+                        <div class="ui-card p-4 sm:p-5 col-span-1 flex flex-col justify-center">
                             <div id="patient-selection-container">
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Patient Details</label>
                                 <div class="relative">
                                     <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                                    <input type="text" id="patient-search-input" placeholder="Search name, ID, phone..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-lg focus:outline-none focus:border-brand-500 transition-all text-sm">
-                                    <div id="patient-search-results" class="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
+                                    <input type="text" id="patient-search-input" placeholder="Search..." class="w-full pl-10 pr-4 py-2 bg-slate-50 sm:bg-white border border-slate-200 sm:border-slate-300 rounded-lg focus:outline-none focus:border-brand-500 transition-all text-sm">
+                                    <div id="patient-search-results" class="absolute z-[60] top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
                                 </div>
                             </div>
 
-                            <div id="selected-patient-card" class="hidden flex items-start justify-between">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center border border-brand-100">
-                                        <i class="fas fa-user text-lg"></i>
+                            <div id="selected-patient-card" class="hidden flex items-start justify-between gap-3">
+                                <div class="flex items-center gap-3 sm:gap-4 overflow-hidden">
+                                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center border border-brand-100 shrink-0">
+                                        <i class="fas fa-user text-sm sm:text-lg"></i>
                                     </div>
-                                    <div>
-                                        <h3 class="font-bold text-slate-900 text-lg leading-tight" id="sp-name">Patient Name</h3>
-                                        <p class="text-sm text-slate-500 mt-0.5" id="sp-details">Phone • Age/Gender</p>
+                                    <div class="overflow-hidden">
+                                        <h3 class="font-bold text-slate-900 text-base sm:text-lg leading-tight truncate" id="sp-name">Patient Name</h3>
+                                        <p class="text-[11px] sm:text-sm text-slate-500 mt-0.5 truncate" id="sp-details">Phone • Age/Gender</p>
                                         <input type="hidden" id="sp-id">
                                     </div>
                                 </div>
-                                <button onclick="clearPatient()" class="text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors">
+                                <button onclick="clearPatient()" class="text-xs sm:text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors shrink-0">
                                     Change
                                 </button>
                             </div>
                         </div>
 
-                        <div class="ui-card p-5 col-span-2 flex flex-col gap-4 max-w-4xl h-fit">
+                        <div class="ui-card p-4 sm:p-5 lg:col-span-2 flex flex-col gap-4 max-w-4xl h-fit">
                             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                                 <div class="flex items-center gap-3">
-                                    <label class="block text-sm font-bold text-slate-700">Report Templates</label>
-                                    <button onclick="toggleTemplateHeight()" id="btn-toggle-templates" class="text-xs font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1 transition-colors">
+                                    <label class="block text-sm font-bold text-slate-700">Templates</label>
+                                    <button onclick="toggleTemplateHeight()" id="btn-toggle-templates" class="text-[10px] sm:text-xs font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1 transition-colors">
                                         <i class="fas fa-chevron-down" id="template-expand-icon"></i> <span id="template-expand-text">Expand</span>
                                     </button>
                                 </div>
-                                <div class="relative w-1/3">
-                                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                                    <input type="text" id="template-search-input" oninput="filterTemplates()" placeholder="Filter..." class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:border-brand-500 transition-all text-xs">
+                                <div class="relative w-1/2 sm:w-1/3">
+                                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
+                                    <input type="text" id="template-search-input" oninput="filterTemplates()" placeholder="Filter..." class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:border-brand-500 transition-all text-[10px] sm:text-xs">
                                 </div>
                             </div>
-                            <div id="templates-checkbox-container" class="flex flex-wrap gap-2 overflow-y-auto max-h-[85px] transition-all duration-300 ease-in-out custom-scrollbar p-1">
-                                <span class="text-sm text-slate-400">Loading templates...</span>
+                            <div id="templates-checkbox-container" class="flex flex-wrap gap-2 overflow-y-auto max-h-[85px] transition-all duration-300 ease-in-out custom-scrollbar p-1 items-start content-start">
+                                <span class="text-xs text-slate-400">Loading templates...</span>
                             </div>
                         </div>
                     </div>
@@ -191,23 +191,23 @@
                             </button>
                         </div>
 
-                        <div id="report-sections-container" class="p-6 space-y-8 bg-slate-50/30">
-                             <div class="flex flex-col items-center justify-center py-16 text-slate-400">
-                                <i class="fas fa-flask text-4xl mb-3 opacity-50"></i>
-                                <p class="text-sm font-medium">Select a template or add a section to begin</p>
+                        <div id="report-sections-container" class="p-4 sm:p-6 space-y-6 sm:space-y-8 bg-slate-50/30">
+                             <div class="flex flex-col items-center justify-center py-10 sm:py-16 text-slate-400">
+                                <i class="fas fa-flask text-3xl sm:text-4xl mb-3 opacity-50"></i>
+                                <p class="text-xs sm:text-sm font-medium">Select a template or add a section to begin</p>
                              </div>
                         </div>
                     </div>
 
                     <!-- Authorizing Doctor Selection At Bottom -->
-                    <div class="ui-card p-6">
-                        <div class="flex flex-col md:flex-row items-center gap-8">
+                    <div class="ui-card p-4 sm:p-6">
+                        <div class="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8">
                             <div class="flex-1 w-full">
                                 <label class="block text-sm font-bold text-slate-700 mb-3">Performed By</label>
                                 <div class="relative group max-w-md">
                                     <div id="doctor-dropdown-toggle" onclick="toggleDoctorDropdown()" class="flex items-center gap-3 bg-white border border-slate-300 rounded-lg px-4 py-2.5 hover:border-brand-400 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all cursor-pointer">
                                         <i class="fas fa-user-md text-brand-500 text-lg"></i>
-                                        <span id="selected-doctor-name" class="text-sm font-semibold text-slate-700 truncate">Performed By</span>
+                                        <span id="selected-doctor-name" class="text-xs sm:text-sm font-semibold text-slate-700 truncate">Performed By</span>
                                         <i class="fas fa-chevron-down text-xs text-slate-400 ml-auto group-hover:text-brand-500 transition-colors"></i>
                                     </div>
                                     
@@ -221,10 +221,10 @@
                                 </div>
                             </div>
                             
-                            <div id="signature-preview-container" class="hidden shrink-0">
-                                 <div class="flex flex-col items-center gap-3">
-                                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Digital Signature Preview</p>
-                                     <div class="bg-slate-50 border border-slate-200 p-2 rounded-xl h-20 w-48 flex items-center justify-center shadow-inner">
+                            <div id="signature-preview-container" class="hidden shrink-0 w-full lg:w-auto">
+                                 <div class="flex flex-col items-center lg:items-center gap-3">
+                                     <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center lg:text-left">Digital Signature Preview</p>
+                                     <div class="bg-slate-50 border border-slate-200 p-2 rounded-xl h-16 sm:h-20 w-40 sm:w-48 flex items-center justify-center shadow-inner">
                                          <img id="signature-image-preview" src="" class="max-h-full max-w-full object-contain" alt="sign">
                                      </div>
                                  </div>
@@ -245,13 +245,12 @@
                 <button onclick="this.closest('.rep-section').remove()" class="text-slate-400 hover:text-red-500 transition-colors p-1"><i class="fas fa-trash text-sm"></i></button>
             </div>
             
-            <div class="p-0">
-                <div class="grid grid-cols-12 gap-4 px-5 py-2.5 bg-white border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <div class="hidden sm:grid grid-cols-12 gap-4 px-5 py-2.5 bg-white border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                     <div class="col-span-5">Parameter</div>
                     <div class="col-span-2">Result</div>
                     <div class="col-span-2">Unit</div>
-                    <div class="col-span-2">Normal Values</div>
-                    <div class="col-span-1 text-right"></div>
+                    <div class="col-span-2">Normal Range</div>
+                    <div class="col-span-1"></div>
                 </div>
 
                 <div class="rs-params flex flex-col"></div>
@@ -270,21 +269,31 @@
     </template>
 
     <template id="param-line-template">
-        <div class="param-line grid grid-cols-12 gap-4 px-5 py-2.5 items-center border-b border-slate-50 hover:bg-slate-50 transition-colors">
-            <div class="col-span-5">
-                <input type="text" class="p-name w-full bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded px-2 py-1.5 font-medium text-slate-800 text-sm placeholder-slate-300 transition-all outline-none" placeholder="Parameter Name">
+        <div class="param-line flex flex-col sm:grid sm:grid-cols-12 gap-3 sm:gap-4 px-4 sm:px-5 py-4 sm:py-2.5 items-start sm:items-center border-b border-slate-100 sm:border-slate-50 hover:bg-slate-50 transition-colors">
+            <div class="w-full sm:col-span-5">
+                <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Parameter</label>
+                <input type="text" class="p-name w-full bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded px-0 sm:px-2 py-1 sm:py-1.5 font-bold sm:font-medium text-slate-800 text-sm placeholder-slate-300 transition-all outline-none" placeholder="Parameter Name">
             </div>
-            <div class="col-span-2">
-                <input type="text" class="p-result w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-sm font-semibold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm" placeholder="Value" oninput="checkAbnormal(this)">
+            <div class="w-full sm:col-span-2">
+                <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Result</label>
+                <input type="text" class="p-result w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm" placeholder="Value" oninput="checkAbnormal(this)">
             </div>
-            <div class="col-span-2">
-                <input type="text" class="p-units-input w-full px-2 py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-sm text-slate-600 transition-all outline-none" placeholder="Unit">
+            <div class="flex gap-3 w-full sm:col-span-4">
+                <div class="flex-1">
+                    <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Unit</label>
+                    <input type="text" class="p-units-input w-full px-0 sm:px-2 py-1 sm:py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-xs sm:text-sm text-slate-600 transition-all outline-none" placeholder="Unit">
+                </div>
+                <div class="flex-[1.5]">
+                    <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Ref. Range</label>
+                    <input type="text" class="p-normal-input w-full px-0 sm:px-2 py-1 sm:py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-xs sm:text-sm text-slate-500 transition-all outline-none placeholder-slate-300" placeholder="Min - Max" oninput="checkAbnormal(this)">
+                </div>
             </div>
-            <div class="col-span-2">
-                <input type="text" class="p-normal-input w-full px-2 py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-sm text-slate-500 transition-all outline-none placeholder-slate-300" placeholder="Min - Max" oninput="checkAbnormal(this)">
-            </div>
-            <div class="col-span-1 flex justify-end">
-                <button onclick="this.closest('.param-line').remove()" class="text-slate-300 hover:text-red-500 transition-colors p-1.5"><i class="fas fa-times"></i></button>
+            <div class="w-full sm:col-span-1 flex justify-end pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
+                <button onclick="this.closest('.param-line').remove()" class="text-slate-400 hover:text-red-500 transition-colors p-2 sm:p-1.5 flex items-center gap-2 text-xs font-medium sm:text-base">
+                    <i class="fas fa-trash-alt sm:hidden"></i>
+                    <i class="fas fa-times hidden sm:block"></i>
+                    <span class="sm:hidden text-red-500">Remove Row</span>
+                </button>
             </div>
         </div>
     </template>
@@ -292,8 +301,8 @@
     <div id="new-patient-modal" class="fixed inset-0 bg-slate-900/40 hidden overflow-y-auto h-full w-full z-[200] flex items-center justify-center transition-opacity backdrop-blur-sm">
         <div class="relative mx-auto border-0 w-full max-w-xl shadow-2xl rounded-2xl bg-white m-4 transform transition-transform" id="new-patient-modal-content">
             
-            <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
-                <h3 class="text-xl font-bold text-slate-800 flex items-center">
+            <div class="px-5 sm:px-8 py-4 sm:py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+                <h3 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center">
                     <i class="fas fa-user-plus text-brand-500 mr-3"></i> Quick Registration
                 </h3>
                 <button onclick="closePatientModal()" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-lg transition-colors focus:outline-none">
@@ -301,37 +310,37 @@
                 </button>
             </div>
 
-            <div class="px-8 py-5">
+            <div class="px-5 sm:px-8 py-4 sm:py-5">
                 <form id="new-patient-form" onsubmit="saveNewPatient(event)">
-                    <div class="grid grid-cols-2 gap-x-6 gap-y-4 text-left">
+                    <div class="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4 text-left">
                         <div class="col-span-2">
-                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                             <label class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center">
                                  Full Name <span class="text-red-500 ml-1">*</span>
                              </label>
-                             <input type="text" id="new-p-name" required placeholder="John Doe" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                             <input type="text" id="new-p-name" required placeholder="John Doe" class="w-full px-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
                         </div>
 
-                        <div class="col-span-1">
-                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                        <div class="col-span-2 sm:col-span-1">
+                             <label class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center">
                                  Phone Number <span class="text-red-500 ml-1">*</span>
                              </label>
                              <input type="text" id="new-p-phone" required placeholder="+91 999 999 9999" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
                         </div>
 
-                        <div class="col-span-1">
-                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5">Email Address</label>
+                        <div class="col-span-2 sm:col-span-1">
+                             <label class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5">Email Address</label>
                              <input type="email" id="new-p-email" placeholder="example@email.com" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
                         </div>
 
                         <div class="col-span-1">
-                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                             <label class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center">
                                  Age <span class="text-red-500 ml-1">*</span>
                              </label>
                              <input type="number" id="new-p-age" required min="0" placeholder="e.g. 35" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
                         </div>
 
                         <div class="col-span-1">
-                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
+                             <label class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center">
                                  Gender <span class="text-red-500 ml-1">*</span>
                              </label>
                              <select id="new-p-gender" required class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm cursor-pointer appearance-none">
@@ -342,14 +351,14 @@
                         </div>
 
                         <div class="col-span-2">
-                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5">Address</label>
+                             <label class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5">Address</label>
                              <textarea id="new-p-address" rows="2" placeholder="Full residential address..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm resize-none"></textarea>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-end space-x-4 pt-5 mt-4 border-t border-slate-100">
+                    <div class="flex items-center justify-end space-x-3 sm:space-x-4 pt-4 sm:pt-5 mt-4 border-t border-slate-100">
                         <button type="button" onclick="closePatientModal()" class="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 focus:outline-none transition-colors">Cancel</button>
-                        <button type="submit" id="btn-save-new-patient" class="px-7 py-2.5 rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 focus:outline-none transition-all">Register & Start</button>
+                        <button type="submit" id="btn-save-new-patient" class="flex-1 sm:flex-none px-7 py-2.5 rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 focus:outline-none transition-all">Register</button>
                     </div>
                 </form>
             </div>

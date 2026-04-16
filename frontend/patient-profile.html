@@ -46,10 +46,10 @@
         
         <main class="flex-1 flex flex-col relative overflow-hidden h-full">
             
-            <header class="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between z-50 shrink-0">
+            <header class="bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between z-50 shrink-0">
                 <div class="flex items-center gap-4">
                     <div>
-                        <nav class="flex text-xs font-medium text-slate-500 mb-1">
+                        <nav class="hidden sm:flex text-xs font-medium text-slate-500 mb-1">
                             <ol class="flex items-center space-x-2">
                                 <li class="hover:text-brand-600 transition-colors"><a href="dashboard.html">Dashboard</a></li>
                                 <li><i class="fas fa-chevron-right text-[10px] opacity-50"></i></li>
@@ -58,16 +58,16 @@
                                 <li class="text-slate-700 font-semibold truncate max-w-[150px]" id="breadcrumb-name">Patient Profile</li>
                             </ol>
                         </nav>
-                        <h1 class="text-xl font-bold text-slate-900 tracking-tight">Patient Overview</h1>
+                        <h1 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Patient Overview</h1>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4">
-                    <button id="header-create-report" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg shadow-sm transition-all flex items-center">
-                        <i class="fas fa-file-medical mr-2"></i> Create Report
+                <div class="flex items-center gap-2 sm:gap-4 ml-auto" id="header-actions">
+                    <button id="header-create-report" class="p-2 sm:px-5 sm:py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg shadow-sm transition-all flex items-center" title="Create Report">
+                        <i class="fas fa-file-medical sm:mr-2"></i> <span class="hidden sm:inline">Create Report</span>
                     </button>
                     <div class="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
-                    <button type="button" class="text-slate-400 hover:text-slate-700 transition-colors" title="Back to Directory" onclick="window.location.href='patients.html'"><i class="fas fa-times text-xl"></i></button>
+                    <button type="button" class="text-slate-400 hover:text-slate-700 transition-colors p-1" title="Back" onclick="window.location.href='patients.html'"><i class="fas fa-times text-xl"></i></button>
                 </div>
             </header>
 
@@ -151,15 +151,38 @@
 
                         <div class="lg:col-span-8 flex flex-col">
                             <div class="ui-card flex flex-col h-full min-h-[600px]">
-                                <div class="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center rounded-t-xl shrink-0">
+                                <div class="px-4 sm:px-6 py-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row justify-between sm:items-center gap-3 rounded-t-xl shrink-0">
                                     <h2 class="text-lg font-bold text-slate-800">Diagnostic History</h2>
-                                    <div class="relative">
-                                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                                        <input type="text" id="search-reports" placeholder="Search past reports..." class="pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-sm outline-none focus:border-brand-500 transition-all w-64">
+                                    <div class="relative w-full sm:w-auto flex items-center gap-2 group">
+                                        <div class="relative flex-1 sm:w-80">
+                                            <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px] group-focus-within:text-brand-500 transition-colors"></i>
+                                            <input type="text" id="search-reports" placeholder="Search history..." class="w-full pl-10 pr-10 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand-500/10 focus:border-brand-500 transition-all font-medium placeholder-slate-400">
+                                            <button id="search-filter-toggle" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-600 p-2 rounded-lg transition-colors" title="Filter by Date">
+                                                <i class="fas fa-filter text-[10px]"></i>
+                                            </button>
+                                        </div>
+
+                                        <!-- Date Filter Panel -->
+                                        <div id="date-filter-panel" class="absolute top-full right-0 mt-2 w-72 bg-white shadow-xl rounded-2xl hidden overflow-hidden z-[60] border border-slate-100 p-4 animate-fade-in-up">
+                                            <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-50">
+                                                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Filter by Date</h4>
+                                                <button id="clear-filters" class="text-[10px] font-bold text-brand-600 hover:text-brand-800 uppercase tracking-widest transition-colors">Reset</button>
+                                            </div>
+                                            <div class="space-y-3">
+                                                <div>
+                                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">From</label>
+                                                    <input type="date" id="filter-from-date" class="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 text-xs font-semibold text-slate-700">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">To</label>
+                                                    <input type="date" id="filter-to-date" class="w-full px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 text-xs font-semibold text-slate-700">
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50/50 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider shrink-0">
+                                <div class="hidden sm:grid grid-cols-12 gap-4 px-6 py-3 bg-slate-50/50 border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider shrink-0">
                                     <div class="col-span-2">Date</div>
                                     <div class="col-span-4">Tests / Templates</div>
                                     <div class="col-span-3">Performed By</div>
@@ -335,9 +358,13 @@
                 list.innerHTML = reports.map(r => {
                     const d = new Date(r.date || r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     
-                    let testNames = "No sections defined";
-                    if(r.sections && r.sections.length > 0) {
+                    let testNames = "";
+                    if (r.templateIds && r.templateIds.length > 0) {
+                        testNames = r.templateIds.map(t => sanitizeHTML(t.templateName)).join(', ');
+                    } else if (r.sections && r.sections.length > 0) {
                         testNames = r.sections.map(s => sanitizeHTML(s.sectionName)).join(', ');
+                    } else {
+                        testNames = "No tests defined";
                     }
 
                     const isDraft = r.status.toLowerCase() === 'draft';
@@ -348,18 +375,21 @@
                         : `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 uppercase tracking-wider">${sanitizeHTML(r.status)}</span>`;
 
                     return `
-                    <div class="grid grid-cols-12 gap-4 px-6 py-4 border-b border-slate-50 items-center hover:bg-slate-50/80 transition-colors group">
-                        <div class="col-span-2 text-sm font-bold text-slate-700">${d}</div>
-                        <div class="col-span-4 text-sm text-slate-600 truncate pr-4" title="${testNames}">${testNames}</div>
-                        <div class="col-span-3 text-sm text-slate-500 font-medium truncate pr-4">${sanitizeHTML(r.performedBy || 'Self')}</div>
-                        <div class="col-span-2">${statusBadge}</div>
-                        <div class="col-span-1 flex justify-end gap-2">
-                            <a href="report-create.html?edit=${r._id}" class="p-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-800 rounded-lg transition-colors shadow-sm" title="Edit/View Report">
+                    <div class="report-item flex flex-col sm:grid sm:grid-cols-12 gap-3 sm:gap-4 px-4 sm:px-6 py-5 sm:py-4 border-b border-slate-50 items-start sm:items-center hover:bg-slate-50/80 transition-colors group" 
+                         data-date="${r.date || r.createdAt}">
+                        <div class="sm:col-span-2 text-xs sm:text-sm font-bold text-slate-500 sm:text-slate-700 uppercase sm:normal-case search-date-text">${d}</div>
+                        <div class="w-full sm:col-span-4 text-sm font-bold sm:font-normal text-slate-800 sm:text-slate-600 sm:truncate sm:pr-4" title="${testNames}">${testNames}</div>
+                        <div class="sm:col-span-3 text-xs sm:text-sm text-slate-500 font-medium truncate sm:pr-4"><i class="fas fa-user-md sm:hidden mr-1.5 opacity-50"></i>${sanitizeHTML(r.performedBy || 'Self')}</div>
+                        <div class="sm:col-span-2">${statusBadge}</div>
+                        <div class="sm:col-span-1 flex justify-end gap-3 w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-0 border-slate-100">
+                            <a href="report-create.html?edit=${r._id}" class="flex-1 sm:flex-none flex items-center justify-center p-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-800 rounded-lg transition-colors shadow-sm" title="Edit/View Report">
                                 <i class="fas fa-edit text-base"></i>
+                                <span class="sm:hidden ml-2 text-xs font-bold uppercase tracking-wider">Edit</span>
                             </a>
                             ${r.status !== 'draft' ? `
-                                <a href="${BASE_URL}/reports/${r._id}/pdf?token=${localStorage.getItem('lis_token')}" target="_blank" class="p-2 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-800 rounded-lg transition-colors shadow-sm" title="View PDF">
+                                <a href="${BASE_URL}/reports/${r._id}/pdf?token=${localStorage.getItem('lis_token')}" target="_blank" class="flex-1 sm:flex-none flex items-center justify-center p-2 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-800 rounded-lg transition-colors shadow-sm" title="View PDF">
                                     <i class="fas fa-file-pdf text-base"></i>
+                                    <span class="sm:hidden ml-2 text-xs font-bold uppercase tracking-wider">PDF</span>
                                 </a>
                             ` : ''}
                         </div>
@@ -374,14 +404,84 @@
             }
         }
 
-        // Search Filter Logic for Reports
-        document.getElementById('search-reports').addEventListener('input', function(e) {
-            const term = e.target.value.toLowerCase();
-            const rows = document.getElementById('reports-list').querySelectorAll('.grid-cols-12');
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(term) ? '' : 'none';
+        // Advanced History Filtering Logic
+        function applyHistoryFilters() {
+            const term = document.getElementById('search-reports').value.toLowerCase().trim();
+            const fromDate = document.getElementById('filter-from-date').value;
+            const toDate = document.getElementById('filter-to-date').value;
+            
+            const start = fromDate ? new Date(fromDate).setHours(0,0,0,0) : null;
+            const end = toDate ? new Date(toDate).setHours(23,59,59,999) : null;
+
+            const items = document.querySelectorAll('.report-item');
+            let visibleCount = 0;
+
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                const itemDate = new Date(item.dataset.date).getTime();
+                
+                const matchesSearch = text.includes(term);
+                const matchesFrom = !start || itemDate >= start;
+                const matchesTo = !end || itemDate <= end;
+                
+                const isVisible = matchesSearch && matchesFrom && matchesTo;
+                
+                item.style.display = isVisible ? '' : 'none';
+                if (isVisible) visibleCount++;
             });
+
+            // Toggle filter button highlight
+            const filterToggle = document.getElementById('search-filter-toggle');
+            if (fromDate || toDate) {
+                filterToggle.classList.add('text-brand-600', 'bg-brand-50');
+            } else {
+                filterToggle.classList.remove('text-brand-600', 'bg-brand-50');
+            }
+
+            // Show empty state if everything is hidden
+            const list = document.getElementById('reports-list');
+            const noResultsId = 'search-no-results';
+            let noResultsEl = document.getElementById(noResultsId);
+
+            if (visibleCount === 0 && (term !== '' || fromDate || toDate)) {
+                if (!noResultsEl) {
+                    noResultsEl = document.createElement('div');
+                    noResultsEl.id = noResultsId;
+                    noResultsEl.className = 'flex flex-col items-center justify-center h-48 text-slate-400';
+                    noResultsEl.innerHTML = `
+                        <i class="fas fa-search-minus text-2xl mb-2 opacity-50"></i>
+                        <p class="text-sm font-medium">No reports match your filters.</p>`;
+                    list.appendChild(noResultsEl);
+                }
+            } else if (noResultsEl) {
+                noResultsEl.remove();
+            }
+        }
+
+        // Search/Filter Event Listeners
+        document.getElementById('search-reports').addEventListener('input', applyHistoryFilters);
+        document.getElementById('filter-from-date').addEventListener('change', applyHistoryFilters);
+        document.getElementById('filter-to-date').addEventListener('change', applyHistoryFilters);
+
+        const filterToggle = document.getElementById('search-filter-toggle');
+        const filterPanel = document.getElementById('date-filter-panel');
+        
+        filterToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            filterPanel.classList.toggle('hidden');
+        });
+
+        document.getElementById('clear-filters').addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.getElementById('filter-from-date').value = '';
+            document.getElementById('filter-to-date').value = '';
+            applyHistoryFilters();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!filterPanel.contains(e.target) && !filterToggle.contains(e.target)) {
+                filterPanel.classList.add('hidden');
+            }
         });
 
         function openEditModal() {

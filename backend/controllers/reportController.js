@@ -37,6 +37,7 @@ exports.getReports = async (req, res) => {
 
     const reports = await ReportInstance.find(query)
       .populate('patientId', 'name phone age gender')
+      .populate('templateIds', 'templateName')
       .populate('performedByLabTechId', 'fullName doctorName signatureUrl')
       .skip(startIndex)
       .limit(limit)

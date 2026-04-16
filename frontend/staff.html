@@ -35,10 +35,10 @@
         <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar pb-12">
             
             <!-- Top Header -->
-            <header class="bg-white border-b border-slate-200 flex items-center justify-between px-8 py-5 sticky top-0 z-10">
+            <header class="bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 py-4 sm:py-5 sticky top-0 z-10">
                 <div class="flex-1 w-full max-w-2xl flex relative opacity-0"></div>
                 <!-- Breadcrumbs -->
-                <nav class="flex absolute left-8 top-1/2 transform -translate-y-1/2" aria-label="Breadcrumb">
+                <nav class="flex absolute left-14 sm:left-8 top-1/2 transform -translate-y-1/2" aria-label="Breadcrumb">
                   <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
                     <li class="inline-flex items-center text-slate-500 hover:text-brand-600 transition-colors">
                       <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-2"></i>Dashboard</a>
@@ -46,29 +46,30 @@
                     <li>
                       <div class="flex items-center">
                         <i class="fas fa-chevron-right text-slate-400 text-xs mx-2"></i>
-                        <span class="text-slate-800 font-bold">Team Management</span>
+                        <span class="text-slate-800 font-bold hidden sm:inline">Team Management</span>
+                        <span class="text-slate-800 font-bold sm:hidden">Team</span>
                       </div>
                     </li>
                   </ol>
                 </nav>
             </header>
 
-            <div class="px-8 py-8 max-w-[1600px] mx-auto">
+            <div class="px-4 py-6 sm:px-8 sm:py-8 max-w-[1600px] mx-auto">
                 
-                <div class="flex justify-between items-end mb-8">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8">
                     <div>
-                        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight flex items-center mt-2 group">
+                        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center mt-2 group">
                             <i class="fas fa-user-shield text-brand-500 mr-3 transition-transform"></i>
                             Team Management
                         </h1>
                         <p class="text-slate-500 mt-2 text-sm max-w-xl leading-relaxed">Manage your secure laboratory staff portal.</p>
                     </div>
-                    <div class="flex space-x-4">
-                        <button onclick="openInviteModal()" class="px-5 py-2.5 bg-white text-brand-600 border border-brand-200 rounded-xl font-bold shadow-sm hover:bg-brand-50 transition-all text-sm flex items-center gap-2">
+                    <div class="flex items-center gap-3">
+                        <button onclick="openInviteModal()" class="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-white text-brand-600 border border-brand-200 rounded-xl font-bold shadow-sm hover:bg-brand-50 transition-all text-xs sm:text-sm flex items-center gap-2">
                             <i class="fas fa-envelope"></i> Invite Doctor
                         </button>
-                        <button onclick="openTechModal()" class="px-5 py-2.5 bg-gradient-to-br from-brand-500 to-brand-600 text-white border border-transparent rounded-xl font-bold shadow-md transition-all text-sm flex items-center gap-2">
-                            <i class="fas fa-plus"></i> Add Technician
+                        <button onclick="openTechModal()" class="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-gradient-to-br from-brand-500 to-brand-600 text-white border border-transparent rounded-xl font-bold shadow-md transition-all text-xs sm:text-sm flex items-center gap-2">
+                            <i class="fas fa-plus"></i> Add Tech
                         </button>
                     </div>
                 </div>
@@ -76,13 +77,13 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
                     <div class="overflow-x-auto min-h-[400px]">
                         <table class="w-full text-sm text-left">
-                            <thead class="text-xs text-slate-500 bg-slate-50/80 uppercase font-bold tracking-wider">
+                            <thead class="text-[10px] sm:text-xs text-slate-500 bg-slate-50/80 uppercase font-bold tracking-wider">
                                 <tr>
-                                    <th scope="col" class="px-6 py-4">Name</th>
-                                    <th scope="col" class="px-6 py-4">Email</th>
-                                    <th scope="col" class="px-6 py-4">Role</th>
-                                    <th scope="col" class="px-6 py-4">Status</th>
-                                    <th scope="col" class="px-6 py-4 text-right">Actions</th>
+                                    <th scope="col" class="px-4 sm:px-6 py-4">Staff Member</th>
+                                    <th scope="col" class="px-6 py-4 hidden md:table-cell">Email</th>
+                                    <th scope="col" class="px-6 py-4 hidden sm:table-cell">Role</th>
+                                    <th scope="col" class="px-6 py-4 hidden lg:table-cell">Status</th>
+                                    <th scope="col" class="px-4 sm:px-6 py-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="staff-table-body" class="divide-y divide-slate-100">
