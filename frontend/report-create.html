@@ -54,11 +54,28 @@
         input:focus, textarea:focus, select:focus {
             box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
         }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
     </style>
 </head>
 <body class="text-slate-800 antialiased selection:bg-brand-500 selection:text-white h-full overflow-hidden">
 
     <div id="toast-container" class="fixed bottom-6 right-6 z-[200] flex flex-col gap-3"></div>
+
+    <!-- Page Loader Overlay -->
+    <div id="page-loader" class="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-md transition-opacity duration-500">
+        <div class="flex flex-col items-center">
+            <div class="relative">
+                <div class="w-16 h-16 border-4 border-slate-100 border-t-brand-600 rounded-full animate-spin"></div>
+                <i class="fas fa-microscope absolute inset-0 flex items-center justify-center text-brand-600 text-xl"></i>
+            </div>
+            <p class="mt-6 text-slate-500 font-bold text-xs uppercase tracking-[0.2em] animate-pulse">Initializing Lab Environment</p>
+        </div>
+    </div>
 
     <div class="flex h-screen overflow-hidden">
         
@@ -374,8 +391,18 @@
         function getActiveDraftKey() { return DraftManager.getReportKey(currentPatient ? currentPatient._id : null); }
         
         document.addEventListener('DOMContentLoaded', async () => {
+            const loader = document.getElementById('page-loader');
             try {
-                loadCommonLayout(); checkAuth(); await loadTemplatesCheckboxes(); await loadSignatures(); await loadReferrals();
+                loadCommonLayout(); 
+                checkAuth(); 
+                
+                // Concurrent data loading
+                await Promise.all([
+                    loadTemplatesCheckboxes(), 
+                    loadSignatures(), 
+                    loadReferrals()
+                ]);
+
                 const urlParams = new URLSearchParams(window.location.search);
                 const editId = urlParams.get('edit'), patientId = urlParams.get('patient');
                 
@@ -433,7 +460,15 @@
                         }
                     }
                 });
-            } catch (err) { console.error('Error:', err); UI.showToast('Initialization error.', 'error'); }
+            } catch (err) { 
+                console.error('Error:', err); 
+                UI.showToast('Initialization error.', 'error'); 
+            } finally {
+                if (loader) {
+                    loader.classList.add('opacity-0');
+                    setTimeout(() => loader.remove(), 500);
+                }
+            }
         });
 
         async function loadTemplatesCheckboxes() {
