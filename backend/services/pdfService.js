@@ -152,7 +152,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
   } 
 
   // Patient Info
-  const reportDate = report.date ? new Date(report.date).toLocaleDateString() : new Date().toLocaleDateString();
+  const reportDate = report.date ? new Date(report.date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
   const reportId = report._id ? report._id.toString().slice(-6).toUpperCase() : 'N/A';
   
   // Template names for "Test Name" section
@@ -417,7 +417,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
     footer: function(currentPage, pageCount) {
       return {
         columns: [
-          { text: `Printed on: ${new Date().toLocaleString()}`, alignment: 'left', fontSize: 8, color: '#94a3b8', margin: [ml, 0, 0, 0] },
+          { text: `Printed on: ${new Date().toLocaleString('en-IN')}`, alignment: 'left', fontSize: 8, color: '#94a3b8', margin: [ml, 0, 0, 0] },
           { text: `Page ${currentPage} of ${pageCount}`, alignment: 'right', fontSize: 8, color: '#94a3b8', margin: [0, 0, mr, 0] }
         ],
         margin: [0, 10, 0, 0]
