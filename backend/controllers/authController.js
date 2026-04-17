@@ -226,10 +226,10 @@ exports.updateProfile = async (req, res) => {
 // @access  Private
 exports.resetPassword = async (req, res) => {
   try {
-    const { currentPassword, newPassword } = req.body;
+    const { newPassword } = req.body;
 
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ success: false, error: 'Please provide both current and new passwords' });
+    if (!newPassword) {
+      return res.status(400).json({ success: false, error: 'Please provide a new password' });
     }
 
     const user = await User.findById(req.user.id).select('+password');
@@ -237,10 +237,14 @@ exports.resetPassword = async (req, res) => {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
 
-    // Check current password
-    const isMatch = await user.matchPassword(currentPassword);
-    if (!isMatch) {
-      return res.status(401).json({ success: false, error: 'Incorrect current password' });
+    if (!user.mustChangePassword) {
+      return res.status(403).json({ success: false, error: 'Password reset is not required for this account.' });
+    }
+
+    // Check if new password is same as old password
+    const isSamePassword = await user.matchPassword(newPassword);
+    if (isSamePassword) {
+      return res.status(400).json({ success: false, error: 'New password must be different from the temporary one.' });
     }
 
     if (!isStrongPassword(newPassword)) {

@@ -261,6 +261,46 @@ class UI {
   }
 }
 
+// Map of explicit page path to allowed roles. If a page isn't listed, it assumes public/all authenticated access.
+const PAGE_PERMISSIONS = {
+    'staff.html': ['Admin'],
+    'register-staff.html': ['Admin'],
+    'design.html': ['Admin'],
+    'templates.html': ['Admin', 'Doctor']
+};
+
+/**
+ * Strips out restricted navigation links based on the user's role.
+ */
+function enforceRBACUI(role) {
+    const navLinks = document.querySelectorAll('a[href]');
+    navLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        // Find the base page name ignoring query parameters or hashes
+        const page = href.split('?')[0].split('#')[0].split('/').pop();
+        
+        if (PAGE_PERMISSIONS[page]) {
+            if (!PAGE_PERMISSIONS[page].includes(role)) {
+                // Completely remove the element to prevent DOM tampering
+                if (link.parentElement && link.parentElement.tagName.toLowerCase() === 'li') {
+                    link.parentElement.remove();
+                } else {
+                    link.remove();
+                }
+            }
+        }
+    });
+
+    // Also hide any inline element marked with a data attribute explicitly
+    const explicitRestricted = document.querySelectorAll('[data-role-restricted]');
+    explicitRestricted.forEach(el => {
+        const allowedRoles = el.getAttribute('data-role-restricted').split(',').map(r => r.trim());
+        if (!allowedRoles.includes(role)) {
+            el.remove();
+        }
+    });
+}
+
 // Check Authentication logic (run on every protected page)
 function checkAuth() {
   const token = localStorage.getItem('lis_token');
@@ -281,6 +321,22 @@ function checkAuth() {
           window.location.href = 'reset-password.html';
           return;
         }
+
+        // ---------- Frontend Route Interceptor (RBAC) ----------
+        const currentPath = window.location.pathname;
+        const currentPage = currentPath.split('/').pop().split('?')[0].split('#')[0];
+        
+        if (PAGE_PERMISSIONS[currentPage]) {
+            const allowedRoles = PAGE_PERMISSIONS[currentPage];
+            if (!allowedRoles.includes(u.role)) {
+                console.warn(`[Security] Unauthorized access to ${currentPage} attempted by role '${u.role}'. Redirecting.`);
+                window.location.replace('dashboard.html'); // replace() prevents going 'back' to unauthorized page
+                return;
+            }
+        }
+
+        // Apply UI Security to strip restricted DOM elements natively
+        enforceRBACUI(u.role);
 
         if (userNameEl) {
           const displayName = u.email ? u.email.split('@')[0] : 'User';
