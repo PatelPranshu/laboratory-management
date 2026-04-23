@@ -700,7 +700,7 @@
 
         function addParamLine(btn, paramData = null, isReadOnly = false) {
             const tpl = document.getElementById('param-line-template'), clone = tpl.content.cloneNode(true), line = clone.querySelector('.param-line');
-            if (!paramData) paramData = { name: '', result: '', units: '', isGenderSpecific: false, normalRange: { min: null, max: null } };
+            if (!paramData) paramData = { name: '', result: '', units: '', ruleType: 'MIN_MAX', normalRange: { min: null, max: null } };
             
             const nameEl = line.querySelector('.p-name'), unitEl = line.querySelector('.p-units-input'), rangeEl = line.querySelector('.p-normal-input');
             
@@ -708,10 +708,21 @@
             line.querySelector('.p-result').value = paramData.result || ''; 
             unitEl.value = paramData.units || '';
             
-            if (paramData.isGenderSpecific) { 
+            // Determine display text for the reference range
+            const ruleType = paramData.ruleType || (paramData.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX');
+            
+            if (ruleType === 'GENDER_SPECIFIC') { 
                 const m = paramData.normalRange?.male, f = paramData.normalRange?.female; 
                 rangeEl.value = `M: ${m?.min??'?'}-${m?.max??'?'} | F: ${f?.min??'?'}-${f?.max??'?'}`; 
                 rangeEl.readOnly = true; rangeEl.classList.add('locked-field'); 
+            } else if (ruleType === 'THRESHOLD_COMPARISON') {
+                const comps = paramData.comparisons || [];
+                const opSymbols = { '<': '<', '<=': '≤', '>': '>', '>=': '≥', '==': '=', 'between': '↔' };
+                rangeEl.value = comps.map(r => {
+                    if (r.operator === 'between') return `${r.value}-${r.valueTo}: ${r.classification || ''}`;
+                    return `${opSymbols[r.operator] || r.operator} ${r.value}: ${r.classification || ''}`;
+                }).join(' | ');
+                rangeEl.readOnly = true; rangeEl.classList.add('locked-field');
             } else if (paramData.normalRange) { 
                 const nr = paramData.normalRange; 
                 rangeEl.value = (nr.min !== null && nr.max !== null) ? `${nr.min} - ${nr.max}` : ''; 
@@ -729,18 +740,46 @@
         }
 
         function checkAbnormal(inputEl) {
-            const line = inputEl.closest('.param-line'); if (!line) return; const resultStr = line.querySelector('.p-result').value.trim(), rangeStr = line.querySelector('.p-normal-input').value.trim(), resultMatch = resultStr.match(/([\d.]+)/), resultInput = line.querySelector('.p-result'); resultInput.classList.remove('text-red-600', 'border-red-300', 'bg-red-50'); if (!resultMatch) return; const resultNum = parseFloat(resultMatch[1]);
-            let min = null, max = null;
-            if (line.dataset.paramData) {
-                const param = JSON.parse(line.dataset.paramData);
-                if (param.isGenderSpecific && currentPatient) {
-                    const gender = currentPatient.gender.toLowerCase();
-                    if (gender === 'male' && param.normalRange.male) { min = param.normalRange.male.min; max = param.normalRange.male.max; }
-                    else if (gender === 'female' && param.normalRange.female) { min = param.normalRange.female.min; max = param.normalRange.female.max; }
-                    if (min !== null && max !== null) { if (resultNum < min || resultNum > max) resultInput.classList.add('text-red-600', 'border-red-300', 'bg-red-50'); return; }
+            const line = inputEl.closest('.param-line'); if (!line || !line.dataset.paramData) return; 
+            const resultStr = inputEl.value.trim(), resultMatch = resultStr.match(/([\d.]+)/); 
+            inputEl.classList.remove('text-red-600', 'border-red-300', 'bg-red-50'); 
+            if (!resultMatch) return; 
+            const resultNum = parseFloat(resultMatch[1]);
+            const param = JSON.parse(line.dataset.paramData);
+            const ruleType = param.ruleType || (param.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX');
+            
+            let isAbnormal = false;
+            if (ruleType === 'MIN_MAX' && param.normalRange) {
+                const nr = param.normalRange;
+                if (nr.min !== null && resultNum < nr.min) isAbnormal = true;
+                if (nr.max !== null && resultNum > nr.max) isAbnormal = true;
+            } else if (ruleType === 'GENDER_SPECIFIC' && param.normalRange && currentPatient) {
+                const gender = currentPatient.gender.toLowerCase();
+                let target = null;
+                if (gender === 'male') target = param.normalRange.male;
+                else if (gender === 'female') target = param.normalRange.female;
+                if (target) {
+                    if (target.min !== null && resultNum < target.min) isAbnormal = true;
+                    if (target.max !== null && resultNum > target.max) isAbnormal = true;
+                }
+            } else if (ruleType === 'THRESHOLD_COMPARISON' && param.comparisons) {
+                for (const r of param.comparisons) {
+                    let matches = false;
+                    switch(r.operator) {
+                        case '<': matches = resultNum < r.value; break;
+                        case '<=': matches = resultNum <= r.value; break;
+                        case '>': matches = resultNum > r.value; break;
+                        case '>=': matches = resultNum >= r.value; break;
+                        case '==': matches = resultNum === r.value; break;
+                        case 'between': matches = resultNum >= r.value && resultNum <= r.valueTo; break;
+                    }
+                    if (matches) {
+                        if (r.action === 'HIGHLIGHT' || r.action === 'CRITICAL') isAbnormal = true;
+                        break;
+                    }
                 }
             }
-            const rangeMatch = rangeStr.match(/([\d.]+)\s*[-–—]\s*([\d.]+)/); if (rangeMatch) { min = parseFloat(rangeMatch[1]); max = parseFloat(rangeMatch[2]); if (resultNum < min || resultNum > max) resultInput.classList.add('text-red-600', 'border-red-300', 'bg-red-50'); }
+            if (isAbnormal) inputEl.classList.add('text-red-600', 'border-red-300', 'bg-red-50');
         }
 
         function toggleTemplate(checkbox, templateId) {
@@ -803,7 +842,10 @@
                       p.name = pl.querySelector('.p-name').value; 
                       p.result = pl.querySelector('.p-result').value; 
                       p.units = pl.querySelector('.p-units-input').value; 
-                      if (!p.isGenderSpecific) { 
+                      
+                      // For MIN_MAX, update normalRange if manually edited (though most are template-locked)
+                      const ruleType = p.ruleType || (p.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX');
+                      if (ruleType === 'MIN_MAX') { 
                           const mMatch = pl.querySelector('.p-normal-input').value.match(/([\d.]+)\s*[-–—]\s*([\d.]+)/); 
                           if (mMatch) p.normalRange = { min: parseFloat(mMatch[1]), max: parseFloat(mMatch[2]) }; 
                       } 
@@ -900,7 +942,19 @@
             if (document.getElementById('report-id').value) return;
             const sections = []; document.querySelectorAll('.rep-section').forEach(secBlock => {
                   const sName = secBlock.querySelector('.rs-name').value, sText = secBlock.querySelector('.rs-text').value, parameters = [];
-                  secBlock.querySelectorAll('.param-line').forEach(pl => { if (!pl.dataset.paramData) return; const p = JSON.parse(pl.dataset.paramData); p.name = pl.querySelector('.p-name').value; p.result = pl.querySelector('.p-result').value; p.units = pl.querySelector('.p-units-input').value; parameters.push(p); });
+                  secBlock.querySelectorAll('.param-line').forEach(pl => { 
+                      if (!pl.dataset.paramData) return; 
+                      const p = JSON.parse(pl.dataset.paramData); 
+                      p.name = pl.querySelector('.p-name').value; 
+                      p.result = pl.querySelector('.p-result').value; 
+                      p.units = pl.querySelector('.p-units-input').value; 
+                      const ruleType = p.ruleType || (p.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX');
+                      if (ruleType === 'MIN_MAX') { 
+                          const mMatch = pl.querySelector('.p-normal-input').value.match(/([\d.]+)\s*[-–—]\s*([\d.]+)/); 
+                          if (mMatch) p.normalRange = { min: parseFloat(mMatch[1]), max: parseFloat(mMatch[2]) }; 
+                      }
+                      parameters.push(p); 
+                  });
                   sections.push({ sectionName: sName, text: sText, parameters });
             });
             const draft = { patient: currentPatient, performedBy: document.getElementById('report-performed-by').value, referredBy: document.getElementById('report-referred-by').value, templateIds: Array.from(document.querySelectorAll('#templates-checkbox-container input:checked')).map(cb => cb.value), sections };

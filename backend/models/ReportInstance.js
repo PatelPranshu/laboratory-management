@@ -16,13 +16,26 @@ const ReportSectionSchema = new mongoose.Schema({
     name: { type: String, required: true },
     result: { type: String },
     units: { type: String },
+    // Legacy field — kept for backwards compatibility with existing documents
     isGenderSpecific: { type: Boolean, default: false },
+    ruleType: {
+      type: String,
+      enum: ['MIN_MAX', 'GENDER_SPECIFIC', 'THRESHOLD_COMPARISON'],
+      default: 'MIN_MAX'
+    },
     normalRange: {
       min: Number,
       max: Number,
       male: { min: Number, max: Number },
       female: { min: Number, max: Number }
-    }
+    },
+    comparisons: [{
+      operator: { type: String, enum: ['<', '<=', '>', '>=', '==', 'between'] },
+      value: { type: Number },
+      valueTo: { type: Number },
+      classification: { type: String },
+      action: { type: String, enum: ['NORMAL', 'HIGHLIGHT', 'CRITICAL'], default: 'NORMAL' }
+    }]
   }]
 });
 

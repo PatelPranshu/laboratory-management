@@ -188,22 +188,24 @@
                 <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Unit</label>
                 <input type="text" class="pr-units w-full bg-white border border-slate-200 focus:border-brand-400 rounded px-2 py-1.5 text-xs text-slate-600 transition-all outline-none placeholder-slate-300 shadow-sm" placeholder="g/dL">
             </div>
-            <div class="w-full sm:col-span-5 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+            <div class="w-full sm:col-span-5 flex flex-col gap-2">
                 <div class="flex items-center gap-1.5 shrink-0">
-                    <label class="relative inline-flex items-center cursor-pointer" title="Gender Specific Range">
-                        <input type="checkbox" class="pr-is-gender sr-only peer" onchange="toggleGenderFields(this)">
-                        <div class="w-7 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-brand-500"></div>
-                        <span class="ml-1.5 text-[10px] font-bold text-slate-400 uppercase">M/F</span>
-                    </label>
+                    <select class="pr-rule-type bg-white border border-slate-200 rounded px-1.5 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-tight outline-none focus:border-brand-400 shadow-sm cursor-pointer" onchange="toggleRuleFields(this)">
+                        <option value="MIN_MAX">Min/Max</option>
+                        <option value="GENDER_SPECIFIC">M/F Range</option>
+                        <option value="THRESHOLD_COMPARISON">Threshold</option>
+                    </select>
                 </div>
                 
-                <div class="range-general flex flex-1 items-center gap-1.5">
+                <!-- MIN_MAX: Standard range -->
+                <div class="rule-min-max flex flex-1 items-center gap-1.5">
                     <input type="number" step="any" class="pr-min w-14 sm:w-full max-w-[70px] px-2 py-1 bg-white border border-slate-200 rounded text-xs font-medium text-slate-700 outline-none focus:border-brand-400 shadow-sm placeholder-slate-300 text-center" placeholder="Min">
                     <span class="text-slate-400 text-xs">-</span>
                     <input type="number" step="any" class="pr-max w-14 sm:w-full max-w-[70px] px-2 py-1 bg-white border border-slate-200 rounded text-xs font-medium text-slate-700 outline-none focus:border-brand-400 shadow-sm placeholder-slate-300 text-center" placeholder="Max">
                 </div>
 
-                <div class="range-gender hidden flex-1 flex-col gap-1.5">
+                <!-- GENDER_SPECIFIC: Male/Female ranges -->
+                <div class="rule-gender hidden flex-col gap-1.5">
                     <div class="flex items-center gap-1.5">
                         <span class="text-[10px] font-extrabold text-blue-500 w-3">M</span>
                         <input type="number" step="any" class="pr-male-min w-12 sm:w-full max-w-[60px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-blue-400 shadow-sm placeholder-slate-300 text-center" placeholder="Min">
@@ -217,6 +219,14 @@
                         <input type="number" step="any" class="pr-female-max w-12 sm:w-full max-w-[60px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-pink-400 shadow-sm placeholder-slate-300 text-center" placeholder="Max">
                     </div>
                 </div>
+
+                <!-- THRESHOLD_COMPARISON: Dynamic comparison rules -->
+                <div class="rule-comparison hidden flex-col gap-1.5">
+                    <div class="comparison-rules-list flex flex-col gap-1"></div>
+                    <button type="button" onclick="addComparisonRule(this)" class="text-[10px] font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1 mt-0.5 self-start">
+                        <i class="fas fa-plus-circle"></i> Add Rule
+                    </button>
+                </div>
             </div>
             <div class="w-full sm:col-span-1 flex justify-end pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
                 <button type="button" onclick="this.closest('.param-row').remove()" class="text-slate-400 hover:text-red-500 transition-colors p-1 flex items-center gap-2 text-xs font-medium sm:text-base opacity-100 sm:opacity-0 group-hover:opacity-100">
@@ -225,6 +235,28 @@
                     <span class="sm:hidden text-red-500">Remove</span>
                 </button>
             </div>
+        </div>
+    </template>
+
+    <template id="comparison-rule-template">
+        <div class="comparison-rule flex flex-wrap items-center gap-1 bg-slate-50 rounded px-1.5 py-1 border border-slate-100">
+            <select class="cmp-operator bg-white border border-slate-200 rounded px-1 py-0.5 text-[11px] font-mono font-bold text-slate-700 outline-none focus:border-brand-400 w-[52px]" onchange="toggleBetweenField(this)">
+                <option value="<">&lt;</option>
+                <option value="<=">&le;</option>
+                <option value=">">&gt;</option>
+                <option value=">=">&ge;</option>
+                <option value="==">&#61;</option>
+                <option value="between">↔</option>
+            </select>
+            <input type="number" step="any" class="cmp-value w-[50px] px-1 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-brand-400 text-center" placeholder="Val">
+            <input type="number" step="any" class="cmp-value-to w-[50px] px-1 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-brand-400 text-center hidden" placeholder="To">
+            <input type="text" class="cmp-classification w-[72px] px-1 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-brand-400" placeholder="Label">
+            <select class="cmp-action bg-white border border-slate-200 rounded px-1 py-0.5 text-[10px] font-bold uppercase text-slate-500 outline-none focus:border-brand-400 w-[68px]">
+                <option value="NORMAL">Normal</option>
+                <option value="HIGHLIGHT">Highlight</option>
+                <option value="CRITICAL">Critical</option>
+            </select>
+            <button type="button" onclick="this.closest('.comparison-rule').remove()" class="text-slate-400 hover:text-red-500 transition-colors p-0.5 text-xs leading-none" title="Remove rule">&times;</button>
         </div>
     </template>
 
@@ -371,20 +403,68 @@
             return wrapperDiv;
         }
 
-        function toggleGenderFields(checkbox) {
-            const row = checkbox.closest('.param-row');
-            const general = row.querySelector('.range-general');
-            const gender = row.querySelector('.range-gender');
-            if (checkbox.checked) {
-                general.classList.add('hidden');
-                general.classList.remove('flex');
+        function toggleRuleFields(selectElement) {
+            const row = selectElement.closest('.param-row');
+            const ruleType = selectElement.value;
+            const minMax = row.querySelector('.rule-min-max');
+            const gender = row.querySelector('.rule-gender');
+            const comparison = row.querySelector('.rule-comparison');
+
+            // Hide all first
+            minMax.classList.add('hidden');
+            minMax.classList.remove('flex');
+            gender.classList.add('hidden');
+            gender.classList.remove('flex');
+            comparison.classList.add('hidden');
+            comparison.classList.remove('flex');
+
+            // Show the selected one
+            if (ruleType === 'MIN_MAX') {
+                minMax.classList.remove('hidden');
+                minMax.classList.add('flex');
+            } else if (ruleType === 'GENDER_SPECIFIC') {
                 gender.classList.remove('hidden');
                 gender.classList.add('flex');
+            } else if (ruleType === 'THRESHOLD_COMPARISON') {
+                comparison.classList.remove('hidden');
+                comparison.classList.add('flex');
+                // Auto-add a first rule if empty
+                const list = row.querySelector('.comparison-rules-list');
+                if (list.children.length === 0) {
+                    const addBtn = row.querySelector('.rule-comparison button[onclick="addComparisonRule(this)"]');
+                    addComparisonRule(addBtn);
+                }
+            }
+        }
+
+        function addComparisonRule(btn, data = null) {
+            const tpl = document.getElementById('comparison-rule-template');
+            const clone = tpl.content.cloneNode(true);
+            const ruleEl = clone.querySelector('.comparison-rule');
+
+            if (data) {
+                ruleEl.querySelector('.cmp-operator').value = data.operator || '<';
+                ruleEl.querySelector('.cmp-value').value = data.value ?? '';
+                ruleEl.querySelector('.cmp-classification').value = data.classification || '';
+                ruleEl.querySelector('.cmp-action').value = data.action || 'NORMAL';
+                if (data.operator === 'between') {
+                    ruleEl.querySelector('.cmp-value-to').value = data.valueTo ?? '';
+                    ruleEl.querySelector('.cmp-value-to').classList.remove('hidden');
+                }
+            }
+
+            const list = btn.closest('.rule-comparison').querySelector('.comparison-rules-list');
+            list.appendChild(clone);
+        }
+
+        function toggleBetweenField(selectEl) {
+            const rule = selectEl.closest('.comparison-rule');
+            const valueTo = rule.querySelector('.cmp-value-to');
+            if (selectEl.value === 'between') {
+                valueTo.classList.remove('hidden');
             } else {
-                general.classList.remove('hidden');
-                general.classList.add('flex');
-                gender.classList.remove('flex');
-                gender.classList.add('hidden');
+                valueTo.classList.add('hidden');
+                valueTo.value = '';
             }
         }
 
@@ -396,10 +476,22 @@
             if (data) {
                 row.querySelector('.pr-name').value = data.name || '';
                 row.querySelector('.pr-units').value = data.units || '';
-                if (data.isGenderSpecific) {
-                    const cb = row.querySelector('.pr-is-gender');
-                    cb.checked = true;
-                    toggleGenderFields(cb);
+
+                // Determine the effective ruleType (with legacy compat)
+                let ruleType = data.ruleType || 'MIN_MAX';
+                if (!data.ruleType && data.isGenderSpecific) {
+                    ruleType = 'GENDER_SPECIFIC';
+                }
+
+                const ruleSelect = row.querySelector('.pr-rule-type');
+                ruleSelect.value = ruleType;
+
+                if (ruleType === 'GENDER_SPECIFIC') {
+                    // Show gender fields
+                    row.querySelector('.rule-min-max').classList.add('hidden');
+                    row.querySelector('.rule-min-max').classList.remove('flex');
+                    row.querySelector('.rule-gender').classList.remove('hidden');
+                    row.querySelector('.rule-gender').classList.add('flex');
                     if (data.normalRange) {
                         if (data.normalRange.male) {
                             row.querySelector('.pr-male-min').value = data.normalRange.male.min ?? '';
@@ -410,9 +502,23 @@
                             row.querySelector('.pr-female-max').value = data.normalRange.female.max ?? '';
                         }
                     }
-                } else if (data.normalRange) {
-                    row.querySelector('.pr-min').value = data.normalRange.min ?? '';
-                    row.querySelector('.pr-max').value = data.normalRange.max ?? '';
+                } else if (ruleType === 'THRESHOLD_COMPARISON') {
+                    // Show comparison fields
+                    row.querySelector('.rule-min-max').classList.add('hidden');
+                    row.querySelector('.rule-min-max').classList.remove('flex');
+                    row.querySelector('.rule-comparison').classList.remove('hidden');
+                    row.querySelector('.rule-comparison').classList.add('flex');
+                    // Populate comparison rules
+                    if (data.comparisons && data.comparisons.length > 0) {
+                        const addRuleBtn = row.querySelector('.rule-comparison button[onclick="addComparisonRule(this)"]');
+                        data.comparisons.forEach(cmp => addComparisonRule(addRuleBtn, cmp));
+                    }
+                } else {
+                    // MIN_MAX (default — already visible)
+                    if (data.normalRange) {
+                        row.querySelector('.pr-min').value = data.normalRange.min ?? '';
+                        row.querySelector('.pr-max').value = data.normalRange.max ?? '';
+                    }
                 }
             }
 
@@ -435,11 +541,11 @@
                     if (!name) return;
 
                     const units = row.querySelector('.pr-units').value.trim();
-                    const isGenderSpecific = row.querySelector('.pr-is-gender').checked;
+                    const ruleType = row.querySelector('.pr-rule-type').value;
                     
-                    const param = { name, units, isGenderSpecific, normalRange: {} };
+                    const param = { name, units, ruleType, normalRange: {} };
                     
-                    if (isGenderSpecific) {
+                    if (ruleType === 'GENDER_SPECIFIC') {
                         param.normalRange.male = {
                             min: parseFloat(row.querySelector('.pr-male-min').value) || null,
                             max: parseFloat(row.querySelector('.pr-male-max').value) || null
@@ -448,7 +554,23 @@
                             min: parseFloat(row.querySelector('.pr-female-min').value) || null,
                             max: parseFloat(row.querySelector('.pr-female-max').value) || null
                         };
+                    } else if (ruleType === 'THRESHOLD_COMPARISON') {
+                        param.comparisons = [];
+                        row.querySelectorAll('.comparison-rule').forEach(ruleEl => {
+                            const operator = ruleEl.querySelector('.cmp-operator').value;
+                            const value = parseFloat(ruleEl.querySelector('.cmp-value').value);
+                            const classification = ruleEl.querySelector('.cmp-classification').value.trim();
+                            const action = ruleEl.querySelector('.cmp-action').value;
+                            if (isNaN(value)) return; // Skip rules without a value
+                            const cmp = { operator, value, classification, action };
+                            if (operator === 'between') {
+                                cmp.valueTo = parseFloat(ruleEl.querySelector('.cmp-value-to').value) || null;
+                            }
+                            param.comparisons.push(cmp);
+                        });
+                        delete param.normalRange; // Not used for threshold
                     } else {
+                        // MIN_MAX
                         param.normalRange.min = parseFloat(row.querySelector('.pr-min').value) || null;
                         param.normalRange.max = parseFloat(row.querySelector('.pr-max').value) || null;
                     }

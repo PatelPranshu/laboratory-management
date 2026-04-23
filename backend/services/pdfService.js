@@ -1,6 +1,7 @@
 const pdfmake = require('pdfmake');
 const https = require('https');
 const http = require('http');
+const { evaluatePatientResult } = require('../utils/resultEvaluator');
 
 const fonts = {
   Roboto: {
@@ -308,31 +309,26 @@ exports.generateReportPdf = async (report, patient, settings) => {
         params.forEach(p => {
           const resultStr = p.result || '';
           const unitsStr = p.units || '';
-          let normalRangeStr = '';
-          let isAbnormal = false;
 
-          if (p.isGenderSpecific) {
-            const m = p.normalRange?.male;
-            const f = p.normalRange?.female;
-            const maleRange = (m && m.min != null && m.max != null) ? `Male: ${m.min}-${m.max} ${unitsStr}` : '';
-            const femaleRange = (f && f.min != null && f.max != null) ? `Female: ${f.min}-${f.max} ${unitsStr}` : '';
-            normalRangeStr = [maleRange, femaleRange].filter(r => r).join('\n');
+          // Use the centralized evaluation engine
+          const evaluation = evaluatePatientResult(resultStr, p, patient.gender);
+          const normalRangeStr = evaluation.rangeDisplay;
+          const isAbnormal = evaluation.isAbnormal;
 
-            const gender = (patient.gender || '').toLowerCase();
-            if (gender === 'male' && m) {
-              isAbnormal = checkNumericAbnormal(resultStr, m.min, m.max);
-            } else if (gender === 'female' && f) {
-              isAbnormal = checkNumericAbnormal(resultStr, f.min, f.max);
-            }
-          } else if (p.normalRange) {
-            const nr = p.normalRange;
-            normalRangeStr = (nr && nr.min != null && nr.max != null) ? `${nr.min}-${nr.max} ${unitsStr}` : '';
-            isAbnormal = checkNumericAbnormal(resultStr, nr.min, nr.max);
+          const resultCell = {
+            text: resultStr,
+            bold: isAbnormal,
+            margin: [0, 0, 0, 0]
+          };
+
+          // Apply red color for critical results
+          if (evaluation.critical) {
+            resultCell.color = '#dc2626';
           }
 
           sectionTableBody.push([
             { text: p.name || '', margin: [0, 0, 0, 0] },
-            { text: resultStr, bold: isAbnormal, margin: [0, 0, 0, 0] },
+            resultCell,
             { text: unitsStr, margin: [0, 0, 0, 0] },
             { text: normalRangeStr, fontSize: fontSize - 3, margin: [0, 0, 0, 0] }
           ]);
