@@ -164,7 +164,7 @@ function evaluatePatientResult(resultValue, parameterLogic, patientGender) {
       if (comparisons.length === 0) break;
 
       // Build display string from all rules
-      result.rangeDisplay = comparisons.map(r => formatRuleDisplay(r)).join(' | ');
+      result.rangeDisplay = comparisons.map(r => formatRuleDisplay(r)).join('\n');
 
       // Find first matching rule (order matters)
       for (const rule of comparisons) {

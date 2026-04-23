@@ -4,6 +4,7 @@ const User = require('../models/User');
 const socketService = require('../services/socketService');
 const { sendNotification } = require('../utils/notifier');
 const { pickFields } = require('../middlewares/validate');
+const { updateLabStats } = require('../utils/statsHelper');
 
 // Allowed fields for patient create/update — prevents mass assignment
 const PATIENT_FIELDS = ['name', 'phone', 'email', 'age', 'gender', 'address'];
@@ -110,6 +111,9 @@ exports.createPatient = async (req, res) => {
 
     const patient = await Patient.create(sanitizedBody);
 
+    // Update Stats Cache
+    await updateLabStats(doctorId, { 'stats.totalPatients': 1 });
+
     await sendNotification(req.user.id, doctorId, {
       type: 'NEW_PATIENT',
       title: 'New Patient Registered',
@@ -162,11 +166,34 @@ exports.deletePatient = async (req, res) => {
     if (!patient) {
       return res.status(404).json({ success: false, error: 'Patient not found' });
     }
+    
+    // Cascading stats update for associated reports before they are deleted
+    const reportCounts = await ReportInstance.aggregate([
+      { $match: { patientId: patient._id } },
+      { $group: { 
+          _id: null, 
+          total: { $sum: 1 },
+          pending: { $sum: { $cond: [{ $eq: ['$status', 'draft'] }, 1, 0] } },
+          sent: { $sum: { $cond: [{ $eq: ['$status', 'sent'] }, 1, 0] } }
+      }}
+    ]);
+
+    if (reportCounts.length > 0) {
+      const stats = reportCounts[0];
+      await updateLabStats(doctorId, {
+        'stats.totalReports': -stats.total,
+        'stats.pendingReports': -stats.pending,
+        'stats.sentReports': -stats.sent
+      });
+    }
 
     // Cascade delete associated reports
     await ReportInstance.deleteMany({ patientId: patient._id });
     
     await patient.deleteOne();
+
+    // Update Stats Cache
+    await updateLabStats(doctorId, { 'stats.totalPatients': -1 });
 
     res.status(200).json({ success: true, data: {} });
   } catch (error) {

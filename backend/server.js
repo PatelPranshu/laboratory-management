@@ -68,7 +68,7 @@ app.use(generalLimiter);
 // Strict rate limiting for auth routes — 20 requests per 15 minutes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 10,
   skip: (req) => req.method === 'OPTIONS',
   message: { success: false, error: 'Too many authentication attempts, please try again later' }
 });

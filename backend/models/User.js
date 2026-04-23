@@ -61,6 +61,14 @@ const UserSchema = new mongoose.Schema({
   },
   doctorName: {
     type: String
+  },
+  // Performance Optimization: Counter Caching for Dashboard
+  stats: {
+    totalPatients: { type: Number, default: 0 },
+    totalReports: { type: Number, default: 0 },
+    pendingReports: { type: Number, default: 0 },
+    sentReports: { type: Number, default: 0 },
+    weeklyReports: { type: Array, default: [] }
   }
 }, { timestamps: true });
 

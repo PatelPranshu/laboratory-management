@@ -6,7 +6,8 @@ const {
   updateReport,
   generatePdf,
   sendReport,
-  getPendingReports
+  getPendingReports,
+  deleteReport
 } = require('../controllers/reportController');
 
 const { protect, authorize } = require('../middlewares/authMiddleware');
@@ -22,7 +23,8 @@ router.get('/pending', protect, getPendingReports);
 
 router.route('/:id')
   .get(protect, validateObjectId, getReport)
-  .put(protect, validateObjectId, updateReport);
+  .put(protect, validateObjectId, updateReport)
+  .delete(protect, validateObjectId, deleteReport);
 
 router.get('/:id/pdf', protect, validateObjectId, authorize('Admin', 'Doctor', 'LabTech'), generatePdf);
 router.post('/:id/send', protect, validateObjectId, authorize('Admin', 'Doctor', 'LabTech'), sendReport);

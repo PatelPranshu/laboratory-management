@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const Signature = require('../models/Signature');
 const { sendNotification } = require('../utils/notifier');
 const { pickFields } = require('../middlewares/validate');
+const { updateLabStats } = require('../utils/statsHelper');
 
 // Allowed fields for report create/update — prevents mass assignment
 // creatorId, verifierId, performedByLabTechId are set SERVER-SIDE only to prevent spoofing
@@ -28,20 +29,35 @@ exports.getReports = async (req, res) => {
     const adminId = getAdminId(req);
     
     let query = { doctorId: adminId };
-    if (req.query.patientId) {
-      // Validate patientId format before using in query
-      if (mongoose.Types.ObjectId.isValid(req.query.patientId)) {
-        query.patientId = req.query.patientId;
-      }
+    
+    // Status filtering
+    if (req.query.status) {
+      query.status = req.query.status;
+    }
+
+    // Patient ID filtering
+    if (req.query.patientId && mongoose.Types.ObjectId.isValid(req.query.patientId)) {
+      query.patientId = req.query.patientId;
+    }
+
+    // Search by patient name (requires joining or separate query if not indexed)
+    if (req.query.search) {
+      const patientIds = await Patient.find({ 
+        doctorId: adminId,
+        name: { $regex: req.query.search, $options: 'i' } 
+      }).distinct('_id');
+      query.patientId = { $in: patientIds };
     }
 
     const reports = await ReportInstance.find(query)
+      .select('-sections') // Optimization: Don't fetch large section data for list view
       .populate('patientId', 'name phone age gender')
       .populate('templateIds', 'templateName')
       .populate('performedByLabTechId', 'fullName doctorName signatureUrl')
       .skip(startIndex)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean(); // Optimization: Return plain JS objects instead of Mongoose documents
 
     const total = await ReportInstance.countDocuments(query);
 
@@ -146,6 +162,15 @@ exports.createReport = async (req, res) => {
 
     const report = await ReportInstance.create(sanitizedBody);
 
+    // Update Stats Cache
+    const statsUpdate = { 'stats.totalReports': 1 };
+    if (report.status === 'draft') {
+      statsUpdate['stats.pendingReports'] = 1;
+    } else if (report.status === 'sent') {
+      statsUpdate['stats.sentReports'] = 1;
+    }
+    await updateLabStats(adminId, statsUpdate);
+
     // Send Notification
     await sendNotification(req.user.id, adminId, {
       type: 'NEW_REPORT',
@@ -226,6 +251,28 @@ exports.updateReport = async (req, res) => {
       returnDocument: 'after',
       runValidators: true
     });
+
+    const newStatus = report.status;
+
+    // Synchronize Stats Cache on status change
+    if (oldStatus !== newStatus) {
+      const statsUpdate = {};
+      
+      // Categorize old and new statuses
+      const isOldPending = (oldStatus === 'draft');
+      const isNewPending = (newStatus === 'draft');
+      const isOldSent = (oldStatus === 'sent');
+      const isNewSent = (newStatus === 'sent');
+
+      if (isOldPending && !isNewPending) statsUpdate['stats.pendingReports'] = -1;
+      if (!isOldPending && isNewPending) statsUpdate['stats.pendingReports'] = 1;
+      if (isOldSent && !isNewSent) statsUpdate['stats.sentReports'] = -1;
+      if (!isOldSent && isNewSent) statsUpdate['stats.sentReports'] = 1;
+
+      if (Object.keys(statsUpdate).length > 0) {
+        await updateLabStats(adminId, statsUpdate);
+      }
+    }
 
     // Notify if the report was finalized (signed) during this update
     if (oldStatus === 'draft' && report.status === 'saved') {
@@ -366,5 +413,35 @@ exports.getPendingReports = async (req, res) => {
   } catch (error) {
     console.error('getPendingReports error:', error.message);
     res.status(500).json({ success: false, error: 'Failed to retrieve pending reports' });
+  }
+};
+
+// @desc    Delete report
+// @route   DELETE /api/reports/:id
+// @access  Private
+exports.deleteReport = async (req, res) => {
+  try {
+    const adminId = getAdminId(req);
+    const report = await ReportInstance.findOne({ _id: req.params.id, doctorId: adminId });
+
+    if (!report) {
+      return res.status(404).json({ success: false, error: 'Report not found' });
+    }
+
+    // Update Stats Cache before deletion
+    const statsUpdate = { 'stats.totalReports': -1 };
+    if (report.status === 'draft') {
+      statsUpdate['stats.pendingReports'] = -1;
+    } else if (report.status === 'sent') {
+      statsUpdate['stats.sentReports'] = -1;
+    }
+    await updateLabStats(adminId, statsUpdate);
+
+    await report.deleteOne();
+
+    res.status(200).json({ success: true, data: {} });
+  } catch (error) {
+    console.error('deleteReport error:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to delete report' });
   }
 };
