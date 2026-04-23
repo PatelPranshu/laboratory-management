@@ -478,8 +478,9 @@
                 row.querySelector('.pr-units').value = data.units || '';
 
                 // Determine the effective ruleType (with legacy compat)
+                // Prioritize GENDER_SPECIFIC if isGenderSpecific is true, even if ruleType defaulted to MIN_MAX
                 let ruleType = data.ruleType || 'MIN_MAX';
-                if (!data.ruleType && data.isGenderSpecific) {
+                if (data.isGenderSpecific === true && ruleType === 'MIN_MAX') {
                     ruleType = 'GENDER_SPECIFIC';
                 }
 

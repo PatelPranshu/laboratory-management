@@ -709,7 +709,11 @@
             unitEl.value = paramData.units || '';
             
             // Determine display text for the reference range
-            const ruleType = paramData.ruleType || (paramData.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX');
+            // Prioritize GENDER_SPECIFIC if isGenderSpecific is true, even if ruleType defaulted to MIN_MAX
+            let ruleType = paramData.ruleType || 'MIN_MAX';
+            if (paramData.isGenderSpecific === true && ruleType === 'MIN_MAX') {
+                ruleType = 'GENDER_SPECIFIC';
+            }
             
             if (ruleType === 'GENDER_SPECIFIC') { 
                 const m = paramData.normalRange?.male, f = paramData.normalRange?.female; 
@@ -746,7 +750,10 @@
             if (!resultMatch) return; 
             const resultNum = parseFloat(resultMatch[1]);
             const param = JSON.parse(line.dataset.paramData);
-            const ruleType = param.ruleType || (param.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX');
+            let ruleType = param.ruleType || 'MIN_MAX';
+            if (param.isGenderSpecific === true && ruleType === 'MIN_MAX') {
+                ruleType = 'GENDER_SPECIFIC';
+            }
             
             let isAbnormal = false;
             if (ruleType === 'MIN_MAX' && param.normalRange) {

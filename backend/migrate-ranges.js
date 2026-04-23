@@ -18,7 +18,7 @@ const ReportInstance = require('./models/ReportInstance');
 async function migrate() {
   try {
     console.log('Connecting to database...');
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/laboratory-management');
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/laboratory-management');
     console.log('Connected successfully.\n');
 
     // 1. Migrate Report Templates
@@ -32,8 +32,11 @@ async function migrate() {
         template.sections.forEach(sec => {
           if (sec.parameters) {
             sec.parameters.forEach(param => {
-              if (!param.ruleType) {
-                param.ruleType = param.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX';
+              if (param.isGenderSpecific === true && param.ruleType !== 'GENDER_SPECIFIC') {
+                param.ruleType = 'GENDER_SPECIFIC';
+                modified = true;
+              } else if (!param.ruleType) {
+                param.ruleType = 'MIN_MAX';
                 modified = true;
               }
             });
@@ -60,8 +63,11 @@ async function migrate() {
         report.sections.forEach(sec => {
           if (sec.parameters) {
             sec.parameters.forEach(param => {
-              if (!param.ruleType) {
-                param.ruleType = param.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX';
+              if (param.isGenderSpecific === true && param.ruleType !== 'GENDER_SPECIFIC') {
+                param.ruleType = 'GENDER_SPECIFIC';
+                modified = true;
+              } else if (!param.ruleType) {
+                param.ruleType = 'MIN_MAX';
                 modified = true;
               }
             });

@@ -45,10 +45,13 @@ function formatMinMax(min, max, units) {
  * Handles backwards compatibility with legacy isGenderSpecific boolean.
  */
 function resolveRuleType(param) {
-  if (param.ruleType) return param.ruleType;
-  // Legacy mapping: if ruleType is missing, infer from isGenderSpecific
-  if (param.isGenderSpecific === true) return 'GENDER_SPECIFIC';
-  return 'MIN_MAX';
+  let ruleType = param.ruleType || 'MIN_MAX';
+  // Legacy mapping: Prioritize GENDER_SPECIFIC if isGenderSpecific is true,
+  // even if ruleType defaulted to MIN_MAX in the DB.
+  if (param.isGenderSpecific === true && ruleType === 'MIN_MAX') {
+    return 'GENDER_SPECIFIC';
+  }
+  return ruleType;
 }
 
 /**
