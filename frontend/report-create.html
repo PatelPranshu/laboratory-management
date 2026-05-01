@@ -302,7 +302,7 @@
                 </div>
                 <div class="flex-[1.5]">
                     <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Ref. Range</label>
-                    <input type="text" class="p-normal-input w-full px-0 sm:px-2 py-1 sm:py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-xs sm:text-sm text-slate-500 transition-all outline-none placeholder-slate-300" placeholder="Min - Max" oninput="checkAbnormal(this)">
+                    <textarea class="p-normal-input w-full px-0 sm:px-2 py-1 sm:py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-[11px] leading-tight text-slate-500 transition-all outline-none placeholder-slate-300 resize-none overflow-hidden" rows="1" placeholder="Min - Max" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'; checkAbnormal(this)"></textarea>
                 </div>
             </div>
             <div class="w-full sm:col-span-1 flex justify-end pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
@@ -717,7 +717,7 @@
             
             if (ruleType === 'GENDER_SPECIFIC') { 
                 const m = paramData.normalRange?.male, f = paramData.normalRange?.female; 
-                rangeEl.value = `M: ${m?.min??'?'}-${m?.max??'?'} | F: ${f?.min??'?'}-${f?.max??'?'}`; 
+                rangeEl.value = `M: ${m?.min??'?'}-${m?.max??'?'} \nF: ${f?.min??'?'}-${f?.max??'?'}`; 
                 rangeEl.readOnly = true; rangeEl.classList.add('locked-field'); 
             } else if (ruleType === 'THRESHOLD_COMPARISON') {
                 const comps = paramData.comparisons || [];
@@ -725,11 +725,19 @@
                 rangeEl.value = comps.map(r => {
                     if (r.operator === 'between') return `${r.value}-${r.valueTo}: ${r.classification || ''}`;
                     return `${opSymbols[r.operator] || r.operator} ${r.value}: ${r.classification || ''}`;
-                }).join(' | ');
+                }).join('\n');
                 rangeEl.readOnly = true; rangeEl.classList.add('locked-field');
             } else if (paramData.normalRange) { 
                 const nr = paramData.normalRange; 
                 rangeEl.value = (nr.min !== null && nr.max !== null) ? `${nr.min} - ${nr.max}` : ''; 
+            }
+
+            // Auto-adjust height for textarea
+            if (rangeEl.tagName === 'TEXTAREA') {
+                setTimeout(() => {
+                    rangeEl.style.height = '';
+                    rangeEl.style.height = rangeEl.scrollHeight + 'px';
+                }, 0);
             }
 
             if (isReadOnly) {

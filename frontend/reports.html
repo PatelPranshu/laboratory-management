@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports Registry - MyPathoLabs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 antialiased text-slate-800 selection:bg-brand-500 selection:text-white">
+
+    <div class="flex h-screen overflow-hidden bg-slate-100">
+        
+        <!-- Sidebar Layout Injected via JS -->
+
+        <!-- Main Content -->
+        <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar pb-12">
+            
+            <!-- Top Header -->
+            <header class="bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 py-4 sm:py-5 sticky top-0 z-10">
+                <div class="flex-1 w-full max-w-2xl flex relative opacity-0">
+                </div>
+                <!-- Breadcrumbs -->
+                <nav class="flex absolute left-14 sm:left-8 top-1/2 transform -translate-y-1/2" aria-label="Breadcrumb">
+                  <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
+                    <li class="inline-flex items-center text-slate-500 hover:text-brand-600 transition-colors">
+                      <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-2"></i>Dashboard</a>
+                    </li>
+                    <li>
+                      <div class="flex items-center">
+                        <i class="fas fa-chevron-right text-slate-400 text-xs mx-2"></i>
+                        <span class="text-slate-800 font-bold">Reports</span>
+                      </div>
+                    </li>
+                  </ol>
+                </nav>
+            </header>
+
+            <div class="px-4 py-6 sm:px-8 sm:py-8 max-w-[1600px] mx-auto">
+                
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Reports Registry</h1>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-1">Manage and track all patient diagnostic reports across the laboratory.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                         <a href="report-create.html" class="flex-1 sm:flex-none justify-center bg-brand-600 hover:bg-brand-500 text-white px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center font-bold text-sm">
+                            <i class="fas fa-plus mr-2"></i> Create Report
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Search and Filter Grid -->
+                <div class="glass-card p-5 mb-8 bg-white border border-slate-200 shadow-sm rounded-2xl">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
+                        <!-- Text Search -->
+                        <div class="md:col-span-5 relative group">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Search Patient</label>
+                            <div class="relative">
+                                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-300 group-focus-within:text-brand-500 transition-colors"></i>
+                                <input type="text" id="report-search" placeholder="Search by patient name..." class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-semibold text-slate-700 transition-all placeholder-slate-300">
+                            </div>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div class="md:col-span-4">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Report Status</label>
+                            <select id="filter-status" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-bold text-slate-600 appearance-none cursor-pointer">
+                                <option value="">All Statuses</option>
+                                <option value="draft">Draft (Pending)</option>
+                                <option value="saved">Saved (Verified)</option>
+                                <option value="sent">Sent to Patient</option>
+                            </select>
+                        </div>
+
+                        <!-- Action Button -->
+                        <div class="md:col-span-3">
+                            <button onclick="applyFilters()" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-2 py-[11px] rounded-xl transition-all font-bold shadow-md text-[11px] flex items-center justify-center group tracking-tighter">
+                                <i class="fas fa-filter mr-1.5 text-brand-200 group-hover:text-white transition-colors"></i> Filter Reports
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="glass-card overflow-hidden bg-white border border-slate-200">
+                    <div class="overflow-x-auto min-h-[400px]">
+                        <table class="min-w-full divide-y divide-slate-100 border-collapse">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-7 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Patient Details</th>
+                                    <th class="px-7 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Test Profiles</th>
+                                    <th class="px-7 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Created Date</th>
+                                    <th class="px-7 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-7 py-5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reports-list" class="divide-y divide-slate-100 bg-white">
+                                <!-- Populated via JS -->
+                                <tr><td colspan="5" class="text-center py-20"><i class="fas fa-circle-notch fa-spin text-4xl text-brand-500"></i></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="bg-white px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-slate-500" id="pagination-info">
+                                    Loading...
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="relative z-0 inline-flex rounded-lg shadow-sm -space-x-px" aria-label="Pagination" id="pagination-controls">
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/layout.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        let currentPage = 1;
+        let searchQuery = '';
+        let statusFilter = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCommonLayout();
+            checkAuth();
+
+            // Handle URL Parameters for initial filtering
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('status')) {
+                statusFilter = urlParams.get('status');
+                document.getElementById('filter-status').value = statusFilter;
+            }
+
+            loadReports(1);
+
+            // Refresh on tab focus
+            if (typeof TabFocusRefresh !== 'undefined') {
+                TabFocusRefresh.register(() => loadReports(currentPage));
+            }
+        });
+
+        async function loadReports(page = 1) {
+            currentPage = page;
+            const tbody = document.getElementById('reports-list');
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-20"><i class="fas fa-circle-notch fa-spin text-4xl text-brand-500"></i></td></tr>`;
+            
+            try {
+                const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
+                const statusParam = statusFilter ? `&status=${statusFilter}` : '';
+                
+                const res = await api.request(`/reports?page=${page}&limit=10${searchParam}${statusParam}`);
+                const data = res.data;
+                const pagination = res.pagination;
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-20 text-slate-500 font-medium">No reports found matching your criteria.</td></tr>`;
+                } else {
+                    const statusColors = {
+                        draft: 'bg-slate-100 text-slate-600 border-slate-200',
+                        saved: 'bg-brand-50 text-brand-700 border-brand-200',
+                        sent: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    };
+
+                    tbody.innerHTML = data.map(r => `
+                        <tr class="hover:bg-brand-50/40 transition-colors group">
+                            <td class="px-7 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center font-bold border border-slate-200">
+                                        <i class="fas fa-file-medical-alt text-xs"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-bold text-slate-800">${r.patientId ? sanitizeHTML(r.patientId.name) : 'Unknown Patient'}</div>
+                                        <div class="text-xs text-slate-500 font-medium mt-0.5">${r.patientId ? r.patientId.phone : 'N/A'}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-7 py-4 whitespace-nowrap">
+                                <div class="flex flex-wrap gap-1 max-w-xs">
+                                    ${r.templateIds && r.templateIds.length > 0 
+                                        ? r.templateIds.map(t => `<span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded uppercase tracking-tight border border-slate-200/50">${sanitizeHTML(t.templateName)}</span>`).join('')
+                                        : '<span class="text-slate-400 text-[10px] italic">No templates</span>'
+                                    }
+                                </div>
+                            </td>
+                            <td class="px-7 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-slate-700">${new Date(r.createdAt).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'})}</div>
+                                <div class="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider">${new Date(r.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                            </td>
+                            <td class="px-7 py-4 whitespace-nowrap">
+                                <span class="px-3 py-1 inline-flex text-[10px] font-black rounded-lg border uppercase tracking-widest ${statusColors[r.status] || statusColors.draft} shadow-sm">
+                                    ${sanitizeHTML(r.status)}
+                                </span>
+                            </td>
+                            <td class="px-7 py-4 whitespace-nowrap text-right text-sm">
+                                <div class="flex justify-end space-x-2">
+                                    ${r.status !== 'draft' ? `
+                                    <a href="${BASE_URL}/reports/${r._id}/pdf?token=${localStorage.getItem('lis_token')}" target="_blank" class="p-2 bg-slate-50 text-slate-500 hover:bg-brand-50 hover:text-brand-600 rounded-lg transition-colors tooltip-container" title="View PDF">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>` : ''}
+                                    
+                                    <a href="report-create.html?edit=${r._id}" class="p-2 bg-slate-50 text-slate-500 hover:bg-brand-50 hover:text-brand-600 rounded-lg transition-colors tooltip-container" title="Edit Report">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+
+                                    <button onclick="deleteReport('${r._id}')" class="p-2 bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 rounded-lg transition-colors tooltip-container" title="Delete Report">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+
+                updatePaginationUI(pagination);
+            } catch (err) {
+                UI.showToast('Failed to load reports', 'error');
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-20 text-red-500 font-bold">Failed to load data.</td></tr>`;
+            }
+        }
+
+        function updatePaginationUI(p) {
+            const info = document.getElementById('pagination-info');
+            const start = (p.page - 1) * p.limit + 1;
+            const end = Math.min(p.page * p.limit, p.total);
+            const total = p.total;
+            
+            if (total === 0) {
+                 info.innerHTML = `Showing <span class="font-bold text-slate-800">0</span> results`;
+            } else {
+                 info.innerHTML = `Showing <span class="font-bold text-slate-800">${start}</span> to <span class="font-bold text-slate-800">${end}</span> of <span class="font-bold text-slate-800">${total}</span> reports`;
+            }
+
+            const controls = document.getElementById('pagination-controls');
+            let btns = '';
+            
+            if (p.page > 1) {
+                btns += `<button onclick="loadReports(${p.page - 1})" class="relative inline-flex items-center px-3 py-2 rounded-l-lg border border-slate-200 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors"><i class="fas fa-chevron-left"></i></button>`;
+            } else {
+                btns += `<button disabled class="relative inline-flex items-center px-3 py-2 rounded-l-lg border border-slate-200 bg-slate-50 text-sm font-medium text-slate-300 cursor-not-allowed"><i class="fas fa-chevron-left"></i></button>`;
+            }
+
+            for(let i=1; i<=p.pages; i++) {
+                if(i === p.page) {
+                     btns += `<span class="relative inline-flex items-center px-4 py-2 border border-brand-500 bg-brand-50 text-sm font-bold text-brand-600 z-10">${i}</span>`;
+                } else {
+                     btns += `<button onclick="loadReports(${i})" class="relative inline-flex items-center px-4 py-2 border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">${i}</button>`;
+                }
+            }
+
+            if (p.page < p.pages) {
+                btns += `<button onclick="loadReports(${p.page + 1})" class="relative inline-flex items-center px-3 py-2 rounded-r-lg border border-slate-200 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors"><i class="fas fa-chevron-right"></i></button>`;
+            } else {
+                btns += `<button disabled class="relative inline-flex items-center px-3 py-2 rounded-r-lg border border-slate-200 bg-slate-50 text-sm font-medium text-slate-300 cursor-not-allowed"><i class="fas fa-chevron-right"></i></button>`;
+            }
+
+            controls.innerHTML = btns;
+        }
+
+        function applyFilters() {
+            searchQuery = document.getElementById('report-search').value;
+            statusFilter = document.getElementById('filter-status').value;
+            loadReports(1);
+        }
+
+        async function deleteReport(id) {
+            const confirmed = await UI.showConfirm('Delete Report', 'Are you sure you want to delete this diagnostic report? This will permanently remove it from the patient history.', 'Delete', 'danger');
+            if (confirmed) {
+                try {
+                    await api.request(`/reports/${id}`, 'DELETE');
+                    UI.showToast('Report deleted successfully', 'success');
+                    loadReports(1);
+                } catch (err) {
+                    UI.showToast(err.message, 'error');
+                }
+            }
+        }
+
+        document.getElementById('report-search').addEventListener('keypress', (e) => {
+             if (e.key === 'Enter') applyFilters();
+        });
+    </script>
+</body>
+</html>

@@ -57,6 +57,12 @@ function loadCommonLayout() {
                     <i class="fas fa-users w-6 group-hover:text-brand-100 transition-colors"></i> 
                     <span class="font-medium ml-2">Patients</span>
                 </a>
+                ${(u && (u.role === 'Admin' || u.role === 'Doctor' || u.role === 'LabTech')) ? `
+                <a href="reports.html" data-page="reports" class="nav-link flex items-center px-4 py-3.5 text-indigo-100/70 hover:bg-white/5 hover:text-white rounded-xl transition-custom group">
+                    <i class="fas fa-file-medical w-6 group-hover:text-brand-100 transition-colors"></i> 
+                    <span class="font-medium ml-2">Reports Registry</span>
+                </a>
+                ` : ''}
                 ${(u && (u.role === 'Admin' || u.role === 'Doctor')) ? `
                 <a href="templates.html" data-page="templates" class="nav-link flex items-center px-4 py-3.5 text-indigo-100/70 hover:bg-white/5 hover:text-white rounded-xl transition-custom group">
                     <i class="fas fa-file-invoice w-6 group-hover:text-brand-100 transition-colors"></i> 
