@@ -259,7 +259,7 @@
             
             <div class="bg-slate-50 px-5 py-3 border-b border-slate-200 flex justify-between items-center rounded-t-lg">
                 <input type="text" class="rs-name font-semibold text-slate-800 bg-transparent border-0 focus:ring-0 p-0 w-3/4 text-base placeholder:text-slate-400 placeholder:font-normal" placeholder="Section Heading (e.g., Lipid Profile)">
-                <button onclick="this.closest('.rep-section').remove()" class="text-slate-400 hover:text-red-500 transition-colors p-1"><i class="fas fa-trash text-sm"></i></button>
+                <button onclick="this.closest('.rep-section').remove(); saveReportDraft()" class="text-slate-400 hover:text-red-500 transition-colors p-1"><i class="fas fa-trash text-sm"></i></button>
             </div>
             
                 <div class="hidden sm:grid grid-cols-12 gap-4 px-5 py-2.5 bg-white border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -278,7 +278,34 @@
                     </button>
                     
                     <div class="flex-1 w-full">
-                         <textarea class="rs-text w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-brand-500 text-sm text-slate-700 outline-none transition-all resize-none shadow-sm placeholder:text-slate-400" rows="1" placeholder="Clinical notes or interpretation for this section..."></textarea>
+                         <textarea class="rs-text w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-brand-500 text-sm text-slate-700 outline-none transition-all resize-y shadow-sm placeholder:text-slate-400" rows="1" placeholder="Clinical notes or interpretation for this section..." oninput="adjustNotesHeight(this)"></textarea>
+                         <details class="w-full group mt-3">
+                             <summary class="text-[11px] font-bold text-slate-400 hover:text-brand-600 cursor-pointer list-none flex items-center gap-1.5 transition-colors select-none pl-1 w-max">
+                                 <i class="fas fa-chevron-right text-[10px] transition-transform duration-200 group-open:rotate-90"></i>
+                                 Advanced Setup (Methodology, Sample, Kit)
+                             </summary>
+                             <div class="w-full bg-slate-50/50 border border-slate-200 rounded-lg p-3 mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-inner relative overflow-hidden">
+                                 <div class="absolute left-0 top-0 w-1 h-full bg-brand-200"></div>
+                                 <div class="pl-2">
+                                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                         <i class="fas fa-microscope text-brand-500 opacity-80"></i> Methodology
+                                     </label>
+                                     <input type="text" class="rs-methodology w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400" placeholder="N/A">
+                                 </div>
+                                 <div class="pl-2">
+                                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                         <i class="fas fa-vial text-brand-500 opacity-80"></i> Sample Type
+                                     </label>
+                                     <input type="text" class="rs-sample-type w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400" placeholder="N/A">
+                                 </div>
+                                 <div class="pl-2">
+                                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                         <i class="fas fa-box-open text-brand-500 opacity-80"></i> Kit Used
+                                     </label>
+                                     <input type="text" class="rs-kit-used w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400" placeholder="N/A">
+                                 </div>
+                             </div>
+                         </details>
                     </div>
                 </div>
             </div>
@@ -286,32 +313,62 @@
     </template>
 
     <template id="param-line-template">
-        <div class="param-line flex flex-col sm:grid sm:grid-cols-12 gap-3 sm:gap-4 px-4 sm:px-5 py-4 sm:py-2.5 items-start sm:items-center border-b border-slate-100 sm:border-slate-50 hover:bg-slate-50 transition-colors">
-            <div class="w-full sm:col-span-5">
-                <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Parameter</label>
-                <input type="text" class="p-name w-full bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded px-0 sm:px-2 py-1 sm:py-1.5 font-bold sm:font-medium text-slate-800 text-sm placeholder-slate-300 transition-all outline-none" placeholder="Parameter Name">
-            </div>
-            <div class="w-full sm:col-span-2">
-                <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Result</label>
-                <input type="text" class="p-result w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm" placeholder="Value" oninput="checkAbnormal(this)">
-            </div>
-            <div class="flex gap-3 w-full sm:col-span-4">
-                <div class="flex-1">
-                    <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Unit</label>
-                    <input type="text" class="p-units-input w-full px-0 sm:px-2 py-1 sm:py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-xs sm:text-sm text-slate-600 transition-all outline-none" placeholder="Unit">
+        <div class="param-line border-b border-slate-100 sm:border-slate-50 hover:bg-slate-50 transition-colors px-4 sm:px-5 py-4 sm:py-2.5 flex flex-col gap-2 relative">
+            <div class="w-full flex flex-col sm:grid sm:grid-cols-12 gap-3 sm:gap-4 items-start sm:items-center">
+                <div class="w-full sm:col-span-5">
+                    <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Parameter</label>
+                    <input type="text" class="p-name w-full bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded px-0 sm:px-2 py-1 sm:py-1.5 font-bold sm:font-medium text-slate-800 text-sm placeholder-slate-300 transition-all outline-none" placeholder="Parameter Name">
                 </div>
-                <div class="flex-[1.5]">
-                    <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Ref. Range</label>
-                    <textarea class="p-normal-input w-full px-0 sm:px-2 py-1 sm:py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-[11px] leading-tight text-slate-500 transition-all outline-none placeholder-slate-300 resize-none overflow-hidden" rows="1" placeholder="Min - Max" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'; checkAbnormal(this)"></textarea>
+                <div class="w-full sm:col-span-2">
+                    <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Result</label>
+                    <input type="text" class="p-result w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm" placeholder="Value" oninput="checkAbnormal(this)">
+                </div>
+                <div class="flex gap-3 w-full sm:col-span-4">
+                    <div class="flex-1">
+                        <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Unit</label>
+                        <input type="text" class="p-units-input w-full px-0 sm:px-2 py-1 sm:py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-xs sm:text-sm text-slate-600 transition-all outline-none" placeholder="Unit">
+                    </div>
+                    <div class="flex-[1.5]">
+                        <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Ref. Range</label>
+                        <textarea class="p-normal-input w-full px-0 sm:px-2 py-1 sm:py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-[11px] leading-tight text-slate-500 transition-all outline-none placeholder-slate-300 resize-none overflow-hidden" rows="1" placeholder="Min - Max" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'; checkAbnormal(this)"></textarea>
+                    </div>
+                </div>
+                <div class="w-full sm:col-span-1 flex justify-end pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
+                    <button onclick="this.closest('.param-line').remove(); saveReportDraft()" class="text-slate-400 hover:text-red-500 transition-colors p-2 sm:p-1.5 flex items-center gap-2 text-xs font-medium sm:text-base">
+                        <i class="fas fa-trash-alt sm:hidden"></i>
+                        <i class="fas fa-times hidden sm:block"></i>
+                        <span class="sm:hidden text-red-500">Remove</span>
+                    </button>
                 </div>
             </div>
-            <div class="w-full sm:col-span-1 flex justify-end pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
-                <button onclick="this.closest('.param-line').remove()" class="text-slate-400 hover:text-red-500 transition-colors p-2 sm:p-1.5 flex items-center gap-2 text-xs font-medium sm:text-base">
-                    <i class="fas fa-trash-alt sm:hidden"></i>
-                    <i class="fas fa-times hidden sm:block"></i>
-                    <span class="sm:hidden text-red-500">Remove Row</span>
-                </button>
-            </div>
+            
+            <details class="w-full group mt-1">
+                <summary class="text-[11px] font-bold text-slate-400 hover:text-brand-600 cursor-pointer list-none flex items-center gap-1.5 transition-colors select-none pl-1 w-max">
+                    <i class="fas fa-chevron-right text-[10px] transition-transform duration-200 group-open:rotate-90"></i>
+                    Advanced Setup (Methodology, Sample, Kit)
+                </summary>
+                <div class="w-full bg-white border border-slate-200 rounded-lg p-3 mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-[0_2px_4px_rgb(0,0,0,0.02)] relative overflow-hidden">
+                    <div class="absolute left-0 top-0 w-1 h-full bg-slate-200"></div>
+                    <div class="pl-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                            <i class="fas fa-microscope text-brand-500 opacity-80"></i> Methodology
+                        </label>
+                        <input type="text" class="p-methodology w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none locked-field cursor-not-allowed" readonly placeholder="N/A">
+                    </div>
+                    <div class="pl-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                            <i class="fas fa-vial text-brand-500 opacity-80"></i> Sample Type
+                        </label>
+                        <input type="text" class="p-sample-type w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none locked-field cursor-not-allowed" readonly placeholder="N/A">
+                    </div>
+                    <div class="pl-2">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                            <i class="fas fa-box-open text-brand-500 opacity-80"></i> Kit Used
+                        </label>
+                        <input type="text" class="p-kit-used w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none locked-field cursor-not-allowed" readonly placeholder="N/A">
+                    </div>
+                </div>
+            </details>
         </div>
     </template>
 
@@ -386,9 +443,41 @@
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
     <script>
-        let templatesData = []; let currentPatient = null;
-        /** Returns the active draft key based on current patient context */
-        function getActiveDraftKey() { return DraftManager.getReportKey(currentPatient ? currentPatient._id : null); }
+        function adjustNotesHeight(el) {
+            const currentStyleHeight = el.style.height;
+            const lastAutoHeight = el.dataset.autoHeight;
+            
+            if (currentStyleHeight && lastAutoHeight && currentStyleHeight !== lastAutoHeight) {
+                return;
+            }
+            
+            el.style.height = 'auto';
+            const computed = window.getComputedStyle(el);
+            const lineHeight = parseFloat(computed.lineHeight) || 20;
+            const padding = parseFloat(computed.paddingTop) + parseFloat(computed.paddingBottom) + parseFloat(computed.borderTopWidth) + parseFloat(computed.borderBottomWidth);
+            const maxHeight = lineHeight * 6 + padding;
+            
+            let targetHeight;
+            if (el.scrollHeight > maxHeight) {
+                targetHeight = maxHeight;
+                el.style.overflowY = 'auto';
+            } else {
+                targetHeight = el.scrollHeight;
+                el.style.overflowY = 'hidden';
+            }
+            
+            const heightStr = targetHeight + 'px';
+            el.style.height = heightStr;
+            el.dataset.autoHeight = heightStr;
+        }
+
+        let templatesData = []; let currentPatient = null; let signaturesData = [];
+        let isRestoringDraft = false;
+        /** Returns the active draft key based on URL context */
+        function getActiveDraftKey() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return DraftManager.getReportKey(urlParams.get('patient'));
+        }
         
         document.addEventListener('DOMContentLoaded', async () => {
             const loader = document.getElementById('page-loader');
@@ -406,35 +495,27 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const editId = urlParams.get('edit'), patientId = urlParams.get('patient');
                 
-                if (editId) await loadExistingReport(editId);
-                else if (patientId) { await selectPatientById(patientId); restoreDraftIfExists(); }
-                else {
-                    // Migrate legacy draft key (lis_draft_report → lis_draft_report_draft_new)
-                    const legacyDraft = DraftManager.load('report');
-                    if (legacyDraft) {
-                        DraftManager.save(DraftManager.getReportKey(null), legacyDraft);
-                        DraftManager.clear('report');
+                isRestoringDraft = true;
+                try {
+                    if (editId) await loadExistingReport(editId);
+                    else if (patientId) {
+                        await selectPatientById(patientId);
+                        const draft = DraftManager.load(getActiveDraftKey());
+                        await applyDraftData(draft, false);
                     }
-                    // No URL context — try loading the generic "new" draft
-                    const draft = DraftManager.load(DraftManager.getReportKey(null));
-                    if (draft) {
-                        if (draft.patient) await selectPatientById(draft.patient._id);
-                        if (draft.sections && draft.sections.length > 0) {
-                            document.getElementById('report-sections-container').innerHTML = '';
-                            draft.sections.forEach(sec => {
-                                const block = addReportSection(false); 
-                                block.querySelector('.rs-name').value = sec.sectionName || ''; 
-                                block.querySelector('.rs-text').value = sec.text || '';
-                                if (sec.parameters) sec.parameters.forEach(p => addParamLine(block.querySelector('button'), p, false));
-                            });
-                        } else {
-                            addReportSection(false);
+                    else {
+                        // Migrate legacy draft key (lis_draft_report → lis_draft_report_draft_new)
+                        const legacyDraft = DraftManager.load('report');
+                        if (legacyDraft) {
+                            DraftManager.save(DraftManager.getReportKey(null), legacyDraft);
+                            DraftManager.clear('report');
                         }
-                        
-                        if (draft.referredBy) {
-                            selectReferral(draft.referredBy);
-                        }
-                    } else addReportSection(false);
+                        // No URL context — try loading the generic "new" draft
+                        const draft = DraftManager.load(getActiveDraftKey());
+                        await applyDraftData(draft, true);
+                    }
+                } finally {
+                    isRestoringDraft = false;
                 }
                 setupPatientSearch();
 
@@ -495,6 +576,8 @@
                     list.innerHTML = '<li class="px-4 py-3 text-center text-slate-400 text-sm italic">No signatures found</li>'; 
                     return; 
                 }
+
+                signaturesData = res.data;
 
                 list.innerHTML = res.data.map(sig => {
                     const name = sig.fullName || sig.doctorName || 'Unknown';
@@ -557,13 +640,18 @@
         }
 
         function selectReferral(name) {
+            const toggle = document.getElementById('referral-dropdown-toggle');
+            if (toggle) toggle.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
             document.getElementById('report-referred-by').value = name;
             document.getElementById('selected-referral-name').textContent = name;
             document.getElementById('referral-dropdown-menu').classList.add('hidden');
             toggleActionState('editing');
+            saveReportDraft();
         }
 
         function selectDoctor(id, name, url) {
+            const toggle = document.getElementById('doctor-dropdown-toggle');
+            if (toggle) toggle.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
             document.getElementById('report-performed-by').value = id;
             document.getElementById('selected-doctor-name').textContent = name;
             document.getElementById('doctor-dropdown-menu').classList.add('hidden');
@@ -579,6 +667,7 @@
                 if (user.role === 'LabTech' && warning) warning.classList.remove('hidden');
                 else if (warning) warning.classList.add('hidden');
                 toggleActionState('editing');
+                saveReportDraft();
             }
         }
 
@@ -637,8 +726,11 @@
 
         async function selectPatientById(id) { try { const res = await api.request(`/patients/${id}`); selectPatient(res.data); } catch (err) { } }
         function selectPatient(p) {
+            const searchInput = document.getElementById('patient-search-input');
+            if (searchInput) searchInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
             document.getElementById('patient-search-results').classList.add('hidden'); document.getElementById('patient-search-input').value = ''; currentPatient = p; document.getElementById('sp-id').value = p._id; document.getElementById('sp-name').textContent = p.name; document.getElementById('sp-details').textContent = `${p.phone} • ${p.age}y / ${p.gender}`; document.getElementById('patient-selection-container').classList.add('hidden'); document.getElementById('selected-patient-card').classList.remove('hidden');
             document.querySelectorAll('.p-result').forEach(input => checkAbnormal(input));
+            saveReportDraft();
         }
 
         function handleHeaderCancel() { 
@@ -647,7 +739,17 @@
             document.getElementById('sp-id').value = '';
             document.getElementById('selected-patient-card').classList.add('hidden');
             document.getElementById('patient-selection-container').classList.remove('hidden');
-            document.getElementById('patient-search-input').value = '';
+            const searchInput = document.getElementById('patient-search-input');
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
+            }
+            
+            const doctorToggle = document.getElementById('doctor-dropdown-toggle');
+            if (doctorToggle) doctorToggle.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
+            
+            const referralToggle = document.getElementById('referral-dropdown-toggle');
+            if (referralToggle) referralToggle.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
 
             // 2. Clear Report Sections
             const container = document.getElementById('report-sections-container');
@@ -679,7 +781,19 @@
 
             UI.showToast('Page Cleared', 'success');
         }
-        function clearPatient() { currentPatient = null; document.getElementById('sp-id').value = ''; document.getElementById('selected-patient-card').classList.add('hidden'); document.getElementById('patient-selection-container').classList.remove('hidden'); document.querySelectorAll('.p-result').forEach(input => checkAbnormal(input)); }
+        function clearPatient() {
+            currentPatient = null;
+            const searchInput = document.getElementById('patient-search-input');
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
+            }
+            document.getElementById('sp-id').value = '';
+            document.getElementById('selected-patient-card').classList.add('hidden');
+            document.getElementById('patient-selection-container').classList.remove('hidden');
+            document.querySelectorAll('.p-result').forEach(input => checkAbnormal(input));
+            saveReportDraft();
+        }
 
         function addReportSection(isTemplate = false) {
             const tpl = document.getElementById('report-sec-template'), clone = tpl.content.cloneNode(true), container = document.getElementById('report-sections-container'); 
@@ -694,6 +808,10 @@
             }
 
             container.appendChild(clone);
+            const notesTextarea = container.lastElementChild.querySelector('.rs-text');
+            if (notesTextarea) {
+                setTimeout(() => adjustNotesHeight(notesTextarea), 0);
+            }
             if (typeof toggleActionState === 'function') toggleActionState('editing');
             return container.lastElementChild;
         }
@@ -727,9 +845,21 @@
                     return `${opSymbols[r.operator] || r.operator} ${r.value}: ${r.classification || ''}`;
                 }).join('\n');
                 rangeEl.readOnly = true; rangeEl.classList.add('locked-field');
+            } else if (ruleType === 'QUALITATIVE' || paramData.dataType === 'TEXT' || paramData.dataType === 'QUALITATIVE') {
+                const textNormal = paramData.normalRange?.textNormal || (paramData.referenceRanges && paramData.referenceRanges[0]?.textNormal);
+                rangeEl.value = textNormal ? `Expected: ${textNormal}` : '';
+                rangeEl.readOnly = true; rangeEl.classList.add('locked-field');
             } else if (paramData.normalRange) { 
                 const nr = paramData.normalRange; 
-                rangeEl.value = (nr.min !== null && nr.max !== null) ? `${nr.min} - ${nr.max}` : ''; 
+                if (nr.min !== null && nr.max !== null) {
+                    rangeEl.value = `${nr.min} - ${nr.max}`;
+                } else if (nr.min !== null) {
+                    rangeEl.value = `≥ ${nr.min}`;
+                } else if (nr.max !== null) {
+                    rangeEl.value = `≤ ${nr.max}`;
+                } else {
+                    rangeEl.value = '';
+                }
             }
 
             // Auto-adjust height for textarea
@@ -746,6 +876,18 @@
                 rangeEl.readOnly = true; rangeEl.classList.add('locked-field');
             }
 
+            const methodologyVal = paramData.methodology || '';
+            const sampleTypeVal = paramData.sampleType || '';
+            const kitUsedVal = paramData.kitUsed || paramData.kit || '';
+            
+            const methodologyEl = line.querySelector('.p-methodology');
+            const sampleTypeEl = line.querySelector('.p-sample-type');
+            const kitUsedEl = line.querySelector('.p-kit-used');
+            
+            if (methodologyEl) methodologyEl.value = methodologyVal;
+            if (sampleTypeEl) sampleTypeEl.value = sampleTypeVal;
+            if (kitUsedEl) kitUsedEl.value = kitUsedVal;
+
             line.dataset.paramData = JSON.stringify(paramData); 
             btn.closest('.rep-section').querySelector('.rs-params').appendChild(clone);
             if (paramData?.result) checkAbnormal(line.querySelector('.p-result'));
@@ -753,44 +895,76 @@
 
         function checkAbnormal(inputEl) {
             const line = inputEl.closest('.param-line'); if (!line || !line.dataset.paramData) return; 
-            const resultStr = inputEl.value.trim(), resultMatch = resultStr.match(/([\d.]+)/); 
+            const resultStr = inputEl.value.trim();
             inputEl.classList.remove('text-red-600', 'border-red-300', 'bg-red-50'); 
-            if (!resultMatch) return; 
-            const resultNum = parseFloat(resultMatch[1]);
+            if (!resultStr) return;
+
             const param = JSON.parse(line.dataset.paramData);
+            const dataType = param.dataType || 'NUMERIC';
             let ruleType = param.ruleType || 'MIN_MAX';
             if (param.isGenderSpecific === true && ruleType === 'MIN_MAX') {
                 ruleType = 'GENDER_SPECIFIC';
             }
             
             let isAbnormal = false;
-            if (ruleType === 'MIN_MAX' && param.normalRange) {
-                const nr = param.normalRange;
-                if (nr.min !== null && resultNum < nr.min) isAbnormal = true;
-                if (nr.max !== null && resultNum > nr.max) isAbnormal = true;
-            } else if (ruleType === 'GENDER_SPECIFIC' && param.normalRange && currentPatient) {
-                const gender = currentPatient.gender.toLowerCase();
-                let target = null;
-                if (gender === 'male') target = param.normalRange.male;
-                else if (gender === 'female') target = param.normalRange.female;
-                if (target) {
-                    if (target.min !== null && resultNum < target.min) isAbnormal = true;
-                    if (target.max !== null && resultNum > target.max) isAbnormal = true;
-                }
-            } else if (ruleType === 'THRESHOLD_COMPARISON' && param.comparisons) {
-                for (const r of param.comparisons) {
-                    let matches = false;
-                    switch(r.operator) {
-                        case '<': matches = resultNum < r.value; break;
-                        case '<=': matches = resultNum <= r.value; break;
-                        case '>': matches = resultNum > r.value; break;
-                        case '>=': matches = resultNum >= r.value; break;
-                        case '==': matches = resultNum === r.value; break;
-                        case 'between': matches = resultNum >= r.value && resultNum <= r.valueTo; break;
+            
+            if (dataType === 'TEXT' || dataType === 'QUALITATIVE' || ruleType === 'QUALITATIVE') {
+                const textNormal = param.normalRange?.textNormal || (param.referenceRanges && param.referenceRanges[0]?.textNormal);
+                const comps = param.comparisons || [];
+                
+                if (comps.length > 0) {
+                    for (const r of comps) {
+                        let matches = false;
+                        const t = resultStr.toLowerCase();
+                        const v = String(r.value || '').toLowerCase();
+                        if (r.operator === 'equals' || r.operator === '==') {
+                            matches = (t === v);
+                        } else if (r.operator === 'contains') {
+                            matches = t.includes(v);
+                        }
+                        if (matches) {
+                            if (r.action === 'HIGHLIGHT' || r.action === 'CRITICAL') isAbnormal = true;
+                            break;
+                        }
                     }
-                    if (matches) {
-                        if (r.action === 'HIGHLIGHT' || r.action === 'CRITICAL') isAbnormal = true;
-                        break;
+                } else if (textNormal) {
+                    if (resultStr.toLowerCase() !== textNormal.toLowerCase()) {
+                        isAbnormal = true;
+                    }
+                }
+            } else {
+                const resultMatch = resultStr.match(/(-?[\d.]+)/);
+                if (!resultMatch) return;
+                const resultNum = parseFloat(resultMatch[1]);
+                
+                if (ruleType === 'MIN_MAX' && param.normalRange) {
+                    const nr = param.normalRange;
+                    if (nr.min !== null && resultNum < nr.min) isAbnormal = true;
+                    if (nr.max !== null && resultNum > nr.max) isAbnormal = true;
+                } else if (ruleType === 'GENDER_SPECIFIC' && param.normalRange && currentPatient) {
+                    const gender = currentPatient.gender.toLowerCase();
+                    let target = null;
+                    if (gender === 'male') target = param.normalRange.male;
+                    else if (gender === 'female') target = param.normalRange.female;
+                    if (target) {
+                        if (target.min !== null && resultNum < target.min) isAbnormal = true;
+                        if (target.max !== null && resultNum > target.max) isAbnormal = true;
+                    }
+                } else if (ruleType === 'THRESHOLD_COMPARISON' && param.comparisons) {
+                    for (const r of param.comparisons) {
+                        let matches = false;
+                        switch(r.operator) {
+                            case '<': matches = resultNum < r.value; break;
+                            case '<=': matches = resultNum <= r.value; break;
+                            case '>': matches = resultNum > r.value; break;
+                            case '>=': matches = resultNum >= r.value; break;
+                            case '==': matches = resultNum === r.value; break;
+                            case 'between': matches = resultNum >= r.value && resultNum <= r.valueTo; break;
+                        }
+                        if (matches) {
+                            if (r.action === 'HIGHLIGHT' || r.action === 'CRITICAL') isAbnormal = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -804,11 +978,15 @@
                 t.sections.forEach(sec => { 
                     const block = addReportSection(true); 
                     block.dataset.templateId = templateId; 
-                    block.querySelector('.rs-name').value = sec.sectionName; 
+                    block.querySelector('.rs-name').value = sec.sectionName || ''; 
                     block.querySelector('.rs-text').value = sec.defaultText || ''; 
+                    if (sec.methodology) { const e = block.querySelector('.rs-methodology'); e.value = sec.methodology; e.readOnly = true; e.classList.add('locked-field'); }
+                    if (sec.sampleType) { const e = block.querySelector('.rs-sample-type'); e.value = sec.sampleType; e.readOnly = true; e.classList.add('locked-field'); }
+                    if (sec.kitUsed) { const e = block.querySelector('.rs-kit-used'); e.value = sec.kitUsed; e.readOnly = true; e.classList.add('locked-field'); }
                     if (sec.parameters) sec.parameters.forEach(p => addParamLine(block.querySelector('button'), p, true)); 
                 });
             } else { document.querySelectorAll(`.rep-section[data-template-id="${templateId}"]`).forEach(b => b.remove()); if (!document.querySelector('.rep-section')) addReportSection(false); }
+            saveReportDraft();
         }
 
         async function loadExistingReport(id) {
@@ -823,19 +1001,45 @@
                       selectReferral(r.referredBy);
                   }
                   if (r.templateIds) document.querySelectorAll('#templates-checkbox-container input').forEach(cb => { if (r.templateIds.includes(cb.value)) cb.checked = true; });
-                 const container = document.getElementById('report-sections-container'); container.innerHTML = '';
-                 r.sections.forEach(sec => { 
-                     const block = addReportSection(false); 
-                     block.querySelector('.rs-name').value = sec.sectionName; 
-                     block.querySelector('.rs-text').value = sec.text || ''; 
-                     if (sec.parameters) sec.parameters.forEach(p => addParamLine(block.querySelector('button'), p, false)); 
-                 });
+                  const container = document.getElementById('report-sections-container'); container.innerHTML = '';
+                  r.sections.forEach(sec => { 
+                      const block = addReportSection(sec.templateId ? true : false); 
+                      if (sec.templateId) block.dataset.templateId = sec.templateId;
+                      block.querySelector('.rs-name').value = sec.sectionName || ''; 
+                      block.querySelector('.rs-text').value = sec.text || ''; 
+                      const methEl = block.querySelector('.rs-methodology'), sampEl = block.querySelector('.rs-sample-type'), kitEl = block.querySelector('.rs-kit-used');
+                      if (sec.methodology) methEl.value = sec.methodology;
+                      if (sec.sampleType) sampEl.value = sec.sampleType;
+                      if (sec.kitUsed) kitEl.value = sec.kitUsed;
+                      if (sec.templateId) {
+                          methEl.readOnly = true; methEl.classList.add('locked-field');
+                          sampEl.readOnly = true; sampEl.classList.add('locked-field');
+                          kitEl.readOnly = true; kitEl.classList.add('locked-field');
+                      }
+                      if (sec.parameters) sec.parameters.forEach(p => addParamLine(block.querySelector('button'), p, sec.templateId ? true : false)); 
+                  });
                  toggleActionState(r.status);
              } catch(err) { }
         }
 
         async function saveReport(isDraft = false) {
-            const patientId = document.getElementById('sp-id').value; if (!patientId) return UI.showToast('Please select a patient.', 'error');
+            const patientSearch = document.getElementById('patient-search-input');
+            const doctorToggle = document.getElementById('doctor-dropdown-toggle');
+            const referralToggle = document.getElementById('referral-dropdown-toggle');
+            
+            [patientSearch, doctorToggle, referralToggle].forEach(el => {
+                if (el) el.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
+            });
+
+            const patientId = document.getElementById('sp-id').value; 
+            if (!patientId) {
+                if (patientSearch) {
+                    patientSearch.classList.add('border-red-500', 'ring-2', 'ring-red-500/20');
+                    patientSearch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    patientSearch.focus();
+                }
+                return UI.showToast('Please select a patient.', 'error');
+            }
             
             const performedByLabTechIdRaw = document.getElementById('report-performed-by').value;
             const performedByLabTechId = performedByLabTechIdRaw === '' ? null : performedByLabTechIdRaw;
@@ -844,12 +1048,35 @@
 
             // Strict validation ONLY for Final Save
             if (!isDraft) {
-                if (!performedByLabTechId || !performedBy) return UI.showToast('Performer selection is mandatory for signing.', 'error');
-                if (!referredBy) return UI.showToast('Please select a referring source.', 'error');
+                let hasError = false;
+                let firstErrorEl = null;
+                if (!performedByLabTechId || !performedBy) {
+                    if (doctorToggle) {
+                        doctorToggle.classList.add('border-red-500', 'ring-2', 'ring-red-500/20');
+                        if (!firstErrorEl) firstErrorEl = doctorToggle;
+                    }
+                    UI.showToast('Performer selection is mandatory for signing.', 'error');
+                    hasError = true;
+                }
+                if (!referredBy) {
+                    if (referralToggle) {
+                        referralToggle.classList.add('border-red-500', 'ring-2', 'ring-red-500/20');
+                        if (!firstErrorEl) firstErrorEl = referralToggle;
+                    }
+                    UI.showToast('Please select a referring source.', 'error');
+                    hasError = true;
+                }
+                if (hasError) {
+                    if (firstErrorEl) {
+                        firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstErrorEl.focus();
+                    }
+                    return;
+                }
             }
 
             const sections = []; document.querySelectorAll('.rep-section').forEach(secBlock => {
-                  const sName = secBlock.querySelector('.rs-name').value; if(!sName && !isDraft) return; 
+                  const sName = secBlock.querySelector('.rs-name').value;
                   const sText = secBlock.querySelector('.rs-text').value, parameters = [];
                   secBlock.querySelectorAll('.param-line').forEach(pl => { 
                       if (!pl.dataset.paramData) return; 
@@ -861,13 +1088,31 @@
                       // For MIN_MAX, update normalRange if manually edited (though most are template-locked)
                       const ruleType = p.ruleType || (p.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX');
                       if (ruleType === 'MIN_MAX') { 
-                          const mMatch = pl.querySelector('.p-normal-input').value.match(/([\d.]+)\s*[-–—]\s*([\d.]+)/); 
-                          if (mMatch) p.normalRange = { min: parseFloat(mMatch[1]), max: parseFloat(mMatch[2]) }; 
+                          const val = pl.querySelector('.p-normal-input').value.trim();
+                          const mMatch = val.match(/(-?[\d.]+)\s*[-–—]\s*(-?[\d.]+)/); 
+                          if (mMatch) {
+                              p.normalRange = { min: mMatch[1], max: mMatch[2] }; 
+                          } else if (val.startsWith('≥')) {
+                              p.normalRange = { min: val.replace('≥', '').trim(), max: null };
+                          } else if (val.startsWith('≤')) {
+                              p.normalRange = { min: null, max: val.replace('≤', '').trim() };
+                          }
                       } 
                       parameters.push(p); 
                   });
-                  if (sName || parameters.length > 0 || sText) {
-                      sections.push({ sectionName: sName || 'Untitled Section', text: sText, parameters: parameters.length > 0 ? parameters : undefined });
+                  const sMeth = secBlock.querySelector('.rs-methodology').value.trim();
+                  const sSamp = secBlock.querySelector('.rs-sample-type').value.trim();
+                  const sKit = secBlock.querySelector('.rs-kit-used').value.trim();
+                  if (sName || parameters.length > 0 || sText || sMeth || sSamp || sKit) {
+                      sections.push({ 
+                          sectionName: sName || '', 
+                          text: sText, 
+                          ...(sMeth && { methodology: sMeth }),
+                          ...(sSamp && { sampleType: sSamp }),
+                          ...(sKit && { kitUsed: sKit }),
+                          parameters: parameters.length > 0 ? parameters : undefined,
+                          templateId: secBlock.dataset.templateId || undefined
+                      });
                   }
             });
 
@@ -935,28 +1180,76 @@
         function downloadPdf() { const id = document.getElementById('report-id').value, token = localStorage.getItem('lis_token'); fetch(`${BASE_URL}/reports/${id}/pdf`, { headers: { 'Authorization': `Bearer ${token}` } }).then(res => res.blob()).then(blob => { const url = window.URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = `Diagnostic_Report_${id.slice(-6)}.pdf`; a.click(); }); }
         async function sendReport(method) { const id = document.getElementById('report-id').value; try { await api.request(`/reports/${id}/send`, 'POST', { method }); UI.showToast('Notification Sent Successfully', 'success'); } catch (err) { UI.showToast(err.message, 'error'); } }
         
-        /** Restores a draft if one exists for the current patient context */
-        function restoreDraftIfExists() {
-            const key = getActiveDraftKey();
-            const draft = DraftManager.load(key);
-            if (draft && draft.sections && draft.sections.length > 0) {
+        function restorePerformedBy(performedById) {
+            if (!performedById || !signaturesData) return;
+            const sig = signaturesData.find(s => s._id === performedById || s.userId === performedById || s.doctorId === performedById);
+            if (sig) {
+                const name = sig.fullName || sig.doctorName || 'Unknown';
+                const sId = sig._id || sig.userId || sig.doctorId;
+                selectDoctor(sId, name, sig.signatureUrl);
+            }
+        }
+
+        /** Restores draft data into UI */
+        async function applyDraftData(draft, restorePatient = false) {
+            if (!draft) {
+                addReportSection(false);
+                return;
+            }
+            
+            if (restorePatient && draft.patient) {
+                await selectPatientById(draft.patient._id);
+            }
+            
+            if (draft.performedBy) {
+                restorePerformedBy(draft.performedBy);
+            }
+            
+            if (draft.referredBy) {
+                selectReferral(draft.referredBy);
+            }
+            
+            if (draft.templateIds) {
+                draft.templateIds.forEach(id => {
+                    const cb = document.getElementById(`tpl-${id}`);
+                    if (cb) cb.checked = true;
+                });
+            }
+            
+            if (draft.sections && draft.sections.length > 0) {
                 document.getElementById('report-sections-container').innerHTML = '';
                 draft.sections.forEach(sec => {
-                    const block = addReportSection(false);
+                    const block = addReportSection(sec.templateId ? true : false);
+                    if (sec.templateId) block.dataset.templateId = sec.templateId;
                     block.querySelector('.rs-name').value = sec.sectionName || '';
                     block.querySelector('.rs-text').value = sec.text || '';
-                    if (sec.parameters) sec.parameters.forEach(p => addParamLine(block.querySelector('button'), p, false));
+                    
+                    const methEl = block.querySelector('.rs-methodology'), sampEl = block.querySelector('.rs-sample-type'), kitEl = block.querySelector('.rs-kit-used');
+                    if (methEl && sec.methodology) methEl.value = sec.methodology;
+                    if (sampEl && sec.sampleType) sampEl.value = sec.sampleType;
+                    if (kitEl && sec.kitUsed) kitEl.value = sec.kitUsed;
+                    if (sec.templateId) {
+                        if (methEl) { methEl.readOnly = true; methEl.classList.add('locked-field'); }
+                        if (sampEl) { sampEl.readOnly = true; sampEl.classList.add('locked-field'); }
+                        if (kitEl) { kitEl.readOnly = true; kitEl.classList.add('locked-field'); }
+                    }
+                    
+                    if (sec.parameters) sec.parameters.forEach(p => addParamLine(block.querySelector('button'), p, sec.templateId ? true : false));
                 });
-                if (draft.referredBy) selectReferral(draft.referredBy);
             } else {
                 addReportSection(false);
             }
         }
 
         const saveReportDraft = DraftManager.debounce(() => {
+            if (isRestoringDraft) return;
             if (document.getElementById('report-id').value) return;
             const sections = []; document.querySelectorAll('.rep-section').forEach(secBlock => {
-                  const sName = secBlock.querySelector('.rs-name').value, sText = secBlock.querySelector('.rs-text').value, parameters = [];
+                  const sName = secBlock.querySelector('.rs-name').value, sText = secBlock.querySelector('.rs-text').value;
+                  const sMeth = secBlock.querySelector('.rs-methodology').value.trim();
+                  const sSamp = secBlock.querySelector('.rs-sample-type').value.trim();
+                  const sKit = secBlock.querySelector('.rs-kit-used').value.trim();
+                  const parameters = [];
                   secBlock.querySelectorAll('.param-line').forEach(pl => { 
                       if (!pl.dataset.paramData) return; 
                       const p = JSON.parse(pl.dataset.paramData); 
@@ -965,15 +1258,37 @@
                       p.units = pl.querySelector('.p-units-input').value; 
                       const ruleType = p.ruleType || (p.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX');
                       if (ruleType === 'MIN_MAX') { 
-                          const mMatch = pl.querySelector('.p-normal-input').value.match(/([\d.]+)\s*[-–—]\s*([\d.]+)/); 
-                          if (mMatch) p.normalRange = { min: parseFloat(mMatch[1]), max: parseFloat(mMatch[2]) }; 
+                          const val = pl.querySelector('.p-normal-input').value.trim();
+                          const mMatch = val.match(/(-?[\d.]+)\s*[-–—]\s*(-?[\d.]+)/); 
+                          if (mMatch) {
+                              p.normalRange = { min: mMatch[1], max: mMatch[2] }; 
+                          } else if (val.startsWith('≥')) {
+                              p.normalRange = { min: val.replace('≥', '').trim(), max: null };
+                          } else if (val.startsWith('≤')) {
+                              p.normalRange = { min: null, max: val.replace('≤', '').trim() };
+                          }
                       }
                       parameters.push(p); 
                   });
-                  sections.push({ sectionName: sName, text: sText, parameters });
+                  sections.push({ 
+                      sectionName: sName, 
+                      text: sText, 
+                      ...(sMeth && { methodology: sMeth }),
+                      ...(sSamp && { sampleType: sSamp }),
+                      ...(sKit && { kitUsed: sKit }),
+                      parameters,
+                      templateId: secBlock.dataset.templateId || undefined
+                  });
             });
             const draft = { patient: currentPatient, performedBy: document.getElementById('report-performed-by').value, referredBy: document.getElementById('report-referred-by').value, templateIds: Array.from(document.querySelectorAll('#templates-checkbox-container input:checked')).map(cb => cb.value), sections };
-            if (draft.patient || draft.performedBy || draft.sections.length > 0) DraftManager.save(getActiveDraftKey(), draft);
+            const hasFilledSection = sections.some(s => s.sectionName || s.text || s.methodology || s.sampleType || s.kitUsed || (s.parameters && s.parameters.length > 0));
+            const hasDraftData = draft.patient || draft.performedBy || draft.referredBy || hasFilledSection;
+            
+            if (hasDraftData) {
+                DraftManager.save(getActiveDraftKey(), draft);
+            } else {
+                DraftManager.clear(getActiveDraftKey());
+            }
         }, 1000);
 
         function toggleTemplateHeight() {

@@ -200,6 +200,15 @@ exports.updateReport = async (req, res) => {
       return res.status(404).json({ success: false, error: 'Report not found' });
     }
 
+    const oldStatus = report.status;
+
+    // Enforce amendment lock
+    if (['saved', 'sent', 'FINAL'].includes(oldStatus)) {
+      if (!req.body.amendmentReason) {
+        return res.status(400).json({ success: false, error: 'Cannot modify a finalized report directly. An amendment reason is required.' });
+      }
+    }
+
     // Whitelist fields — prevent doctorId/auditLogs manipulation
     const sanitizedBody = pickFields(req.body, REPORT_UPDATE_FIELDS);
 
@@ -209,7 +218,13 @@ exports.updateReport = async (req, res) => {
     // Determine final status
     const requestedStatus = req.body.status;
     
-    if (requestedStatus === 'draft') {
+    if (['saved', 'sent', 'FINAL'].includes(oldStatus) && req.body.amendmentReason) {
+      sanitizedBody.status = 'AMENDED';
+      sanitizedBody.amendmentHistory = [
+        ...(report.amendmentHistory || []),
+        { date: new Date(), userId: req.user.id, reason: req.body.amendmentReason, previousStatus: oldStatus }
+      ];
+    } else if (requestedStatus === 'draft' || requestedStatus === 'DRAFT') {
       sanitizedBody.status = 'draft';
     } else if (sanitizedBody.performedByLabTechId) {
       const signature = await Signature.findOne({ 
@@ -233,7 +248,7 @@ exports.updateReport = async (req, res) => {
     }
 
     // Validation for non-drafts
-    if (sanitizedBody.status === 'saved') {
+    if (sanitizedBody.status === 'saved' || sanitizedBody.status === 'FINAL') {
       if (!sanitizedBody.performedBy && !report.performedBy) {
         return res.status(400).json({ success: false, error: 'Performing technician/doctor name is required for finalized reports' });
       }
@@ -246,7 +261,6 @@ exports.updateReport = async (req, res) => {
     // Append audit log (don't allow client to overwrite)
     sanitizedBody.auditLogs = [...report.auditLogs, { action: 'Modified', userId: req.user.id }];
 
-    const oldStatus = report.status;
     report = await ReportInstance.findByIdAndUpdate(req.params.id, sanitizedBody, {
       returnDocument: 'after',
       runValidators: true
@@ -274,12 +288,19 @@ exports.updateReport = async (req, res) => {
       }
     }
 
-    // Notify if the report was finalized (signed) during this update
+    // Notify if the report was finalized (signed) or amended during this update
     if (oldStatus === 'draft' && report.status === 'saved') {
       await sendNotification(req.user.id, adminId, {
         type: 'NEW_REPORT',
         title: 'Report Finalized & Signed',
-        message: `Clinical findings for the report have been finalized by ${req.user.name}.`,
+        message: `Clinical findings for a report have been finalized by ${req.user.name}.`,
+        referenceId: report._id
+      });
+    } else if (newStatus === 'AMENDED' || (oldStatus === 'saved' && req.body.status !== 'draft')) {
+      await sendNotification(req.user.id, adminId, {
+        type: 'NEW_REPORT',
+        title: 'Report Modified',
+        message: `A report was modified or amended by ${req.user.name}.`,
         referenceId: report._id
       });
     }

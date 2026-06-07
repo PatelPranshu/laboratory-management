@@ -3,12 +3,13 @@ const https = require('https');
 const http = require('http');
 const { evaluatePatientResult } = require('../utils/resultEvaluator');
 
+const path = require('path');
 const fonts = {
   Roboto: {
-    normal: 'Helvetica',
-    bold: 'Helvetica-Bold',
-    italics: 'Helvetica-Oblique',
-    bolditalics: 'Helvetica-BoldOblique'
+    normal: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto/Roboto-Regular.ttf'),
+    bold: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto/Roboto-Medium.ttf'),
+    italics: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto/Roboto-Italic.ttf'),
+    bolditalics: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto/Roboto-MediumItalic.ttf')
   }
 };
 
@@ -22,9 +23,21 @@ pdfmake.setUrlAccessPolicy(function () { return false; });
  */
 function downloadImageAsBase64(url) {
   return new Promise((resolve) => {
+    try {
+      const parsedUrl = new URL(url);
+      // Strictly whitelist Cloudinary to prevent SSRF vulnerabilities
+      if (parsedUrl.hostname !== 'res.cloudinary.com') {
+        console.warn(`[SECURITY] Blocked SSRF attempt: URL domain not whitelisted: ${parsedUrl.hostname}`);
+        return resolve(null);
+      }
+    } catch (err) {
+      console.warn(`Invalid image URL format: ${url}`);
+      return resolve(null);
+    }
+
     const protocol = url.startsWith('https') ? https : http;
     protocol.get(url, (response) => {
-      // Follow redirects
+      // Follow redirects, but the recursive call will automatically validate the new location against the whitelist
       if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
         return downloadImageAsBase64(response.headers.location).then(resolve);
       }
@@ -216,7 +229,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
       const tid = sec.templateId ? sec.templateId.toString() : 'unassigned';
       if (!remarksByTemplate[tid]) remarksByTemplate[tid] = [];
       remarksByTemplate[tid].push({
-        title: (sec.sectionName || `Section ${sIdx + 1}`).toUpperCase(),
+        title: sec.sectionName ? sec.sectionName.trim().toUpperCase() : '',
         text: sec.text
       });
     }
@@ -265,21 +278,6 @@ exports.generateReportPdf = async (report, patient, settings) => {
 
       // Add the master header ONLY on the very first section of this test type
       if (isFirstSection) {
-        // NEW: Test Type Title Row
-        sectionTableBody.push([
-          { 
-            text: currentTemplateName, 
-            colSpan: 4, 
-            alignment: 'center', 
-            bold: true, 
-            fillColor: '#e2e8f0', // Slightly darker to distinguish from column headers
-            color: '#0f172a',
-            margin: [0, 4, 0, 4],
-            fontSize: fontSize
-          },
-          {}, {}, {}
-        ]);
-        
         sectionTableBody.push([
           { text: 'TEST DESCRIPTION', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
           { text: 'RESULT', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
@@ -289,10 +287,30 @@ exports.generateReportPdf = async (report, patient, settings) => {
       }
 
       // Add Section Title row
-      if (sec.sectionName) {
+      if (sec.sectionName || sec.methodology || sec.sampleType || sec.kitUsed) {
+        const sectionTextChunks = [];
+        if (sec.sectionName) {
+          sectionTextChunks.push({ text: sec.sectionName.toUpperCase() });
+        }
+        
+        const advSetup = [];
+        if (sec.methodology) advSetup.push(`Methodology: ${sec.methodology}`);
+        if (sec.sampleType) advSetup.push(`Sample: ${sec.sampleType}`);
+        if (sec.kitUsed) advSetup.push(`Kit: ${sec.kitUsed}`);
+        
+        if (advSetup.length > 0) {
+          sectionTextChunks.push({
+            text: (sec.sectionName ? '\n  ' : '  ') + advSetup.join(', '),
+            fontSize: Math.max(6, fontSize - 4),
+            italics: true,
+            color: '#64748b',
+            bold: false
+          });
+        }
+
         sectionTableBody.push([
           { 
-            text: sec.sectionName.toUpperCase(), 
+            text: sectionTextChunks, 
             colSpan: 4, 
             bold: true, 
             fillColor: '#f8fafc',
@@ -326,8 +344,25 @@ exports.generateReportPdf = async (report, patient, settings) => {
             resultCell.color = '#dc2626';
           }
 
+          const paramTextChunks = [];
+          paramTextChunks.push({ text: p.name || '' });
+          
+          const paramAdv = [];
+          if (p.methodology) paramAdv.push(`Methodology: ${p.methodology}`);
+          if (p.sampleType) paramAdv.push(`Sample: ${p.sampleType}`);
+          if (p.kitUsed || p.kit) paramAdv.push(`Kit: ${p.kitUsed || p.kit}`);
+          
+          if (paramAdv.length > 0) {
+            paramTextChunks.push({
+              text: '\n  ' + paramAdv.join(', '),
+              fontSize: Math.max(6, fontSize - 4),
+              italics: true,
+              color: '#64748b'
+            });
+          }
+
           sectionTableBody.push([
-            { text: p.name || '', margin: [0, 0, 0, 0] },
+            { text: paramTextChunks, margin: [0, 0, 0, 0] },
             resultCell,
             { text: unitsStr, margin: [0, 0, 0, 0] },
             { text: normalRangeStr, fontSize: fontSize - 3, margin: [0, 0, 0, 0] }
@@ -369,15 +404,14 @@ exports.generateReportPdf = async (report, patient, settings) => {
           {
             fontSize: fontSize - 1,
             table: {
-              headerRows: isFirstSection ? 2 : 0, // UPDATED: Now pinning 2 rows (Title + Columns)
+              headerRows: isFirstSection ? 1 : 0, 
               widths: ['38%', '15%', '15%', '32%'], 
               body: sectionTableBody
             },
             layout: {
               hLineWidth: function (i, node) {
                 if (isFirstSection && i === 0) return 1.5; // Top line of template
-                if (isFirstSection && i === 1) return 1.5; // Line under Test Type title
-                if (isFirstSection && i === 2) return 1.5; // Line under column headers
+                if (isFirstSection && i === 1) return 1.5; // Line under column headers
                 if (!isFirstSection && i === 0) return 0;  // Connects seamlessly to previous section
                 if (isLastSection && i === node.table.body.length) return 1.5; // Bottom line of template
                 return 0.5; // Internal dividing lines
@@ -386,7 +420,6 @@ exports.generateReportPdf = async (report, patient, settings) => {
               hLineColor: function (i, node) {
                 if (isFirstSection && i === 0) return '#475569';
                 if (isFirstSection && i === 1) return '#475569';
-                if (isFirstSection && i === 2) return '#475569';
                 if (!isFirstSection && i === 0) return '#e2e8f0';
                 if (isLastSection && i === node.table.body.length) return '#475569';
                 return '#e2e8f0';
@@ -413,11 +446,14 @@ exports.generateReportPdf = async (report, patient, settings) => {
       remarksContent.push({ text: 'REMARKS / OBSERVATIONS', style: 'subheader', margin: [0, 8, 0, 4], fontSize: fontSize - 2, color: '#64748b' });
       
       blockRemarks.forEach(rem => {
+        const textParts = [];
+        if (rem.title) {
+          textParts.push({ text: `${rem.title}: `, bold: true, fontSize: fontSize - 1 });
+        }
+        textParts.push({ text: rem.text, fontSize: fontSize - 1 });
+
         remarksContent.push({
-          text: [
-            { text: `${rem.title}: `, bold: true, fontSize: fontSize - 1 },
-            { text: rem.text, fontSize: fontSize - 1 }
-          ],
+          text: textParts,
           margin: [0, 2, 0, 4]
         });
       });

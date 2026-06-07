@@ -24,9 +24,13 @@ function parseNumericResult(resultValue) {
  */
 function isOutsideBounds(numericValue, min, max) {
   if (numericValue == null) return null;
-  if (min == null && max == null) return null;
-  if (min != null && numericValue < min) return true;
-  if (max != null && numericValue > max) return true;
+  if ((min == null || min === '') && (max == null || max === '')) return null;
+  
+  const minNum = (min !== null && min !== '') ? parseFloat(min) : null;
+  const maxNum = (max !== null && max !== '') ? parseFloat(max) : null;
+  
+  if (minNum !== null && !isNaN(minNum) && numericValue < minNum) return true;
+  if (maxNum !== null && !isNaN(maxNum) && numericValue > maxNum) return true;
   return false;
 }
 
@@ -74,6 +78,22 @@ function matchesRule(numericValue, rule) {
 }
 
 /**
+ * Evaluates a single threshold comparison rule against a text value.
+ * @returns {boolean} true if the rule matches
+ */
+function matchesTextRule(textValue, rule) {
+  if (textValue == null || rule.value == null) return false;
+  const t = String(textValue).toLowerCase().trim();
+  const v = String(rule.value).toLowerCase().trim();
+  switch (rule.operator) {
+    case 'equals':
+    case '==': return t === v;
+    case 'contains': return t.includes(v);
+    default: return false;
+  }
+}
+
+/**
  * Formats a single comparison rule for PDF display.
  */
 function formatRuleDisplay(rule) {
@@ -110,10 +130,54 @@ function evaluatePatientResult(resultValue, parameterLogic, patientGender) {
 
   if (!parameterLogic) return result;
 
-  const numericValue = parseNumericResult(resultValue);
-  const ruleType = resolveRuleType(parameterLogic);
+  const dataType = parameterLogic.dataType || 'NUMERIC';
   const units = parameterLogic.units || '';
   const gender = (patientGender || '').toLowerCase();
+  const numericValue = parseNumericResult(resultValue);
+  const textValue = String(resultValue || '').trim();
+
+  if (dataType === 'TEXT' || dataType === 'QUALITATIVE') {
+      const ranges = parameterLogic.referenceRanges || [];
+      let expectedNormal = null;
+      for (const r of ranges) {
+        if (!r.gender || r.gender === 'ANY' || r.gender.toLowerCase() === gender) {
+          if (r.textNormal) expectedNormal = r.textNormal;
+          if (expectedNormal) break;
+        }
+      }
+
+      const comparisons = parameterLogic.comparisons || [];
+      if (comparisons.length > 0) {
+        result.rangeDisplay = comparisons.map(r => `${r.operator} ${r.value}: ${r.classification || ''}`).join('\n');
+        for (const rule of comparisons) {
+          if (matchesTextRule(textValue, rule)) {
+            result.classification = rule.classification || null;
+            const action = (rule.action || 'NORMAL').toUpperCase();
+            if (action === 'HIGHLIGHT') {
+              result.isAbnormal = true;
+              result.highlight = true;
+            } else if (action === 'CRITICAL') {
+              result.isAbnormal = true;
+              result.highlight = true;
+              result.critical = true;
+            }
+            break;
+          }
+        }
+      } else if (expectedNormal) {
+        result.rangeDisplay = `Expected: ${expectedNormal}`;
+        if (textValue && textValue.toLowerCase() !== expectedNormal.toLowerCase()) {
+          result.isAbnormal = true;
+          result.highlight = true;
+          result.classification = 'Abnormal';
+        } else if (textValue) {
+          result.classification = 'Normal';
+        }
+      }
+      return result;
+  }
+
+  const ruleType = resolveRuleType(parameterLogic);
 
   switch (ruleType) {
     case 'MIN_MAX': {

@@ -5,6 +5,7 @@ const PrintSettings = require('../models/PrintSettings');
 const { isValidEmail, isStrongPassword } = require('../middlewares/validate');
 const jwt = require('jsonwebtoken');
 const { sendInvitationEmail } = require('../services/emailService');
+const { sendNotification } = require('../utils/notifier');
 
 // Generate JWT Helper
 const generateToken = (id) => {
@@ -154,6 +155,14 @@ exports.completeRegistration = async (req, res) => {
     const user = await User.create(userFields);
     await invitation.deleteOne(); // Remove token once used
 
+    // Notify lab team about new staff
+    await sendNotification(user._id, admin._id, {
+      type: 'NEW_STAFF',
+      title: 'New Staff Member',
+      message: `${user.name} has joined the lab as a ${user.role}.`,
+      referenceId: user._id
+    });
+
     res.status(201).json({
       success: true,
       token: generateToken(user._id),
@@ -206,6 +215,14 @@ exports.createTech = async (req, res) => {
       parentAdminId: admin._id,
       accountStatus: 'Active',
       mustChangePassword: true // Emphasize this directly!
+    });
+
+    // Notify lab team about new tech
+    await sendNotification(req.user.id, admin._id, {
+      type: 'NEW_STAFF',
+      title: 'New Technician Added',
+      message: `${user.name} was added as a Lab Technician.`,
+      referenceId: user._id
     });
 
     res.status(201).json({

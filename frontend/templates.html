@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,71 +26,101 @@
         }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
-        .ui-card { 
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .ui-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 0.75rem; 
+            border-radius: 0.75rem;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
 
-        input:focus, textarea:focus, select:focus {
+        input:focus,
+        textarea:focus,
+        select:focus {
             box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
         }
 
         /* Prevent number input arrows in modern browsers for cleaner UI */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
     </style>
 </head>
+
 <body class="text-slate-800 antialiased selection:bg-brand-500 selection:text-white h-full overflow-hidden">
 
     <div id="toast-container" class="fixed bottom-6 right-6 z-[200] flex flex-col gap-3"></div>
 
     <div class="flex h-screen overflow-hidden">
-        
+
         <main class="flex-1 flex flex-col relative overflow-hidden h-full">
-            
-            <header class="bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between z-50 shrink-0">
+
+            <header
+                class="bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between z-50 shrink-0">
                 <div class="flex items-center gap-4">
                     <div>
                         <nav class="hidden sm:flex text-xs font-medium text-slate-500 mb-1">
                             <ol class="flex items-center space-x-2">
-                                <li class="hover:text-brand-600 transition-colors"><a href="dashboard.html">Dashboard</a></li>
+                                <li class="hover:text-brand-600 transition-colors"><a
+                                        href="dashboard.html">Dashboard</a></li>
                                 <li><i class="fas fa-chevron-right text-[10px] opacity-50"></i></li>
                                 <li class="text-slate-700 font-semibold">Report Templates</li>
                             </ol>
                         </nav>
-                        <h1 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight" id="page-title">Manage Templates</h1>
+                        <h1 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight" id="page-title">Manage
+                            Templates</h1>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2 sm:gap-4 ml-auto" id="header-actions">
-                    <button onclick="createNewTemplate()" class="p-2 sm:px-5 sm:py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all shadow-sm flex items-center" title="New Template">
-                        <i class="fas fa-plus text-brand-600 sm:mr-2"></i> <span class="hidden sm:inline">New Template</span>
+                    <button onclick="createNewTemplate()"
+                        class="p-2 sm:px-5 sm:py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all shadow-sm flex items-center"
+                        title="New Template">
+                        <i class="fas fa-plus text-brand-600 sm:mr-2"></i> <span class="hidden sm:inline">New
+                            Template</span>
                     </button>
                     <div class="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
-                    <button type="button" class="text-slate-400 hover:text-slate-700 transition-colors p-1" title="Close" onclick="window.location.href='dashboard.html'"><i class="fas fa-times text-xl"></i></button>
+                    <button type="button" class="text-slate-400 hover:text-slate-700 transition-colors p-1"
+                        title="Close" onclick="window.location.href='dashboard.html'"><i
+                            class="fas fa-times text-xl"></i></button>
                 </div>
             </header>
 
             <div class="flex-1 bg-slate-50/50 p-4 sm:p-6 overflow-hidden flex flex-col">
                 <div class="max-w-[1400px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
-                    
+
                     <div class="lg:col-span-4 xl:col-span-3 flex flex-col h-full min-h-0">
                         <div class="ui-card flex flex-col h-full overflow-hidden">
-                            <div class="px-5 py-4 border-b border-slate-100 bg-white rounded-t-xl flex justify-between items-center shrink-0">
-                                <h2 class="text-sm font-bold text-slate-800"><i class="fas fa-list-ul text-brand-500 mr-2"></i>Saved Inventory</h2>
-                                <button onclick="loadTemplates()" class="text-slate-400 hover:text-brand-600 transition-colors"><i class="fas fa-sync-alt text-xs"></i></button>
+                            <div
+                                class="px-5 py-4 border-b border-slate-100 bg-white rounded-t-xl flex justify-between items-center shrink-0">
+                                <h2 class="text-sm font-bold text-slate-800"><i
+                                        class="fas fa-list-ul text-brand-500 mr-2"></i>Saved Inventory</h2>
+                                <button onclick="loadTemplates()"
+                                    class="text-slate-400 hover:text-brand-600 transition-colors"><i
+                                        class="fas fa-sync-alt text-xs"></i></button>
                             </div>
-                            <ul id="templates-list" class="overflow-y-auto flex-1 custom-scrollbar divide-y divide-slate-50 bg-white">
+                            <ul id="templates-list"
+                                class="overflow-y-auto flex-1 custom-scrollbar divide-y divide-slate-50 bg-white">
                                 <li class="p-6 text-center text-slate-400 flex flex-col items-center justify-center">
                                     <i class="fas fa-circle-notch fa-spin text-2xl mb-2"></i>
                                     <span class="font-medium text-sm">Loading templates...</span>
@@ -100,30 +131,73 @@
 
                     <div class="lg:col-span-8 xl:col-span-9 flex flex-col h-full min-h-0">
                         <div class="ui-card flex flex-col h-full overflow-hidden relative">
-                            <div class="px-4 sm:px-6 py-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row justify-between sm:items-center gap-4 rounded-t-xl shrink-0 z-10 shadow-[0_4px_6px_-1px_rgb(0,0,0,0.02)]">
+                            <div
+                                class="px-4 sm:px-6 py-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row justify-between sm:items-center gap-4 rounded-t-xl shrink-0 z-10 shadow-[0_4px_6px_-1px_rgb(0,0,0,0.02)]">
                                 <div>
-                                    <h2 class="text-lg font-bold text-slate-800" id="editor-title">Create New Template</h2>
-                                    <p class="text-[11px] sm:text-sm text-slate-500 mt-0.5" id="editor-subtitle">Define sections and default parameters.</p>
+                                    <h2 class="text-lg font-bold text-slate-800" id="editor-title">Create New Template
+                                    </h2>
+                                    <p class="text-[11px] sm:text-sm text-slate-500 mt-0.5" id="editor-subtitle">Define
+                                        sections and default parameters.</p>
                                 </div>
-                                <button id="btn-save-template" onclick="saveTemplate()" class="w-full sm:w-auto justify-center px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-lg shadow-sm transition-all flex items-center">
+                                <button id="btn-save-template" onclick="saveTemplate()"
+                                    class="w-full sm:w-auto justify-center px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-lg shadow-sm transition-all flex items-center">
                                     <i class="fas fa-save mr-2"></i> Save Template
                                 </button>
                             </div>
-                            
-                            <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 p-4 sm:p-6 flex flex-col">
+
+                            <div
+                                class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 p-4 sm:p-6 flex flex-col">
                                 <input type="hidden" id="template-id">
-                                
-                                <div class="mb-6 shrink-0 bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                     <div class="absolute top-0 left-0 w-1 h-full bg-brand-500"></div>
-                                     <label class="block text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-2">Template Master Name <span class="text-red-500">*</span></label>
-                                     <input type="text" id="t-name" placeholder="e.g. Comprehensive Metabolic Panel" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 focus:bg-white transition-all text-base sm:text-xl font-bold text-slate-800 placeholder-slate-400 ml-2 max-w-[calc(100%-0.5rem)]">
+
+                                <div
+                                    class="mb-6 shrink-0 bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                    <div class="absolute top-0 left-0 w-1 h-full bg-brand-500"></div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 ml-2">
+                                        <div class="col-span-1 sm:col-span-2">
+                                            <label
+                                                class="block text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Template
+                                                Master Name <span class="text-red-500">*</span></label>
+                                            <input type="text" id="t-name"
+                                                placeholder="e.g. Comprehensive Metabolic Panel"
+                                                class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 focus:bg-white transition-all text-base sm:text-xl font-bold text-slate-800 placeholder-slate-400 max-w-[calc(100%-0.5rem)]">
+                                        </div>
+                                        <div>
+                                            <label
+                                                class="block text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Department</label>
+                                            <select id="t-department"
+                                                class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm font-semibold text-slate-700">
+                                                <option value="GENERAL">General</option>
+                                                <option value="BIOCHEMISTRY">Biochemistry</option>
+                                                <option value="MICROBIOLOGY">Microbiology</option>
+                                                <option value="PATHOLOGY">Pathology</option>
+                                                <option value="HEMATOLOGY">Hematology</option>
+                                                <option value="RADIOLOGY">Radiology</option>
+                                                <option value="IMMUNOLOGY">Immunology</option>
+                                                <option value="GENETICS">Genetics</option>
+                                                <option value="OTHER">Other</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label
+                                                class="block text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Report
+                                                Type</label>
+                                            <select id="t-report-type"
+                                                class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm font-semibold text-slate-700">
+                                                <option value="DISCRETE">Discrete</option>
+                                                <option value="NARRATIVE">Narrative</option>
+                                                <option value="HYBRID">Hybrid</option>
+                                                <option value="CULTURE">Culture</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="flex justify-between items-center mb-4 mt-2 shrink-0">
                                     <h3 class="text-sm font-bold text-slate-700 flex items-center">
                                         <i class="fas fa-layer-group text-slate-400 mr-2"></i> Document Sections
                                     </h3>
-                                    <button onclick="addSection()" class="text-xs font-bold uppercase tracking-wider text-brand-600 hover:text-brand-800 hover:bg-brand-50 transition-colors flex items-center bg-white border border-slate-200 px-3 py-2 rounded-lg shadow-sm">
+                                    <button onclick="addSection()"
+                                        class="text-xs font-bold uppercase tracking-wider text-brand-600 hover:text-brand-800 hover:bg-brand-50 transition-colors flex items-center bg-white border border-slate-200 px-3 py-2 rounded-lg shadow-sm">
                                         <i class="fas fa-plus mr-1.5"></i> Add Section
                                     </button>
                                 </div>
@@ -132,7 +206,8 @@
                                     <!-- Sections injected here -->
                                 </div>
                                 <div class="mt-4 pb-4">
-                                    <button onclick="addSection()" class="w-full text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-brand-600 hover:bg-white hover:border-brand-300 transition-colors flex items-center justify-center bg-transparent border-2 border-dashed border-slate-300 px-3 py-3 rounded-xl">
+                                    <button onclick="addSection()"
+                                        class="w-full text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-brand-600 hover:bg-white hover:border-brand-300 transition-colors flex items-center justify-center bg-transparent border-2 border-dashed border-slate-300 px-3 py-3 rounded-xl">
                                         <i class="fas fa-plus mr-2"></i> Add Another Section
                                     </button>
                                 </div>
@@ -145,20 +220,70 @@
     </div>
 
     <template id="section-template">
-        <div class="section-block bg-white border border-slate-200 rounded-lg shadow-sm relative transition-all group mb-4">
-            
+        <div
+            class="section-block bg-white border border-slate-200 rounded-lg shadow-sm relative transition-all group mb-4">
+
             <div class="bg-slate-50 px-5 py-3 border-b border-slate-200 flex justify-between items-center rounded-t-lg">
-                <input type="text" class="sec-name font-semibold text-slate-800 bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-lg px-3 py-1.5 w-full sm:w-3/4 text-base placeholder:text-slate-400 placeholder:font-normal outline-none transition-all shadow-sm" placeholder="Section Heading (e.g., Hematology Findings)">
-                <button onclick="this.closest('.section-block').remove()" class="text-slate-400 hover:text-red-500 transition-colors p-1" title="Delete Section"><i class="fas fa-trash text-sm"></i></button>
+                <input type="text"
+                    class="sec-name font-semibold text-slate-800 bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-lg px-3 py-1.5 w-full sm:w-3/4 text-base placeholder:text-slate-400 placeholder:font-normal outline-none transition-all shadow-sm"
+                    placeholder="Section Heading (e.g., Hematology Findings)">
+                <button onclick="this.closest('.section-block').remove()"
+                    class="text-slate-400 hover:text-red-500 transition-colors p-1" title="Delete Section"><i
+                        class="fas fa-trash text-sm"></i></button>
             </div>
-            
+
             <div class="p-0">
                 <div class="px-5 py-3 border-b border-slate-100 bg-white">
-                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-1">Default Interpretation/Notes</label>
-                     <textarea rows="1" class="sec-text w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-brand-500 text-sm text-slate-700 outline-none transition-all resize-none shadow-sm placeholder:text-slate-400" placeholder="Optional standard remarks/notes for this section..."></textarea>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-1">Default
+                        Interpretation/Notes</label>
+                    <textarea rows="1"
+                        class="sec-text w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-brand-500 text-sm text-slate-700 outline-none transition-all resize-y shadow-sm placeholder:text-slate-400"
+                        placeholder="Optional standard remarks/notes for this section..."
+                        oninput="adjustNotesHeight(this)"></textarea>
+
+                    <details class="w-full group mt-3">
+                        <summary
+                            class="text-[11px] font-bold text-slate-400 hover:text-brand-600 cursor-pointer list-none flex items-center gap-1.5 transition-colors select-none pl-1 w-max">
+                            <i
+                                class="fas fa-chevron-right text-[10px] transition-transform duration-200 group-open:rotate-90"></i>
+                            Advanced Setup (Methodology, Sample, Kit)
+                        </summary>
+                        <div
+                            class="w-full bg-slate-50/50 border border-slate-200 rounded-lg p-3 mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-inner relative overflow-hidden">
+                            <div class="absolute left-0 top-0 w-1 h-full bg-brand-200"></div>
+                            <div class="pl-2">
+                                <label
+                                    class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="fas fa-microscope text-brand-500 opacity-80"></i> Methodology
+                                </label>
+                                <input type="text"
+                                    class="sec-methodology w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400 shadow-sm transition-all"
+                                    placeholder="e.g. CMIA">
+                            </div>
+                            <div class="pl-2">
+                                <label
+                                    class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="fas fa-vial text-brand-500 opacity-80"></i> Sample Type
+                                </label>
+                                <input type="text"
+                                    class="sec-sample-type w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400 shadow-sm transition-all"
+                                    placeholder="e.g. Serum">
+                            </div>
+                            <div class="pl-2">
+                                <label
+                                    class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="fas fa-box-open text-brand-500 opacity-80"></i> Kit Used
+                                </label>
+                                <input type="text"
+                                    class="sec-kit-used w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400 shadow-sm transition-all"
+                                    placeholder="e.g. SD Bioline">
+                            </div>
+                        </div>
+                    </details>
                 </div>
 
-                <div class="hidden sm:grid grid-cols-12 gap-3 px-5 py-2 bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-widest shrink-0">
+                <div
+                    class="hidden sm:grid grid-cols-12 gap-3 px-5 py-2 bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-widest shrink-0">
                     <div class="col-span-4 pl-2">Parameter Name</div>
                     <div class="col-span-2">Unit</div>
                     <div class="col-span-5 ml-1">Reference Range</div>
@@ -168,9 +293,10 @@
                 <div class="sec-params flex flex-col">
                     <!-- Param rows injected here -->
                 </div>
-                
+
                 <div class="px-5 py-3 border-t border-slate-100 bg-white rounded-b-lg flex items-center">
-                    <button type="button" onclick="addParamRow(this)" class="text-sm font-medium text-brand-600 hover:text-brand-800 transition-colors flex items-center">
+                    <button type="button" onclick="addParamRow(this)"
+                        class="text-sm font-medium text-brand-600 hover:text-brand-800 transition-colors flex items-center">
                         <i class="fas fa-plus-circle mr-1.5"></i> Add Parameter Row
                     </button>
                 </div>
@@ -179,98 +305,230 @@
     </template>
 
     <template id="param-row-template">
-        <div class="param-row flex flex-col sm:grid sm:grid-cols-12 gap-3 px-4 sm:px-5 py-4 sm:py-2 items-start sm:items-center border-b border-slate-50 hover:bg-slate-50 transition-colors group">
-            <div class="w-full sm:col-span-4">
-                <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Parameter Name</label>
-                <input type="text" class="pr-name w-full bg-white border border-slate-200 focus:border-brand-400 rounded px-2 py-1.5 font-semibold text-slate-800 text-[13px] placeholder-slate-300 transition-all outline-none shadow-sm" placeholder="e.g. Hemoglobin">
-            </div>
-            <div class="w-full sm:col-span-2">
-                <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Unit</label>
-                <input type="text" class="pr-units w-full bg-white border border-slate-200 focus:border-brand-400 rounded px-2 py-1.5 text-xs text-slate-600 transition-all outline-none placeholder-slate-300 shadow-sm" placeholder="g/dL">
-            </div>
-            <div class="w-full sm:col-span-5 flex flex-col gap-2">
-                <div class="flex items-center gap-1.5 shrink-0">
-                    <select class="pr-rule-type bg-white border border-slate-200 rounded px-1.5 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-tight outline-none focus:border-brand-400 shadow-sm cursor-pointer" onchange="toggleRuleFields(this)">
-                        <option value="MIN_MAX">Min/Max</option>
-                        <option value="GENDER_SPECIFIC">M/F Range</option>
-                        <option value="THRESHOLD_COMPARISON">Threshold</option>
+        <div
+            class="param-row flex flex-col gap-3 px-4 sm:px-5 py-4 sm:py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors group">
+            <div class="flex flex-col sm:grid sm:grid-cols-12 gap-3 items-start sm:items-center w-full">
+                <div class="w-full sm:col-span-3">
+                    <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Parameter Name</label>
+                    <input type="text"
+                        class="pr-name w-full bg-white border border-slate-200 focus:border-brand-400 rounded px-2 py-1.5 font-semibold text-slate-800 text-[13px] placeholder-slate-300 transition-all outline-none shadow-sm"
+                        placeholder="e.g. Hemoglobin">
+                </div>
+                <div class="w-full sm:col-span-2">
+                    <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Data Type</label>
+                    <select
+                        class="pr-data-type w-full bg-white border border-slate-200 focus:border-brand-400 rounded px-2 py-1.5 text-xs text-slate-600 outline-none shadow-sm cursor-pointer"
+                        onchange="toggleDataTypeFields(this)">
+                        <option value="NUMERIC">Numeric</option>
+                        <option value="TEXT">Text / Qualitative</option>
+                        <option value="BOOLEAN">Boolean</option>
+                        <option value="DATETIME">Date & Time</option>
+                        <option value="ATTACHMENT">Attachment</option>
+                        <option value="MULTI_SELECT">Multi-Select</option>
+                        <option value="CULTURE_SENSITIVITY">Culture & Sensitivity</option>
                     </select>
                 </div>
-                
-                <!-- MIN_MAX: Standard range -->
-                <div class="rule-min-max flex flex-1 items-center gap-1.5">
-                    <input type="number" step="any" class="pr-min w-14 sm:w-full max-w-[70px] px-2 py-1 bg-white border border-slate-200 rounded text-xs font-medium text-slate-700 outline-none focus:border-brand-400 shadow-sm placeholder-slate-300 text-center" placeholder="Min">
-                    <span class="text-slate-400 text-xs">-</span>
-                    <input type="number" step="any" class="pr-max w-14 sm:w-full max-w-[70px] px-2 py-1 bg-white border border-slate-200 rounded text-xs font-medium text-slate-700 outline-none focus:border-brand-400 shadow-sm placeholder-slate-300 text-center" placeholder="Max">
+                <div class="w-full sm:col-span-1 pr-units-container">
+                    <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Unit</label>
+                    <input type="text"
+                        class="pr-units w-full bg-white border border-slate-200 focus:border-brand-400 rounded px-2 py-1.5 text-[11px] text-slate-600 transition-all outline-none placeholder-slate-300 shadow-sm"
+                        placeholder="g/dL">
                 </div>
+                <div class="w-full sm:col-span-5 flex flex-col gap-2">
+                    <!-- NUMERIC CONFIG -->
+                    <div class="pr-numeric-config flex flex-col gap-2">
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <select
+                                class="pr-rule-type bg-white border border-slate-200 rounded px-1.5 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-tight outline-none focus:border-brand-400 shadow-sm cursor-pointer"
+                                onchange="toggleRuleFields(this)">
+                                <option value="MIN_MAX">Min/Max</option>
+                                <option value="GENDER_SPECIFIC">M/F Range</option>
+                                <option value="THRESHOLD_COMPARISON">Threshold</option>
+                            </select>
+                        </div>
 
-                <!-- GENDER_SPECIFIC: Male/Female ranges -->
-                <div class="rule-gender hidden flex-col gap-1.5">
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-[10px] font-extrabold text-blue-500 w-3">M</span>
-                        <input type="number" step="any" class="pr-male-min w-12 sm:w-full max-w-[60px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-blue-400 shadow-sm placeholder-slate-300 text-center" placeholder="Min">
-                        <span class="text-slate-400 text-[10px]">-</span>
-                        <input type="number" step="any" class="pr-male-max w-12 sm:w-full max-w-[60px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-blue-400 shadow-sm placeholder-slate-300 text-center" placeholder="Max">
+                        <div class="rule-min-max flex flex-1 items-center gap-1.5">
+                            <input type="number" step="any"
+                                class="pr-min w-14 sm:w-full max-w-[70px] px-2 py-1 bg-white border border-slate-200 rounded text-xs font-medium text-slate-700 outline-none focus:border-brand-400 shadow-sm placeholder-slate-300 text-center"
+                                placeholder="Min">
+                            <span class="text-slate-400 text-xs">-</span>
+                            <input type="number" step="any"
+                                class="pr-max w-14 sm:w-full max-w-[70px] px-2 py-1 bg-white border border-slate-200 rounded text-xs font-medium text-slate-700 outline-none focus:border-brand-400 shadow-sm placeholder-slate-300 text-center"
+                                placeholder="Max">
+                        </div>
+
+                        <div class="rule-gender hidden flex-col gap-1.5">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[10px] font-extrabold text-blue-500 w-3">M</span>
+                                <input type="number" step="any"
+                                    class="pr-male-min w-12 sm:w-full max-w-[60px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-blue-400 shadow-sm placeholder-slate-300 text-center"
+                                    placeholder="Min">
+                                <span class="text-slate-400 text-[10px]">-</span>
+                                <input type="number" step="any"
+                                    class="pr-male-max w-12 sm:w-full max-w-[60px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-blue-400 shadow-sm placeholder-slate-300 text-center"
+                                    placeholder="Max">
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[10px] font-extrabold text-pink-500 w-3">F</span>
+                                <input type="number" step="any"
+                                    class="pr-female-min w-12 sm:w-full max-w-[60px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-pink-400 shadow-sm placeholder-slate-300 text-center"
+                                    placeholder="Min">
+                                <span class="text-slate-400 text-[10px]">-</span>
+                                <input type="number" step="any"
+                                    class="pr-female-max w-12 sm:w-full max-w-[60px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-pink-400 shadow-sm placeholder-slate-300 text-center"
+                                    placeholder="Max">
+                            </div>
+                        </div>
+
+                        <div class="rule-comparison hidden flex-col gap-1.5">
+                            <div class="comparison-rules-list flex flex-col gap-1"></div>
+                            <button type="button" onclick="addComparisonRule(this)"
+                                class="text-[10px] font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1 mt-0.5 self-start">
+                                <i class="fas fa-plus-circle"></i> Add Rule
+                            </button>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="text-[10px] font-extrabold text-pink-500 w-3">F</span>
-                        <input type="number" step="any" class="pr-female-min w-12 sm:w-full max-w-[60px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-pink-400 shadow-sm placeholder-slate-300 text-center" placeholder="Min">
-                        <span class="text-slate-400 text-[10px]">-</span>
-                        <input type="number" step="any" class="pr-female-max w-12 sm:w-full max-w-[60px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-pink-400 shadow-sm placeholder-slate-300 text-center" placeholder="Max">
+
+                    <!-- TEXT CONFIG -->
+                    <div class="pr-text-config hidden flex-col gap-2">
+                        <input type="text"
+                            class="pr-text-normal w-full px-2 py-1.5 bg-white border border-slate-200 focus:border-brand-400 rounded text-xs outline-none shadow-sm placeholder-slate-400"
+                            placeholder="Expected Normal Result (e.g. NEGATIVE)">
+                    </div>
+
+                    <!-- NARRATIVE CONFIG -->
+                    <div class="pr-narrative-config hidden">
+                        <span class="text-[10px] font-semibold text-slate-400 italic">No ranges required for
+                            narrative.</span>
                     </div>
                 </div>
-
-                <!-- THRESHOLD_COMPARISON: Dynamic comparison rules -->
-                <div class="rule-comparison hidden flex-col gap-1.5">
-                    <div class="comparison-rules-list flex flex-col gap-1"></div>
-                    <button type="button" onclick="addComparisonRule(this)" class="text-[10px] font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1 mt-0.5 self-start">
-                        <i class="fas fa-plus-circle"></i> Add Rule
+                <div class="w-full sm:col-span-1 flex justify-end pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
+                    <button type="button" onclick="this.closest('.param-row').remove()"
+                        class="text-slate-400 hover:text-red-500 transition-colors p-1 flex items-center gap-2 text-xs font-medium sm:text-base opacity-100 sm:opacity-0 group-hover:opacity-100">
+                        <i class="fas fa-trash-alt sm:hidden"></i>
+                        <i class="fas fa-times hidden sm:block"></i>
+                        <span class="sm:hidden text-red-500">Remove</span>
                     </button>
                 </div>
             </div>
-            <div class="w-full sm:col-span-1 flex justify-end pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
-                <button type="button" onclick="this.closest('.param-row').remove()" class="text-slate-400 hover:text-red-500 transition-colors p-1 flex items-center gap-2 text-xs font-medium sm:text-base opacity-100 sm:opacity-0 group-hover:opacity-100">
-                    <i class="fas fa-trash-alt sm:hidden"></i>
-                    <i class="fas fa-times hidden sm:block"></i>
-                    <span class="sm:hidden text-red-500">Remove</span>
-                </button>
-            </div>
+
+            <details class="w-full group mt-2 mb-1">
+                <summary
+                    class="text-[11px] font-bold text-slate-400 hover:text-brand-600 cursor-pointer list-none flex items-center gap-1.5 transition-colors select-none pl-1 w-max">
+                    <i
+                        class="fas fa-chevron-right text-[10px] transition-transform duration-200 group-open:rotate-90"></i>
+                    Advanced Setup (Methodology, Sample, Kit)
+                </summary>
+                <div
+                    class="w-full bg-white border border-slate-200 rounded-lg p-3 mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-[0_2px_4px_rgb(0,0,0,0.02)] relative overflow-hidden">
+                    <div class="absolute left-0 top-0 w-1 h-full bg-slate-200"></div>
+                    <div class="pl-2">
+                        <label
+                            class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                            <i class="fas fa-microscope text-brand-500 opacity-80"></i> Methodology
+                        </label>
+                        <input type="text"
+                            class="pr-methodology w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400 shadow-sm transition-all"
+                            placeholder="e.g. CMIA">
+                    </div>
+                    <div class="pl-2">
+                        <label
+                            class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                            <i class="fas fa-vial text-brand-500 opacity-80"></i> Sample Type
+                        </label>
+                        <input type="text"
+                            class="pr-sample-type w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400 shadow-sm transition-all"
+                            placeholder="e.g. Serum">
+                    </div>
+                    <div class="pl-2">
+                        <label
+                            class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                            <i class="fas fa-box-open text-brand-500 opacity-80"></i> Kit Used
+                        </label>
+                        <input type="text"
+                            class="pr-kit-used w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400 shadow-sm transition-all"
+                            placeholder="e.g. SD Bioline">
+                    </div>
+                </div>
+            </details>
         </div>
     </template>
 
     <template id="comparison-rule-template">
-        <div class="comparison-rule flex flex-wrap items-center gap-1 bg-slate-50 rounded px-1.5 py-1 border border-slate-100">
-            <select class="cmp-operator bg-white border border-slate-200 rounded px-1 py-0.5 text-[11px] font-mono font-bold text-slate-700 outline-none focus:border-brand-400 w-[52px]" onchange="toggleBetweenField(this)">
+        <div
+            class="comparison-rule flex flex-nowrap items-center gap-1 bg-slate-50 rounded px-1.5 py-1 border border-slate-100">
+            <select
+                class="cmp-operator bg-white border border-slate-200 rounded px-1 py-0.5 text-[11px] font-mono font-bold text-slate-700 outline-none focus:border-brand-400 w-[72px]"
+                onchange="toggleBetweenField(this)">
                 <option value="<">&lt;</option>
                 <option value="<=">&le;</option>
                 <option value=">">&gt;</option>
                 <option value=">=">&ge;</option>
                 <option value="==">&#61;</option>
                 <option value="between">↔</option>
+                <option value="equals">equals</option>
+                <option value="contains">contains</option>
             </select>
-            <input type="number" step="any" class="cmp-value w-[50px] px-1 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-brand-400 text-center" placeholder="Val">
-            <input type="number" step="any" class="cmp-value-to w-[50px] px-1 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-brand-400 text-center hidden" placeholder="To">
-            <input type="text" class="cmp-classification w-[72px] px-1 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-brand-400" placeholder="Label">
-            <select class="cmp-action bg-white border border-slate-200 rounded px-1 py-0.5 text-[10px] font-bold uppercase text-slate-500 outline-none focus:border-brand-400 w-[68px]">
+            <input type="text"
+                class="cmp-value w-[70px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-brand-400 text-center"
+                placeholder="Val">
+            <input type="text"
+                class="cmp-value-to w-[70px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-brand-400 text-center hidden"
+                placeholder="To">
+            <input type="text"
+                class="cmp-classification w-[65px] px-1 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-brand-400"
+                placeholder="Label">
+            <select
+                class="cmp-action bg-white border border-slate-200 rounded px-1 py-0.5 text-[10px] font-bold uppercase text-slate-500 outline-none focus:border-brand-400 w-[68px]">
                 <option value="NORMAL">Normal</option>
                 <option value="HIGHLIGHT">Highlight</option>
                 <option value="CRITICAL">Critical</option>
             </select>
-            <button type="button" onclick="this.closest('.comparison-rule').remove()" class="text-slate-400 hover:text-red-500 transition-colors p-0.5 text-xs leading-none" title="Remove rule">&times;</button>
-        </div>
+            <button type="button" onclick="this.closest('.comparison-rule').remove()"
+                class="text-slate-400 hover:text-red-500 transition-colors p-0.5 text-xs leading-none shrink-0"
+                title="Remove rule">&times;</button>
+            </>
     </template>
 
     <script src="js/layout.js"></script>
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
     <script>
+        function adjustNotesHeight(el) {
+            const currentStyleHeight = el.style.height;
+            const lastAutoHeight = el.dataset.autoHeight;
+
+            if (currentStyleHeight && lastAutoHeight && currentStyleHeight !== lastAutoHeight) {
+                return;
+            }
+
+            el.style.height = 'auto';
+            const computed = window.getComputedStyle(el);
+            const lineHeight = parseFloat(computed.lineHeight) || 20;
+            const padding = parseFloat(computed.paddingTop) + parseFloat(computed.paddingBottom) + parseFloat(computed.borderTopWidth) + parseFloat(computed.borderBottomWidth);
+            const maxHeight = lineHeight * 6 + padding;
+
+            let targetHeight;
+            if (el.scrollHeight > maxHeight) {
+                targetHeight = maxHeight;
+                el.style.overflowY = 'auto';
+            } else {
+                targetHeight = el.scrollHeight;
+                el.style.overflowY = 'hidden';
+            }
+
+            const heightStr = targetHeight + 'px';
+            el.style.height = heightStr;
+            el.dataset.autoHeight = heightStr;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             loadCommonLayout();
             checkAuth();
             loadTemplates();
 
             const saveDraft = DraftManager.debounce(() => {
-                if (document.getElementById('template-id').value) return; 
+                if (document.getElementById('template-id').value) return;
                 const data = extractTemplateData();
                 if (data.name || data.sections.length > 0) {
                     DraftManager.save('template', data);
@@ -297,10 +555,10 @@
                             }
                         });
                     } else {
-                        addSection(); 
+                        addSection();
                     }
                 } else {
-                    addSection(); 
+                    addSection();
                 }
             }
         });
@@ -311,8 +569,8 @@
             try {
                 const res = await api.request('/templates');
                 const data = res.data;
-                
-                if(data.length === 0) {
+
+                if (data.length === 0) {
                     list.innerHTML = `<li class="p-8 text-center flex flex-col items-center justify-center h-full"><div class="bg-slate-50 p-3 rounded-full mb-2"><i class="fas fa-inbox text-xl text-slate-400"></i></div><p class="text-sm font-medium text-slate-600">No templates found.</p></li>`;
                     return;
                 }
@@ -332,8 +590,8 @@
                     </li>
                 `}).join('');
             } catch (err) {
-                 UI.showToast('Failed to load templates from server', 'error');
-                 list.innerHTML = `<li class="p-6 text-center text-red-500 font-medium text-sm">Error connecting to server.</li>`;
+                UI.showToast('Failed to load templates from server', 'error');
+                list.innerHTML = `<li class="p-6 text-center text-red-500 font-medium text-sm">Error connecting to server.</li>`;
             }
         }
 
@@ -344,6 +602,8 @@
         function createNewTemplate() {
             document.getElementById('template-id').value = '';
             document.getElementById('t-name').value = '';
+            document.getElementById('t-department').value = 'GENERAL';
+            document.getElementById('t-report-type').value = 'DISCRETE';
             document.getElementById('editor-title').textContent = 'Create New Template';
             document.getElementById('editor-subtitle').textContent = 'Define sections and default parameters.';
             document.getElementById('sections-container').innerHTML = '';
@@ -353,16 +613,26 @@
         function loadTemplateIntoEditor(t) {
             document.getElementById('template-id').value = t._id;
             document.getElementById('t-name').value = t.templateName;
+            document.getElementById('t-department').value = t.department || 'GENERAL';
+            document.getElementById('t-report-type').value = t.reportType || 'DISCRETE';
             document.getElementById('editor-title').textContent = 'Edit Template Info';
             document.getElementById('editor-subtitle').innerHTML = `Currently modifying <span class="font-bold text-brand-600">${t.templateName}</span>`;
-            
+
             const container = document.getElementById('sections-container');
             container.innerHTML = '';
-            
+
             t.sections.forEach(sec => {
                 const block = addSection();
-                block.querySelector('.sec-name').value = sec.sectionName;
+                block.querySelector('.sec-name').value = sec.sectionName || '';
                 block.querySelector('.sec-text').value = sec.defaultText || '';
+
+                if (sec.methodology || sec.sampleType || sec.kitUsed) {
+                    block.querySelector('.sec-methodology').value = sec.methodology || '';
+                    block.querySelector('.sec-sample-type').value = sec.sampleType || '';
+                    block.querySelector('.sec-kit-used').value = sec.kitUsed || '';
+                    const detailsEl = block.querySelector('.sec-text').nextElementSibling;
+                    if (detailsEl && detailsEl.tagName === 'DETAILS') detailsEl.open = true;
+                }
                 if (sec.parameters && Array.isArray(sec.parameters)) {
                     const addBtn = block.querySelector('button[onclick="addParamRow(this)"]');
                     sec.parameters.forEach(p => {
@@ -376,8 +646,8 @@
                             const rangeMatch = (v.normalRange || '').match(/([\d.]+)\s*[-–—]\s*([\d.]+)/);
                             legacyParam.units = (v.normalRange || '').replace(/[\d.\s-–—]+/g, '').trim();
                             legacyParam.normalRange = {
-                                min: rangeMatch ? parseFloat(rangeMatch[1]) : null,
-                                max: rangeMatch ? parseFloat(rangeMatch[2]) : null
+                                min: rangeMatch ? rangeMatch[1] : null,
+                                max: rangeMatch ? rangeMatch[2] : null
                             };
                         }
                         addParamRow(addBtn, legacyParam);
@@ -394,13 +664,50 @@
             wrapperDiv.classList.add('animate-fade-in-up');
             wrapperDiv.appendChild(clone);
             container.appendChild(wrapperDiv);
-            
+
+            const notesTextarea = wrapperDiv.querySelector('.sec-text');
+            if (notesTextarea) {
+                setTimeout(() => adjustNotesHeight(notesTextarea), 0);
+            }
+
             setTimeout(() => {
                 const newInputs = wrapperDiv.querySelectorAll('.sec-name');
-                if(newInputs.length > 0) newInputs[newInputs.length-1].focus();
+                if (newInputs.length > 0) newInputs[newInputs.length - 1].focus();
             }, 50);
 
             return wrapperDiv;
+        }
+
+        function toggleDataTypeFields(selectElement) {
+            const row = selectElement.closest('.param-row');
+            const dataType = selectElement.value;
+            const unitsContainer = row.querySelector('.pr-units-container');
+            const numericConfig = row.querySelector('.pr-numeric-config');
+            const textConfig = row.querySelector('.pr-text-config');
+            const narrativeConfig = row.querySelector('.pr-narrative-config');
+
+            if (dataType === 'NUMERIC') {
+                unitsContainer.classList.remove('opacity-0', 'pointer-events-none');
+                numericConfig.classList.remove('hidden');
+                numericConfig.classList.add('flex');
+                textConfig.classList.add('hidden');
+                textConfig.classList.remove('flex');
+                narrativeConfig.classList.add('hidden');
+            } else if (dataType === 'TEXT' || dataType === 'QUALITATIVE') {
+                unitsContainer.classList.add('opacity-0', 'pointer-events-none');
+                numericConfig.classList.add('hidden');
+                numericConfig.classList.remove('flex');
+                textConfig.classList.remove('hidden');
+                textConfig.classList.add('flex');
+                narrativeConfig.classList.add('hidden');
+            } else {
+                unitsContainer.classList.add('opacity-0', 'pointer-events-none');
+                numericConfig.classList.add('hidden');
+                numericConfig.classList.remove('flex');
+                textConfig.classList.add('hidden');
+                textConfig.classList.remove('flex');
+                narrativeConfig.classList.remove('hidden');
+            }
         }
 
         function toggleRuleFields(selectElement) {
@@ -475,50 +782,76 @@
 
             if (data) {
                 row.querySelector('.pr-name').value = data.name || '';
-                row.querySelector('.pr-units').value = data.units || '';
 
-                // Determine the effective ruleType (with legacy compat)
-                // Prioritize GENDER_SPECIFIC if isGenderSpecific is true, even if ruleType defaulted to MIN_MAX
-                let ruleType = data.ruleType || 'MIN_MAX';
-                if (data.isGenderSpecific === true && ruleType === 'MIN_MAX') {
-                    ruleType = 'GENDER_SPECIFIC';
+                const dataTypeSelect = row.querySelector('.pr-data-type');
+                dataTypeSelect.value = data.dataType || 'NUMERIC';
+                toggleDataTypeFields(dataTypeSelect);
+
+                const methodology = data.methodology || '';
+                const sampleType = data.sampleType || '';
+                const kitUsed = data.kitUsed || data.kit || '';
+
+                row.querySelector('.pr-methodology').value = methodology;
+                row.querySelector('.pr-sample-type').value = sampleType;
+                row.querySelector('.pr-kit-used').value = kitUsed;
+
+                if (methodology || sampleType || kitUsed) {
+                    const detailsEl = row.querySelector('details');
+                    if (detailsEl) detailsEl.open = true;
                 }
 
-                const ruleSelect = row.querySelector('.pr-rule-type');
-                ruleSelect.value = ruleType;
+                if (data.dataType === 'TEXT' || data.dataType === 'QUALITATIVE') {
+                    if (data.normalRange && data.normalRange.textNormal) {
+                        row.querySelector('.pr-text-normal').value = data.normalRange.textNormal;
+                    } else if (data.referenceRanges && data.referenceRanges.length > 0) {
+                        row.querySelector('.pr-text-normal').value = data.referenceRanges[0].textNormal || '';
+                    }
+                } else if (data.dataType === 'NUMERIC' || !data.dataType) {
+                    row.querySelector('.pr-units').value = data.units || '';
 
-                if (ruleType === 'GENDER_SPECIFIC') {
-                    // Show gender fields
-                    row.querySelector('.rule-min-max').classList.add('hidden');
-                    row.querySelector('.rule-min-max').classList.remove('flex');
-                    row.querySelector('.rule-gender').classList.remove('hidden');
-                    row.querySelector('.rule-gender').classList.add('flex');
-                    if (data.normalRange) {
-                        if (data.normalRange.male) {
-                            row.querySelector('.pr-male-min').value = data.normalRange.male.min ?? '';
-                            row.querySelector('.pr-male-max').value = data.normalRange.male.max ?? '';
-                        }
-                        if (data.normalRange.female) {
-                            row.querySelector('.pr-female-min').value = data.normalRange.female.min ?? '';
-                            row.querySelector('.pr-female-max').value = data.normalRange.female.max ?? '';
-                        }
+                    // Determine the effective ruleType (with legacy compat)
+                    // Prioritize GENDER_SPECIFIC if isGenderSpecific is true, even if ruleType defaulted to MIN_MAX
+                    let ruleType = data.ruleType || 'MIN_MAX';
+                    if (data.isGenderSpecific === true && ruleType === 'MIN_MAX') {
+                        ruleType = 'GENDER_SPECIFIC';
                     }
-                } else if (ruleType === 'THRESHOLD_COMPARISON') {
-                    // Show comparison fields
-                    row.querySelector('.rule-min-max').classList.add('hidden');
-                    row.querySelector('.rule-min-max').classList.remove('flex');
-                    row.querySelector('.rule-comparison').classList.remove('hidden');
-                    row.querySelector('.rule-comparison').classList.add('flex');
-                    // Populate comparison rules
-                    if (data.comparisons && data.comparisons.length > 0) {
-                        const addRuleBtn = row.querySelector('.rule-comparison button[onclick="addComparisonRule(this)"]');
-                        data.comparisons.forEach(cmp => addComparisonRule(addRuleBtn, cmp));
-                    }
-                } else {
-                    // MIN_MAX (default — already visible)
-                    if (data.normalRange) {
-                        row.querySelector('.pr-min').value = data.normalRange.min ?? '';
-                        row.querySelector('.pr-max').value = data.normalRange.max ?? '';
+
+                    const ruleSelect = row.querySelector('.pr-rule-type');
+                    ruleSelect.value = ruleType;
+
+                    if (ruleType === 'GENDER_SPECIFIC') {
+                        // Show gender fields
+                        row.querySelector('.rule-min-max').classList.add('hidden');
+                        row.querySelector('.rule-min-max').classList.remove('flex');
+                        row.querySelector('.rule-gender').classList.remove('hidden');
+                        row.querySelector('.rule-gender').classList.add('flex');
+                        if (data.normalRange) {
+                            if (data.normalRange.male) {
+                                row.querySelector('.pr-male-min').value = data.normalRange.male.min ?? '';
+                                row.querySelector('.pr-male-max').value = data.normalRange.male.max ?? '';
+                            }
+                            if (data.normalRange.female) {
+                                row.querySelector('.pr-female-min').value = data.normalRange.female.min ?? '';
+                                row.querySelector('.pr-female-max').value = data.normalRange.female.max ?? '';
+                            }
+                        }
+                    } else if (ruleType === 'THRESHOLD_COMPARISON') {
+                        // Show comparison fields
+                        row.querySelector('.rule-min-max').classList.add('hidden');
+                        row.querySelector('.rule-min-max').classList.remove('flex');
+                        row.querySelector('.rule-comparison').classList.remove('hidden');
+                        row.querySelector('.rule-comparison').classList.add('flex');
+                        // Populate comparison rules
+                        if (data.comparisons && data.comparisons.length > 0) {
+                            const addRuleBtn = row.querySelector('.rule-comparison button[onclick="addComparisonRule(this)"]');
+                            data.comparisons.forEach(cmp => addComparisonRule(addRuleBtn, cmp));
+                        }
+                    } else {
+                        // MIN_MAX (default — already visible)
+                        if (data.normalRange) {
+                            row.querySelector('.pr-min').value = data.normalRange.min ?? '';
+                            row.querySelector('.pr-max').value = data.normalRange.max ?? '';
+                        }
                     }
                 }
             }
@@ -531,70 +864,120 @@
             const name = document.getElementById('t-name').value;
             const sectionBlocks = document.querySelectorAll('.section-block');
             const sections = [];
-            
+
             sectionBlocks.forEach(block => {
                 const secName = block.querySelector('.sec-name').value;
                 const secText = block.querySelector('.sec-text').value;
+                const secMethodology = block.querySelector('.sec-methodology').value.trim();
+                const secSampleType = block.querySelector('.sec-sample-type').value.trim();
+                const secKitUsed = block.querySelector('.sec-kit-used').value.trim();
                 const parameters = [];
-                
+
                 block.querySelectorAll('.param-row').forEach(row => {
                     const name = row.querySelector('.pr-name').value.trim();
                     if (!name) return;
 
                     const units = row.querySelector('.pr-units').value.trim();
+                    const dataType = row.querySelector('.pr-data-type').value;
                     const ruleType = row.querySelector('.pr-rule-type').value;
-                    
-                    const param = { name, units, ruleType, normalRange: {} };
-                    
-                    if (ruleType === 'GENDER_SPECIFIC') {
-                        param.normalRange.male = {
-                            min: parseFloat(row.querySelector('.pr-male-min').value) || null,
-                            max: parseFloat(row.querySelector('.pr-male-max').value) || null
-                        };
-                        param.normalRange.female = {
-                            min: parseFloat(row.querySelector('.pr-female-min').value) || null,
-                            max: parseFloat(row.querySelector('.pr-female-max').value) || null
-                        };
-                    } else if (ruleType === 'THRESHOLD_COMPARISON') {
-                        param.comparisons = [];
-                        row.querySelectorAll('.comparison-rule').forEach(ruleEl => {
-                            const operator = ruleEl.querySelector('.cmp-operator').value;
-                            const value = parseFloat(ruleEl.querySelector('.cmp-value').value);
-                            const classification = ruleEl.querySelector('.cmp-classification').value.trim();
-                            const action = ruleEl.querySelector('.cmp-action').value;
-                            if (isNaN(value)) return; // Skip rules without a value
-                            const cmp = { operator, value, classification, action };
-                            if (operator === 'between') {
-                                cmp.valueTo = parseFloat(ruleEl.querySelector('.cmp-value-to').value) || null;
-                            }
-                            param.comparisons.push(cmp);
-                        });
-                        delete param.normalRange; // Not used for threshold
+
+                    const methodology = row.querySelector('.pr-methodology').value.trim();
+                    const sampleType = row.querySelector('.pr-sample-type').value.trim();
+                    const kitUsed = row.querySelector('.pr-kit-used').value.trim();
+
+                    const param = {
+                        name, units, dataType, ruleType,
+                        normalRange: {}, referenceRanges: [],
+                        ...(methodology && { methodology }),
+                        ...(sampleType && { sampleType }),
+                        ...(kitUsed && { kitUsed })
+                    };
+
+                    if (dataType === 'NUMERIC') {
+                        if (ruleType === 'GENDER_SPECIFIC') {
+                            const maleMin = row.querySelector('.pr-male-min').value.trim();
+                            const maleMax = row.querySelector('.pr-male-max').value.trim();
+                            const femaleMin = row.querySelector('.pr-female-min').value.trim();
+                            const femaleMax = row.querySelector('.pr-female-max').value.trim();
+                            param.normalRange.male = {
+                                min: maleMin !== '' ? maleMin : null,
+                                max: maleMax !== '' ? maleMax : null
+                            };
+                            param.normalRange.female = {
+                                min: femaleMin !== '' ? femaleMin : null,
+                                max: femaleMax !== '' ? femaleMax : null
+                            };
+                        } else if (ruleType === 'THRESHOLD_COMPARISON') {
+                            param.comparisons = [];
+                            row.querySelectorAll('.comparison-rule').forEach(ruleEl => {
+                                const operator = ruleEl.querySelector('.cmp-operator').value;
+                                const valStr = ruleEl.querySelector('.cmp-value').value.trim();
+                                const classification = ruleEl.querySelector('.cmp-classification').value.trim();
+                                const action = ruleEl.querySelector('.cmp-action').value;
+                                if (valStr === '') return;
+
+                                // Coerce to number if numeric, otherwise save as string
+                                const parsedVal = (!isNaN(valStr) && !isNaN(parseFloat(valStr))) ? parseFloat(valStr) : valStr;
+                                const cmp = { operator, value: parsedVal, classification, action };
+
+                                if (operator === 'between') {
+                                    const valToStr = ruleEl.querySelector('.cmp-value-to').value.trim();
+                                    if (valToStr !== '') {
+                                        cmp.valueTo = (!isNaN(valToStr) && !isNaN(parseFloat(valToStr))) ? parseFloat(valToStr) : valToStr;
+                                    } else {
+                                        cmp.valueTo = null;
+                                    }
+                                }
+                                param.comparisons.push(cmp);
+                            });
+                            delete param.normalRange; // Not used for threshold
+                        } else {
+                            // MIN_MAX
+                            const minVal = row.querySelector('.pr-min').value.trim();
+                            const maxVal = row.querySelector('.pr-max').value.trim();
+                            param.normalRange.min = minVal !== '' ? minVal : null;
+                            param.normalRange.max = maxVal !== '' ? maxVal : null;
+                        }
+                    } else if (dataType === 'TEXT' || dataType === 'QUALITATIVE') {
+                        const textNormal = row.querySelector('.pr-text-normal').value.trim();
+                        param.ruleType = 'QUALITATIVE';
+                        if (textNormal) {
+                            param.normalRange = { textNormal: textNormal };
+                            param.referenceRanges.push({ gender: 'ANY', textNormal });
+                        } else {
+                            delete param.normalRange;
+                        }
                     } else {
-                        // MIN_MAX
-                        param.normalRange.min = parseFloat(row.querySelector('.pr-min').value) || null;
-                        param.normalRange.max = parseFloat(row.querySelector('.pr-max').value) || null;
+                        delete param.normalRange;
+                        delete param.ruleType;
+                        delete param.units;
                     }
                     parameters.push(param);
                 });
-                
+
                 sections.push({
                     sectionName: secName,
                     defaultText: secText,
+                    ...(secMethodology && { methodology: secMethodology }),
+                    ...(secSampleType && { sampleType: secSampleType }),
+                    ...(secKitUsed && { kitUsed: secKitUsed }),
                     parameters: parameters.length > 0 ? parameters : undefined
                 });
             });
 
-            return { name, sections };
+            const department = document.getElementById('t-department').value;
+            const reportType = document.getElementById('t-report-type').value;
+
+            return { name, department, reportType, sections };
         }
 
         async function saveTemplate() {
             const id = document.getElementById('template-id').value;
-            const { name, sections } = extractTemplateData();
-            
-            if (!name) { 
+            const { name, department, reportType, sections } = extractTemplateData();
+
+            if (!name) {
                 document.getElementById('t-name').focus();
-                return UI.showToast('Template Master Name is required', 'error'); 
+                return UI.showToast('Template Master Name is required', 'error');
             }
 
             if (sections.length === 0) return UI.showToast('Please provide valid section details', 'error');
@@ -603,10 +986,10 @@
 
             try {
                 if (id) {
-                    await api.request(`/templates/${id}`, 'PUT', { templateName: name, sections });
+                    await api.request(`/templates/${id}`, 'PUT', { templateName: name, department, reportType, sections });
                     UI.showToast('Template structure updated successfully', 'success');
                 } else {
-                    const res = await api.request('/templates', 'POST', { templateName: name, sections });
+                    const res = await api.request('/templates', 'POST', { templateName: name, department, reportType, sections });
                     document.getElementById('template-id').value = res.data._id;
                     document.getElementById('editor-title').textContent = 'Edit Template Info';
                     document.getElementById('editor-subtitle').innerHTML = `Currently modifying <span class="font-bold text-brand-600">${name}</span>`;
@@ -622,23 +1005,23 @@
         }
 
         async function deleteTemplate(e, id) {
-             e.stopPropagation(); 
-             const confirmed = await UI.showConfirm('Delete Template', 'Are you sure you want to delete this template? Future reports cannot use it.', 'Delete', 'danger');
-             if (confirmed) {
-                 try {
-                     await api.request(`/templates/${id}`, 'DELETE');
-                     UI.showToast('Template permanently deleted', 'success');
-                     if(document.getElementById('template-id').value === id) {
-                         createNewTemplate();
-                     }
-                     loadTemplates();
-                 } catch (err) {
-                     UI.showToast(err.message, 'error');
-                 }
-             }
+            e.stopPropagation();
+            const confirmed = await UI.showConfirm('Delete Template', 'Are you sure you want to delete this template? Future reports cannot use it.', 'Delete', 'danger');
+            if (confirmed) {
+                try {
+                    await api.request(`/templates/${id}`, 'DELETE');
+                    UI.showToast('Template permanently deleted', 'success');
+                    if (document.getElementById('template-id').value === id) {
+                        createNewTemplate();
+                    }
+                    loadTemplates();
+                } catch (err) {
+                    UI.showToast(err.message, 'error');
+                }
+            }
         }
 
-        if(!document.getElementById('custom-animations')) {
+        if (!document.getElementById('custom-animations')) {
             const style = document.createElement('style');
             style.id = 'custom-animations';
             style.textContent = `
@@ -654,4 +1037,5 @@
         }
     </script>
 </body>
+
 </html>

@@ -28,7 +28,7 @@ exports.register = async (req, res) => {
     if (!isStrongPassword(password)) {
       return res.status(400).json({
         success: false,
-        error: 'Password must be at least 8 characters with at least 1 uppercase letter and 1 number'
+        error: 'Password must be at least 8 characters with at least 1 uppercase letter, 1 number, and 1 special character'
       });
     }
 
@@ -196,7 +196,7 @@ exports.updateProfile = async (req, res) => {
       if (!isStrongPassword(password)) {
         return res.status(400).json({
           success: false,
-          error: 'Password must be at least 8 characters with at least 1 uppercase letter and 1 number'
+          error: 'Password must be at least 8 characters with at least 1 uppercase letter, 1 number, and 1 special character'
         });
       }
       user.password = password;
@@ -250,7 +250,7 @@ exports.resetPassword = async (req, res) => {
     if (!isStrongPassword(newPassword)) {
       return res.status(400).json({
         success: false,
-        error: 'New password must be at least 8 characters with at least 1 uppercase letter and 1 number'
+        error: 'New password must be at least 8 characters with at least 1 uppercase letter, 1 number, and 1 special character'
       });
     }
 

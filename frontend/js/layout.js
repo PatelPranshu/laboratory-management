@@ -224,34 +224,41 @@ function initNotifications() {
         return;
     }
 
+    // 1. Render the UI immediately
+    renderNotificationUI();
+
+    // 2. Fetch initial notifications
+    fetchInitialNotifs();
+
+    // 3. Setup Socket
     if (typeof io !== 'undefined') {
-        setupNotificationSystem(token);
+        setupNotificationSocket(token);
     } else {
         const script = document.createElement('script');
         script.src = 'https://cdn.socket.io/4.8.1/socket.io.min.js';
-        script.onload = () => setupNotificationSystem(token);
+        script.onload = () => setupNotificationSocket(token);
+        script.onerror = () => console.warn('[Notifications] Failed to load socket.io script');
         document.head.appendChild(script);
     }
 }
 
-function setupNotificationSystem(token) {
+let unreadCount = 0;
+let notifications = [];
+
+function renderNotificationUI() {
     const header = document.querySelector('header');
     if (!header) return;
 
-    // Find the rightmost flex container to append the bell
     let targetContainer = header.querySelector('#header-actions') || 
                           header.querySelector('.flex.items-center.gap-4:last-child') || 
                           header.querySelector('.flex.space-x-4:last-child') ||
                           header.querySelector('.flex.items-center.justify-end');
     
-    // Fallback if no clean container found
     if (!targetContainer) {
         const wrap = document.createElement('div');
-        wrap.className = "ml-6 flex items-center space-x-4 shrink-0";
+        wrap.className = "ml-auto lg:ml-6 flex items-center space-x-4 shrink-0";
         header.appendChild(wrap);
         targetContainer = wrap;
-    } else {
-         // Append explicitly via code if it exists. Dashboard uses #header-actions.
     }
 
     // Check if bell already injected
@@ -283,12 +290,7 @@ function setupNotificationSystem(token) {
 
     const bellBtn = document.getElementById('notif-bell-btn');
     const dropdown = document.getElementById('notif-dropdown');
-    const badge = document.getElementById('notif-badge');
-    const listEl = document.getElementById('notif-list');
     const readAllBtn = document.getElementById('notif-read-all');
-
-    let notifications = [];
-    let unreadCount = 0;
 
     bellBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -300,70 +302,6 @@ function setupNotificationSystem(token) {
             dropdown.classList.add('hidden');
         }
     });
-
-    const renderList = () => {
-        if (notifications.length === 0) {
-            listEl.innerHTML = '<div class="px-4 py-8 flex flex-col items-center text-center text-sm font-medium text-slate-400"><i class="fas fa-bell-slash text-2xl mb-3 text-slate-200"></i>No notifications yet.</div>';
-            return;
-        }
-
-        listEl.innerHTML = notifications.map(n => `
-            <div class="p-4 border-b border-slate-50 last:border-0 hover:bg-brand-50/30 cursor-pointer transition-colors ${n.isRead ? 'opacity-70' : 'bg-brand-50/10'}" onclick="handleNotifClick('${n._id}', '${n.type}', '${n.referenceId}')">
-                <div class="flex gap-3">
-                    <div class="mt-0.5 rounded-full bg-slate-100 w-8 h-8 flex items-center justify-center shrink-0 ${!n.isRead ? 'text-brand-600 bg-brand-50' : 'text-slate-400'}">
-                        ${n.type === 'NEW_PATIENT' ? '<i class="fas fa-user-plus text-xs"></i>' : '<i class="fas fa-file-medical text-xs"></i>'}
-                    </div>
-                    <div>
-                        <p class="text-[13px] font-semibold text-slate-800 mb-0.5 ${!n.isRead ? 'text-brand-700' : ''}">${sanitizeHTML(n.title)}</p>
-                        <p class="text-[12px] text-slate-500 leading-snug">${sanitizeHTML(n.message)}</p>
-                        <p class="text-[10px] font-medium text-slate-400 mt-1.5"><i class="far fa-clock mr-1"></i>${new Date(n.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} • ${new Date(n.createdAt).toLocaleDateString()}</p>
-                    </div>
-                    ${!n.isRead ? '<div class="w-2 h-2 rounded-full bg-brand-500 mt-2 ml-auto shrink-0 shadow-sm"></div>' : ''}
-                </div>
-            </div>
-        `).join('');
-    };
-
-    const updateBadge = () => {
-        if (unreadCount > 0) {
-            badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
-        }
-    };
-
-    const fetchNotifs = async () => {
-        try {
-            const res = await api.request('/notifications');
-            notifications = res.data;
-            unreadCount = res.unreadCount;
-            renderList();
-            updateBadge();
-        } catch(e) {
-            console.error('Failed to load notifications', e);
-            listEl.innerHTML = '<div class="px-4 py-4 text-center text-sm font-medium text-red-400">Failed to load notifications.</div>';
-        }
-    };
-
-    fetchNotifs();
-
-    window.handleNotifClick = async (id, type, refId) => {
-        dropdown.classList.add('hidden');
-        try {
-            await api.request(`/notifications/read/${id}`, 'PUT');
-            const idx = notifications.findIndex(n => n._id === id);
-            if (idx > -1 && !notifications[idx].isRead) {
-               notifications[idx].isRead = true;
-               unreadCount = Math.max(0, unreadCount - 1);
-               updateBadge();
-               renderList();
-            }
-        } catch(e) {}
-        
-        if (type === 'NEW_PATIENT') window.location.href = `patient-profile.html?id=${refId}`;
-        if (type === 'NEW_REPORT') window.location.href = `report-create.html?edit=${refId}`;
-    };
 
     readAllBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -381,17 +319,86 @@ function setupNotificationSystem(token) {
         }
     });
 
-    // Use the explicit SOCKET_URL from api.js (avoids fragile string manipulation)
+    window.handleNotifClick = async (id, type, refId) => {
+        dropdown.classList.add('hidden');
+        try {
+            await api.request(`/notifications/read/${id}`, 'PUT');
+            const idx = notifications.findIndex(n => n._id === id);
+            if (idx > -1 && !notifications[idx].isRead) {
+               notifications[idx].isRead = true;
+               unreadCount = Math.max(0, unreadCount - 1);
+               updateBadge();
+               renderList();
+            }
+        } catch(e) {}
+        
+        if (type === 'NEW_PATIENT') window.location.href = `patient-profile.html?id=${refId}`;
+        if (type === 'NEW_REPORT' || type === 'REPORT_AMENDED') window.location.href = `report-create.html?edit=${refId}`;
+        if (type === 'NEW_STAFF') window.location.href = `staff.html`;
+    };
+}
+
+function renderList() {
+    const listEl = document.getElementById('notif-list');
+    if (!listEl) return;
+
+    if (notifications.length === 0) {
+        listEl.innerHTML = '<div class="px-4 py-8 flex flex-col items-center text-center text-sm font-medium text-slate-400"><i class="fas fa-bell-slash text-2xl mb-3 text-slate-200"></i>No notifications yet.</div>';
+        return;
+    }
+
+    listEl.innerHTML = notifications.map(n => `
+        <div class="p-4 border-b border-slate-50 last:border-0 hover:bg-brand-50/30 cursor-pointer transition-colors ${n.isRead ? 'opacity-70' : 'bg-brand-50/10'}" onclick="handleNotifClick('${n._id}', '${n.type}', '${n.referenceId}')">
+            <div class="flex gap-3">
+                <div class="mt-0.5 rounded-full bg-slate-100 w-8 h-8 flex items-center justify-center shrink-0 ${!n.isRead ? 'text-brand-600 bg-brand-50' : 'text-slate-400'}">
+                    ${n.type === 'NEW_PATIENT' ? '<i class="fas fa-user-plus text-xs"></i>' : (n.type === 'NEW_STAFF' ? '<i class="fas fa-user-md text-xs"></i>' : '<i class="fas fa-file-medical text-xs"></i>')}
+                </div>
+                <div>
+                    <p class="text-[13px] font-semibold text-slate-800 mb-0.5 ${!n.isRead ? 'text-brand-700' : ''}">${sanitizeForHtml(n.title)}</p>
+                    <p class="text-[12px] text-slate-500 leading-snug">${sanitizeForHtml(n.message)}</p>
+                    <p class="text-[10px] font-medium text-slate-400 mt-1.5"><i class="far fa-clock mr-1"></i>${new Date(n.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} • ${new Date(n.createdAt).toLocaleDateString()}</p>
+                </div>
+                ${!n.isRead ? '<div class="w-2 h-2 rounded-full bg-brand-500 mt-2 ml-auto shrink-0 shadow-sm"></div>' : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateBadge() {
+    const badge = document.getElementById('notif-badge');
+    if (!badge) return;
+    if (unreadCount > 0) {
+        badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+async function fetchInitialNotifs() {
+    try {
+        const res = await api.request('/notifications');
+        notifications = res.data;
+        unreadCount = res.unreadCount;
+        renderList();
+        updateBadge();
+    } catch(e) {
+        console.error('Failed to load notifications', e);
+        const listEl = document.getElementById('notif-list');
+        if (listEl) listEl.innerHTML = '<div class="px-4 py-4 text-center text-sm font-medium text-red-400">Failed to load notifications.</div>';
+    }
+}
+
+function setupNotificationSocket(token) {
     const socketUrl = (typeof SOCKET_URL !== 'undefined') ? SOCKET_URL : '';
 
-    // Connect Socket.IO with production-ready settings
     const socket = io(socketUrl, {
         auth: { token },
-        transports: ['websocket', 'polling'], // Prefer WebSocket, fall back to polling
-        reconnectionAttempts: 10,              // Don't retry forever
-        reconnectionDelay: 2000,               // Start with 2s delay
-        reconnectionDelayMax: 30000,           // Cap at 30s
-        timeout: 15000                         // Connection timeout
+        transports: ['websocket', 'polling'], 
+        reconnectionAttempts: 10,
+        reconnectionDelay: 2000,
+        reconnectionDelayMax: 30000,
+        timeout: 15000
     });
 
     socket.on('connect', () => {

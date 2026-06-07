@@ -2,7 +2,30 @@ const ReportTemplate = require('../models/ReportTemplate');
 const { pickFields } = require('../middlewares/validate');
 
 // Allowed fields for template create/update
-const TEMPLATE_FIELDS = ['templateName', 'sections'];
+const TEMPLATE_FIELDS = ['templateName', 'department', 'reportType', 'sections'];
+
+const validateTemplatePayload = (sections) => {
+  if (!sections) return null;
+  for (const section of sections) {
+    for (const param of section.parameters || []) {
+      if (param.dataType === 'NUMERIC') {
+        const hasLegacyMinMax = param.normalRange && (param.normalRange.min != null || param.normalRange.max != null || (param.normalRange.male && (param.normalRange.male.min != null || param.normalRange.male.max != null)) || (param.normalRange.female && (param.normalRange.female.min != null || param.normalRange.female.max != null)));
+        const hasLegacyComparisons = param.comparisons && param.comparisons.length > 0;
+        const hasNewRanges = param.referenceRanges && param.referenceRanges.length > 0 && param.referenceRanges.some(r => r.min != null || r.max != null);
+        if (!hasLegacyMinMax && !hasLegacyComparisons && !hasNewRanges) {
+          return `Parameter '${param.name}' is NUMERIC but missing limits.`;
+        }
+      } else if (param.dataType === 'TEXT') {
+        const hasLegacyComparisons = param.comparisons && param.comparisons.length > 0;
+        const hasNewText = param.referenceRanges && param.referenceRanges.length > 0 && param.referenceRanges.some(r => r.textNormal);
+        if (!hasLegacyComparisons && !hasNewText) {
+          return `Parameter '${param.name}' is TEXT but missing expected text limit.`;
+        }
+      }
+    }
+  }
+  return null;
+};
 
 // @desc    Get all templates
 // @route   GET /api/templates
@@ -47,6 +70,11 @@ exports.createTemplate = async (req, res) => {
     const sanitizedBody = pickFields(req.body, TEMPLATE_FIELDS);
     sanitizedBody.doctorId = req.user.id;
 
+    const validationError = validateTemplatePayload(sanitizedBody.sections);
+    if (validationError) {
+      return res.status(400).json({ success: false, error: validationError });
+    }
+
     const template = await ReportTemplate.create(sanitizedBody);
     res.status(201).json({ success: true, data: template });
   } catch (error) {
@@ -68,6 +96,11 @@ exports.updateTemplate = async (req, res) => {
 
     // Whitelist fields — prevent mass assignment
     const sanitizedBody = pickFields(req.body, TEMPLATE_FIELDS);
+
+    const validationError = validateTemplatePayload(sanitizedBody.sections);
+    if (validationError) {
+      return res.status(400).json({ success: false, error: validationError });
+    }
 
     template = await ReportTemplate.findByIdAndUpdate(req.params.id, sanitizedBody, {
       returnDocument: 'after',

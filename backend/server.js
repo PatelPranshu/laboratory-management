@@ -9,9 +9,33 @@ const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 const http = require('http');
 const socketService = require('./services/socketService');
+const xss = require('xss');
+
+// In-place recursive sanitization for Express 5 compatibility
+const cleanXSS = (data) => {
+  if (typeof data === 'string') return xss(data);
+  if (Array.isArray(data)) {
+    for (let i = 0; i < data.length; i++) data[i] = cleanXSS(data[i]);
+  } else if (typeof data === 'object' && data !== null) {
+    for (const key in data) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
+        data[key] = cleanXSS(data[key]);
+      }
+    }
+  }
+  return data;
+};
 
 // Load env vars
 dotenv.config();
+
+// Assert critical environment variables
+const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET', 'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];
+const missingVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+if (missingVars.length > 0) {
+  console.error(`[FATAL] Missing required environment variables: ${missingVars.join(', ')}`);
+  process.exit(1);
+}
 
 // Connect to database
 connectDB();
@@ -84,6 +108,14 @@ app.use((req, res, next) => {
   if (req.body) mongoSanitize.sanitize(req.body);
   if (req.query) mongoSanitize.sanitize(req.query);
   if (req.params) mongoSanitize.sanitize(req.params);
+  next();
+});
+
+// ---------- Data Sanitization against XSS ----------
+app.use((req, res, next) => {
+  if (req.body) cleanXSS(req.body);
+  if (req.query) cleanXSS(req.query);
+  if (req.params) cleanXSS(req.params);
   next();
 });
 

@@ -69,6 +69,9 @@ const UserSchema = new mongoose.Schema({
     pendingReports: { type: Number, default: 0 },
     sentReports: { type: Number, default: 0 },
     weeklyReports: { type: Array, default: [] }
+  },
+  passwordChangedAt: {
+    type: Date
   }
 }, { timestamps: true });
 
@@ -79,6 +82,10 @@ UserSchema.pre('save', async function () {
   }
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
+  // Set passwordChangedAt, subtract 1000ms to ensure the token created right after isn't accidentally invalidated
+  if (!this.isNew) {
+    this.passwordChangedAt = Date.now() - 1000;
+  }
 });
 
 // Match user entered password to hashed password in database

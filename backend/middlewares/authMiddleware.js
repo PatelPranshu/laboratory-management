@@ -23,6 +23,14 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ success: false, error: 'User no longer exists' });
     }
 
+    // Check if user changed password after the token was issued
+    if (user.passwordChangedAt) {
+      const changedTimestamp = parseInt(user.passwordChangedAt.getTime() / 1000, 10);
+      if (decoded.iat < changedTimestamp) {
+        return res.status(401).json({ success: false, error: 'User recently changed password, please log in again' });
+      }
+    }
+
     req.user = user;
     next();
   } catch (err) {

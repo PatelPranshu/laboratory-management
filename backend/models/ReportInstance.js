@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const ReportSectionSchema = new mongoose.Schema({
   sectionName: {
     type: String,
-    required: true
+    default: ''
   },
   templateId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -12,27 +12,51 @@ const ReportSectionSchema = new mongoose.Schema({
   text: {
     type: String
   },
+  methodology: { type: String },
+  sampleType: { type: String },
+  kitUsed: { type: String },
   parameters: [{
     name: { type: String, required: true },
+    dataType: { 
+      type: String, 
+      enum: ['NUMERIC', 'TEXT', 'BOOLEAN', 'DATETIME', 'ATTACHMENT', 'MULTI_SELECT', 'CULTURE_SENSITIVITY'],
+      default: 'NUMERIC'
+    },
     result: { type: String },
+    valueNumeric: { type: Number },
+    valueText: { type: String },
+    valueBoolean: { type: Boolean },
+    attachments: [{ type: String }],
+    cultureResults: [{
+      organism: { type: String },
+      colonyCount: { type: String },
+      sensitivities: [{
+        antibiotic: { type: String },
+        interpretation: { type: String }
+      }]
+    }],
     units: { type: String },
+    methodology: { type: String },
+    sampleType: { type: String },
+    kitUsed: { type: String },
     // Legacy field — kept for backwards compatibility with existing documents
     isGenderSpecific: { type: Boolean, default: false },
     ruleType: {
       type: String,
-      enum: ['MIN_MAX', 'GENDER_SPECIFIC', 'THRESHOLD_COMPARISON'],
+      enum: ['MIN_MAX', 'GENDER_SPECIFIC', 'THRESHOLD_COMPARISON', 'QUALITATIVE'],
       default: 'MIN_MAX'
     },
     normalRange: {
-      min: Number,
-      max: Number,
-      male: { min: Number, max: Number },
-      female: { min: Number, max: Number }
+      min: mongoose.Schema.Types.Mixed,
+      max: mongoose.Schema.Types.Mixed,
+      male: { min: mongoose.Schema.Types.Mixed, max: mongoose.Schema.Types.Mixed },
+      female: { min: mongoose.Schema.Types.Mixed, max: mongoose.Schema.Types.Mixed },
+      textNormal: { type: String }
     },
     comparisons: [{
-      operator: { type: String, enum: ['<', '<=', '>', '>=', '==', 'between'] },
-      value: { type: Number },
-      valueTo: { type: Number },
+      operator: { type: String, enum: ['<', '<=', '>', '>=', '==', 'between', 'equals', 'contains'] },
+      value: { type: mongoose.Schema.Types.Mixed },
+      valueTo: { type: mongoose.Schema.Types.Mixed },
       classification: { type: String },
       action: { type: String, enum: ['NORMAL', 'HIGHLIGHT', 'CRITICAL'], default: 'NORMAL' }
     }]
@@ -101,9 +125,20 @@ const ReportInstanceSchema = new mongoose.Schema({
   sections: [ReportSectionSchema],
   status: {
     type: String,
-    enum: ['draft', 'saved', 'sent'],
+    enum: ['draft', 'saved', 'sent', 'DRAFT', 'PENDING_REVIEW', 'FINAL', 'AMENDED'],
     default: 'draft'
   },
+  authorizedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  amendmentHistory: [{
+    date: { type: Date, default: Date.now },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    reason: { type: String },
+    previousStatus: { type: String },
+    previousState: { type: mongoose.Schema.Types.Mixed }
+  }],
   auditLogs: [AuditLogSchema]
 }, { timestamps: true });
 
