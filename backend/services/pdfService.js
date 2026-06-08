@@ -278,6 +278,22 @@ exports.generateReportPdf = async (report, patient, settings) => {
 
       // Add the master header ONLY on the very first section of this test type
       if (isFirstSection) {
+
+        // NEW: Test Type Title Row
+        sectionTableBody.push([
+          { 
+            text: currentTemplateName, 
+            colSpan: 4, 
+            alignment: 'center', 
+            bold: true, 
+            fillColor: '#e2e8f0', // Slightly darker to distinguish from column headers
+            color: '#0f172a',
+            margin: [0, 4, 0, 4],
+            fontSize: fontSize
+          },
+          {}, {}, {}
+        ]);
+        
         sectionTableBody.push([
           { text: 'TEST DESCRIPTION', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
           { text: 'RESULT', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
