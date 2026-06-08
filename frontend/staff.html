@@ -161,7 +161,6 @@
     
     <script>
         checkAuth();
-        loadCommonLayout();
         // Access control: only Admin
         const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
         if (user.role !== 'Admin') {
