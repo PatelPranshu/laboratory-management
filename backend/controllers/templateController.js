@@ -6,6 +6,25 @@ const { pickFields } = require('../middlewares/validate');
 // Allowed fields for template create/update
 const TEMPLATE_FIELDS = ['templateName', 'department', 'reportType', 'sections'];
 
+const unescapeOperators = (sections) => {
+  if (!sections || !Array.isArray(sections)) return;
+  sections.forEach(sec => {
+    if (sec.parameters && Array.isArray(sec.parameters)) {
+      sec.parameters.forEach(param => {
+        if (param.comparisons && Array.isArray(param.comparisons)) {
+          param.comparisons.forEach(cmp => {
+            if (typeof cmp.operator === 'string') {
+              cmp.operator = cmp.operator
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>');
+            }
+          });
+        }
+      });
+    }
+  });
+};
+
 const validateTemplatePayload = (sections) => {
   if (!sections) return null;
   for (const section of sections) {
@@ -72,6 +91,8 @@ exports.createTemplate = async (req, res) => {
     const sanitizedBody = pickFields(req.body, TEMPLATE_FIELDS);
     sanitizedBody.doctorId = req.user.id;
 
+    unescapeOperators(sanitizedBody.sections);
+
     const validationError = validateTemplatePayload(sanitizedBody.sections);
     if (validationError) {
       return res.status(400).json({ success: false, error: validationError });
@@ -98,6 +119,8 @@ exports.updateTemplate = async (req, res) => {
 
     // Whitelist fields — prevent mass assignment
     const sanitizedBody = pickFields(req.body, TEMPLATE_FIELDS);
+
+    unescapeOperators(sanitizedBody.sections);
 
     const validationError = validateTemplatePayload(sanitizedBody.sections);
     if (validationError) {
