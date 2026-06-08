@@ -204,7 +204,7 @@ exports.updateReport = async (req, res) => {
 
     // Enforce amendment lock
     if (['saved', 'sent', 'FINAL'].includes(oldStatus)) {
-      if (!req.body.amendmentReason) {
+      if (!req.body.amendmentReason && req.user.role !== 'Admin') {
         return res.status(400).json({ success: false, error: 'Cannot modify a finalized report directly. An amendment reason is required.' });
       }
     }

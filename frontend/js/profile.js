@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Update Header & Sidebar display
             const displayName = user.name || user.email.split('@')[0];
             elements.name.textContent = user.name || user.email;
-            elements.role.textContent = user.role === 'Doctor' ? 'Medical Director / Lab Owner' : 'Laboratory Technician';
+            elements.role.textContent = user.role === 'Admin' ? 'System Administrator' : (user.role === 'Doctor' ? 'Medical Director / Lab Owner' : 'Laboratory Technician');
             elements.initials.textContent = displayName.substring(0, 2).toUpperCase();
             
             // Side details
