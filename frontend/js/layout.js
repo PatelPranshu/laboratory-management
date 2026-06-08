@@ -235,7 +235,7 @@ function initNotifications() {
         setupNotificationSocket(token);
     } else {
         const script = document.createElement('script');
-        script.src = 'https://cdn.socket.io/4.8.1/socket.io.min.js';
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js';
         script.onload = () => setupNotificationSocket(token);
         script.onerror = () => console.warn('[Notifications] Failed to load socket.io script');
         document.head.appendChild(script);
