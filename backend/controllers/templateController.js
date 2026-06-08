@@ -1,4 +1,6 @@
+const crypto = require('crypto');
 const ReportTemplate = require('../models/ReportTemplate');
+const SharedBundle = require('../models/SharedBundle');
 const { pickFields } = require('../middlewares/validate');
 
 // Allowed fields for template create/update
@@ -131,5 +133,167 @@ exports.deleteTemplate = async (req, res) => {
   } catch (error) {
     console.error('deleteTemplate error:', error.message);
     res.status(500).json({ success: false, error: 'Failed to delete template' });
+  }
+};
+
+// Recursive function to deep clone template and strip internal Mongoose IDs
+const deepCloneTemplate = (obj) => {
+  if (Array.isArray(obj)) {
+    return obj.map(item => deepCloneTemplate(item));
+  } else if (obj !== null && typeof obj === 'object') {
+    if (obj instanceof Date) return new Date(obj.getTime());
+    
+    const clone = {};
+    for (const key in obj) {
+      if (key === '_id' || key === 'id' || key === '__v' || key === 'createdAt' || key === 'updatedAt' || key === 'doctorId') {
+        continue;
+      }
+      clone[key] = deepCloneTemplate(obj[key]);
+    }
+    return clone;
+  }
+  return obj;
+};
+
+// @desc    Generate a share code for templates
+// @route   POST /api/templates/share/generate
+// @access  Private
+exports.generateShare = async (req, res) => {
+  try {
+    const { templateIds } = req.body;
+    if (!templateIds || !Array.isArray(templateIds) || templateIds.length === 0) {
+      return res.status(400).json({ success: false, error: 'Please provide an array of templateIds' });
+    }
+
+    let shareCode;
+    let bundle;
+    let attempts = 0;
+    
+    while (attempts < 3) {
+      shareCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+      try {
+        bundle = await SharedBundle.create({
+          shareCode,
+          senderId: req.user.id,
+          templateIds
+        });
+        break; // Successfully created
+      } catch (err) {
+        // 11000 is the MongoDB duplicate key error code
+        if (err.code === 11000) {
+          attempts++;
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    if (!bundle) {
+      return res.status(500).json({ success: false, error: 'Failed to generate a unique share code. Please try again.' });
+    }
+
+    res.status(201).json({ success: true, data: bundle });
+  } catch (error) {
+    console.error('generateShare error:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to generate share code' });
+  }
+};
+
+// @desc    Get active shared bundles created by the user
+// @route   GET /api/templates/share/active
+// @access  Private
+exports.getActiveShares = async (req, res) => {
+  try {
+    const bundles = await SharedBundle.find({ senderId: req.user.id })
+      .populate('templateIds', 'templateName department')
+      .sort('-createdAt');
+
+    res.status(200).json({ success: true, count: bundles.length, data: bundles });
+  } catch (error) {
+    console.error('getActiveShares error:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to fetch active shares' });
+  }
+};
+
+// @desc    Revoke/Delete an active share
+// @route   DELETE /api/templates/share/:id
+// @access  Private
+exports.revokeShare = async (req, res) => {
+  try {
+    const bundle = await SharedBundle.findOne({ _id: req.params.id, senderId: req.user.id });
+
+    if (!bundle) {
+      return res.status(404).json({ success: false, error: 'Share bundle not found or unauthorized' });
+    }
+
+    await bundle.deleteOne();
+    res.status(200).json({ success: true, data: {} });
+  } catch (error) {
+    console.error('revokeShare error:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to revoke share' });
+  }
+};
+
+// @desc    Preview a shared bundle
+// @route   GET /api/templates/share/preview/:code
+// @access  Private
+exports.previewShare = async (req, res) => {
+  try {
+    const code = req.params.code.toUpperCase();
+    const bundle = await SharedBundle.findOne({ shareCode: code })
+      .populate('senderId', 'name labName')
+      .populate('templateIds', 'templateName department');
+
+    if (!bundle) {
+      return res.status(404).json({ success: false, error: 'Invalid or expired share code' });
+    }
+
+    res.status(200).json({ success: true, data: bundle });
+  } catch (error) {
+    console.error('previewShare error:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to preview share' });
+  }
+};
+
+// @desc    Import templates from a shared bundle
+// @route   POST /api/templates/share/import
+// @access  Private
+exports.importShare = async (req, res) => {
+  try {
+    const { shareCode } = req.body;
+    if (!shareCode) {
+      return res.status(400).json({ success: false, error: 'Please provide a share code' });
+    }
+
+    const code = shareCode.toUpperCase();
+    const bundle = await SharedBundle.findOne({ shareCode: code });
+
+    if (!bundle) {
+      return res.status(404).json({ success: false, error: 'Invalid or expired share code' });
+    }
+
+    if (bundle.senderId.toString() === req.user.id.toString()) {
+      return res.status(400).json({ success: false, error: 'Cannot import your own shared templates' });
+    }
+
+    const templatesToImport = await ReportTemplate.find({ _id: { $in: bundle.templateIds } }).lean();
+    
+    if (templatesToImport.length === 0) {
+      return res.status(404).json({ success: false, error: 'No templates found in this bundle' });
+    }
+
+    const newTemplates = templatesToImport.map(t => {
+      const cloned = deepCloneTemplate(t);
+      cloned.templateName = `${cloned.templateName} (Imported)`;
+      cloned.doctorId = req.user.id;
+      return cloned;
+    });
+
+    const inserted = await ReportTemplate.insertMany(newTemplates);
+
+    res.status(201).json({ success: true, count: inserted.length, data: inserted });
+  } catch (error) {
+    console.error('importShare error:', error.message);
+    res.status(500).json({ success: false, error: 'Failed to import templates' });
   }
 };

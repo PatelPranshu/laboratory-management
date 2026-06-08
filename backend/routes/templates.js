@@ -4,13 +4,25 @@ const {
   getTemplate,
   createTemplate,
   updateTemplate,
-  deleteTemplate
+  deleteTemplate,
+  generateShare,
+  getActiveShares,
+  revokeShare,
+  previewShare,
+  importShare
 } = require('../controllers/templateController');
 
 const { protect, authorize } = require('../middlewares/authMiddleware');
 const { validateObjectId } = require('../middlewares/validate');
 
 const router = express.Router();
+
+// Share routes MUST come before /:id routes
+router.post('/share/generate', protect, authorize('Admin', 'Doctor'), generateShare);
+router.get('/share/active', protect, authorize('Admin', 'Doctor'), getActiveShares);
+router.get('/share/preview/:code', protect, authorize('Admin', 'Doctor'), previewShare);
+router.post('/share/import', protect, authorize('Admin', 'Doctor'), importShare);
+router.delete('/share/:id', protect, validateObjectId, authorize('Admin', 'Doctor'), revokeShare);
 
 router.route('/')
   .get(protect, getTemplates)

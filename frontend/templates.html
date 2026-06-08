@@ -93,6 +93,11 @@
                 </div>
 
                 <div class="flex items-center gap-2 sm:gap-4 ml-auto" id="header-actions">
+                    <button onclick="openShareModal()"
+                        class="p-2 sm:px-5 sm:py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all shadow-sm flex items-center"
+                        title="Share / Import">
+                        <i class="fas fa-share-alt text-brand-600 sm:mr-2"></i> <span class="hidden sm:inline">Share / Import</span>
+                    </button>
                     <button onclick="createNewTemplate()"
                         class="p-2 sm:px-5 sm:py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all shadow-sm flex items-center"
                         title="New Template">
@@ -490,9 +495,99 @@
             </>
     </template>
 
+    <!-- Share / Import Modal -->
+    <div id="share-modal" class="fixed inset-0 z-[150] hidden">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeShareModal()"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
+                <h2 class="text-lg font-bold text-slate-800"><i class="fas fa-share-alt text-brand-500 mr-2"></i>Share / Import Templates</h2>
+                <button onclick="closeShareModal()" class="text-slate-400 hover:text-slate-700 transition-colors"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="flex border-b border-slate-100 shrink-0 px-6 pt-2 gap-6 bg-slate-50/50">
+                <button onclick="switchShareTab('generate')" id="tab-btn-generate" class="pb-3 text-sm font-bold border-b-2 border-brand-500 text-brand-600 transition-colors">Generate Code</button>
+                <button onclick="switchShareTab('manage')" id="tab-btn-manage" class="pb-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors">Active Shares</button>
+                <button onclick="switchShareTab('import')" id="tab-btn-import" class="pb-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors">Import Templates</button>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                <!-- Tab 1: Generate -->
+                <div id="tab-content-generate" class="block">
+                    <p class="text-sm text-slate-600 mb-4">Select templates to bundle into a single 24-hour share code.</p>
+                    <div id="share-template-list" class="space-y-2 max-h-[40vh] overflow-y-auto border border-slate-200 rounded-lg p-2 mb-4 bg-slate-50 custom-scrollbar">
+                        <!-- Checkboxes injected here -->
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <button onclick="generateShareCode()" id="btn-generate-code" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-lg shadow-sm transition-all flex justify-center items-center">
+                            Generate Share Code
+                        </button>
+                        <div id="generated-code-container" class="hidden flex flex-col items-center gap-2 bg-green-50 border border-green-200 p-4 rounded-lg mt-2 text-center">
+                            <span class="text-xs font-bold text-green-700 uppercase tracking-widest">Your Share Code (Valid for 24h)</span>
+                            <div class="flex items-center gap-2 w-full justify-center">
+                                <input type="text" id="generated-code-input" readonly class="bg-white border border-green-300 rounded px-4 py-2 text-xl font-mono font-bold text-slate-800 w-48 text-center outline-none">
+                                <button onclick="copyShareCode()" class="p-2 bg-green-600 hover:bg-green-700 text-white rounded shadow-sm transition-colors" title="Copy"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Manage -->
+                <div id="tab-content-manage" class="hidden">
+                    <p class="text-sm text-slate-600 mb-4">Your actively shared template bundles.</p>
+                    <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    <th class="p-3">Share Code</th>
+                                    <th class="p-3">Templates</th>
+                                    <th class="p-3">Created</th>
+                                    <th class="p-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="active-shares-tbody" class="divide-y divide-slate-100 text-sm text-slate-700 bg-white">
+                                <!-- Rows injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Import -->
+                <div id="tab-content-import" class="hidden">
+                    <p class="text-sm text-slate-600 mb-4">Enter a share code provided by another lab to import their templates.</p>
+                    <div class="flex gap-2 mb-6">
+                        <input type="text" id="import-code-input" placeholder="e.g. A1B2C3D4" class="flex-1 bg-white border border-slate-300 focus:border-brand-500 rounded-lg px-4 py-2.5 font-mono font-bold text-slate-800 uppercase outline-none transition-all shadow-sm">
+                        <button onclick="previewShareCode()" id="btn-preview-share" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm rounded-lg shadow-sm transition-all whitespace-nowrap">
+                            Preview
+                        </button>
+                    </div>
+
+                    <div id="import-preview-container" class="hidden border border-brand-200 bg-brand-50 rounded-lg p-5 flex-col gap-4">
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-lg shrink-0"><i class="fas fa-user-md"></i></div>
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm">Shared by <span id="preview-sender-name" class="text-brand-700"></span></h3>
+                                <p class="text-xs text-slate-500 font-medium" id="preview-lab-name"></p>
+                            </div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded px-4 py-3">
+                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Templates in this bundle:</h4>
+                            <ul id="preview-template-list" class="list-disc list-inside text-sm text-slate-700 font-medium space-y-1">
+                                <!-- Items injected here -->
+                            </ul>
+                        </div>
+                        <button onclick="confirmImport()" id="btn-confirm-import" class="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold text-sm rounded-lg shadow-sm transition-all flex justify-center items-center mt-2">
+                            <i class="fas fa-file-import mr-2"></i> Confirm & Import Templates
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/layout.js"></script>
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/templates.js"></script>
     <script>
         function adjustNotesHeight(el) {
             const currentStyleHeight = el.style.height;
