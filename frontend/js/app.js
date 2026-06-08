@@ -339,8 +339,8 @@ function checkAuth() {
         enforceRBACUI(u.role);
 
         if (userNameEl) {
-          const displayName = u.email ? u.email.split('@')[0] : 'User';
-          userNameEl.textContent = `Dr. ${displayName}`;
+          const displayName = u.name || (u.email ? u.email.split('@')[0] : 'User');
+          userNameEl.textContent = displayName;
         }
       } catch(e) {
         if (userNameEl) userNameEl.textContent = 'User';

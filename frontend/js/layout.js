@@ -29,6 +29,39 @@ function loadCommonLayout() {
     // Sanitize labName to prevent stored XSS via malicious lab names
     const safeLabName = sanitizeForHtml(labName);
 
+    // Guarantee strict UI consistency for the sidebar across all pages regardless of local Tailwind configs
+    if (!document.getElementById('sidebar-strict-styles')) {
+        const style = document.createElement('style');
+        style.id = 'sidebar-strict-styles';
+        style.innerHTML = `
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+            
+            #main-sidebar {
+                font-family: 'Inter', sans-serif !important;
+                background-color: #1e1b4b !important;
+                background-image: none !important;
+            }
+            #main-sidebar .text-brand-100,
+            #main-sidebar .group-hover\\:text-brand-100:hover { color: #e0f2fe !important; }
+            #main-sidebar .text-brand-300 { color: #7dd3fc !important; }
+            #main-sidebar .text-indigo-100\\/70 { color: rgba(224, 231, 255, 0.7) !important; }
+            #main-sidebar .hover\\:text-white:hover { color: #ffffff !important; }
+            #main-sidebar .hover\\:bg-white\\/5:hover { background-color: rgba(255, 255, 255, 0.05) !important; }
+            #main-sidebar .bg-white\\/10 { background-color: rgba(255, 255, 255, 0.1) !important; }
+            #main-sidebar .border-white\\/10 { border-color: rgba(255, 255, 255, 0.1) !important; }
+            #main-sidebar .from-brand-500 { --tw-gradient-from: #0ea5e9 !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(14, 165, 233, 0)) !important; }
+            #main-sidebar .to-indigo-600 { --tw-gradient-to: #4f46e5 !important; }
+            
+            /* Scrollbar */
+            #main-sidebar .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+            #main-sidebar .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+            #main-sidebar .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+            #main-sidebar .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+        `;
+        document.head.appendChild(style);
+    }
+
+
     const sidebarHTML = `
         <!-- Sidebar Backdrop -->
         <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/50 z-40 hidden opacity-0 transition-opacity duration-300" onclick="closeMobileSidebar()"></div>
