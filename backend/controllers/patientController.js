@@ -106,6 +106,11 @@ exports.createPatient = async (req, res) => {
 
     // Whitelist fields — prevent mass assignment of doctorId or other internal fields
     const sanitizedBody = pickFields(req.body, PATIENT_FIELDS);
+
+    if (!sanitizedBody.name || sanitizedBody.age === undefined || sanitizedBody.age === '' || !sanitizedBody.gender) {
+      return res.status(400).json({ success: false, error: 'Name, Age, and Gender are required fields.' });
+    }
+
     sanitizedBody.doctorId = doctorId;
     sanitizedBody.createdBy = req.user.id;
 
