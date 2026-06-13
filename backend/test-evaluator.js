@@ -64,12 +64,14 @@ const genderParam = {
 
 r = evaluatePatientResult('14', genderParam, 'Male');
 assert('Male normal', r.isAbnormal, false);
+assert('Male range display matches Male gender', r.rangeDisplay, '13-17 g/dL');
 
 r = evaluatePatientResult('11', genderParam, 'Male');
 assert('Male low', r.isAbnormal, true);
 
 r = evaluatePatientResult('14', genderParam, 'Female');
 assert('Female normal', r.isAbnormal, false);
+assert('Female range display matches Female gender', r.rangeDisplay, '12-15 g/dL');
 
 r = evaluatePatientResult('16', genderParam, 'Female');
 assert('Female high', r.isAbnormal, true);

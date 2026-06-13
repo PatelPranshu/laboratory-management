@@ -29,6 +29,12 @@ const PatientSchema = new mongoose.Schema({
     enum: ['Male', 'Female', 'Other'],
     required: true
   },
+  weight: {
+    type: Number
+  },
+  height: {
+    type: Number
+  },
   address: {
     type: String
   }

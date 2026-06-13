@@ -7,9 +7,9 @@ const path = require('path');
 const fonts = {
   Roboto: {
     normal: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto/Roboto-Regular.ttf'),
-    bold: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto/Roboto-Medium.ttf'),
+    bold: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto/Roboto-Bold.ttf'),
     italics: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto/Roboto-Italic.ttf'),
-    bolditalics: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto/Roboto-MediumItalic.ttf')
+    bolditalics: path.join(__dirname, '../node_modules/pdfmake/fonts/Roboto/Roboto-BoldItalic.ttf')
   }
 };
 
@@ -129,7 +129,12 @@ exports.generateReportPdf = async (report, patient, settings) => {
   const mt = lp.marginTop || 40;
   const mr = lp.marginRight || 40;
   const mb = lp.marginBottom || 40;
-  const fontSize = lp.fontSize || 12;
+  
+  // Font sizes
+  const baseFontSize = lp.fontSize || 12;
+  const patientInfoFontSize = lp.patientInfoFontSize || baseFontSize;
+  const templateInfoFontSize = lp.templateInfoFontSize || baseFontSize;
+  const signatureFontSize = lp.signatureFontSize || baseFontSize;
 
   const contentWidth = 595.28 - ml - mr;
 
@@ -217,31 +222,39 @@ exports.generateReportPdf = async (report, patient, settings) => {
     }
 
     const patientInfoTable = {
+      fontSize: patientInfoFontSize,
       table: {
-        widths: ['20%', '30%', '20%', '30%'],
+        widths: ['10%', '10%', '15%', '15%', '20%', '30%'],
         body: [
           [
-            { text: 'Patient Name:', bold: true, color: '#334155' },
-            { text: (patient.name || 'N/A').toUpperCase(), bold: true },
+            { text: 'Patient Name:', colSpan: 2, bold: true, color: '#334155' },
+            {},
+            { text: (patient.name || 'N/A').toUpperCase(), colSpan: 2, bold: true },
+            {},
             { text: 'Report ID:', bold: true, color: '#334155' },
             { text: reportId }
           ],
           [
-            { text: 'Age / Gender:', bold: true, color: '#334155' },
-            { text: `${patient.age || 'N/A'} / ${patient.gender || 'N/A'}` },
+            { text: 'Age:', bold: true, color: '#334155' },
+            { text: patient.age || 'N/A' },
+            { text: 'Gender:', bold: true, color: '#334155' },
+            { text: patient.gender || 'N/A' },
             { text: 'Report Date:', bold: true, color: '#334155' },
             { text: reportDate }
           ],
           [
-            { text: 'Phone:', bold: true, color: '#334155' },
-            { text: patient.phone || 'N/A' },
+            { text: 'Phone:', colSpan: 2, bold: true, color: '#334155' },
+            {},
+            { text: patient.phone || 'N/A', colSpan: 2 },
+            {},
             { text: 'Referred By:', bold: true, color: '#334155' },
             { text: (report.referredBy || 'Self').toUpperCase(), bold: true }
           ],
           [
-            { text: 'Test Name:', bold: true, color: '#334155' },
-            { text: currentTemplateName, colSpan: 3, bold: true, color: '#0f172a' },
-            {}, {}
+            { text: 'Test Name:', colSpan: 2, bold: true, color: '#334155' },
+            {},
+            { text: currentTemplateName, colSpan: 4, bold: true, color: '#0f172a' },
+            {}, {}, {}
           ]
         ]
       },
@@ -281,7 +294,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
             fillColor: '#e2e8f0', 
             color: '#0f172a',
             margin: [0, 4, 0, 4],
-            fontSize: fontSize
+            fontSize: templateInfoFontSize
           },
           {}, {}, {}
         ]);
@@ -308,7 +321,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
         if (advSetup.length > 0) {
           sectionTextChunks.push({
             text: (sec.sectionName ? '\n  ' : '  ') + advSetup.join(', '),
-            fontSize: Math.max(6, fontSize - 4),
+            fontSize: Math.max(6, templateInfoFontSize - 4),
             italics: true,
             color: '#64748b',
             bold: false
@@ -359,18 +372,28 @@ exports.generateReportPdf = async (report, patient, settings) => {
           if (paramAdv.length > 0) {
             paramTextChunks.push({
               text: '\n  ' + paramAdv.join(', '),
-              fontSize: Math.max(6, fontSize - 4),
+              fontSize: Math.max(6, templateInfoFontSize - 4),
               italics: true,
               color: '#64748b'
             });
           }
 
-          sectionTableBody.push([
-            { text: paramTextChunks, margin: [0, 0, 0, 0] },
-            resultCell,
-            { text: unitsStr, margin: [0, 0, 0, 0] },
-            { text: normalRangeStr, fontSize: fontSize - 3, margin: [0, 0, 0, 0] }
-          ]);
+          if (p.dataType === 'DEFAULT_VALUE') {
+            resultCell.colSpan = 3;
+            sectionTableBody.push([
+              { text: paramTextChunks, margin: [0, 0, 0, 0] },
+              resultCell,
+              {},
+              {}
+            ]);
+          } else {
+            sectionTableBody.push([
+              { text: paramTextChunks, margin: [0, 0, 0, 0] },
+              resultCell,
+              { text: unitsStr, margin: [0, 0, 0, 0] },
+              { text: normalRangeStr, fontSize: templateInfoFontSize - 2, margin: [0, 0, 0, 0] }
+            ]);
+          }
         });
       } else if (sec.values) {
         const valuesObj = (sec.values && typeof sec.values.toJSON === 'function') 
@@ -396,7 +419,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
             { text: String(key), margin: [0, 0, 0, 0] },
             { text: resultStr, bold: isAbnormal, margin: [0, 0, 0, 0] },
             { text: '', margin: [0, 0, 0, 0] },
-            { text: normalRangeStr, fontSize: fontSize - 3, margin: [0, 0, 0, 0] }
+            { text: normalRangeStr, fontSize: templateInfoFontSize - 3, margin: [0, 0, 0, 0] }
           ]);
         }
       }
@@ -404,7 +427,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
       content.push({
         stack: [
           {
-            fontSize: fontSize - 1,
+            fontSize: templateInfoFontSize - 1,
             table: {
               headerRows: isFirstSection ? 1 : 0, 
               widths: ['38%', '15%', '15%', '32%'], 
@@ -442,14 +465,14 @@ exports.generateReportPdf = async (report, patient, settings) => {
     if (blockRemarks && blockRemarks.length > 0) {
       const remarksContent = [];
       remarksContent.push({ canvas: [{ type: 'line', x1: 0, y1: 5, x2: contentWidth, y2: 5, lineWidth: 0.5, lineColor: '#cbd5e1' }] });
-      remarksContent.push({ text: 'REMARKS / OBSERVATIONS', style: 'subheader', margin: [0, 8, 0, 4], fontSize: fontSize - 2, color: '#64748b' });
+      remarksContent.push({ text: 'REMARKS / OBSERVATIONS', style: 'subheader', margin: [0, 8, 0, 4], fontSize: templateInfoFontSize - 2, color: '#64748b' });
       
       blockRemarks.forEach(rem => {
         const textParts = [];
         if (rem.title) {
-          textParts.push({ text: `${rem.title}: `, bold: true, fontSize: fontSize - 1 });
+          textParts.push({ text: `${rem.title}: `, bold: true, fontSize: templateInfoFontSize - 1 });
         }
-        textParts.push({ text: rem.text, fontSize: fontSize - 1 });
+        textParts.push({ text: rem.text, fontSize: templateInfoFontSize - 1 });
 
         remarksContent.push({
           text: textParts,
@@ -484,8 +507,8 @@ exports.generateReportPdf = async (report, patient, settings) => {
         text: `*** END OF ${currentTemplateName} ***`,
         alignment: 'center',
         bold: true,
-        margin: [0, 25, 0, 15],
-        fontSize: fontSize - 2,
+        margin: [0, 0, 0, 15],
+        fontSize: signatureFontSize - 2,
         color: '#475569'
     });
 
@@ -497,10 +520,10 @@ exports.generateReportPdf = async (report, patient, settings) => {
                 { 
                     width: '*', 
                     text: 'Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated and authenticated document.',
-                    fontSize: fontSize - 4,
+                    fontSize: signatureFontSize - 4,
                     color: '#64748b',
                     italics: true,
-                    margin: [0, 30, 10, 0]
+                    margin: [0, 20, 10, 0]
                 }, 
                 {
                     width: 200,
@@ -508,8 +531,8 @@ exports.generateReportPdf = async (report, patient, settings) => {
                     margin: [0, 10, 0, 0],
                     stack: [
                         { image: signatureImageData, fit: [120, 60], alignment: 'center' },
-                        { text: signerName, fontSize: fontSize + 1, bold: true, color: '#1e293b' },
-                        { text: 'PERFORMED BY / AUTHORIZED SIGNATORY', fontSize: fontSize - 4, color: '#64748b', margin: [0, 4, 0, 0], bold: true, characterSpacing: 0.5 }
+                        { text: signerName, fontSize: signatureFontSize, bold: true, color: '#1e293b' },
+                        { text: 'PERFORMED BY / AUTHORIZED SIGNATORY', fontSize: signatureFontSize - 4, color: '#64748b', margin: [0, 2, 0, 0], bold: true, characterSpacing: 0.5 }
                     ]
                 }
             ]
@@ -517,7 +540,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
     } else {
         endOfReportBlock.push({
             text: 'Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated document.',
-            fontSize: fontSize - 4,
+            fontSize: signatureFontSize - 4,
             color: '#64748b',
             italics: true,
             margin: [0, 10, 0, 0]
@@ -535,23 +558,14 @@ exports.generateReportPdf = async (report, patient, settings) => {
   const docDefinition = {
     content: content,
     pageMargins: [ml, mt, mr, mb + 20], 
-    footer: function(currentPage, pageCount) {
-      return {
-        columns: [
-          { text: `Printed on: ${new Date().toLocaleString('en-IN')}`, alignment: 'left', fontSize: 8, color: '#94a3b8', margin: [ml, 0, 0, 0] },
-          { text: `Page ${currentPage} of ${pageCount}`, alignment: 'right', fontSize: 8, color: '#94a3b8', margin: [0, 0, mr, 0] }
-        ],
-        margin: [0, 10, 0, 0]
-      };
-    },
     styles: {
-      header: { fontSize: fontSize + 6, bold: true },
-      subheader: { fontSize: fontSize + 2, bold: true },
+      header: { fontSize: baseFontSize + 6, bold: true },
+      subheader: { fontSize: baseFontSize + 2, bold: true },
       patientInfo: { lineHeight: 1.4 }
     },
     defaultStyle: {
       font: 'Roboto',
-      fontSize: fontSize
+      fontSize: baseFontSize
     }
   };
 

@@ -7,6 +7,55 @@ const Signature = require('../models/Signature');
 const { sendNotification } = require('../utils/notifier');
 const { pickFields } = require('../middlewares/validate');
 const { updateLabStats } = require('../utils/statsHelper');
+const { calculateDerivedResult } = require('../utils/mathHelper');
+
+/**
+ * Resolves all CALCULATED parameters across report sections.
+ * Uses multi-pass resolution (up to 10 passes) to handle chained formulas
+ * where one calculated param depends on another calculated param's result.
+ * 
+ * @param {Array} sections - The report sections containing parameters
+ * @param {Object} patientContext - Patient demographics { 'Patient Age': N, ... }
+ */
+function resolveCalculatedParams(sections, patientContext = {}) {
+  const MAX_PASSES = 10;
+
+  for (let pass = 0; pass < MAX_PASSES; pass++) {
+    let resolvedAny = false;
+
+    // Build a flat results map from ALL sections' parameters
+    const resultsMap = {};
+    for (const section of sections) {
+      for (const param of (section.parameters || [])) {
+        if (param.result && param.result.trim() !== '') {
+          const numVal = parseFloat(param.result);
+          if (!isNaN(numVal)) {
+            resultsMap[param.name] = numVal;
+          }
+        }
+      }
+    }
+
+    // Iterate through all CALCULATED parameters and attempt resolution
+    for (const section of sections) {
+      for (const param of (section.parameters || [])) {
+        if (param.dataType !== 'CALCULATED' || !param.formula) continue;
+
+        // Skip if already resolved in a previous pass
+        if (param.result && param.result.trim() !== '') continue;
+
+        const result = calculateDerivedResult(param.formula, resultsMap, patientContext);
+        if (result !== null) {
+          param.result = String(result);
+          resolvedAny = true;
+        }
+      }
+    }
+
+    // If no new values were resolved this pass, we're done
+    if (!resolvedAny) break;
+  }
+}
 
 // Allowed fields for report create/update — prevents mass assignment
 // creatorId, verifierId, performedByLabTechId are set SERVER-SIDE only to prevent spoofing
@@ -130,6 +179,23 @@ exports.createReport = async (req, res) => {
     // Handle empty string IDs
     if (sanitizedBody.performedByLabTechId === '') sanitizedBody.performedByLabTechId = null;
 
+    // Resolve CALCULATED parameters before saving
+    if (sanitizedBody.sections && sanitizedBody.patientId) {
+      try {
+        const patient = await Patient.findById(sanitizedBody.patientId);
+        if (patient) {
+          const patientContext = {
+            'Patient Age': patient.age,
+            'Patient Weight': patient.weight,
+            'Patient Height': patient.height
+          };
+          resolveCalculatedParams(sanitizedBody.sections, patientContext);
+        }
+      } catch (calcErr) {
+        console.warn('Calculated param resolution failed (non-blocking):', calcErr.message);
+      }
+    }
+
     // Determine final status
     // If client explicitly requested 'draft', keep it as draft
     const requestedStatus = req.body.status;
@@ -224,6 +290,24 @@ exports.updateReport = async (req, res) => {
 
     // Whitelist fields — prevent doctorId/auditLogs manipulation
     const sanitizedBody = pickFields(req.body, REPORT_UPDATE_FIELDS);
+
+    // Resolve CALCULATED parameters before saving
+    if (sanitizedBody.sections) {
+      try {
+        const patientId = report.patientId;
+        const patient = await Patient.findById(patientId);
+        if (patient) {
+          const patientContext = {
+            'Patient Age': patient.age,
+            'Patient Weight': patient.weight,
+            'Patient Height': patient.height
+          };
+          resolveCalculatedParams(sanitizedBody.sections, patientContext);
+        }
+      } catch (calcErr) {
+        console.warn('Calculated param resolution failed (non-blocking):', calcErr.message);
+      }
+    }
 
     // Handle empty string IDs
     if (sanitizedBody.performedByLabTechId === '') sanitizedBody.performedByLabTechId = null;

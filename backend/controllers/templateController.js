@@ -29,7 +29,19 @@ const validateTemplatePayload = (sections) => {
   if (!sections) return null;
   for (const section of sections) {
     for (const param of section.parameters || []) {
-      if (param.dataType === 'NUMERIC') {
+      if (param.dataType === 'CALCULATED') {
+        // CALCULATED params must have a formula
+        if (!param.formula || !param.formula.trim()) {
+          return `Parameter '${param.name}' is CALCULATED but missing a formula.`;
+        }
+        // CALCULATED params also require reference ranges (like NUMERIC) for abnormality flagging
+        const hasLegacyMinMax = param.normalRange && (param.normalRange.min != null || param.normalRange.max != null || (param.normalRange.male && (param.normalRange.male.min != null || param.normalRange.male.max != null)) || (param.normalRange.female && (param.normalRange.female.min != null || param.normalRange.female.max != null)));
+        const hasLegacyComparisons = param.comparisons && param.comparisons.length > 0;
+        const hasNewRanges = param.referenceRanges && param.referenceRanges.length > 0 && param.referenceRanges.some(r => r.min != null || r.max != null);
+        if (!hasLegacyMinMax && !hasLegacyComparisons && !hasNewRanges) {
+          return `Parameter '${param.name}' is CALCULATED but missing reference range limits.`;
+        }
+      } else if (param.dataType === 'NUMERIC') {
         const hasLegacyMinMax = param.normalRange && (param.normalRange.min != null || param.normalRange.max != null || (param.normalRange.male && (param.normalRange.male.min != null || param.normalRange.male.max != null)) || (param.normalRange.female && (param.normalRange.female.min != null || param.normalRange.female.max != null)));
         const hasLegacyComparisons = param.comparisons && param.comparisons.length > 0;
         const hasNewRanges = param.referenceRanges && param.referenceRanges.length > 0 && param.referenceRanges.some(r => r.min != null || r.max != null);

@@ -7,7 +7,7 @@ const { pickFields } = require('../middlewares/validate');
 const { updateLabStats } = require('../utils/statsHelper');
 
 // Allowed fields for patient create/update — prevents mass assignment
-const PATIENT_FIELDS = ['name', 'phone', 'email', 'age', 'gender', 'address'];
+const PATIENT_FIELDS = ['name', 'phone', 'email', 'age', 'gender', 'address', 'weight', 'height'];
 
 // Resolve the lab admin ID regardless of the caller's role
 const getAdminId = (req) => {

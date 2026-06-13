@@ -19,9 +19,11 @@ const ReportSectionSchema = new mongoose.Schema({
     name: { type: String, required: true },
     dataType: { 
       type: String, 
-      enum: ['NUMERIC', 'TEXT', 'BOOLEAN', 'DATETIME', 'ATTACHMENT', 'MULTI_SELECT', 'CULTURE_SENSITIVITY'],
+      enum: ['NUMERIC', 'TEXT', 'BOOLEAN', 'DATETIME', 'ATTACHMENT', 'MULTI_SELECT', 'CULTURE_SENSITIVITY', 'CALCULATED', 'DEFAULT_VALUE'],
       default: 'NUMERIC'
     },
+    formula: { type: String },
+    formulaDependencies: [{ type: String }],
     result: { type: String },
     valueNumeric: { type: Number },
     valueText: { type: String },

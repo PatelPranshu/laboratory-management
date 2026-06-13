@@ -9,6 +9,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -570,6 +571,24 @@
                             <textarea id="new-p-address" rows="2" placeholder="Full residential address..."
                                 class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm resize-none"></textarea>
                         </div>
+
+                        <div class="col-span-1">
+                            <label
+                                class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center gap-1.5">
+                                <i class="fas fa-weight text-slate-400 text-[10px]"></i> Weight (kg)
+                            </label>
+                            <input type="number" id="new-p-weight" step="0.1" min="0" placeholder="e.g. 70"
+                                class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                        </div>
+
+                        <div class="col-span-1">
+                            <label
+                                class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center gap-1.5">
+                                <i class="fas fa-ruler-vertical text-slate-400 text-[10px]"></i> Height (cm)
+                            </label>
+                            <input type="number" id="new-p-height" step="0.1" min="0" placeholder="e.g. 170"
+                                class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                        </div>
                     </div>
 
                     <div
@@ -623,6 +642,89 @@
             const urlParams = new URLSearchParams(window.location.search);
             return DraftManager.getReportKey(urlParams.get('patient'));
         }
+
+        function liveCalculateParams() {
+            if (typeof math === 'undefined') return;
+
+            const resultsMap = {};
+            // Collect manually entered results
+            document.querySelectorAll('.param-line').forEach(line => {
+                const paramDataStr = line.dataset.paramData;
+                if (!paramDataStr) return;
+                const param = JSON.parse(paramDataStr);
+                if (param.dataType !== 'CALCULATED') {
+                    const resultVal = parseFloat(line.querySelector('.p-result').value);
+                    if (!isNaN(resultVal)) {
+                        resultsMap[param.name] = resultVal;
+                    }
+                }
+            });
+
+            const patientContext = {
+                'Patient Age': currentPatient ? currentPatient.age : null,
+                'Patient Weight': currentPatient ? currentPatient.weight : null,
+                'Patient Height': currentPatient ? currentPatient.height : null
+            };
+
+            // Multi-pass resolution
+            for (let pass = 0; pass < 5; pass++) {
+                let resolvedAny = false;
+                document.querySelectorAll('.param-line').forEach(line => {
+                    const paramDataStr = line.dataset.paramData;
+                    if (!paramDataStr) return;
+                    const param = JSON.parse(paramDataStr);
+                    
+                    if (param.dataType === 'CALCULATED' && param.formula) {
+                        const inputEl = line.querySelector('.p-result');
+                        let formulaToEval = param.formula;
+                        let missingDep = false;
+
+                        formulaToEval = formulaToEval.replace(/\[([^\]]+)\]/g, (match, tagName) => {
+                            let val = resultsMap[tagName] !== undefined ? resultsMap[tagName] : patientContext[tagName];
+                            if (val === undefined || val === null || isNaN(val) || val === '') {
+                                missingDep = true;
+                                return '0';
+                            }
+                            return val;
+                        });
+
+                        const oldVal = inputEl.value;
+                        let newVal = '';
+
+                        if (!missingDep) {
+                            try {
+                                let res = math.evaluate(formulaToEval);
+                                if (typeof res === 'number' && !isNaN(res) && isFinite(res)) {
+                                    newVal = String(Math.round(res * 100) / 100);
+                                    resultsMap[param.name] = parseFloat(newVal);
+                                }
+                            } catch (err) {}
+                        }
+
+                        if (oldVal !== newVal) {
+                            inputEl.value = newVal;
+                            resolvedAny = true;
+                            if (newVal) checkAbnormal(inputEl);
+                            else {
+                                inputEl.classList.remove('text-red-600', 'border-red-300', 'bg-red-50', 'text-amber-600', 'border-amber-300', 'bg-amber-50');
+                                inputEl.style.backgroundColor = '#fef9c3';
+                                inputEl.style.borderColor = '#fbbf24';
+                            }
+                        } else if (newVal !== '' && !resultsMap[param.name]) {
+                            // ensure it's in the map even if it didn't change this pass, so chained formulas work
+                            resultsMap[param.name] = parseFloat(newVal);
+                        }
+                    }
+                });
+                if (!resolvedAny) break;
+            }
+        }
+
+        document.addEventListener('input', (e) => {
+            if (e.target.classList.contains('p-result')) {
+                liveCalculateParams();
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', async () => {
             const loader = document.getElementById('page-loader');
@@ -968,7 +1070,11 @@
             const nameEl = line.querySelector('.p-name'), unitEl = line.querySelector('.p-units-input'), rangeEl = line.querySelector('.p-normal-input');
 
             nameEl.value = paramData.name || '';
-            line.querySelector('.p-result').value = paramData.result || '';
+            let defaultResultVal = paramData.result || '';
+            if (!defaultResultVal && paramData.dataType === 'DEFAULT_VALUE' && paramData.defaultValue !== undefined) {
+                defaultResultVal = paramData.defaultValue;
+            }
+            line.querySelector('.p-result').value = defaultResultVal;
             unitEl.value = paramData.units || '';
 
             // Determine display text for the reference range
@@ -1019,6 +1125,24 @@
                 nameEl.readOnly = true; nameEl.classList.add('locked-field');
                 unitEl.readOnly = true; unitEl.classList.add('locked-field');
                 rangeEl.readOnly = true; rangeEl.classList.add('locked-field');
+            }
+
+            // CALCULATED parameters: result field is readonly (populated server-side on save)
+            if (paramData.dataType === 'CALCULATED') {
+                const resultEl = line.querySelector('.p-result');
+                resultEl.readOnly = true;
+                resultEl.classList.add('locked-field');
+                resultEl.style.backgroundColor = '#fef9c3';
+                resultEl.style.borderColor = '#fbbf24';
+                resultEl.placeholder = '⚡ Auto-calculated';
+                resultEl.title = 'This value is calculated automatically live as you type other results.';
+
+                // Add a small visual badge next to the name
+                const badge = document.createElement('span');
+                badge.className = 'ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-100 border border-amber-200 text-amber-700 text-[9px] font-extrabold rounded-md uppercase tracking-wider';
+                badge.innerHTML = '<i class="fas fa-square-root-alt text-[8px]"></i> Calc';
+                badge.title = `Formula: ${paramData.formula || 'N/A'}`;
+                nameEl.parentElement.appendChild(badge);
             }
 
             const methodologyVal = paramData.methodology || '';
@@ -1441,6 +1565,8 @@
             } else {
                 addReportSection(false);
             }
+            
+            setTimeout(liveCalculateParams, 100);
         }
 
         const saveReportDraft = DraftManager.debounce(() => {
@@ -1529,7 +1655,9 @@
                     email: document.getElementById('new-p-email').value,
                     age: document.getElementById('new-p-age').value,
                     gender: document.getElementById('new-p-gender').value,
-                    address: document.getElementById('new-p-address').value
+                    address: document.getElementById('new-p-address').value,
+                    weight: document.getElementById('new-p-weight').value || undefined,
+                    height: document.getElementById('new-p-height').value || undefined
                 });
                 selectPatient(res.data);
                 closePatientModal();

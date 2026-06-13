@@ -201,14 +201,20 @@ function evaluatePatientResult(resultValue, parameterLogic, patientGender) {
 
       const m = nr.male;
       const f = nr.female;
-      const maleRange = (m && m.min != null && m.max != null) ? `Male: ${m.min}-${m.max} ${units}` : '';
-      const femaleRange = (f && f.min != null && f.max != null) ? `Female: ${f.min}-${f.max} ${units}` : '';
-      result.rangeDisplay = [maleRange, femaleRange].filter(r => r).join('\n');
 
       // Evaluate against the patient's gender-specific range
       let targetRange = null;
-      if (gender === 'male' && m) targetRange = m;
-      else if (gender === 'female' && f) targetRange = f;
+      if ((gender === 'male' || gender === 'm') && m) {
+        targetRange = m;
+        result.rangeDisplay = formatMinMax(m.min, m.max, units);
+      } else if ((gender === 'female' || gender === 'f') && f) {
+        targetRange = f;
+        result.rangeDisplay = formatMinMax(f.min, f.max, units);
+      } else {
+        const maleRange = (m && m.min != null && m.max != null) ? `Male: ${m.min}-${m.max} ${units}` : '';
+        const femaleRange = (f && f.min != null && f.max != null) ? `Female: ${f.min}-${f.max} ${units}` : '';
+        result.rangeDisplay = [maleRange, femaleRange].filter(r => r).join('\n');
+      }
 
       if (targetRange) {
         const abnormal = isOutsideBounds(numericValue, targetRange.min, targetRange.max);

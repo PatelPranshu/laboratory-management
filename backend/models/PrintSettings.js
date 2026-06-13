@@ -21,6 +21,9 @@ const PrintSettingsSchema = new mongoose.Schema({
     marginLeft: { type: Number, default: 20 },
     marginRight: { type: Number, default: 20 },
     fontSize: { type: Number, default: 12 },
+    patientInfoFontSize: { type: Number, default: 12 },
+    templateInfoFontSize: { type: Number, default: 12 },
+    signatureFontSize: { type: Number, default: 12 },
     fontFamily: { type: String, default: 'Helvetica' },
     headerHeight: { type: Number, default: 0 },
     footerHeight: { type: Number, default: 0 }
