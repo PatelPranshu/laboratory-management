@@ -64,22 +64,16 @@ const validateTemplatePayload = (sections) => {
 // @route   GET /api/templates
 // @access  Private
 exports.getTemplates = async (req, res) => {
-  try {
     const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
     const templates = await ReportTemplate.find({ doctorId });
 
     res.status(200).json({ success: true, count: templates.length, data: templates });
-  } catch (error) {
-    console.error('getTemplates error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to retrieve templates' });
-  }
-};
+  };
 
 // @desc    Get single template
 // @route   GET /api/templates/:id
 // @access  Private
 exports.getTemplate = async (req, res) => {
-  try {
     const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
     const template = await ReportTemplate.findOne({ _id: req.params.id, doctorId });
 
@@ -88,17 +82,12 @@ exports.getTemplate = async (req, res) => {
     }
 
     res.status(200).json({ success: true, data: template });
-  } catch (error) {
-    console.error('getTemplate error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to retrieve template' });
-  }
-};
+  };
 
 // @desc    Create template
 // @route   POST /api/templates
 // @access  Private (Doctor only — enforced by route middleware)
 exports.createTemplate = async (req, res) => {
-  try {
     // Whitelist fields FIRST, then set doctorId
     const sanitizedBody = pickFields(req.body, TEMPLATE_FIELDS);
     sanitizedBody.doctorId = req.user.id;
@@ -112,17 +101,12 @@ exports.createTemplate = async (req, res) => {
 
     const template = await ReportTemplate.create(sanitizedBody);
     res.status(201).json({ success: true, data: template });
-  } catch (error) {
-    console.error('createTemplate error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to create template' });
-  }
-};
+  };
 
 // @desc    Update template
 // @route   PUT /api/templates/:id
 // @access  Private (Doctor only)
 exports.updateTemplate = async (req, res) => {
-  try {
     let template = await ReportTemplate.findOne({ _id: req.params.id, doctorId: req.user.id });
 
     if (!template) {
@@ -145,17 +129,12 @@ exports.updateTemplate = async (req, res) => {
     });
 
     res.status(200).json({ success: true, data: template });
-  } catch (error) {
-    console.error('updateTemplate error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to update template' });
-  }
-};
+  };
 
 // @desc    Delete template
 // @route   DELETE /api/templates/:id
 // @access  Private (Doctor only)
 exports.deleteTemplate = async (req, res) => {
-  try {
     const template = await ReportTemplate.findOne({ _id: req.params.id, doctorId: req.user.id });
 
     if (!template) {
@@ -165,11 +144,7 @@ exports.deleteTemplate = async (req, res) => {
     await template.deleteOne();
 
     res.status(200).json({ success: true, data: {} });
-  } catch (error) {
-    console.error('deleteTemplate error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to delete template' });
-  }
-};
+  };
 
 // Recursive function to deep clone template and strip internal Mongoose IDs
 const deepCloneTemplate = (obj) => {
@@ -194,10 +169,11 @@ const deepCloneTemplate = (obj) => {
 // @route   POST /api/templates/share/generate
 // @access  Private
 exports.generateShare = async (req, res) => {
-  try {
     const { templateIds } = req.body;
     if (!templateIds || !Array.isArray(templateIds) || templateIds.length === 0) {
-      return res.status(400).json({ success: false, error: 'Please provide an array of templateIds' });
+      const err = new Error('Please provide an array of templateIds');
+      err.statusCode = 400;
+      throw err;
     }
 
     let shareCode;
@@ -214,7 +190,6 @@ exports.generateShare = async (req, res) => {
         });
         break; // Successfully created
       } catch (err) {
-        // 11000 is the MongoDB duplicate key error code
         if (err.code === 11000) {
           attempts++;
         } else {
@@ -224,38 +199,30 @@ exports.generateShare = async (req, res) => {
     }
 
     if (!bundle) {
-      return res.status(500).json({ success: false, error: 'Failed to generate a unique share code. Please try again.' });
+      const err = new Error('Failed to generate a unique share code. Please try again.');
+      err.statusCode = 500;
+      throw err;
     }
 
     res.status(201).json({ success: true, data: bundle });
-  } catch (error) {
-    console.error('generateShare error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to generate share code' });
-  }
 };
 
 // @desc    Get active shared bundles created by the user
 // @route   GET /api/templates/share/active
 // @access  Private
 exports.getActiveShares = async (req, res) => {
-  try {
     const bundles = await SharedBundle.find({ senderId: req.user.id })
       .populate('templateIds', 'templateName department')
       .populate('importedBy.user', 'name email labName')
       .sort('-createdAt');
 
     res.status(200).json({ success: true, count: bundles.length, data: bundles });
-  } catch (error) {
-    console.error('getActiveShares error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to fetch active shares' });
-  }
-};
+  };
 
 // @desc    Revoke/Delete an active share
 // @route   DELETE /api/templates/share/:id
 // @access  Private
 exports.revokeShare = async (req, res) => {
-  try {
     const bundle = await SharedBundle.findOne({ _id: req.params.id, senderId: req.user.id });
 
     if (!bundle) {
@@ -264,17 +231,12 @@ exports.revokeShare = async (req, res) => {
 
     await bundle.deleteOne();
     res.status(200).json({ success: true, data: {} });
-  } catch (error) {
-    console.error('revokeShare error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to revoke share' });
-  }
-};
+  };
 
 // @desc    Preview a shared bundle
 // @route   GET /api/templates/share/preview/:code
 // @access  Private
 exports.previewShare = async (req, res) => {
-  try {
     const code = req.params.code.toUpperCase();
     const bundle = await SharedBundle.findOne({ shareCode: code })
       .populate('senderId', 'name labName')
@@ -285,17 +247,12 @@ exports.previewShare = async (req, res) => {
     }
 
     res.status(200).json({ success: true, data: bundle });
-  } catch (error) {
-    console.error('previewShare error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to preview share' });
-  }
-};
+  };
 
 // @desc    Import templates from a shared bundle
 // @route   POST /api/templates/share/import
 // @access  Private
 exports.importShare = async (req, res) => {
-  try {
     const { shareCode } = req.body;
     if (!shareCode) {
       return res.status(400).json({ success: false, error: 'Please provide a share code' });
@@ -339,8 +296,4 @@ exports.importShare = async (req, res) => {
     await bundle.save();
 
     res.status(201).json({ success: true, count: inserted.length, data: inserted });
-  } catch (error) {
-    console.error('importShare error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to import templates' });
-  }
-};
+  };

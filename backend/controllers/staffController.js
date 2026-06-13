@@ -1,8 +1,8 @@
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Invitation = require('../models/Invitation');
 const PrintSettings = require('../models/PrintSettings');
-const { isValidEmail, isStrongPassword } = require('../middlewares/validate');
 const jwt = require('jsonwebtoken');
 const { sendInvitationEmail } = require('../services/emailService');
 const { sendNotification } = require('../utils/notifier');
@@ -15,145 +15,136 @@ const generateToken = (id) => {
 };
 
 // @desc    Invite Staff (Doctor/LabTech)
-// @route   POST /api/staff/invite
-// @access  Private (Admin only)
 exports.inviteStaff = async (req, res) => {
+  const { email, role } = req.body;
+
+  if (!email || !role) {
+    const err = new Error('Email and role are required');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (!['Doctor', 'LabTech'].includes(role)) {
+    const err = new Error('Invalid role');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const userExists = await User.findOne({ email: email.toLowerCase().trim() });
+  if (userExists) {
+    const err = new Error('User already exists');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Delete existing unused invitations for this email to prevent spam
+  await Invitation.deleteMany({ email: email.toLowerCase().trim() });
+
+  // Generate secure token
+  const token = crypto.randomBytes(32).toString('hex');
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  await Invitation.create({
+    email: email.toLowerCase().trim(),
+    role,
+    token: hashedToken,
+    parentAdminId: req.user.id
+  });
+
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
+  const inviteLink = `${frontendUrl}/register-staff.html?token=${token}`;
+
   try {
-    const { email, role } = req.body;
-
-    if (!email || !role) {
-      return res.status(400).json({ success: false, error: 'Email and role are required' });
-    }
-
-    if (!['Doctor', 'LabTech'].includes(role)) {
-      return res.status(400).json({ success: false, error: 'Invalid role' });
-    }
-
-    if (!isValidEmail(email)) {
-      return res.status(400).json({ success: false, error: 'Invalid email address' });
-    }
-
-    // Check if user already exists
-    const userExists = await User.findOne({ email: email.toLowerCase().trim() });
-    if (userExists) {
-      return res.status(400).json({ success: false, error: 'User already exists' });
-    }
-
-    // Delete existing unused invitations for this email to prevent spam
-    await Invitation.deleteMany({ email: email.toLowerCase().trim() });
-
-    // Generate secure token
-    const token = crypto.randomBytes(32).toString('hex');
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-
-    await Invitation.create({
-      email: email.toLowerCase().trim(),
-      role,
-      token: hashedToken,
-      parentAdminId: req.user.id
+    await sendInvitationEmail(email, role, inviteLink);
+    // Ensure we immediately notify the admin
+    res.status(200).json({ success: true, message: 'Invitation email successfully sent!' });
+  } catch (emailError) {
+    console.error(`[STAFF] Email delivery failed for invitation to ${email}. Invitation is still valid in DB.`);
+    res.status(200).json({ 
+      success: true, 
+      message: 'Invitation generated successfully, but the automatic email failed to send. You may share the link manually.',
+      warning: 'Email delivery failed'
     });
-
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
-    const inviteLink = `${frontendUrl}/register-staff.html?token=${token}`;
-
-    try {
-      await sendInvitationEmail(email, role, inviteLink);
-      // Ensure we immediately notify the admin
-      res.status(200).json({ success: true, message: 'Invitation email successfully sent!' });
-    } catch (emailError) {
-      // If email delivery fails, the invite is still valid in the DB, so we inform the client.
-      console.error(`[STAFF] Email delivery failed for invitation to ${email}. Invitation is still valid in DB.`);
-      res.status(200).json({ 
-        success: true, 
-        message: 'Invitation generated successfully, but the automatic email failed to send. You may share the link manually.',
-        warning: 'Email delivery failed'
-      });
-    }
-  } catch (error) {
-    console.error('inviteStaff error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to invite staff' });
   }
 };
 
 // @desc    Verify Invitation Token
-// @route   GET /api/staff/verify-invite/:token
-// @access  Public
 exports.verifyInvite = async (req, res) => {
-  try {
-    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+  const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
 
-    const invitation = await Invitation.findOne({ token: hashedToken });
-    if (!invitation) {
-      return res.status(404).json({ success: false, error: 'Invitation is invalid or has expired' });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: {
-        email: invitation.email,
-        role: invitation.role
-      }
-    });
-  } catch (error) {
-    console.error('verifyInvite error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to verify invitation' });
+  const invitation = await Invitation.findOne({ token: hashedToken });
+  if (!invitation) {
+    const err = new Error('Invitation is invalid or has expired');
+    err.statusCode = 404;
+    throw err;
   }
+
+  res.status(200).json({
+    success: true,
+    data: {
+      email: invitation.email,
+      role: invitation.role
+    }
+  });
 };
 
 // @desc    Complete Registration via Invitation
-// @route   POST /api/staff/complete-registration
-// @access  Public
 exports.completeRegistration = async (req, res) => {
+  const { token, password, name, signatureUrl } = req.body;
+
+  if (!token || !password || !name) {
+    const err = new Error('Name, password, and token are required');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+  const invitation = await Invitation.findOne({ token: hashedToken });
+  
+  if (!invitation) {
+    const err = new Error('Invitation is invalid or has expired');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // Double check email isn't already used
+  const userExists = await User.findOne({ email: invitation.email });
+  if (userExists) {
+    const err = new Error('Email already registered');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Get Admin's labName
+  const admin = await User.findById(invitation.parentAdminId);
+  if (!admin || admin.role !== 'Admin') {
+     const err = new Error('Invalid lab environment');
+     err.statusCode = 400;
+     throw err;
+  }
+
+  const userFields = {
+    email: invitation.email,
+    name: name.trim(),
+    password,
+    role: invitation.role,
+    labName: admin.labName,
+    parentAdminId: admin._id,
+    accountStatus: 'Active',
+    mustChangePassword: false
+  };
+
+  if (invitation.role === 'Doctor' && signatureUrl) {
+    userFields.signatureUrl = signatureUrl;
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const { token, password, name, signatureUrl } = req.body;
-
-    if (!token || !password || !name) {
-      return res.status(400).json({ success: false, error: 'Name, password, and token are required' });
-    }
-
-    if (!isStrongPassword(password)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Password must be at least 8 characters with at least 1 uppercase letter and 1 number'
-      });
-    }
-
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-    const invitation = await Invitation.findOne({ token: hashedToken });
-    
-    if (!invitation) {
-      return res.status(404).json({ success: false, error: 'Invitation is invalid or has expired' });
-    }
-
-    // Double check email isn't already used
-    const userExists = await User.findOne({ email: invitation.email });
-    if (userExists) {
-      return res.status(400).json({ success: false, error: 'Email already registered' });
-    }
-
-    // Get Admin's labName
-    const admin = await User.findById(invitation.parentAdminId);
-    if (!admin || admin.role !== 'Admin') {
-       return res.status(400).json({ success: false, error: 'Invalid lab environment' });
-    }
-
-    const userFields = {
-      email: invitation.email,
-      name: name.trim(),
-      password,
-      role: invitation.role,
-      labName: admin.labName,
-      parentAdminId: admin._id,
-      accountStatus: 'Active',
-      mustChangePassword: false
-    };
-
-    if (invitation.role === 'Doctor' && signatureUrl) {
-      userFields.signatureUrl = signatureUrl;
-    }
-
-    const user = await User.create(userFields);
-    await invitation.deleteOne(); // Remove token once used
+    const users = await User.create([userFields], { session });
+    const user = users[0];
+    await invitation.deleteOne({ session }); // Remove token once used
 
     // Notify lab team about new staff
     await sendNotification(user._id, admin._id, {
@@ -161,7 +152,10 @@ exports.completeRegistration = async (req, res) => {
       title: 'New Staff Member',
       message: `${user.name} has joined the lab as a ${user.role}.`,
       referenceId: user._id
-    });
+    }, session);
+
+    await session.commitTransaction();
+    session.endSession();
 
     res.status(201).json({
       success: true,
@@ -179,34 +173,36 @@ exports.completeRegistration = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('completeRegistration error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to complete registration' });
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
 };
 
 // @desc    Directly Create Lab Technician
-// @route   POST /api/staff/create-tech
-// @access  Private (Admin only)
 exports.createTech = async (req, res) => {
+  const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    const err = new Error('Name, email, and password are required');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const userExists = await User.findOne({ email: email.toLowerCase().trim() });
+  if (userExists) {
+    const err = new Error('User already exists');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const admin = await User.findById(req.user.id);
+  
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ success: false, error: 'Name, email, and password are required' });
-    }
-
-    if (!isValidEmail(email)) {
-      return res.status(400).json({ success: false, error: 'Invalid email address' });
-    }
-
-    const userExists = await User.findOne({ email: email.toLowerCase().trim() });
-    if (userExists) {
-      return res.status(400).json({ success: false, error: 'User already exists' });
-    }
-
-    const admin = await User.findById(req.user.id);
-    
-    const user = await User.create({
+    const users = await User.create([{
       email: email.toLowerCase().trim(),
       name: name.trim(),
       password: password, // They must change this later
@@ -215,7 +211,9 @@ exports.createTech = async (req, res) => {
       parentAdminId: admin._id,
       accountStatus: 'Active',
       mustChangePassword: true // Emphasize this directly!
-    });
+    }], { session });
+
+    const user = users[0];
 
     // Notify lab team about new tech
     await sendNotification(req.user.id, admin._id, {
@@ -223,7 +221,10 @@ exports.createTech = async (req, res) => {
       title: 'New Technician Added',
       message: `${user.name} was added as a Lab Technician.`,
       referenceId: user._id
-    });
+    }, session);
+
+    await session.commitTransaction();
+    session.endSession();
 
     res.status(201).json({
       success: true,
@@ -235,88 +236,75 @@ exports.createTech = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('createTech error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to create technician' });
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
   }
 };
 
 // @desc    Get all staff for this admin
-// @route   GET /api/staff
-// @access  Private (Admin only)
 exports.getStaff = async (req, res) => {
-  try {
-    const staff = await User.find({ parentAdminId: req.user.id })
-      .select('-password')
-      .sort({ createdAt: -1 });
+  const staff = await User.find({ parentAdminId: req.user.id })
+    .select('-password')
+    .sort({ createdAt: -1 });
 
-    res.status(200).json({
-      success: true,
-      count: staff.length,
-      data: staff
-    });
-  } catch (error) {
-    console.error('getStaff error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to get staff list' });
-  }
+  res.status(200).json({
+    success: true,
+    count: staff.length,
+    data: staff
+  });
 };
 
 // @desc    Remove Staff Member
-// @route   DELETE /api/staff/:id
-// @access  Private (Admin only)
 exports.removeStaff = async (req, res) => {
-  try {
-    const staffMember = await User.findById(req.params.id);
-    if (!staffMember) {
-      return res.status(404).json({ success: false, error: 'Staff member not found' });
-    }
-
-    if (staffMember.parentAdminId.toString() !== req.user.id) {
-      return res.status(403).json({ success: false, error: 'Not authorized to delete this staff member' });
-    }
-
-    if (staffMember._id.toString() === req.user.id) {
-      return res.status(400).json({ success: false, error: 'Cannot delete your own admin account' });
-    }
-
-    await staffMember.deleteOne();
-    res.status(200).json({ success: true, data: {} });
-  } catch (error) {
-    console.error('removeStaff error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to remove staff member' });
+  const staffMember = await User.findById(req.params.id);
+  if (!staffMember) {
+    const err = new Error('Staff member not found');
+    err.statusCode = 404;
+    throw err;
   }
+
+  if (staffMember.parentAdminId.toString() !== req.user.id) {
+    const err = new Error('Not authorized to delete this staff member');
+    err.statusCode = 403;
+    throw err;
+  }
+
+  if (staffMember._id.toString() === req.user.id) {
+    const err = new Error('Cannot delete your own admin account');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  await staffMember.deleteOne();
+  res.status(200).json({ success: true, data: {} });
 };
 
 // @desc    Reset Staff Password
-// @route   PUT /api/staff/:id/reset-password
-// @access  Private (Admin only)
 exports.resetPassword = async (req, res) => {
-  try {
-    const { password } = req.body;
-    if (!password) {
-      return res.status(400).json({ success: false, error: 'Please provide a new password' });
-    }
-
-    const RegExpPass = /^(?=.*[A-Z])(?=.*[0-9]).{8,}$/;
-    if (!RegExpPass.test(password)) {
-      return res.status(400).json({ success: false, error: 'Password must be at least 8 characters with 1 uppercase and 1 number' });
-    }
-
-    const staffMember = await User.findById(req.params.id);
-    if (!staffMember) {
-      return res.status(404).json({ success: false, error: 'Staff member not found' });
-    }
-
-    if (staffMember.parentAdminId.toString() !== req.user.id) {
-      return res.status(403).json({ success: false, error: 'Not authorized to reset password for this staff member' });
-    }
-
-    staffMember.password = password;
-    staffMember.mustChangePassword = true; 
-    await staffMember.save();
-
-    res.status(200).json({ success: true, message: 'Password reset successfully' });
-  } catch (error) {
-    console.error('resetPassword error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to reset password' });
+  const { password } = req.body;
+  if (!password) {
+    const err = new Error('Please provide a new password');
+    err.statusCode = 400;
+    throw err;
   }
+
+  const staffMember = await User.findById(req.params.id);
+  if (!staffMember) {
+    const err = new Error('Staff member not found');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  if (staffMember.parentAdminId.toString() !== req.user.id) {
+    const err = new Error('Not authorized to reset password for this staff member');
+    err.statusCode = 403;
+    throw err;
+  }
+
+  staffMember.password = password;
+  staffMember.mustChangePassword = true; 
+  await staffMember.save();
+
+  res.status(200).json({ success: true, message: 'Password reset successfully' });
 };

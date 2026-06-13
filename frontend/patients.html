@@ -66,7 +66,7 @@
                         <button onclick="exportCSV()" class="flex-1 sm:flex-none justify-center bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center font-bold text-sm">
                             <i class="fas fa-file-csv mr-2 text-brand-500"></i> Export
                         </button>
-                        <button onclick="openModal()" class="flex-1 sm:flex-none justify-center bg-brand-600 hover:bg-brand-500 text-white px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center font-bold text-sm">
+                        <button onclick="PatientModal.open({ mode: 'create', onSuccess: (p) => window.location.href = 'patient-profile.html?id=' + p._id })" class="flex-1 sm:flex-none justify-center bg-brand-600 hover:bg-brand-500 text-white px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center font-bold text-sm">
                             <i class="fas fa-plus mr-2"></i> Add Patient
                         </button>
                     </div>
@@ -148,77 +148,7 @@
         </main>
     </div>
 
-    <!-- Add/Edit Patient Modal -->
-    <div id="patient-modal" class="fixed inset-0 bg-slate-900/40 hidden overflow-y-auto h-full w-full z-50 flex items-center justify-center transition-opacity">
-        <div class="relative mx-auto border-0 w-full max-w-xl shadow-2xl rounded-2xl bg-white m-4 transform transition-transform scale-95 opacity-0 duration-300" id="modal-content">
-            
-            <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
-                <h3 class="text-xl font-bold text-slate-800 flex items-center" id="modal-title">
-                    <i class="fas fa-user-plus text-brand-500 mr-3"></i> Add New Patient
-                </h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-lg transition-colors focus:outline-none">
-                    <i class="fas fa-times text-lg"></i>
-                </button>
-            </div>
-
-            <div class="px-8 py-5">
-                <form id="patient-form" onsubmit="savePatient(event)">
-                    <input type="hidden" id="patient-id">
-                    
-                    <div class="grid grid-cols-2 gap-x-6 gap-y-4">
-                        <div class="col-span-2">
-                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
-                                 Full Name <span class="text-red-500 ml-1">*</span>
-                             </label>
-                             <input type="text" id="p-name" required placeholder="John Doe" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
-                        </div>
-
-                        <div class="col-span-1">
-                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
-                                 Age <span class="text-red-500 ml-1">*</span>
-                             </label>
-                             <input type="number" id="p-age" required min="0" placeholder="e.g. 35" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
-                        </div>
-
-                        <div class="col-span-1">
-                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
-                                 Gender <span class="text-red-500 ml-1">*</span>
-                             </label>
-                             <select id="p-gender" required class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm cursor-pointer appearance-none">
-                                 <option value="Male">Male</option>
-                                 <option value="Female">Female</option>
-                                 <option value="Other">Other</option>
-                             </select>
-                        </div>
-
-                        <div class="col-span-1">
-                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5 flex items-center">
-                                 Phone Number
-                             </label>
-                             <input type="text" id="p-phone" placeholder="+91 999 999 9999" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
-                        </div>
-
-                        <div class="col-span-1">
-                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5">Email Address</label>
-                             <input type="email" id="p-email" placeholder="example@email.com" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
-                        </div>
-
-                        <div class="col-span-2">
-                             <label class="block text-[13px] font-bold text-slate-700 mb-1.5">Address</label>
-                             <textarea id="p-address" rows="2" placeholder="Full residential address..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm resize-none"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-end space-x-4 pt-5 mt-4 border-t border-slate-100">
-                        <button type="button" onclick="closeModal()" class="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 focus:outline-none transition-colors">Cancel</button>
-                        <button type="submit" id="btn-save-patient" class="px-7 py-2.5 rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 focus:outline-none transition-all">Save Patient</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts -->
+    <script src="js/patientModal.js"></script>
     <script src="js/layout.js"></script>
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
@@ -366,105 +296,7 @@
              if (e.key === 'Enter') applySearch();
         });
 
-        // Modals with animation
-        function openModal() {
-            document.getElementById('patient-form').reset();
-            document.getElementById('patient-id').value = '';
-            document.getElementById('modal-title').innerHTML = '<i class="fas fa-user-plus text-brand-500 mr-3"></i> Add New Patient';
-            
-            const modal = document.getElementById('patient-modal');
-            const content = document.getElementById('modal-content');
-            
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                content.classList.remove('scale-95', 'opacity-0');
-                content.classList.add('scale-100', 'opacity-100');
-            }, 10);
 
-            // Check for and load draft if not in edit mode
-            const draft = DraftManager.load('patient');
-            if (draft) {
-                document.getElementById('p-name').value = draft.name || '';
-                document.getElementById('p-phone').value = draft.phone || '';
-                document.getElementById('p-email').value = draft.email || '';
-                document.getElementById('p-age').value = draft.age || '';
-                document.getElementById('p-gender').value = draft.gender || 'Male';
-                document.getElementById('p-address').value = draft.address || '';
-            }
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('patient-modal');
-            const content = document.getElementById('modal-content');
-            
-            content.classList.remove('scale-100', 'opacity-100');
-            content.classList.add('scale-95', 'opacity-0');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
-        }
-
-        function editPatient(p) {
-            document.getElementById('patient-id').value = p._id;
-            document.getElementById('p-name').value = p.name;
-            document.getElementById('p-phone').value = p.phone;
-            document.getElementById('p-age').value = p.age;
-            document.getElementById('p-gender').value = p.gender;
-            document.getElementById('p-email').value = p.email || '';
-            document.getElementById('p-address').value = p.address || '';
-            document.getElementById('modal-title').innerHTML = '<i class="fas fa-user-edit text-brand-500 mr-3"></i> Edit Patient';
-            
-            const modal = document.getElementById('patient-modal');
-            const content = document.getElementById('modal-content');
-            
-            modal.classList.remove('hidden');
-            setTimeout(() => {
-                content.classList.remove('scale-95', 'opacity-0');
-                content.classList.add('scale-100', 'opacity-100');
-            }, 10);
-        }
-
-        let isSavingPatient = false;
-
-        async function savePatient(e) {
-            e.preventDefault();
-            if (isSavingPatient) return;
-            isSavingPatient = true;
-
-            UI.toggleLoader('btn-save-patient', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Saving...');
-
-            const id = document.getElementById('patient-id').value;
-            const data = {
-                name: document.getElementById('p-name').value,
-                phone: document.getElementById('p-phone').value,
-                email: document.getElementById('p-email').value,
-                age: document.getElementById('p-age').value,
-                gender: document.getElementById('p-gender').value,
-                address: document.getElementById('p-address').value
-            };
-
-            try {
-                if (id) {
-                    await api.request(`/patients/${id}`, 'PUT', data);
-                    UI.showToast('Patient updated successfully', 'success');
-                    DraftManager.clear('patient'); // Clear draft on success
-                    closeModal();
-                    loadPatients(currentPage); // reload current page
-                } else {
-                    const res = await api.request(`/patients`, 'POST', data);
-                    UI.showToast('Patient added successfully', 'success');
-                    DraftManager.clear('patient'); // Clear draft on success
-                    closeModal();
-                    window.location.href = `patient-profile.html?id=${res.data._id}`;
-                }
-            } catch (err) {
-                UI.showToast(err.message, 'error');
-            } finally {
-                UI.toggleLoader('btn-save-patient', false, 'Save Patient');
-                isSavingPatient = false;
-            }
-        }
 
         async function deletePatient(id) {
             const confirmed = await UI.showConfirm('Delete Patient', 'Are you sure you want to delete this patient? This action cannot be undone.', 'Delete', 'danger');

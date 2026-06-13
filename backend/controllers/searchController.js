@@ -5,7 +5,6 @@ const ReportInstance = require('../models/ReportInstance');
 // @route   GET /api/search
 // @access  Private
 exports.globalSearch = async (req, res) => {
-  try {
     const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
     const { query, fromDate, toDate } = req.query;
 
@@ -79,8 +78,4 @@ exports.globalSearch = async (req, res) => {
         reports: filteredReports
       }
     });
-  } catch (error) {
-    console.error('globalSearch error:', error.message);
-    res.status(500).json({ success: false, error: 'Search failed' });
-  }
-};
+  };

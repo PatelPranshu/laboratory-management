@@ -6,69 +6,44 @@ const { deleteFromCloudinary } = require('../utils/cloudinary');
 // @route   POST /api/signatures
 // @access  Private (Admin, Doctor, LabTech)
 exports.addSignature = async (req, res) => {
-  try {
     const { fullName, signatureUrl } = req.body;
 
     if (!signatureUrl || (!fullName && req.user.role === 'Admin')) {
-      return res.status(400).json({ success: false, error: 'Name and signature URL are required' });
+      const err = new Error('Name and signature URL are required');
+      err.statusCode = 400;
+      throw err;
     }
 
     // Validate URL format
     try {
       const parsed = new URL(signatureUrl);
       if (!['https:', 'http:'].includes(parsed.protocol)) {
-        return res.status(400).json({ success: false, error: 'Signature URL must use HTTPS' });
+        const err = new Error('Signature URL must use HTTPS');
+        err.statusCode = 400;
+        throw err;
       }
     } catch (e) {
-      return res.status(400).json({ success: false, error: 'Invalid signature URL format' });
+      const err = new Error('Invalid URL format');
+      err.statusCode = 400;
+      throw err;
     }
 
-    // Resolve the Lab ID
-    let labId = req.user.role === 'Admin' ? req.user.id : (req.user.parentAdminId || req.user.id);
-    
-    // For non-admins, they can only manage their own signature
-    if (req.user.role !== 'Admin') {
-      const existingSign = await Signature.findOne({ userId: req.user.id });
-      if (existingSign) {
-        // Delete old image from Cloudinary if URL changed
-        if (existingSign.signatureUrl && existingSign.signatureUrl !== signatureUrl) {
-          await deleteFromCloudinary(existingSign.signatureUrl);
-        }
-        existingSign.signatureUrl = signatureUrl;
-        existingSign.fullName = req.user.name; // Always sync name with profile
-        await existingSign.save();
-        return res.status(200).json({ success: true, data: existingSign });
-      }
+    const labId = req.user.role === 'Admin' ? req.user.id : req.user.parentAdminId;
 
-      const signature = await Signature.create({
-        fullName: req.user.name,
-        signatureUrl,
-        parentAdminId: labId,
-        userId: req.user.id
-      });
-      return res.status(201).json({ success: true, data: signature });
-    }
-
-    // For Admins adding/updating signatures manually
     const signature = await Signature.create({
-      fullName,
-      signatureUrl,
+      userId: req.user.id,
       parentAdminId: labId,
-      // userId might be null if admin is adding a generic signature or for a user not yet linked
+      fullName: fullName || req.user.name,
+      signatureUrl
     });
 
     res.status(201).json({ success: true, data: signature });
-  } catch (error) {
-    console.error('addSignature error:', error.message);
-    res.status(500).json({ success: false, error: 'Server Error' });
-  }
 };
 
 // @desc    Get all signatures for the tenant lab
 // @route   GET /api/signatures
 // @access  Private (All staff)
 exports.getSignatures = async (req, res) => {
-  try {
     // Find parentAdminId for the current user (Standardized fallback)
     let labId = req.user.role === 'Admin' ? req.user.id : (req.user.parentAdminId || req.user.id);
 
@@ -91,17 +66,12 @@ exports.getSignatures = async (req, res) => {
     }));
     
     res.status(200).json({ success: true, count: mappedSignatures.length, data: mappedSignatures });
-  } catch (error) {
-    console.error('getSignatures error:', error.message);
-    res.status(500).json({ success: false, error: 'Server Error' });
-  }
-};
+  };
 
 // @desc    Delete a signature
 // @route   DELETE /api/signatures/:id
 // @access  Private (Admin only)
 exports.deleteSignature = async (req, res) => {
-  try {
     const signature = await Signature.findById(req.params.id);
 
     if (!signature) {
@@ -125,8 +95,4 @@ exports.deleteSignature = async (req, res) => {
 
     await signature.deleteOne();
     res.status(200).json({ success: true, data: {} });
-  } catch (error) {
-    console.error('deleteSignature error:', error.message);
-    res.status(500).json({ success: false, error: 'Server Error' });
-  }
-};
+  };

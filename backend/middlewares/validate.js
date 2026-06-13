@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
+const { z } = require('zod');
 
 /**
  * Middleware: Validate that :id param is a valid MongoDB ObjectId.
- * Prevents CastError crashes from invalid ID formats.
  */
 const validateObjectId = (req, res, next) => {
   if (req.params.id && !mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -15,8 +15,7 @@ const validateObjectId = (req, res, next) => {
 };
 
 /**
- * Utility: Pick only allowed fields from an object.
- * Prevents mass-assignment attacks where attackers inject fields like doctorId.
+ * Legacy utility: Pick only allowed fields from an object.
  */
 const pickFields = (source, allowedFields) => {
   const result = {};
@@ -29,30 +28,39 @@ const pickFields = (source, allowedFields) => {
 };
 
 /**
- * Validate email format
+ * Zod validation middleware
  */
-const isValidEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+const validateSchema = (schema) => (req, res, next) => {
+  try {
+    req.body = schema.parse(req.body);
+    next();
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      // Pass ZodError to the global errorHandler
+      error.statusCode = 400;
+      return next(error);
+    }
+    next(error);
+  }
 };
 
 /**
- * Validate password strength:
- * - Minimum 8 characters
- * - At least 1 uppercase letter
- * - At least 1 number
+ * Zod custom validators for common fields
  */
-const isStrongPassword = (password) => {
-  if (!password || password.length < 8) return false;
-  if (!/[A-Z]/.test(password)) return false;
-  if (!/[0-9]/.test(password)) return false;
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(password)) return false;
-  return true;
-};
+const objectIdSchema = z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {
+  message: 'Invalid ObjectId'
+});
+
+const passwordSchema = z.string().min(8, 'Password must be at least 8 characters')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[0-9]/, 'Password must contain at least one number')
+  .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/, 'Password must contain at least one special character');
+
 
 module.exports = {
   validateObjectId,
   pickFields,
-  isValidEmail,
-  isStrongPassword
+  validateSchema,
+  objectIdSchema,
+  passwordSchema
 };

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const logger = require('../utils/logger');
 
 const connectDB = async () => {
   const MAX_RETRIES = 5;
@@ -7,16 +8,16 @@ const connectDB = async () => {
   const connect = async () => {
     try {
       const conn = await mongoose.connect(process.env.MONGO_URI);
-      console.log(`MongoDB Connected: ${conn.connection.host}`);
+      logger.info(`MongoDB Connected: ${conn.connection.host}`);
     } catch (error) {
       retries++;
-      console.error(`MongoDB Connection Error (attempt ${retries}/${MAX_RETRIES}): ${error.message}`);
+      logger.error(`MongoDB Connection Error (attempt ${retries}/${MAX_RETRIES}): ${error.message}`);
       if (retries < MAX_RETRIES) {
-        console.log(`Retrying in 5 seconds...`);
+        logger.info(`Retrying in 5 seconds...`);
         await new Promise(resolve => setTimeout(resolve, 5000));
         return connect();
       } else {
-        console.error('Max retries reached. Exiting.');
+        logger.error('Max retries reached. Exiting.');
         process.exit(1);
       }
     }
@@ -26,15 +27,15 @@ const connectDB = async () => {
 
   // Connection event listeners
   mongoose.connection.on('error', (err) => {
-    console.error('MongoDB connection error:', err.message);
+    logger.error('MongoDB connection error:', err);
   });
 
   mongoose.connection.on('disconnected', () => {
-    console.warn('MongoDB disconnected. Attempting to reconnect...');
+    logger.warn('MongoDB disconnected. Attempting to reconnect...');
   });
 
   mongoose.connection.on('reconnected', () => {
-    console.log('MongoDB reconnected.');
+    logger.info('MongoDB reconnected.');
   });
 };
 

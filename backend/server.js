@@ -10,6 +10,8 @@ const { notFound, errorHandler } = require('./middlewares/errorHandler');
 const http = require('http');
 const socketService = require('./services/socketService');
 const xss = require('xss');
+const morgan = require('morgan');
+const logger = require('./utils/logger');
 
 // Fields that should NOT be HTML escaped because they contain math symbols, passwords, or code
 const NO_XSS_KEYS = ['operator', 'value', 'valueTo', 'min', 'max', 'textNormal', 'password', 'result', 'referenceRange', 'formula'];
@@ -38,7 +40,7 @@ dotenv.config();
 const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET', 'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];
 const missingVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 if (missingVars.length > 0) {
-  console.error(`[FATAL] Missing required environment variables: ${missingVars.join(', ')}`);
+  logger.error(`[FATAL] Missing required environment variables: ${missingVars.join(', ')}`);
   process.exit(1);
 }
 
@@ -46,6 +48,9 @@ if (missingVars.length > 0) {
 connectDB();
 
 const app = express();
+
+// HTTP Request Logging with Morgan
+app.use(morgan('combined', { stream: logger.stream }));
 
 // Trust the reverse proxy (e.g., Render) so rate limiters use the correct client IP
 app.set('trust proxy', 1);
@@ -81,7 +86,10 @@ app.use(cors({
 }));
 
 // Security headers
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 
 // Response compression
 app.use(compression());
@@ -166,23 +174,23 @@ const server = http.createServer(app);
 socketService.init(server);
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  logger.info(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
 });
 
 // ---------- Graceful Shutdown ----------
 const gracefulShutdown = (signal) => {
-  console.log(`\n${signal} received. Shutting down gracefully...`);
+  logger.info(`\n${signal} received. Shutting down gracefully...`);
   server.close(() => {
     const mongoose = require('mongoose');
     mongoose.connection.close(false).then(() => {
-      console.log('MongoDB connection closed.');
+      logger.info('MongoDB connection closed.');
       process.exit(0);
     });
   });
 
   // Force close after 10 seconds
   setTimeout(() => {
-    console.error('Forced shutdown after timeout.');
+    logger.error('Forced shutdown after timeout.');
     process.exit(1);
   }, 10000);
 };
@@ -192,6 +200,6 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Rejection:', err.message);
+  logger.error(`Unhandled Rejection: ${err.message}`, err);
   server.close(() => process.exit(1));
 });

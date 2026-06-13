@@ -3,6 +3,7 @@
  * Catches all unhandled errors and returns consistent JSON responses.
  * In production, internal error details are hidden from the client.
  */
+const logger = require('../utils/logger');
 
 // 404 — Route not found
 const notFound = (req, res, next) => {
@@ -14,7 +15,7 @@ const notFound = (req, res, next) => {
 
 // Global error handler
 const errorHandler = (err, req, res, next) => {
-  console.error('Unhandled Error:', err.stack || err.message);
+  logger.error('Unhandled Error:', err);
 
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';

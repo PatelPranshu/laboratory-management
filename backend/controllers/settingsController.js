@@ -20,7 +20,6 @@ const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 // @route   GET /api/settings/print
 // @access  Private
 exports.getPrintSettings = async (req, res) => {
-  try {
     const doctorId = getAdminId(req);
     let settings = await PrintSettings.findOne({ doctorId });
 
@@ -29,17 +28,12 @@ exports.getPrintSettings = async (req, res) => {
     }
 
     res.status(200).json({ success: true, data: settings });
-  } catch (error) {
-    console.error('getPrintSettings error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to retrieve print settings' });
-  }
-};
+  };
 
 // @desc    Update Print Settings
 // @route   PUT /api/settings/print
 // @access  Private
 exports.updatePrintSettings = async (req, res) => {
-  try {
     const doctorId = getAdminId(req);
 
     // Whitelist allowed fields
@@ -62,17 +56,12 @@ exports.updatePrintSettings = async (req, res) => {
     }
 
     res.status(200).json({ success: true, data: settings });
-  } catch (error) {
-    console.error('updatePrintSettings error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to update print settings' });
-  }
-};
+  };
 
 // @desc    Upload Image to Cloudinary (Header/Footer)
 // @route   POST /api/settings/upload
 // @access  Private
 exports.uploadImage = async (req, res) => {
-  try {
     // Roles authorized to upload (Branding is Admin, Signatures is All)
     if (req.user.role !== 'Admin' && req.user.role !== 'Doctor' && req.user.role !== 'LabTech') {
       return res.status(403).json({ success: false, error: 'Not authorized to upload images' });
@@ -119,17 +108,12 @@ exports.uploadImage = async (req, res) => {
       }
     });
 
-  } catch (error) {
-    console.error('uploadImage error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to upload image' });
-  }
-};
+  };
 
 // @desc    Delete Image from Cloudinary
 // @route   POST /api/settings/delete-image
 // @access  Private
 exports.deleteImage = async (req, res) => {
-  try {
     if (req.user.role !== 'Admin' && req.user.role !== 'Doctor' && req.user.role !== 'LabTech') {
       return res.status(403).json({ success: false, error: 'Not authorized to manage images' });
     }
@@ -163,8 +147,4 @@ exports.deleteImage = async (req, res) => {
     }
 
     res.status(200).json({ success: true, message: 'Image deleted from Cloudinary' });
-  } catch (error) {
-    console.error('deleteImage error:', error.message);
-    res.status(500).json({ success: false, error: 'Failed to delete image' });
-  }
-};
+  };

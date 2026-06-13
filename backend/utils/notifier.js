@@ -1,6 +1,7 @@
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 const socketService = require('../services/socketService');
+const logger = require('./logger');
 
 /**
  * Sends a notification to all relevant staff members in a laboratory group.
@@ -11,8 +12,9 @@ const socketService = require('../services/socketService');
  * @param {string} options.title - Short title.
  * @param {string} options.message - Descriptive body.
  * @param {string} options.referenceId - ID of the related object (Patient/Report).
+ * @param {object} session - Optional mongoose session.
  */
-const sendNotification = async (senderId, adminId, { type, title, message, referenceId }) => {
+const sendNotification = async (senderId, adminId, { type, title, message, referenceId }, session = null) => {
   try {
     const io = socketService.getIO();
 
@@ -39,7 +41,7 @@ const sendNotification = async (senderId, adminId, { type, title, message, refer
     }));
 
     // Insert into DB for persistence
-    const insertedNotifications = await Notification.insertMany(notificationData);
+    const insertedNotifications = await Notification.insertMany(notificationData, { session });
 
     // Broadcast to active socket rooms
     insertedNotifications.forEach(noti => {
@@ -47,7 +49,7 @@ const sendNotification = async (senderId, adminId, { type, title, message, refer
     });
 
   } catch (error) {
-    console.error('Notification Service Error:', error.message);
+    logger.error('Notification Service Error:', error);
   }
 };
 
