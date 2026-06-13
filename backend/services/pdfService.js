@@ -131,10 +131,8 @@ exports.generateReportPdf = async (report, patient, settings) => {
   const mb = lp.marginBottom || 40;
   const fontSize = lp.fontSize || 12;
 
-  // The default A4 width is 595.28 pt. We calculate available content width.
   const contentWidth = 595.28 - ml - mr;
 
-  // Pre-download images as base64 (pdfmake can't reliably fetch remote URLs)
   let headerImageData = null;
   let footerImageData = null;
   let signatureImageData = null;
@@ -150,80 +148,9 @@ exports.generateReportPdf = async (report, patient, settings) => {
     signatureImageData = await downloadImageAsBase64(report.performedByLabTechId.signatureUrl);
   }
 
-  // Header Image
-  if (headerImageData) {
-    const headerConfig = {
-      image: headerImageData,
-      alignment: 'center',
-      margin: [0, 0, 0, 20]
-    };
-    if (lp.headerHeight && lp.headerHeight > 0) {
-      headerConfig.fit = [contentWidth, lp.headerHeight];
-    } else {
-      headerConfig.width = contentWidth;
-    }
-    content.push(headerConfig);
-  } 
-
-  // Patient Info
-  const reportDate = report.date ? new Date(report.date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
-  const reportId = report._id ? report._id.toString().slice(-6).toUpperCase() : 'N/A';
-  
-  // Template names for "Test Name" section
-  const templateNames = (report.templateIds || [])
-    .map(t => typeof t === 'object' && t.templateName ? t.templateName : null)
-    .filter(name => name !== null)
-    .join(', ') || 'N/A';
-
-  content.push({
-    table: {
-      widths: ['20%', '30%', '20%', '30%'],
-      body: [
-        [
-          { text: 'Patient Name:', bold: true, color: '#334155' },
-          { text: (patient.name || 'N/A').toUpperCase(), bold: true },
-          { text: 'Report ID:', bold: true, color: '#334155' },
-          { text: reportId }
-        ],
-        [
-          { text: 'Age / Gender:', bold: true, color: '#334155' },
-          { text: `${patient.age || 'N/A'} / ${patient.gender || 'N/A'}` },
-          { text: 'Report Date:', bold: true, color: '#334155' },
-          { text: reportDate }
-        ],
-        [
-          { text: 'Phone:', bold: true, color: '#334155' },
-          { text: patient.phone || 'N/A' },
-          { text: 'Referred By:', bold: true, color: '#334155' },
-          { text: (report.referredBy || 'Self').toUpperCase(), bold: true }
-        ],
-        [
-          { text: 'Test Name:', bold: true, color: '#334155' },
-          { text: templateNames, colSpan: 3, bold: true, color: '#0f172a' },
-          {}, {}
-        ]
-      ]
-    },
-    layout: {
-      hLineWidth: () => 0.5,
-      vLineWidth: () => 0.5,
-      hLineColor: () => '#cbd5e1',
-      vLineColor: () => '#cbd5e1',
-      paddingLeft: () => 5,
-      paddingRight: () => 5,
-      paddingTop: () => 4,
-      paddingBottom: () => 4
-    },
-    margin: [0, 5, 0, 15]
-  });
-
-  content.push({ canvas: [{ type: 'line', x1: 0, y1: 0, x2: contentWidth, y2: 0, lineWidth: 2, lineColor: '#1e293b' }] });
-  content.push({text: '\n', fontSize: 5});
-
   const sections = report.sections || [];
   const remarksByTemplate = {};
 
-  // 1. Filter out completely empty sections so they don't break our grouping logic
   const filteredSections = sections.filter((sec, sIdx) => {
     if (sec.text && sec.text.trim()) {
       const tid = sec.templateId ? sec.templateId.toString() : 'unassigned';
@@ -243,7 +170,6 @@ exports.generateReportPdf = async (report, patient, settings) => {
     return params.length > 0 || legacyCount > 0;
   });
 
-  // 2. Group sections strictly by template ID
   const groupedBlocks = [];
   let currentBlock = null;
 
@@ -259,10 +185,14 @@ exports.generateReportPdf = async (report, patient, settings) => {
     currentBlock.sections.push(sec);
   });
 
-  // 3. Render blocks: Each block is a separate Test Type (Template)
-  groupedBlocks.forEach((block, blockIdx) => {
+  if (groupedBlocks.length === 0) {
+    groupedBlocks.push({ templateId: 'unassigned', sections: [] });
+  }
 
-    // Extract the actual template/test name from report data
+  const reportDate = report.date ? new Date(report.date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
+  const reportId = report._id ? report._id.toString().slice(-6).toUpperCase() : 'N/A';
+
+  groupedBlocks.forEach((block, blockIdx) => {
     let currentTemplateName = 'TEST RESULTS';
     if (block.templateId !== 'unassigned') {
       const tmpl = (report.templateIds || []).find(t => t && typeof t === 'object' && t._id && t._id.toString() === block.templateId);
@@ -271,22 +201,84 @@ exports.generateReportPdf = async (report, patient, settings) => {
       }
     }
 
+    if (headerImageData) {
+      const headerConfig = {
+        image: headerImageData,
+        alignment: 'center',
+        margin: [0, 0, 0, 20]
+      };
+      if (lp.headerHeight && lp.headerHeight > 0) {
+        headerConfig.fit = [contentWidth, lp.headerHeight];
+      } else {
+        headerConfig.width = contentWidth;
+      }
+      if (blockIdx > 0) headerConfig.pageBreak = 'before';
+      content.push(headerConfig);
+    }
+
+    const patientInfoTable = {
+      table: {
+        widths: ['20%', '30%', '20%', '30%'],
+        body: [
+          [
+            { text: 'Patient Name:', bold: true, color: '#334155' },
+            { text: (patient.name || 'N/A').toUpperCase(), bold: true },
+            { text: 'Report ID:', bold: true, color: '#334155' },
+            { text: reportId }
+          ],
+          [
+            { text: 'Age / Gender:', bold: true, color: '#334155' },
+            { text: `${patient.age || 'N/A'} / ${patient.gender || 'N/A'}` },
+            { text: 'Report Date:', bold: true, color: '#334155' },
+            { text: reportDate }
+          ],
+          [
+            { text: 'Phone:', bold: true, color: '#334155' },
+            { text: patient.phone || 'N/A' },
+            { text: 'Referred By:', bold: true, color: '#334155' },
+            { text: (report.referredBy || 'Self').toUpperCase(), bold: true }
+          ],
+          [
+            { text: 'Test Name:', bold: true, color: '#334155' },
+            { text: currentTemplateName, colSpan: 3, bold: true, color: '#0f172a' },
+            {}, {}
+          ]
+        ]
+      },
+      layout: {
+        hLineWidth: () => 0.5,
+        vLineWidth: () => 0.5,
+        hLineColor: () => '#cbd5e1',
+        vLineColor: () => '#cbd5e1',
+        paddingLeft: () => 5,
+        paddingRight: () => 5,
+        paddingTop: () => 4,
+        paddingBottom: () => 4
+      },
+      margin: [0, 5, 0, 15]
+    };
+
+    if (!headerImageData && blockIdx > 0) {
+      patientInfoTable.pageBreak = 'before';
+    }
+
+    content.push(patientInfoTable);
+    content.push({ canvas: [{ type: 'line', x1: 0, y1: 0, x2: contentWidth, y2: 0, lineWidth: 2, lineColor: '#1e293b' }] });
+    content.push({text: '\n', fontSize: 5});
+
     block.sections.forEach((sec, sIdx) => {
       const isFirstSection = (sIdx === 0);
       const isLastSection = (sIdx === block.sections.length - 1);
       const sectionTableBody = [];
 
-      // Add the master header ONLY on the very first section of this test type
       if (isFirstSection) {
-
-        // NEW: Test Type Title Row
         sectionTableBody.push([
           { 
             text: currentTemplateName, 
             colSpan: 4, 
             alignment: 'center', 
             bold: true, 
-            fillColor: '#e2e8f0', // Slightly darker to distinguish from column headers
+            fillColor: '#e2e8f0', 
             color: '#0f172a',
             margin: [0, 4, 0, 4],
             fontSize: fontSize
@@ -302,7 +294,6 @@ exports.generateReportPdf = async (report, patient, settings) => {
         ]);
       }
 
-      // Add Section Title row
       if (sec.sectionName || sec.methodology || sec.sampleType || sec.kitUsed) {
         const sectionTextChunks = [];
         if (sec.sectionName) {
@@ -337,14 +328,12 @@ exports.generateReportPdf = async (report, patient, settings) => {
         ]);
       }
 
-      // Process Parameters (Structured Array)
       const params = sec.parameters || [];
       if (params.length > 0) {
         params.forEach(p => {
           const resultStr = p.result || '';
           const unitsStr = p.units || '';
 
-          // Use the centralized evaluation engine
           const evaluation = evaluatePatientResult(resultStr, p, patient.gender);
           const normalRangeStr = evaluation.rangeDisplay;
           const isAbnormal = evaluation.isAbnormal;
@@ -355,7 +344,6 @@ exports.generateReportPdf = async (report, patient, settings) => {
             margin: [0, 0, 0, 0]
           };
 
-          // Apply red color for critical results
           if (evaluation.critical) {
             resultCell.color = '#dc2626';
           }
@@ -385,7 +373,6 @@ exports.generateReportPdf = async (report, patient, settings) => {
           ]);
         });
       } else if (sec.values) {
-        // Backward compatibility for old format
         const valuesObj = (sec.values && typeof sec.values.toJSON === 'function') 
           ? sec.values.toJSON() 
           : (typeof sec.values === 'object' && sec.values !== null ? sec.values : {});
@@ -414,7 +401,6 @@ exports.generateReportPdf = async (report, patient, settings) => {
         }
       }
 
-      // Add to content within an unbreakable stack (per section)
       content.push({
         stack: [
           {
@@ -426,11 +412,11 @@ exports.generateReportPdf = async (report, patient, settings) => {
             },
             layout: {
               hLineWidth: function (i, node) {
-                if (isFirstSection && i === 0) return 1.5; // Top line of template
-                if (isFirstSection && i === 1) return 1.5; // Line under column headers
-                if (!isFirstSection && i === 0) return 0;  // Connects seamlessly to previous section
-                if (isLastSection && i === node.table.body.length) return 1.5; // Bottom line of template
-                return 0.5; // Internal dividing lines
+                if (isFirstSection && i === 0) return 1.5;
+                if (isFirstSection && i === 1) return 1.5;
+                if (!isFirstSection && i === 0) return 0;
+                if (isLastSection && i === node.table.body.length) return 1.5;
+                return 0.5;
               },
               vLineWidth: () => 0,
               hLineColor: function (i, node) {
@@ -448,13 +434,10 @@ exports.generateReportPdf = async (report, patient, settings) => {
           }
         ],
         margin: [0, isFirstSection ? 10 : 0, 0, isLastSection ? 10 : 0], 
-        unbreakable: true,
-        pageBreak: (isFirstSection && blockIdx > 0) ? 'before' : undefined 
+        unbreakable: true
       });
-
     });
 
-  // NEW: Append Remarks specific to this Test Type (Template)
     const blockRemarks = remarksByTemplate[block.templateId];
     if (blockRemarks && blockRemarks.length > 0) {
       const remarksContent = [];
@@ -480,77 +463,73 @@ exports.generateReportPdf = async (report, patient, settings) => {
         margin: [0, 0, 0, 10]
       });
     }
-  });
 
-  // Footer Image (at the end of content)
-  if (footerImageData) {
-    const footerConfig = {
-      image: footerImageData,
-      alignment: 'center',
-      margin: [0, 30, 0, 0]
-    };
-    if (lp.footerHeight && lp.footerHeight > 0) {
-      footerConfig.fit = [contentWidth, lp.footerHeight];
-    } else {
-      footerConfig.width = contentWidth;
+    if (footerImageData) {
+      const footerConfig = {
+        image: footerImageData,
+        alignment: 'center',
+        margin: [0, 30, 0, 0]
+      };
+      if (lp.footerHeight && lp.footerHeight > 0) {
+        footerConfig.fit = [contentWidth, lp.footerHeight];
+      } else {
+        footerConfig.width = contentWidth;
+      }
+      content.push(footerConfig);
     }
-    content.push(footerConfig);
-  }
 
-  const endOfReportBlock = [];
+    const endOfReportBlock = [];
 
-  // End of Report Marker
-  endOfReportBlock.push({
-      text: '*** END OF REPORT ***',
-      alignment: 'center',
-      bold: true,
-      margin: [0, 25, 0, 15],
-      fontSize: fontSize - 2,
-      color: '#475569'
-  });
+    endOfReportBlock.push({
+        text: `*** END OF ${currentTemplateName} ***`,
+        alignment: 'center',
+        bold: true,
+        margin: [0, 25, 0, 15],
+        fontSize: fontSize - 2,
+        color: '#475569'
+    });
 
-  // Verify & Sign Section with Legal Disclaimer
-  if (signatureImageData && report.performedByLabTechId) {
-      const signerName = (report.performedByLabTechId.fullName || report.performedByLabTechId.doctorName || report.performedBy || 'Authorized Signatory').toUpperCase();
-      
-      endOfReportBlock.push({
-          columns: [
-              { 
-                  width: '*', 
-                  text: 'Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated and authenticated document.',
-                  fontSize: fontSize - 4,
-                  color: '#64748b',
-                  italics: true,
-                  margin: [0, 30, 10, 0]
-              }, 
-              {
-                  width: 200,
-                  alignment: 'center',
-                  margin: [0, 10, 0, 0],
-                  stack: [
-                      { image: signatureImageData, fit: [120, 60], alignment: 'center' },
-                      { text: signerName, fontSize: fontSize + 1, bold: true, color: '#1e293b' },
-                      { text: 'PERFORMED BY / AUTHORIZED SIGNATORY', fontSize: fontSize - 4, color: '#64748b', margin: [0, 4, 0, 0], bold: true, characterSpacing: 0.5 }
-                  ]
-              }
-          ]
-      });
-  } else {
-      // Fallback Disclaimer if no signature
-      endOfReportBlock.push({
-          text: 'Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated document.',
-          fontSize: fontSize - 4,
-          color: '#64748b',
-          italics: true,
-          margin: [0, 10, 0, 0]
-      });
-  }
+    if (signatureImageData && report.performedByLabTechId) {
+        const signerName = (report.performedByLabTechId.fullName || report.performedByLabTechId.doctorName || report.performedBy || 'Authorized Signatory').toUpperCase();
+        
+        endOfReportBlock.push({
+            columns: [
+                { 
+                    width: '*', 
+                    text: 'Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated and authenticated document.',
+                    fontSize: fontSize - 4,
+                    color: '#64748b',
+                    italics: true,
+                    margin: [0, 30, 10, 0]
+                }, 
+                {
+                    width: 200,
+                    alignment: 'center',
+                    margin: [0, 10, 0, 0],
+                    stack: [
+                        { image: signatureImageData, fit: [120, 60], alignment: 'center' },
+                        { text: signerName, fontSize: fontSize + 1, bold: true, color: '#1e293b' },
+                        { text: 'PERFORMED BY / AUTHORIZED SIGNATORY', fontSize: fontSize - 4, color: '#64748b', margin: [0, 4, 0, 0], bold: true, characterSpacing: 0.5 }
+                    ]
+                }
+            ]
+        });
+    } else {
+        endOfReportBlock.push({
+            text: 'Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated document.',
+            fontSize: fontSize - 4,
+            color: '#64748b',
+            italics: true,
+            margin: [0, 10, 0, 0]
+        });
+    }
 
-  // Group everything into an unbreakable wrapper
-  content.push({
-    stack: endOfReportBlock,
-    unbreakable: true, // Prevents elements separating across multiple pages
-    margin: [0, 10, 0, 0]
+    content.push({
+      stack: endOfReportBlock,
+      unbreakable: true,
+      margin: [0, 10, 0, 0]
+    });
+
   });
 
   const docDefinition = {

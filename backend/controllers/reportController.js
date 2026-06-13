@@ -35,6 +35,19 @@ exports.getReports = async (req, res) => {
       query.status = req.query.status;
     }
 
+    // Date range filtering
+    if (req.query.startDate || req.query.endDate) {
+      query.createdAt = {};
+      if (req.query.startDate) {
+        query.createdAt.$gte = new Date(req.query.startDate);
+      }
+      if (req.query.endDate) {
+        const endDate = new Date(req.query.endDate);
+        endDate.setUTCHours(23, 59, 59, 999);
+        query.createdAt.$lte = endDate;
+      }
+    }
+
     // Patient ID filtering
     if (req.query.patientId && mongoose.Types.ObjectId.isValid(req.query.patientId)) {
       query.patientId = req.query.patientId;
@@ -350,12 +363,38 @@ exports.generatePdf = async (req, res) => {
     report.auditLogs.push({ action: 'Downloaded PDF', userId: req.user.id });
     await report.save();
 
-    // Sanitize filename — remove special chars
-    const safeName = (report.patientId.name || 'Patient').replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_');
+    // Sanitize and construct filename using patient name and template names
+    const patientName = (report.patientId.name || 'Patient')
+      .replace(/[^a-zA-Z0-9_\- ]/g, '')
+      .replace(/\s+/g, '_');
+
+    const templateNames = (report.templateIds || [])
+      .map(t => (t.templateName || '').replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_'))
+      .filter(Boolean);
+
+    let baseName = [patientName, ...templateNames].join('_');
+    
+    // Ensure no consecutive underscores
+    baseName = baseName.replace(/_+/g, '_');
+
+    // Ensure the filename length never exceeds a safe limit (e.g. 150 characters)
+    if (baseName.length > 150) {
+      baseName = baseName.substring(0, 150);
+    }
+
+    // Remove any leading or trailing underscores from the filename
+    baseName = baseName.replace(/^_+|_+$/g, '');
+
+    // Fallback if name is empty
+    if (!baseName) {
+      baseName = 'Report';
+    }
+
+    const filename = `${baseName}.pdf`;
 
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename=Report_${safeName}.pdf`,
+      'Content-Disposition': `attachment; filename="${filename}"`,
       'Content-Length': pdfBuffer.length
     });
 

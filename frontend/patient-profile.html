@@ -502,8 +502,13 @@
             setTimeout(() => modal.classList.add('hidden'), 300);
         }
 
+        let isSavingPatientEdit = false;
+
         async function savePatientEdit(e) {
             e.preventDefault();
+            if (isSavingPatientEdit) return;
+            isSavingPatientEdit = true;
+
             UI.toggleLoader('btn-save-edit', true, 'Saving...');
             try {
                 const payload = {
@@ -522,6 +527,8 @@
                 UI.showToast(err.message, 'error');
             } finally {
                 UI.toggleLoader('btn-save-edit', false, 'Save Changes');
+                isSavingPatientEdit = false;
+
             }
         }
 

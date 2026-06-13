@@ -70,18 +70,30 @@
 
                 <!-- Search and Filter Grid -->
                 <div class="glass-card p-5 mb-8 bg-white border border-slate-200 shadow-sm rounded-2xl">
-                    <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-end">
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                         <!-- Text Search -->
-                        <div class="md:col-span-5 relative group">
+                        <div class="md:col-span-3 relative group">
                             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Search Patient</label>
                             <div class="relative">
                                 <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-300 group-focus-within:text-brand-500 transition-colors"></i>
-                                <input type="text" id="report-search" placeholder="Search by patient name..." class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-semibold text-slate-700 transition-all placeholder-slate-300">
+                                <input type="text" id="report-search" placeholder="Patient name..." class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-semibold text-slate-700 transition-all placeholder-slate-300">
                             </div>
                         </div>
 
+                        <!-- Start Date -->
+                        <div class="md:col-span-2">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Start Date</label>
+                            <input type="date" id="filter-start-date" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-bold text-slate-600 cursor-pointer">
+                        </div>
+
+                        <!-- End Date -->
+                        <div class="md:col-span-2">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">End Date</label>
+                            <input type="date" id="filter-end-date" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-bold text-slate-600 cursor-pointer">
+                        </div>
+
                         <!-- Status Filter -->
-                        <div class="md:col-span-4">
+                        <div class="md:col-span-3">
                             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Report Status</label>
                             <select id="filter-status" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-bold text-slate-600 appearance-none cursor-pointer">
                                 <option value="">All Statuses</option>
@@ -92,9 +104,9 @@
                         </div>
 
                         <!-- Action Button -->
-                        <div class="md:col-span-3">
+                        <div class="md:col-span-2">
                             <button onclick="applyFilters()" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-2 py-[11px] rounded-xl transition-all font-bold shadow-md text-[11px] flex items-center justify-center group tracking-tighter">
-                                <i class="fas fa-filter mr-1.5 text-brand-200 group-hover:text-white transition-colors"></i> Filter Reports
+                                <i class="fas fa-filter mr-1.5 text-brand-200 group-hover:text-white transition-colors"></i> Filter
                             </button>
                         </div>
                     </div>
@@ -148,6 +160,8 @@
         let currentPage = 1;
         let searchQuery = '';
         let statusFilter = '';
+        let startDateFilter = '';
+        let endDateFilter = '';
 
         document.addEventListener('DOMContentLoaded', () => {
             loadCommonLayout();
@@ -176,8 +190,10 @@
             try {
                 const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
                 const statusParam = statusFilter ? `&status=${statusFilter}` : '';
+                const startDateParam = startDateFilter ? `&startDate=${startDateFilter}` : '';
+                const endDateParam = endDateFilter ? `&endDate=${endDateFilter}` : '';
                 
-                const res = await api.request(`/reports?page=${page}&limit=10${searchParam}${statusParam}`);
+                const res = await api.request(`/reports?page=${page}&limit=10${searchParam}${statusParam}${startDateParam}${endDateParam}`);
                 const data = res.data;
                 const pagination = res.pagination;
 
@@ -288,6 +304,8 @@
         function applyFilters() {
             searchQuery = document.getElementById('report-search').value;
             statusFilter = document.getElementById('filter-status').value;
+            startDateFilter = document.getElementById('filter-start-date').value;
+            endDateFilter = document.getElementById('filter-end-date').value;
             loadReports(1);
         }
 

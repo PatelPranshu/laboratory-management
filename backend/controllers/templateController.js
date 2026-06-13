@@ -229,6 +229,7 @@ exports.getActiveShares = async (req, res) => {
   try {
     const bundles = await SharedBundle.find({ senderId: req.user.id })
       .populate('templateIds', 'templateName department')
+      .populate('importedBy.user', 'name email labName')
       .sort('-createdAt');
 
     res.status(200).json({ success: true, count: bundles.length, data: bundles });
@@ -299,6 +300,12 @@ exports.importShare = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Cannot import your own shared templates' });
     }
 
+    // Check if already imported
+    const alreadyImported = bundle.importedBy.some(imp => imp.user.toString() === req.user.id.toString());
+    if (alreadyImported) {
+      return res.status(400).json({ success: false, error: 'You have already imported this shared bundle' });
+    }
+
     const templatesToImport = await ReportTemplate.find({ _id: { $in: bundle.templateIds } }).lean();
     
     if (templatesToImport.length === 0) {
@@ -307,12 +314,17 @@ exports.importShare = async (req, res) => {
 
     const newTemplates = templatesToImport.map(t => {
       const cloned = deepCloneTemplate(t);
-      cloned.templateName = `${cloned.templateName} (Imported)`;
       cloned.doctorId = req.user.id;
       return cloned;
     });
 
     const inserted = await ReportTemplate.insertMany(newTemplates);
+
+    bundle.importedBy.push({
+      user: req.user.id,
+      labName: req.user.labName
+    });
+    await bundle.save();
 
     res.status(201).json({ success: true, count: inserted.length, data: inserted });
   } catch (error) {

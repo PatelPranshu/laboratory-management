@@ -29,17 +29,22 @@ function switchShareTab(tab) {
     // Hide all
     ['generate', 'manage', 'import'].forEach(t => {
         document.getElementById(`tab-content-${t}`).classList.add('hidden');
-        document.getElementById(`tab-btn-${t}`).classList.remove('border-brand-500', 'text-brand-600');
-        document.getElementById(`tab-btn-${t}`).classList.add('border-transparent', 'text-slate-500');
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (btn) {
+            btn.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 hover:text-slate-800 transition-all bg-transparent";
+        }
     });
 
     // Show active
     document.getElementById(`tab-content-${tab}`).classList.remove('hidden');
-    document.getElementById(`tab-btn-${tab}`).classList.remove('border-transparent', 'text-slate-500');
-    document.getElementById(`tab-btn-${tab}`).classList.add('border-brand-500', 'text-brand-600');
+    const activeBtn = document.getElementById(`tab-btn-${tab}`);
+    if (activeBtn) {
+        activeBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm transition-all";
+    }
 
     // Trigger loads
     if (tab === 'generate') {
+        resetGenerateUI();
         loadTemplatesForShare();
     } else if (tab === 'manage') {
         loadActiveShares();
@@ -92,11 +97,21 @@ async function generateShareCode() {
         const code = res.data.shareCode;
 
         document.getElementById('generated-code-container').classList.remove('hidden');
+        document.getElementById('btn-generate-code').classList.add('hidden');
         document.getElementById('generated-code-input').value = code;
+        
+        // Hide unselected templates
+        const allCheckboxes = document.querySelectorAll('.share-template-cb');
+        allCheckboxes.forEach(cb => {
+            if (!cb.checked) {
+                const label = cb.closest('label');
+                if (label) label.classList.add('hidden');
+            }
+        });
         
         UI.showToast('Share code generated successfully', 'success');
         
-        // Uncheck all
+        // Uncheck all so they are ready for next time
         checkboxes.forEach(cb => cb.checked = false);
     } catch (error) {
         UI.showToast(error.message || 'Failed to generate share code', 'error');
@@ -104,6 +119,19 @@ async function generateShareCode() {
         btn.innerHTML = originalText;
         btn.disabled = false;
     }
+}
+
+function resetGenerateUI() {
+    const codeContainer = document.getElementById('generated-code-container');
+    const genBtn = document.getElementById('btn-generate-code');
+    if (codeContainer) codeContainer.classList.add('hidden');
+    if (genBtn) genBtn.classList.remove('hidden');
+    
+    const allCheckboxes = document.querySelectorAll('.share-template-cb');
+    allCheckboxes.forEach(cb => {
+        const label = cb.closest('label');
+        if (label) label.classList.remove('hidden');
+    });
 }
 
 function copyShareCode() {
@@ -128,19 +156,63 @@ async function loadActiveShares() {
 
         tbody.innerHTML = bundles.map(b => {
             const date = new Date(b.createdAt).toLocaleString();
+            
+            // Templates list HTML
+            const templatesHtml = b.templateIds && b.templateIds.length > 0 
+                ? b.templateIds.map(t => `<li class="text-xs text-slate-700 flex items-center py-1 border-b border-slate-50 last:border-0"><i class="fas fa-file-alt text-brand-400 mr-2"></i>${t.templateName} <span class="text-[10px] text-slate-400 ml-2 bg-slate-100 px-1.5 py-0.5 rounded">${t.department}</span></li>`).join('')
+                : '<li class="text-xs text-slate-500 italic">No templates available.</li>';
+                
+            // Imported by HTML
+            const importedByHtml = b.importedBy && b.importedBy.length > 0 
+                ? b.importedBy.map(imp => {
+                    const impDate = new Date(imp.importedAt).toLocaleString();
+                    const userName = imp.user ? imp.user.name : 'Unknown User';
+                    const lab = imp.user ? imp.user.labName : (imp.labName || 'Unknown Lab');
+                    return `
+                    <li class="bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm">
+                        <div class="text-xs font-bold text-slate-800">${userName} <span class="text-slate-400 font-normal px-1">from</span> ${lab}</div>
+                        <div class="text-[10px] text-slate-500 mt-1"><i class="far fa-clock mr-1"></i>${impDate}</div>
+                    </li>
+                    `;
+                }).join('')
+                : '<div class="text-xs text-slate-500 italic bg-white p-3 rounded border border-slate-100">No one has imported this bundle yet.</div>';
+
             return `
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="p-3 font-mono font-bold text-slate-800">${b.shareCode}</td>
-                    <td class="p-3">
-                        <span class="inline-flex items-center justify-center px-2 py-1 text-xs font-bold bg-brand-100 text-brand-700 rounded-full">
-                            ${b.templateIds.length} Items
+                <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
+                    <td class="p-3 font-mono font-bold text-slate-800 align-middle">${b.shareCode}</td>
+                    <td class="p-3 align-middle">
+                        <span class="inline-flex items-center justify-center px-2 py-1 text-[10px] font-bold bg-brand-100 text-brand-700 rounded-lg">
+                            ${b.templateIds ? b.templateIds.length : 0} Items
                         </span>
                     </td>
-                    <td class="p-3 text-xs text-slate-500">${date}</td>
-                    <td class="p-3 text-right">
-                        <button onclick="revokeShare('${b._id}')" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded text-xs font-bold transition-colors">
-                            Stop Sharing
-                        </button>
+                    <td class="p-3 text-xs text-slate-500 align-middle">${date}</td>
+                    <td class="p-3 text-right align-middle">
+                        <div class="flex items-center justify-end gap-2">
+                            <button onclick="toggleShareDetails('${b._id}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors">
+                                View More
+                            </button>
+                            <button onclick="revokeShare('${b._id}')" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-colors">
+                                Stop Sharing
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                <tr id="details-${b._id}" class="hidden bg-slate-50/50 border-b border-slate-100 shadow-inner">
+                    <td colspan="4" class="p-0">
+                        <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 flex items-center"><i class="fas fa-layer-group text-brand-500 mr-2"></i> Shared Templates</h4>
+                                <ul class="bg-white border border-slate-200 rounded-lg p-2 shadow-sm">
+                                    ${templatesHtml}
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 flex items-center"><i class="fas fa-download text-green-500 mr-2"></i> Import History</h4>
+                                <ul class="space-y-2">
+                                    ${importedByHtml}
+                                </ul>
+                            </div>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -148,6 +220,17 @@ async function loadActiveShares() {
     } catch (error) {
         UI.showToast('Failed to load active shares', 'error');
         tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-red-500 text-sm">Error loading active shares.</td></tr>';
+    }
+}
+
+window.toggleShareDetails = function(id) {
+    const detailsRow = document.getElementById(`details-${id}`);
+    if (detailsRow) {
+        if (detailsRow.classList.contains('hidden')) {
+            detailsRow.classList.remove('hidden');
+        } else {
+            detailsRow.classList.add('hidden');
+        }
     }
 }
 
@@ -183,6 +266,7 @@ async function previewShareCode() {
 
         document.getElementById('preview-sender-name').textContent = bundle.senderId.name;
         document.getElementById('preview-lab-name').textContent = bundle.senderId.labName || 'N/A';
+        document.getElementById('preview-template-count').textContent = bundle.templateIds.length;
         
         const ul = document.getElementById('preview-template-list');
         ul.innerHTML = bundle.templateIds.map(t => `<li>${t.templateName} <span class="text-slate-400 text-xs ml-1">(${t.department})</span></li>`).join('');

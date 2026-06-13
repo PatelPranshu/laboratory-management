@@ -425,8 +425,13 @@
             }, 10);
         }
 
+        let isSavingPatient = false;
+
         async function savePatient(e) {
             e.preventDefault();
+            if (isSavingPatient) return;
+            isSavingPatient = true;
+
             UI.toggleLoader('btn-save-patient', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Saving...');
 
             const id = document.getElementById('patient-id').value;
@@ -443,17 +448,21 @@
                 if (id) {
                     await api.request(`/patients/${id}`, 'PUT', data);
                     UI.showToast('Patient updated successfully', 'success');
+                    DraftManager.clear('patient'); // Clear draft on success
+                    closeModal();
+                    loadPatients(currentPage); // reload current page
                 } else {
-                    await api.request(`/patients`, 'POST', data);
+                    const res = await api.request(`/patients`, 'POST', data);
                     UI.showToast('Patient added successfully', 'success');
+                    DraftManager.clear('patient'); // Clear draft on success
+                    closeModal();
+                    window.location.href = `patient-profile.html?id=${res.data._id}`;
                 }
-                DraftManager.clear('patient'); // Clear draft on success
-                closeModal();
-                loadPatients(currentPage); // reload current page
             } catch (err) {
                 UI.showToast(err.message, 'error');
             } finally {
                 UI.toggleLoader('btn-save-patient', false, 'Save Patient');
+                isSavingPatient = false;
             }
         }
 

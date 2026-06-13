@@ -259,6 +259,152 @@ class UI {
           input.onkeypress = (e) => { if(e.key === 'Enter') close(input.value); };
       });
   }
+
+  static initCustomSelects() {
+      // Find all selects that haven't been wrapped yet
+      const selects = document.querySelectorAll('select:not([data-custom-select])');
+      
+      selects.forEach(select => {
+          // Mark as processed
+          select.setAttribute('data-custom-select', 'true');
+          
+          // Hide original select
+          select.style.display = 'none';
+          
+          // Create wrapper
+          const wrapper = document.createElement('div');
+          const isFullWidth = select.classList.contains('w-full') || (!Array.from(select.classList).some(c => c.startsWith('w-')));
+          wrapper.className = `relative custom-select-wrapper ${isFullWidth ? 'w-full' : 'inline-block'}`;
+          
+          // Insert wrapper right after the select
+          select.parentNode.insertBefore(wrapper, select.nextSibling);
+          // Move select inside wrapper (optional but helps keep DOM organized)
+          wrapper.appendChild(select);
+
+          // Get selected option text
+          let selectedText = '';
+          if (select.options.length > 0) {
+              const selectedOption = select.options[select.selectedIndex];
+              selectedText = selectedOption ? selectedOption.text : select.options[0].text;
+          }
+
+          // Create trigger
+          const trigger = document.createElement('div');
+          // Copy relevant classes from original select to trigger (padding, bg, border, rounded, text size, font-weight)
+          const classesToCopy = Array.from(select.classList).filter(c => 
+              c.startsWith('w-') || c.startsWith('px-') || c.startsWith('py-') || 
+              c.startsWith('bg-') || c.startsWith('border') || c.startsWith('rounded') || 
+              c.startsWith('text-') || c.startsWith('font-') || c.startsWith('shadow-')
+          );
+          trigger.className = `custom-select-trigger flex items-center justify-between cursor-pointer select-none transition-all ${classesToCopy.join(' ')}`;
+          if (!classesToCopy.some(c => c.startsWith('bg-'))) trigger.classList.add('bg-white');
+          if (!classesToCopy.some(c => c.startsWith('border'))) trigger.classList.add('border', 'border-slate-200');
+          if (!classesToCopy.some(c => c.startsWith('rounded'))) trigger.classList.add('rounded-xl');
+          if (!classesToCopy.some(c => c.startsWith('px-'))) trigger.classList.add('px-4');
+          if (!classesToCopy.some(c => c.startsWith('py-'))) trigger.classList.add('py-2.5');
+
+          // Trigger hover/focus states
+          trigger.classList.add('hover:border-brand-300');
+          
+          trigger.innerHTML = `<span class="truncate pr-2">${escapeHtml(selectedText)}</span><i class="fas fa-chevron-down text-slate-400 text-[10px] transition-transform duration-200"></i>`;
+          wrapper.appendChild(trigger);
+
+          // Create options container
+          const optionsContainer = document.createElement('div');
+          optionsContainer.className = 'custom-select-options absolute z-[100] min-w-full w-max whitespace-nowrap bg-white border border-slate-100 rounded-xl shadow-lg mt-1 hidden max-h-60 overflow-y-auto custom-scrollbar transform opacity-0 scale-95 transition-all duration-200 origin-top';
+          wrapper.appendChild(optionsContainer);
+
+          // Populate options
+          const renderOptions = () => {
+              optionsContainer.innerHTML = '';
+              Array.from(select.options).forEach((option, index) => {
+                  const optionDiv = document.createElement('div');
+                  optionDiv.className = `px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors ${select.selectedIndex === index ? 'bg-brand-50 text-brand-600' : 'text-slate-600 hover:bg-slate-50 hover:text-brand-500'}`;
+                  optionDiv.textContent = option.text;
+                  optionDiv.addEventListener('click', (e) => {
+                      e.stopPropagation();
+                      select.selectedIndex = index;
+                      trigger.querySelector('span').textContent = option.text;
+                      // Update active state class
+                      Array.from(optionsContainer.children).forEach(c => c.className = 'px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors text-slate-600 hover:bg-slate-50 hover:text-brand-500');
+                      optionDiv.className = 'px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors bg-brand-50 text-brand-600';
+                      
+                      closeDropdown();
+                      // Fire change event
+                      select.dispatchEvent(new Event('change', { bubbles: true }));
+                      // Also fire input event for broader compatibility
+                      select.dispatchEvent(new Event('input', { bubbles: true }));
+                  });
+                  optionsContainer.appendChild(optionDiv);
+              });
+          };
+          renderOptions();
+
+          // Sync if original select changes externally
+          select.addEventListener('change', () => {
+              const selectedOption = select.options[select.selectedIndex];
+              if (selectedOption) {
+                  trigger.querySelector('span').textContent = selectedOption.text;
+                  Array.from(optionsContainer.children).forEach((c, i) => {
+                      c.className = i === select.selectedIndex ? 'px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors bg-brand-50 text-brand-600' : 'px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors text-slate-600 hover:bg-slate-50 hover:text-brand-500';
+                  });
+              }
+          });
+
+          // Toggle dropdown
+          const toggleDropdown = () => {
+              const isHidden = optionsContainer.classList.contains('hidden');
+              // Close all other open dropdowns first
+              document.querySelectorAll('.custom-select-options:not(.hidden)').forEach(el => {
+                  if (el !== optionsContainer) {
+                      el.classList.remove('opacity-100', 'scale-100');
+                      el.classList.add('opacity-0', 'scale-95');
+                      setTimeout(() => el.classList.add('hidden'), 200);
+                      const otherIcon = el.previousElementSibling.querySelector('i');
+                      if (otherIcon) otherIcon.classList.remove('rotate-180');
+                      el.previousElementSibling.classList.remove('ring-2', 'ring-brand-500/20', 'border-brand-400');
+                  }
+              });
+
+              if (isHidden) {
+                  // Re-render in case options changed dynamically
+                  renderOptions();
+                  optionsContainer.classList.remove('hidden');
+                  trigger.classList.add('ring-2', 'ring-brand-500/20', 'border-brand-400');
+                  trigger.querySelector('i').classList.add('rotate-180');
+                  // Trigger animation
+                  requestAnimationFrame(() => {
+                      optionsContainer.classList.remove('opacity-0', 'scale-95');
+                      optionsContainer.classList.add('opacity-100', 'scale-100');
+                  });
+              } else {
+                  closeDropdown();
+              }
+          };
+
+          const closeDropdown = () => {
+              optionsContainer.classList.remove('opacity-100', 'scale-100');
+              optionsContainer.classList.add('opacity-0', 'scale-95');
+              trigger.querySelector('i').classList.remove('rotate-180');
+              trigger.classList.remove('ring-2', 'ring-brand-500/20', 'border-brand-400');
+              setTimeout(() => {
+                  optionsContainer.classList.add('hidden');
+              }, 200);
+          };
+
+          trigger.addEventListener('click', (e) => {
+              e.stopPropagation();
+              toggleDropdown();
+          });
+
+          // Close when clicking outside
+          document.addEventListener('click', (e) => {
+              if (!wrapper.contains(e.target) && !optionsContainer.classList.contains('hidden')) {
+                  closeDropdown();
+              }
+          });
+      });
+  }
 }
 
 // Map of explicit page path to allowed roles. If a page isn't listed, it assumes public/all authenticated access.
@@ -361,6 +507,36 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
     }
+
+    // Initialize custom selects globally
+    UI.initCustomSelects();
+
+    // Auto-init custom selects on dynamically added elements
+    const observer = new MutationObserver((mutations) => {
+        let shouldInit = false;
+        for (const mutation of mutations) {
+            if (mutation.addedNodes.length) {
+                for (const node of mutation.addedNodes) {
+                    if (node.nodeType === 1) { // ELEMENT_NODE
+                        if (node.tagName === 'SELECT' && !node.dataset.customSelect) {
+                            shouldInit = true;
+                            break;
+                        }
+                        if (node.querySelector && node.querySelector('select:not([data-custom-select])')) {
+                            shouldInit = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (shouldInit) break;
+        }
+        if (shouldInit) {
+            UI.initCustomSelects();
+        }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
 });
 
 function togglePasswordVisibility(inputId, button) {

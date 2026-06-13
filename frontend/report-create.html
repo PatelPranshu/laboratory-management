@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,70 +26,102 @@
         }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        
-        .chip-checkbox:checked + label { 
-            background-color: #f0f9ff; 
-            color: #0284c7; 
-            border-color: #bae6fd; 
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .chip-checkbox:checked+label {
+            background-color: #f0f9ff;
+            color: #0284c7;
+            border-color: #bae6fd;
             font-weight: 600;
         }
-        
-        .ui-card { 
+
+        .ui-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 0.75rem; 
+            border-radius: 0.75rem;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
-        
+
         .locked-field {
             background-color: #f8fafc !important;
-            color: #94a3b8 !important;
+            color: #334155 !important;
             cursor: not-allowed;
             border-color: #e2e8f0 !important;
         }
 
-        input:focus, textarea:focus, select:focus {
+        input:focus,
+        textarea:focus,
+        select:focus {
             box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
         }
 
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        .animate-fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.4s ease-out forwards;
+        }
     </style>
 </head>
+
 <body class="text-slate-800 antialiased selection:bg-brand-500 selection:text-white h-full overflow-hidden">
 
     <div id="toast-container" class="fixed bottom-6 right-6 z-[200] flex flex-col gap-3"></div>
 
     <!-- Page Loader Overlay -->
-    <div id="page-loader" class="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-md transition-opacity duration-500">
+    <div id="page-loader"
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80 backdrop-blur-md transition-opacity duration-500">
         <div class="flex flex-col items-center">
             <div class="relative">
                 <div class="w-16 h-16 border-4 border-slate-100 border-t-brand-600 rounded-full animate-spin"></div>
-                <i class="fas fa-microscope absolute inset-0 flex items-center justify-center text-brand-600 text-xl"></i>
+                <i
+                    class="fas fa-microscope absolute inset-0 flex items-center justify-center text-brand-600 text-xl"></i>
             </div>
-            <p class="mt-6 text-slate-500 font-bold text-xs uppercase tracking-[0.2em] animate-pulse">Initializing Lab Environment</p>
+            <p class="mt-6 text-slate-500 font-bold text-xs uppercase tracking-[0.2em] animate-pulse">Initializing Lab
+                Environment</p>
         </div>
     </div>
 
     <div class="flex h-screen overflow-hidden">
-        
+
         <!-- Sidebar injected by layout.js -->
 
         <main class="flex-1 flex flex-col relative overflow-hidden h-full">
-            
-            <header class="bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between z-50 shrink-0">
+
+            <header
+                class="bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between z-50 shrink-0">
                 <div class="flex items-center gap-4">
                     <div class="hidden sm:block">
                         <nav class="flex text-xs font-medium text-slate-500 mb-1">
                             <ol class="flex items-center space-x-2">
-                                <li class="hover:text-brand-600 transition-colors"><a href="dashboard.html">Dashboard</a></li>
+                                <li class="hover:text-brand-600 transition-colors"><a
+                                        href="dashboard.html">Dashboard</a></li>
                                 <li><i class="fas fa-chevron-right text-[10px] opacity-50"></i></li>
                                 <li class="text-slate-700 font-semibold">Report Creation</li>
                             </ol>
@@ -99,18 +132,23 @@
 
                 <div class="flex items-center gap-4" id="header-actions">
                     <div class="hidden xl:flex items-center relative gap-2 group">
-                        <div id="referral-dropdown-toggle" onclick="toggleReferralDropdown()" class="hidden sm:flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 gap-2 transition-all hover:border-brand-300 cursor-pointer min-w-[150px]">
+                        <div id="referral-dropdown-toggle" onclick="toggleReferralDropdown()"
+                            class="hidden sm:flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 gap-2 transition-all hover:border-brand-300 cursor-pointer min-w-[150px]">
                             <i class="fas fa-user-md text-slate-400 text-xs group-hover:text-brand-500"></i>
                             <div class="flex flex-col flex-1 min-w-0">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tight leading-none mb-0.5">Referred By</span>
-                                <span id="selected-referral-name" class="text-xs font-bold text-slate-700 truncate">Select Referrer</span>
+                                <span
+                                    class="text-[9px] font-bold text-slate-400 uppercase tracking-tight leading-none mb-0.5">Referred
+                                    By</span>
+                                <span id="selected-referral-name"
+                                    class="text-xs font-bold text-slate-700 truncate">Select Referrer</span>
                             </div>
                             <i class="fas fa-chevron-down text-[10px] text-slate-400"></i>
                         </div>
-                        
+
                         <input type="hidden" id="report-referred-by">
 
-                        <div id="referral-dropdown-menu" class="hidden absolute top-full right-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-xl z-[100] overflow-hidden py-1.5 animate-fade-in-up">
+                        <div id="referral-dropdown-menu"
+                            class="hidden absolute top-full right-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-xl z-[100] overflow-hidden py-1.5 animate-fade-in-up">
                             <ul id="referral-list" class="max-h-60 overflow-y-auto custom-scrollbar">
                                 <li class="px-4 py-3 text-center text-slate-400 text-sm italic">Loading sources...</li>
                             </ul>
@@ -119,59 +157,79 @@
 
                     <div class="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
 
-                    <span class="text-xs font-medium text-slate-400 hidden xl:inline" id="last-saved-info">Unsaved Report</span>
-                    
-                    <button id="btn-save-draft" onclick="saveReport(true)" class="p-2.5 sm:px-5 sm:py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0" title="Save Draft">
-                        <i class="fas fa-save sm:mr-2 text-slate-400"></i> <span class="hidden sm:inline">Save Draft</span>
+                    <span class="text-xs font-medium text-slate-400 hidden xl:inline" id="last-saved-info">Unsaved
+                        Report</span>
+
+                    <button id="btn-save-draft" onclick="saveReport(true)"
+                        class="p-2.5 sm:px-5 sm:py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0"
+                        title="Save Draft">
+                        <i class="fas fa-save sm:mr-2 text-slate-400"></i> <span class="hidden sm:inline">Save
+                            Draft</span>
                     </button>
 
-                    <button id="btn-save-report" onclick="saveReport(false)" class="p-2.5 sm:px-5 sm:py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0" title="Save & Sign">
+                    <button id="btn-save-report" onclick="saveReport(false)"
+                        class="p-2.5 sm:px-5 sm:py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0"
+                        title="Save & Sign">
                         <i class="fas fa-check sm:mr-2"></i> <span class="hidden sm:inline">Save & Sign</span>
                     </button>
 
                     <div id="header-post-save-actions" class="hidden flex items-center gap-3">
-                         <div id="header-status-wrapper" class="flex items-center bg-green-50 text-green-700 px-3 py-1.5 rounded-md border border-green-200">
-                             <span class="text-xs font-semibold" id="header-status-badge">Saved</span>
-                         </div>
-                         <button onclick="downloadPdf()" class="text-slate-400 hover:text-brand-600 transition-colors" title="Download PDF"><i class="fas fa-file-pdf text-xl"></i></button>
-                         <button onclick="sendReport('whatsapp')" class="text-slate-400 hover:text-emerald-600 transition-colors" title="WhatsApp"><i class="fab fa-whatsapp text-xl"></i></button>
+                        <div id="header-status-wrapper"
+                            class="flex items-center bg-green-50 text-green-700 px-3 py-1.5 rounded-md border border-green-200">
+                            <span class="text-xs font-semibold" id="header-status-badge">Saved</span>
+                        </div>
+                        <button id="btn-download-pdf" onclick="downloadPdf()" class="text-slate-400 hover:text-brand-600 transition-colors"
+                            title="Download PDF"><i class="fas fa-file-pdf text-3xl"></i></button>
+                        <button onclick="sendReport('whatsapp')"
+                            class="hidden text-slate-400 hover:text-emerald-600 transition-colors" title="WhatsApp"><i
+                                class="fab fa-whatsapp text-xl"></i></button>
                     </div>
 
                     <div class="h-6 w-px bg-slate-200 mx-2 hidden sm:block"></div>
-                    <button type="button" onclick="handleHeaderCancel()" class="text-slate-400 hover:text-slate-700 transition-colors" title="Close"><i class="fas fa-times text-xl"></i></button>
+                    <button type="button" onclick="handleHeaderCancel()"
+                        class="text-slate-400 hover:text-slate-700 transition-colors" title="Close"><i
+                            class="fas fa-times text-xl"></i></button>
                 </div>
             </header>
 
             <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/50">
                 <div class="max-w-[1200px] mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
-                    
+
                     <input type="hidden" id="report-id">
                     <input type="hidden" id="report-status">
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        
+
                         <div class="ui-card p-4 sm:p-5 col-span-1 flex flex-col justify-center">
                             <div id="patient-selection-container">
                                 <label class="block text-sm font-semibold text-slate-700 mb-2">Patient Details</label>
                                 <div class="relative">
-                                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                                    <input type="text" id="patient-search-input" placeholder="Search..." class="w-full pl-10 pr-4 py-2 bg-slate-50 sm:bg-white border border-slate-200 sm:border-slate-300 rounded-lg focus:outline-none focus:border-brand-500 transition-all text-sm">
-                                    <div id="patient-search-results" class="absolute z-[60] top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto"></div>
+                                    <i
+                                        class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                                    <input type="text" id="patient-search-input" placeholder="Search..."
+                                        class="w-full pl-10 pr-4 py-2 bg-slate-50 sm:bg-white border border-slate-200 sm:border-slate-300 rounded-lg focus:outline-none focus:border-brand-500 transition-all text-sm">
+                                    <div id="patient-search-results"
+                                        class="absolute z-[60] top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto">
+                                    </div>
                                 </div>
                             </div>
 
                             <div id="selected-patient-card" class="hidden flex items-start justify-between gap-3">
                                 <div class="flex items-center gap-3 sm:gap-4 overflow-hidden">
-                                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center border border-brand-100 shrink-0">
+                                    <div
+                                        class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center border border-brand-100 shrink-0">
                                         <i class="fas fa-user text-sm sm:text-lg"></i>
                                     </div>
                                     <div class="overflow-hidden">
-                                        <h3 class="font-bold text-slate-900 text-base sm:text-lg leading-tight truncate" id="sp-name">Patient Name</h3>
-                                        <p class="text-[11px] sm:text-sm text-slate-500 mt-0.5 truncate" id="sp-details">Phone • Age/Gender</p>
+                                        <h3 class="font-bold text-slate-900 text-base sm:text-lg leading-tight truncate"
+                                            id="sp-name">Patient Name</h3>
+                                        <p class="text-[11px] sm:text-sm text-slate-500 mt-0.5 truncate"
+                                            id="sp-details">Phone • Age/Gender</p>
                                         <input type="hidden" id="sp-id">
                                     </div>
                                 </div>
-                                <button onclick="clearPatient()" class="text-xs sm:text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors shrink-0">
+                                <button onclick="clearPatient()"
+                                    class="text-xs sm:text-sm font-medium text-brand-600 hover:text-brand-700 transition-colors shrink-0">
                                     Change
                                 </button>
                             </div>
@@ -181,38 +239,47 @@
                             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                                 <div class="flex items-center gap-3">
                                     <label class="block text-sm font-bold text-slate-700">Templates</label>
-                                    <button onclick="toggleTemplateHeight()" id="btn-toggle-templates" class="text-[10px] sm:text-xs font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1 transition-colors">
-                                        <i class="fas fa-chevron-down" id="template-expand-icon"></i> <span id="template-expand-text">Expand</span>
+                                    <button onclick="toggleTemplateHeight()" id="btn-toggle-templates"
+                                        class="text-[10px] sm:text-xs font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1 transition-colors">
+                                        <i class="fas fa-chevron-down" id="template-expand-icon"></i> <span
+                                            id="template-expand-text">Expand</span>
                                     </button>
                                 </div>
                                 <div class="relative w-1/2 sm:w-1/3">
-                                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
-                                    <input type="text" id="template-search-input" oninput="filterTemplates()" placeholder="Filter..." class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:border-brand-500 transition-all text-[10px] sm:text-xs">
+                                    <i
+                                        class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
+                                    <input type="text" id="template-search-input" oninput="filterTemplates()"
+                                        placeholder="Filter..."
+                                        class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md focus:outline-none focus:border-brand-500 transition-all text-[10px] sm:text-xs">
                                 </div>
                             </div>
-                            <div id="templates-checkbox-container" class="flex flex-wrap gap-2 overflow-y-auto max-h-[85px] transition-all duration-300 ease-in-out custom-scrollbar p-1 items-start content-start">
+                            <div id="templates-checkbox-container"
+                                class="flex flex-wrap gap-2 overflow-y-auto max-h-[85px] transition-all duration-300 ease-in-out custom-scrollbar p-1 items-start content-start">
                                 <span class="text-xs text-slate-400">Loading templates...</span>
                             </div>
                         </div>
                     </div>
-                    
+
 
 
                     <div class="ui-card flex flex-col min-h-[500px]">
-                        <div class="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center rounded-t-xl shrink-0">
+                        <div
+                            class="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center rounded-t-xl shrink-0">
                             <h2 class="text-lg font-bold text-slate-800 tracking-tight">
                                 Diagnostic Findings
                             </h2>
-                            <button onclick="addReportSection(false)" class="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
+                            <button onclick="addReportSection(false)"
+                                class="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
                                 <i class="fas fa-plus text-brand-600 mr-1.5"></i> Add Section
                             </button>
                         </div>
 
                         <div id="report-sections-container" class="p-4 sm:p-6 space-y-6 sm:space-y-8 bg-slate-50/30">
-                             <div class="flex flex-col items-center justify-center py-10 sm:py-16 text-slate-400">
+                            <div class="flex flex-col items-center justify-center py-10 sm:py-16 text-slate-400">
                                 <i class="fas fa-flask text-3xl sm:text-4xl mb-3 opacity-50"></i>
-                                <p class="text-xs sm:text-sm font-medium">Select a template or add a section to begin</p>
-                             </div>
+                                <p class="text-xs sm:text-sm font-medium">Select a template or add a section to begin
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -222,29 +289,39 @@
                             <div class="flex-1 w-full">
                                 <label class="block text-sm font-bold text-slate-700 mb-3">Performed By</label>
                                 <div class="relative group max-w-md">
-                                    <div id="doctor-dropdown-toggle" onclick="toggleDoctorDropdown()" class="flex items-center gap-3 bg-white border border-slate-300 rounded-lg px-4 py-2.5 hover:border-brand-400 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all cursor-pointer">
+                                    <div id="doctor-dropdown-toggle" onclick="toggleDoctorDropdown()"
+                                        class="flex items-center gap-3 bg-white border border-slate-300 rounded-lg px-4 py-2.5 hover:border-brand-400 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all cursor-pointer">
                                         <i class="fas fa-user-md text-brand-500 text-lg"></i>
-                                        <span id="selected-doctor-name" class="text-xs sm:text-sm font-semibold text-slate-700 truncate">Performed By</span>
-                                        <i class="fas fa-chevron-down text-xs text-slate-400 ml-auto group-hover:text-brand-500 transition-colors"></i>
+                                        <span id="selected-doctor-name"
+                                            class="text-xs sm:text-sm font-semibold text-slate-700 truncate">Performed
+                                            By</span>
+                                        <i
+                                            class="fas fa-chevron-down text-xs text-slate-400 ml-auto group-hover:text-brand-500 transition-colors"></i>
                                     </div>
-                                    
+
                                     <input type="hidden" id="report-performed-by">
-            
-                                    <div id="doctor-dropdown-menu" class="hidden absolute z-[100] bottom-full left-0 right-0 mb-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden py-1.5 animate-fade-in-up">
+
+                                    <div id="doctor-dropdown-menu"
+                                        class="hidden absolute z-[100] bottom-full left-0 right-0 mb-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden py-1.5 animate-fade-in-up">
                                         <ul id="doctor-list" class="max-h-60 overflow-y-auto custom-scrollbar">
-                                            <li class="px-4 py-3 text-center text-slate-400 text-sm italic">Loading doctors...</li>
+                                            <li class="px-4 py-3 text-center text-slate-400 text-sm italic">Loading
+                                                doctors...</li>
                                         </ul>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div id="signature-preview-container" class="hidden shrink-0 w-full lg:w-auto">
-                                 <div class="flex flex-col items-center lg:items-center gap-3">
-                                     <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center lg:text-left">Digital Signature Preview</p>
-                                     <div class="bg-slate-50 border border-slate-200 p-2 rounded-xl h-16 sm:h-20 w-40 sm:w-48 flex items-center justify-center shadow-inner">
-                                         <img id="signature-image-preview" src="" class="max-h-full max-w-full object-contain" alt="sign">
-                                     </div>
-                                 </div>
+                                <div class="flex flex-col items-center lg:items-center gap-3">
+                                    <p
+                                        class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center lg:text-left">
+                                        Digital Signature Preview</p>
+                                    <div
+                                        class="bg-slate-50 border border-slate-200 p-2 rounded-xl h-16 sm:h-20 w-40 sm:w-48 flex items-center justify-center shadow-inner">
+                                        <img id="signature-image-preview" src=""
+                                            class="max-h-full max-w-full object-contain" alt="sign">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -255,131 +332,183 @@
     </div>
 
     <template id="report-sec-template">
-        <div class="rep-section bg-white border border-slate-200 rounded-lg shadow-sm relative transition-all group mb-6">
-            
+        <div
+            class="rep-section bg-white border border-slate-200 rounded-lg shadow-sm relative transition-all group mb-6">
+
             <div class="bg-slate-50 px-5 py-3 border-b border-slate-200 flex justify-between items-center rounded-t-lg">
-                <input type="text" class="rs-name font-semibold text-slate-800 bg-transparent border-0 focus:ring-0 p-0 w-3/4 text-base placeholder:text-slate-400 placeholder:font-normal" placeholder="Section Heading (e.g., Lipid Profile)">
-                <button onclick="this.closest('.rep-section').remove(); saveReportDraft()" class="text-slate-400 hover:text-red-500 transition-colors p-1"><i class="fas fa-trash text-sm"></i></button>
+                <input type="text"
+                    class="rs-name font-semibold text-slate-800 bg-transparent border-0 focus:ring-0 p-0 w-3/4 text-base placeholder:text-slate-400 placeholder:font-normal"
+                    placeholder="Section Heading (e.g., Lipid Profile)">
+                <button onclick="this.closest('.rep-section').remove(); saveReportDraft()"
+                    class="text-slate-400 hover:text-red-500 transition-colors p-1"><i
+                        class="fas fa-trash text-sm"></i></button>
             </div>
-            
-                <div class="hidden sm:grid grid-cols-12 gap-4 px-5 py-2.5 bg-white border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    <div class="col-span-5">Parameter</div>
-                    <div class="col-span-2">Result</div>
-                    <div class="col-span-2">Unit</div>
-                    <div class="col-span-2">Normal Range</div>
-                    <div class="col-span-1"></div>
+
+            <div
+                class="hidden sm:grid grid-cols-12 gap-4 px-5 py-2.5 bg-white border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <div class="col-span-5">Parameter</div>
+                <div class="col-span-2">Result</div>
+                <div class="col-span-2">Unit</div>
+                <div class="col-span-2">Normal Range</div>
+                <div class="col-span-1"></div>
+            </div>
+
+            <div class="rs-params flex flex-col"></div>
+
+            <div
+               class="px-5 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-lg flex flex-col gap-4">
+                <div class="flex items-center">
+                    <button onclick="addParamLine(this, null, false)"
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:border-brand-300 text-xs font-bold text-brand-600 hover:text-brand-700 rounded-lg shadow-sm transition-all cursor-pointer">
+                        <i class="fas fa-plus"></i> Add Row
+                    </button>
                 </div>
 
-                <div class="rs-params flex flex-col"></div>
-                
-                <div class="px-5 py-4 border-t border-slate-100 bg-slate-50/50 rounded-b-lg flex flex-col md:flex-row gap-4 items-start md:items-center">
-                    <button onclick="addParamLine(this, null, false)" class="text-sm font-medium text-brand-600 hover:text-brand-800 transition-colors flex items-center whitespace-nowrap">
-                        <i class="fas fa-plus-circle mr-1.5"></i> Add Row
-                    </button>
-                    
-                    <div class="flex-1 w-full">
-                         <textarea class="rs-text w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-brand-500 text-sm text-slate-700 outline-none transition-all resize-y shadow-sm placeholder:text-slate-400" rows="1" placeholder="Clinical notes or interpretation for this section..." oninput="adjustNotesHeight(this)"></textarea>
-                         <details class="w-full group mt-3">
-                             <summary class="text-[11px] font-bold text-slate-400 hover:text-brand-600 cursor-pointer list-none flex items-center gap-1.5 transition-colors select-none pl-1 w-max">
-                                 <i class="fas fa-chevron-right text-[10px] transition-transform duration-200 group-open:rotate-90"></i>
-                                 Advanced Setup (Methodology, Sample, Kit)
-                             </summary>
-                             <div class="w-full bg-slate-50/50 border border-slate-200 rounded-lg p-3 mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-inner relative overflow-hidden">
-                                 <div class="absolute left-0 top-0 w-1 h-full bg-brand-200"></div>
-                                 <div class="pl-2">
-                                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                                         <i class="fas fa-microscope text-brand-500 opacity-80"></i> Methodology
-                                     </label>
-                                     <input type="text" class="rs-methodology w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400" placeholder="N/A">
-                                 </div>
-                                 <div class="pl-2">
-                                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                                         <i class="fas fa-vial text-brand-500 opacity-80"></i> Sample Type
-                                     </label>
-                                     <input type="text" class="rs-sample-type w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400" placeholder="N/A">
-                                 </div>
-                                 <div class="pl-2">
-                                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                                         <i class="fas fa-box-open text-brand-500 opacity-80"></i> Kit Used
-                                     </label>
-                                     <input type="text" class="rs-kit-used w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400" placeholder="N/A">
-                                 </div>
-                             </div>
-                         </details>
-                    </div>
+                <div class="flex-1 w-full">
+                    <textarea
+                        class="rs-text w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-brand-500 text-sm text-slate-700 outline-none transition-all resize-y shadow-sm placeholder:text-slate-400"
+                        rows="1" placeholder="Clinical notes or interpretation for this section..."
+                        oninput="adjustNotesHeight(this)"></textarea>
+                    <details class="w-full group mt-3">
+                        <summary
+                            class="text-[11px] font-bold text-slate-400 hover:text-brand-600 cursor-pointer list-none flex items-center gap-1.5 transition-colors select-none pl-1 w-max">
+                            <i
+                                class="fas fa-chevron-right text-[10px] transition-transform duration-200 group-open:rotate-90"></i>
+                            Advanced Setup (Methodology, Sample, Kit)
+                        </summary>
+                        <div
+                            class="w-full bg-slate-50/50 border border-slate-200 rounded-lg p-3 mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-inner relative overflow-hidden">
+                            <div class="absolute left-0 top-0 w-1 h-full bg-brand-200"></div>
+                            <div class="pl-2">
+                                <label
+                                    class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="fas fa-microscope text-brand-500 opacity-80"></i> Methodology
+                                </label>
+                                <input type="text"
+                                    class="rs-methodology w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400"
+                                    placeholder="N/A">
+                            </div>
+                            <div class="pl-2">
+                                <label
+                                    class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="fas fa-vial text-brand-500 opacity-80"></i> Sample Type
+                                </label>
+                                <input type="text"
+                                    class="rs-sample-type w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400"
+                                    placeholder="N/A">
+                            </div>
+                            <div class="pl-2">
+                                <label
+                                    class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                    <i class="fas fa-box-open text-brand-500 opacity-80"></i> Kit Used
+                                </label>
+                                <input type="text"
+                                    class="rs-kit-used w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400"
+                                    placeholder="N/A">
+                            </div>
+                        </div>
+                    </details>
                 </div>
             </div>
+        </div>
         </div>
     </template>
 
     <template id="param-line-template">
-        <div class="param-line border-b border-slate-100 sm:border-slate-50 hover:bg-slate-50 transition-colors px-4 sm:px-5 py-4 sm:py-2.5 flex flex-col gap-2 relative">
+        <div
+            class="param-line border-b border-slate-100 sm:border-slate-50 hover:bg-slate-50 transition-colors px-4 sm:px-5 py-4 sm:py-2.5 flex flex-col gap-2 relative">
             <div class="w-full flex flex-col sm:grid sm:grid-cols-12 gap-3 sm:gap-4 items-start sm:items-center">
                 <div class="w-full sm:col-span-5">
                     <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Parameter</label>
-                    <input type="text" class="p-name w-full bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded px-0 sm:px-2 py-1 sm:py-1.5 font-bold sm:font-medium text-slate-800 text-sm placeholder-slate-300 transition-all outline-none" placeholder="Parameter Name">
+                    <input type="text"
+                        class="p-name w-full bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded px-0 sm:px-2 py-1 sm:py-1.5 font-bold sm:font-medium text-slate-800 text-sm placeholder-slate-300 transition-all outline-none"
+                        placeholder="Parameter Name">
                 </div>
                 <div class="w-full sm:col-span-2">
                     <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Result</label>
-                    <input type="text" class="p-result w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm" placeholder="Value" oninput="checkAbnormal(this)">
+                    <input type="text"
+                        class="p-result w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm"
+                        placeholder="Value" oninput="checkAbnormal(this)">
                 </div>
                 <div class="flex gap-3 w-full sm:col-span-4">
                     <div class="flex-1">
                         <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Unit</label>
-                        <input type="text" class="p-units-input w-full px-0 sm:px-2 py-1 sm:py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-xs sm:text-sm text-slate-600 transition-all outline-none" placeholder="Unit">
+                        <input type="text"
+                            class="p-units-input w-full px-0 sm:px-2 py-1 sm:py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-xs sm:text-sm text-slate-600 transition-all outline-none"
+                            placeholder="Unit">
                     </div>
                     <div class="flex-[1.5]">
                         <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Ref. Range</label>
-                        <textarea class="p-normal-input w-full px-0 sm:px-2 py-1 sm:py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-[11px] leading-tight text-slate-500 transition-all outline-none placeholder-slate-300 resize-none overflow-hidden" rows="1" placeholder="Min - Max" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'; checkAbnormal(this)"></textarea>
+                        <textarea
+                            class="p-normal-input w-full px-0 sm:px-2 py-1 sm:py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-[11px] leading-tight text-slate-500 transition-all outline-none placeholder-slate-300 resize-none overflow-hidden"
+                            rows="1" placeholder="Min - Max"
+                            oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'; checkAbnormal(this)"></textarea>
                     </div>
                 </div>
                 <div class="w-full sm:col-span-1 flex justify-end pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
-                    <button onclick="this.closest('.param-line').remove(); saveReportDraft()" class="text-slate-400 hover:text-red-500 transition-colors p-2 sm:p-1.5 flex items-center gap-2 text-xs font-medium sm:text-base">
+                    <button onclick="this.closest('.param-line').remove(); saveReportDraft()"
+                        class="text-slate-400 hover:text-red-500 transition-colors p-2 sm:p-1.5 flex items-center gap-2 text-xs font-medium sm:text-base">
                         <i class="fas fa-trash-alt sm:hidden"></i>
                         <i class="fas fa-times hidden sm:block"></i>
                         <span class="sm:hidden text-red-500">Remove</span>
                     </button>
                 </div>
             </div>
-            
+
             <details class="w-full group mt-1">
-                <summary class="text-[11px] font-bold text-slate-400 hover:text-brand-600 cursor-pointer list-none flex items-center gap-1.5 transition-colors select-none pl-1 w-max">
-                    <i class="fas fa-chevron-right text-[10px] transition-transform duration-200 group-open:rotate-90"></i>
+                <summary
+                    class="text-[11px] font-bold text-slate-400 hover:text-brand-600 cursor-pointer list-none flex items-center gap-1.5 transition-colors select-none pl-1 w-max">
+                    <i
+                        class="fas fa-chevron-right text-[10px] transition-transform duration-200 group-open:rotate-90"></i>
                     Advanced Setup (Methodology, Sample, Kit)
                 </summary>
-                <div class="w-full bg-white border border-slate-200 rounded-lg p-3 mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-[0_2px_4px_rgb(0,0,0,0.02)] relative overflow-hidden">
+                <div
+                    class="w-full bg-white border border-slate-200 rounded-lg p-3 mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-[0_2px_4px_rgb(0,0,0,0.02)] relative overflow-hidden">
                     <div class="absolute left-0 top-0 w-1 h-full bg-slate-200"></div>
                     <div class="pl-2">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                        <label
+                            class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                             <i class="fas fa-microscope text-brand-500 opacity-80"></i> Methodology
                         </label>
-                        <input type="text" class="p-methodology w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none locked-field cursor-not-allowed" readonly placeholder="N/A">
+                        <input type="text"
+                            class="p-methodology w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none locked-field cursor-not-allowed"
+                            readonly placeholder="N/A">
                     </div>
                     <div class="pl-2">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                        <label
+                            class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                             <i class="fas fa-vial text-brand-500 opacity-80"></i> Sample Type
                         </label>
-                        <input type="text" class="p-sample-type w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none locked-field cursor-not-allowed" readonly placeholder="N/A">
+                        <input type="text"
+                            class="p-sample-type w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none locked-field cursor-not-allowed"
+                            readonly placeholder="N/A">
                     </div>
                     <div class="pl-2">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                        <label
+                            class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                             <i class="fas fa-box-open text-brand-500 opacity-80"></i> Kit Used
                         </label>
-                        <input type="text" class="p-kit-used w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none locked-field cursor-not-allowed" readonly placeholder="N/A">
+                        <input type="text"
+                            class="p-kit-used w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none locked-field cursor-not-allowed"
+                            readonly placeholder="N/A">
                     </div>
                 </div>
             </details>
         </div>
     </template>
 
-    <div id="new-patient-modal" class="fixed inset-0 bg-slate-900/40 hidden overflow-y-auto h-full w-full z-[200] flex items-center justify-center transition-opacity backdrop-blur-sm">
-        <div class="relative mx-auto border-0 w-full max-w-xl shadow-2xl rounded-2xl bg-white m-4 transform transition-transform" id="new-patient-modal-content">
-            
-            <div class="px-5 sm:px-8 py-4 sm:py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+    <div id="new-patient-modal"
+        class="fixed inset-0 bg-slate-900/40 hidden overflow-y-auto h-full w-full z-[200] flex items-center justify-center transition-opacity backdrop-blur-sm">
+        <div class="relative mx-auto border-0 w-full max-w-xl shadow-2xl rounded-2xl bg-white m-4 transform transition-transform"
+            id="new-patient-modal-content">
+
+            <div
+                class="px-5 sm:px-8 py-4 sm:py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
                 <h3 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center">
                     <i class="fas fa-user-plus text-brand-500 mr-3"></i> Quick Registration
                 </h3>
-                <button onclick="closePatientModal()" class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-lg transition-colors focus:outline-none">
+                <button onclick="closePatientModal()"
+                    class="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-lg transition-colors focus:outline-none">
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
@@ -388,51 +517,67 @@
                 <form id="new-patient-form" onsubmit="saveNewPatient(event)">
                     <div class="grid grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4 text-left">
                         <div class="col-span-2">
-                             <label class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center">
-                                 Full Name <span class="text-red-500 ml-1">*</span>
-                             </label>
-                             <input type="text" id="new-p-name" required placeholder="John Doe" class="w-full px-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                            <label
+                                class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center">
+                                Full Name <span class="text-red-500 ml-1">*</span>
+                            </label>
+                            <input type="text" id="new-p-name" required placeholder="John Doe"
+                                class="w-full px-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
                         </div>
 
                         <div class="col-span-2 sm:col-span-1">
-                             <label class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center">
-                                 Phone Number <span class="text-red-500 ml-1">*</span>
-                             </label>
-                             <input type="text" id="new-p-phone" required placeholder="+91 999 999 9999" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                            <label
+                                class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center">
+                                Phone Number <span class="text-red-500 ml-1">*</span>
+                            </label>
+                            <input type="text" id="new-p-phone" required placeholder="+91 999 999 9999"
+                                class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
                         </div>
 
                         <div class="col-span-2 sm:col-span-1">
-                             <label class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5">Email Address</label>
-                             <input type="email" id="new-p-email" placeholder="example@email.com" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                            <label
+                                class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5">Email
+                                Address</label>
+                            <input type="email" id="new-p-email" placeholder="example@email.com"
+                                class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
                         </div>
 
                         <div class="col-span-1">
-                             <label class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center">
-                                 Age <span class="text-red-500 ml-1">*</span>
-                             </label>
-                             <input type="number" id="new-p-age" required min="0" placeholder="e.g. 35" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                            <label
+                                class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center">
+                                Age <span class="text-red-500 ml-1">*</span>
+                            </label>
+                            <input type="number" id="new-p-age" required min="0" placeholder="e.g. 35"
+                                class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
                         </div>
 
                         <div class="col-span-1">
-                             <label class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center">
-                                 Gender <span class="text-red-500 ml-1">*</span>
-                             </label>
-                             <select id="new-p-gender" required class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm cursor-pointer appearance-none">
-                                 <option value="Male">Male</option>
-                                 <option value="Female">Female</option>
-                                 <option value="Other">Other</option>
-                             </select>
+                            <label
+                                class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center">
+                                Gender <span class="text-red-500 ml-1">*</span>
+                            </label>
+                            <select id="new-p-gender" required
+                                class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm cursor-pointer appearance-none">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
                         </div>
 
                         <div class="col-span-2">
-                             <label class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5">Address</label>
-                             <textarea id="new-p-address" rows="2" placeholder="Full residential address..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm resize-none"></textarea>
+                            <label
+                                class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5">Address</label>
+                            <textarea id="new-p-address" rows="2" placeholder="Full residential address..."
+                                class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm resize-none"></textarea>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-end space-x-3 sm:space-x-4 pt-4 sm:pt-5 mt-4 border-t border-slate-100">
-                        <button type="button" onclick="closePatientModal()" class="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 focus:outline-none transition-colors">Cancel</button>
-                        <button type="submit" id="btn-save-new-patient" class="flex-1 sm:flex-none px-7 py-2.5 rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 focus:outline-none transition-all">Register</button>
+                    <div
+                        class="flex items-center justify-end space-x-3 sm:space-x-4 pt-4 sm:pt-5 mt-4 border-t border-slate-100">
+                        <button type="button" onclick="closePatientModal()"
+                            class="px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 focus:outline-none transition-colors">Cancel</button>
+                        <button type="submit" id="btn-save-new-patient"
+                            class="flex-1 sm:flex-none px-7 py-2.5 rounded-xl shadow-md text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 focus:outline-none transition-all">Register</button>
                     </div>
                 </form>
             </div>
@@ -446,17 +591,17 @@
         function adjustNotesHeight(el) {
             const currentStyleHeight = el.style.height;
             const lastAutoHeight = el.dataset.autoHeight;
-            
+
             if (currentStyleHeight && lastAutoHeight && currentStyleHeight !== lastAutoHeight) {
                 return;
             }
-            
+
             el.style.height = 'auto';
             const computed = window.getComputedStyle(el);
             const lineHeight = parseFloat(computed.lineHeight) || 20;
             const padding = parseFloat(computed.paddingTop) + parseFloat(computed.paddingBottom) + parseFloat(computed.borderTopWidth) + parseFloat(computed.borderBottomWidth);
             const maxHeight = lineHeight * 6 + padding;
-            
+
             let targetHeight;
             if (el.scrollHeight > maxHeight) {
                 targetHeight = maxHeight;
@@ -465,7 +610,7 @@
                 targetHeight = el.scrollHeight;
                 el.style.overflowY = 'hidden';
             }
-            
+
             const heightStr = targetHeight + 'px';
             el.style.height = heightStr;
             el.dataset.autoHeight = heightStr;
@@ -478,23 +623,23 @@
             const urlParams = new URLSearchParams(window.location.search);
             return DraftManager.getReportKey(urlParams.get('patient'));
         }
-        
+
         document.addEventListener('DOMContentLoaded', async () => {
             const loader = document.getElementById('page-loader');
             try {
-                loadCommonLayout(); 
-                checkAuth(); 
-                
+                loadCommonLayout();
+                checkAuth();
+
                 // Concurrent data loading
                 await Promise.all([
-                    loadTemplatesCheckboxes(), 
-                    loadSignatures(), 
+                    loadTemplatesCheckboxes(),
+                    loadSignatures(),
                     loadReferrals()
                 ]);
 
                 const urlParams = new URLSearchParams(window.location.search);
                 const editId = urlParams.get('edit'), patientId = urlParams.get('patient');
-                
+
                 isRestoringDraft = true;
                 try {
                     if (editId) await loadExistingReport(editId);
@@ -541,9 +686,9 @@
                         }
                     }
                 });
-            } catch (err) { 
-                console.error('Error:', err); 
-                UI.showToast('Initialization error.', 'error'); 
+            } catch (err) {
+                console.error('Error:', err);
+                UI.showToast('Initialization error.', 'error');
             } finally {
                 if (loader) {
                     loader.classList.add('opacity-0');
@@ -553,28 +698,28 @@
         });
 
         async function loadTemplatesCheckboxes() {
-             try {
-                 const res = await api.request('/templates'); templatesData = res.data;
-                 const container = document.getElementById('templates-checkbox-container'); container.innerHTML = '';
-                 if (templatesData.length === 0) { container.innerHTML = '<span class="text-sm text-slate-400 font-medium">No Templates Found</span>'; return; }
-                 templatesData.forEach(t => {
-                     const wrapper = document.createElement('div');
-                     wrapper.innerHTML = `<input type="checkbox" id="tpl-${t._id}" class="hidden chip-checkbox" value="${t._id}" onchange="toggleTemplate(this, '${t._id}')"><label for="tpl-${t._id}" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-600 bg-white cursor-pointer hover:border-brand-400 transition-all block truncate max-w-[150px]" title="${sanitizeHTML(t.templateName)}">${sanitizeHTML(t.templateName)}</label>`;
-                     container.appendChild(wrapper.firstElementChild); container.appendChild(wrapper.lastElementChild);
-                 });
-             } catch (err) { }
+            try {
+                const res = await api.request('/templates'); templatesData = res.data;
+                const container = document.getElementById('templates-checkbox-container'); container.innerHTML = '';
+                if (templatesData.length === 0) { container.innerHTML = '<span class="text-sm text-slate-400 font-medium">No Templates Found</span>'; return; }
+                templatesData.forEach(t => {
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = `<input type="checkbox" id="tpl-${t._id}" class="hidden chip-checkbox" value="${t._id}" onchange="toggleTemplate(this, '${t._id}')"><label for="tpl-${t._id}" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-600 bg-white cursor-pointer hover:border-brand-400 transition-all block truncate max-w-[150px]" title="${sanitizeHTML(t.templateName)}">${sanitizeHTML(t.templateName)}</label>`;
+                    container.appendChild(wrapper.firstElementChild); container.appendChild(wrapper.lastElementChild);
+                });
+            } catch (err) { }
         }
 
         async function loadSignatures() {
             try {
                 const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
-                const res = await api.request('/signatures'); 
+                const res = await api.request('/signatures');
                 const list = document.getElementById('doctor-list');
                 const toggle = document.getElementById('doctor-dropdown-toggle');
-                
-                if (!res.data || res.data.length === 0) { 
-                    list.innerHTML = '<li class="px-4 py-3 text-center text-slate-400 text-sm italic">No signatures found</li>'; 
-                    return; 
+
+                if (!res.data || res.data.length === 0) {
+                    list.innerHTML = '<li class="px-4 py-3 text-center text-slate-400 text-sm italic">No signatures found</li>';
+                    return;
                 }
 
                 signaturesData = res.data;
@@ -596,7 +741,7 @@
                     const name = sig.fullName || sig.doctorName || 'Unknown';
                     const sId = sig._id || sig.userId || sig.doctorId;
                     selectDoctor(sId, name, sig.signatureUrl);
-                    
+
                     // Lock dropdown visually and functionally
                     if (toggle) {
                         toggle.onclick = null;
@@ -612,7 +757,7 @@
                 const res = await api.request('/referrals');
                 const list = document.getElementById('referral-list');
                 if (!list || !res.data) return;
-                
+
                 if (res.data.length === 0) {
                     list.innerHTML = '<li class="px-4 py-3 text-center text-slate-400 text-sm italic">No referral sources found</li>';
                     return;
@@ -627,7 +772,7 @@
                 `).join('');
             } catch (err) { console.error('Error loading referrals:', err); }
         }
-        
+
 
         function toggleDoctorDropdown() {
             const menu = document.getElementById('doctor-dropdown-menu');
@@ -655,11 +800,11 @@
             document.getElementById('report-performed-by').value = id;
             document.getElementById('selected-doctor-name').textContent = name;
             document.getElementById('doctor-dropdown-menu').classList.add('hidden');
-            
+
             const container = document.getElementById('signature-preview-container');
             const img = document.getElementById('signature-image-preview');
             const warning = document.getElementById('draft-warning-container');
-            
+
             if (url) {
                 img.src = url;
                 container.classList.remove('hidden');
@@ -721,7 +866,7 @@
                     } catch (err) { if (err.name !== 'AbortError') results.classList.add('hidden'); }
                 }, 400);
             });
-            document.addEventListener('click', e => { if(!input.contains(e.target) && !results.contains(e.target)) results.classList.add('hidden'); });
+            document.addEventListener('click', e => { if (!input.contains(e.target) && !results.contains(e.target)) results.classList.add('hidden'); });
         }
 
         async function selectPatientById(id) { try { const res = await api.request(`/patients/${id}`); selectPatient(res.data); } catch (err) { } }
@@ -733,7 +878,7 @@
             saveReportDraft();
         }
 
-        function handleHeaderCancel() { 
+        function handleHeaderCancel() {
             // 1. Clear Patient
             currentPatient = null;
             document.getElementById('sp-id').value = '';
@@ -744,10 +889,10 @@
                 searchInput.value = '';
                 searchInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
             }
-            
+
             const doctorToggle = document.getElementById('doctor-dropdown-toggle');
             if (doctorToggle) doctorToggle.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
-            
+
             const referralToggle = document.getElementById('referral-dropdown-toggle');
             if (referralToggle) referralToggle.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
 
@@ -796,9 +941,9 @@
         }
 
         function addReportSection(isTemplate = false) {
-            const tpl = document.getElementById('report-sec-template'), clone = tpl.content.cloneNode(true), container = document.getElementById('report-sections-container'); 
-            if (container.querySelector('.fa-flask')) container.innerHTML = ''; 
-            
+            const tpl = document.getElementById('report-sec-template'), clone = tpl.content.cloneNode(true), container = document.getElementById('report-sections-container');
+            if (container.querySelector('.fa-flask')) container.innerHTML = '';
+
             const block = clone.querySelector('.rep-section');
             if (isTemplate) {
                 const nameInput = block.querySelector('.rs-name');
@@ -819,24 +964,24 @@
         function addParamLine(btn, paramData = null, isReadOnly = false) {
             const tpl = document.getElementById('param-line-template'), clone = tpl.content.cloneNode(true), line = clone.querySelector('.param-line');
             if (!paramData) paramData = { name: '', result: '', units: '', ruleType: 'MIN_MAX', normalRange: { min: null, max: null } };
-            
+
             const nameEl = line.querySelector('.p-name'), unitEl = line.querySelector('.p-units-input'), rangeEl = line.querySelector('.p-normal-input');
-            
-            nameEl.value = paramData.name || ''; 
-            line.querySelector('.p-result').value = paramData.result || ''; 
+
+            nameEl.value = paramData.name || '';
+            line.querySelector('.p-result').value = paramData.result || '';
             unitEl.value = paramData.units || '';
-            
+
             // Determine display text for the reference range
             // Prioritize GENDER_SPECIFIC if isGenderSpecific is true, even if ruleType defaulted to MIN_MAX
             let ruleType = paramData.ruleType || 'MIN_MAX';
             if (paramData.isGenderSpecific === true && ruleType === 'MIN_MAX') {
                 ruleType = 'GENDER_SPECIFIC';
             }
-            
-            if (ruleType === 'GENDER_SPECIFIC') { 
-                const m = paramData.normalRange?.male, f = paramData.normalRange?.female; 
-                rangeEl.value = `M: ${m?.min??'?'}-${m?.max??'?'} \nF: ${f?.min??'?'}-${f?.max??'?'}`; 
-                rangeEl.readOnly = true; rangeEl.classList.add('locked-field'); 
+
+            if (ruleType === 'GENDER_SPECIFIC') {
+                const m = paramData.normalRange?.male, f = paramData.normalRange?.female;
+                rangeEl.value = `M: ${m?.min ?? '?'}-${m?.max ?? '?'} \nF: ${f?.min ?? '?'}-${f?.max ?? '?'}`;
+                rangeEl.readOnly = true; rangeEl.classList.add('locked-field');
             } else if (ruleType === 'THRESHOLD_COMPARISON') {
                 const comps = paramData.comparisons || [];
                 const opSymbols = { '<': '<', '<=': '≤', '>': '>', '>=': '≥', '==': '=', 'between': '↔' };
@@ -849,8 +994,8 @@
                 const textNormal = paramData.normalRange?.textNormal || (paramData.referenceRanges && paramData.referenceRanges[0]?.textNormal);
                 rangeEl.value = textNormal ? `Expected: ${textNormal}` : '';
                 rangeEl.readOnly = true; rangeEl.classList.add('locked-field');
-            } else if (paramData.normalRange) { 
-                const nr = paramData.normalRange; 
+            } else if (paramData.normalRange) {
+                const nr = paramData.normalRange;
                 if (nr.min !== null && nr.max !== null) {
                     rangeEl.value = `${nr.min} - ${nr.max}`;
                 } else if (nr.min !== null) {
@@ -879,24 +1024,24 @@
             const methodologyVal = paramData.methodology || '';
             const sampleTypeVal = paramData.sampleType || '';
             const kitUsedVal = paramData.kitUsed || paramData.kit || '';
-            
+
             const methodologyEl = line.querySelector('.p-methodology');
             const sampleTypeEl = line.querySelector('.p-sample-type');
             const kitUsedEl = line.querySelector('.p-kit-used');
-            
+
             if (methodologyEl) methodologyEl.value = methodologyVal;
             if (sampleTypeEl) sampleTypeEl.value = sampleTypeVal;
             if (kitUsedEl) kitUsedEl.value = kitUsedVal;
 
-            line.dataset.paramData = JSON.stringify(paramData); 
+            line.dataset.paramData = JSON.stringify(paramData);
             btn.closest('.rep-section').querySelector('.rs-params').appendChild(clone);
             if (paramData?.result) checkAbnormal(line.querySelector('.p-result'));
         }
 
         function checkAbnormal(inputEl) {
-            const line = inputEl.closest('.param-line'); if (!line || !line.dataset.paramData) return; 
+            const line = inputEl.closest('.param-line'); if (!line || !line.dataset.paramData) return;
             const resultStr = inputEl.value.trim();
-            inputEl.classList.remove('text-red-600', 'border-red-300', 'bg-red-50'); 
+            inputEl.classList.remove('text-red-600', 'border-red-300', 'bg-red-50');
             if (!resultStr) return;
 
             const param = JSON.parse(line.dataset.paramData);
@@ -905,13 +1050,13 @@
             if (param.isGenderSpecific === true && ruleType === 'MIN_MAX') {
                 ruleType = 'GENDER_SPECIFIC';
             }
-            
+
             let isAbnormal = false;
-            
+
             if (dataType === 'TEXT' || dataType === 'QUALITATIVE' || ruleType === 'QUALITATIVE') {
                 const textNormal = param.normalRange?.textNormal || (param.referenceRanges && param.referenceRanges[0]?.textNormal);
                 const comps = param.comparisons || [];
-                
+
                 if (comps.length > 0) {
                     for (const r of comps) {
                         let matches = false;
@@ -936,7 +1081,7 @@
                 const resultMatch = resultStr.match(/(-?[\d.]+)/);
                 if (!resultMatch) return;
                 const resultNum = parseFloat(resultMatch[1]);
-                
+
                 if (ruleType === 'MIN_MAX' && param.normalRange) {
                     const nr = param.normalRange;
                     if (nr.min !== null && resultNum < nr.min) isAbnormal = true;
@@ -953,7 +1098,7 @@
                 } else if (ruleType === 'THRESHOLD_COMPARISON' && param.comparisons) {
                     for (const r of param.comparisons) {
                         let matches = false;
-                        switch(r.operator) {
+                        switch (r.operator) {
                             case '<': matches = resultNum < r.value; break;
                             case '<=': matches = resultNum <= r.value; break;
                             case '>': matches = resultNum > r.value; break;
@@ -975,63 +1120,63 @@
             if (checkbox.checked) {
                 const t = templatesData.find(x => x._id === templateId); if (!t) return;
                 document.querySelectorAll('.rep-section').forEach(b => { if (!b.querySelector('.rs-name').value && b.querySelectorAll('.param-line').length === 0) b.remove(); });
-                t.sections.forEach(sec => { 
-                    const block = addReportSection(true); 
-                    block.dataset.templateId = templateId; 
-                    block.querySelector('.rs-name').value = sec.sectionName || ''; 
-                    block.querySelector('.rs-text').value = sec.defaultText || ''; 
+                t.sections.forEach(sec => {
+                    const block = addReportSection(true);
+                    block.dataset.templateId = templateId;
+                    block.querySelector('.rs-name').value = sec.sectionName || '';
+                    block.querySelector('.rs-text').value = sec.defaultText || '';
                     if (sec.methodology) { const e = block.querySelector('.rs-methodology'); e.value = sec.methodology; e.readOnly = true; e.classList.add('locked-field'); }
                     if (sec.sampleType) { const e = block.querySelector('.rs-sample-type'); e.value = sec.sampleType; e.readOnly = true; e.classList.add('locked-field'); }
                     if (sec.kitUsed) { const e = block.querySelector('.rs-kit-used'); e.value = sec.kitUsed; e.readOnly = true; e.classList.add('locked-field'); }
-                    if (sec.parameters) sec.parameters.forEach(p => addParamLine(block.querySelector('button'), p, true)); 
+                    if (sec.parameters) sec.parameters.forEach(p => addParamLine(block.querySelector('button'), p, true));
                 });
             } else { document.querySelectorAll(`.rep-section[data-template-id="${templateId}"]`).forEach(b => b.remove()); if (!document.querySelector('.rep-section')) addReportSection(false); }
             saveReportDraft();
         }
 
         async function loadExistingReport(id) {
-             try {
-                 const res = await api.request(`/reports/${id}`), r = res.data; document.getElementById('report-id').value = r._id; document.getElementById('report-status').value = r.status; if (typeof updateStatusBadgeUI === 'function') updateStatusBadgeUI(r.status);
-                  if (r.performedByLabTechId) { 
-                      const sig = r.performedByLabTechId;
-                      selectDoctor(sig._id, sig.fullName || sig.doctorName, sig.signatureUrl); 
-                  }
-                  if(r.patientId) selectPatient(r.patientId);
-                  if (r.referredBy) {
-                      selectReferral(r.referredBy);
-                  }
-                  if (r.templateIds) document.querySelectorAll('#templates-checkbox-container input').forEach(cb => { if (r.templateIds.includes(cb.value)) cb.checked = true; });
-                  const container = document.getElementById('report-sections-container'); container.innerHTML = '';
-                  r.sections.forEach(sec => { 
-                      const block = addReportSection(sec.templateId ? true : false); 
-                      if (sec.templateId) block.dataset.templateId = sec.templateId;
-                      block.querySelector('.rs-name').value = sec.sectionName || ''; 
-                      block.querySelector('.rs-text').value = sec.text || ''; 
-                      const methEl = block.querySelector('.rs-methodology'), sampEl = block.querySelector('.rs-sample-type'), kitEl = block.querySelector('.rs-kit-used');
-                      if (sec.methodology) methEl.value = sec.methodology;
-                      if (sec.sampleType) sampEl.value = sec.sampleType;
-                      if (sec.kitUsed) kitEl.value = sec.kitUsed;
-                      if (sec.templateId) {
-                          methEl.readOnly = true; methEl.classList.add('locked-field');
-                          sampEl.readOnly = true; sampEl.classList.add('locked-field');
-                          kitEl.readOnly = true; kitEl.classList.add('locked-field');
-                      }
-                      if (sec.parameters) sec.parameters.forEach(p => addParamLine(block.querySelector('button'), p, sec.templateId ? true : false)); 
-                  });
-                 toggleActionState(r.status);
-             } catch(err) { }
+            try {
+                const res = await api.request(`/reports/${id}`), r = res.data; document.getElementById('report-id').value = r._id; document.getElementById('report-status').value = r.status; if (typeof updateStatusBadgeUI === 'function') updateStatusBadgeUI(r.status);
+                if (r.performedByLabTechId) {
+                    const sig = r.performedByLabTechId;
+                    selectDoctor(sig._id, sig.fullName || sig.doctorName, sig.signatureUrl);
+                }
+                if (r.patientId) selectPatient(r.patientId);
+                if (r.referredBy) {
+                    selectReferral(r.referredBy);
+                }
+                if (r.templateIds) document.querySelectorAll('#templates-checkbox-container input').forEach(cb => { if (r.templateIds.includes(cb.value)) cb.checked = true; });
+                const container = document.getElementById('report-sections-container'); container.innerHTML = '';
+                r.sections.forEach(sec => {
+                    const block = addReportSection(sec.templateId ? true : false);
+                    if (sec.templateId) block.dataset.templateId = sec.templateId;
+                    block.querySelector('.rs-name').value = sec.sectionName || '';
+                    block.querySelector('.rs-text').value = sec.text || '';
+                    const methEl = block.querySelector('.rs-methodology'), sampEl = block.querySelector('.rs-sample-type'), kitEl = block.querySelector('.rs-kit-used');
+                    if (sec.methodology) methEl.value = sec.methodology;
+                    if (sec.sampleType) sampEl.value = sec.sampleType;
+                    if (sec.kitUsed) kitEl.value = sec.kitUsed;
+                    if (sec.templateId) {
+                        methEl.readOnly = true; methEl.classList.add('locked-field');
+                        sampEl.readOnly = true; sampEl.classList.add('locked-field');
+                        kitEl.readOnly = true; kitEl.classList.add('locked-field');
+                    }
+                    if (sec.parameters) sec.parameters.forEach(p => addParamLine(block.querySelector('button'), p, sec.templateId ? true : false));
+                });
+                toggleActionState(r.status);
+            } catch (err) { }
         }
 
         async function saveReport(isDraft = false) {
             const patientSearch = document.getElementById('patient-search-input');
             const doctorToggle = document.getElementById('doctor-dropdown-toggle');
             const referralToggle = document.getElementById('referral-dropdown-toggle');
-            
+
             [patientSearch, doctorToggle, referralToggle].forEach(el => {
                 if (el) el.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
             });
 
-            const patientId = document.getElementById('sp-id').value; 
+            const patientId = document.getElementById('sp-id').value;
             if (!patientId) {
                 if (patientSearch) {
                     patientSearch.classList.add('border-red-500', 'ring-2', 'ring-red-500/20');
@@ -1040,7 +1185,7 @@
                 }
                 return UI.showToast('Please select a patient.', 'error');
             }
-            
+
             const performedByLabTechIdRaw = document.getElementById('report-performed-by').value;
             const performedByLabTechId = performedByLabTechIdRaw === '' ? null : performedByLabTechIdRaw;
             const performedBy = document.getElementById('selected-doctor-name').textContent === 'Performed By' ? '' : document.getElementById('selected-doctor-name').textContent;
@@ -1076,99 +1221,99 @@
             }
 
             const sections = []; document.querySelectorAll('.rep-section').forEach(secBlock => {
-                  const sName = secBlock.querySelector('.rs-name').value;
-                  const sText = secBlock.querySelector('.rs-text').value, parameters = [];
-                  secBlock.querySelectorAll('.param-line').forEach(pl => { 
-                      if (!pl.dataset.paramData) return; 
-                      const p = JSON.parse(pl.dataset.paramData); 
-                      p.name = pl.querySelector('.p-name').value; 
-                      p.result = pl.querySelector('.p-result').value; 
-                      p.units = pl.querySelector('.p-units-input').value; 
-                      
-                      // For MIN_MAX, update normalRange if manually edited (though most are template-locked)
-                      const ruleType = p.ruleType || (p.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX');
-                      if (ruleType === 'MIN_MAX') { 
-                          const val = pl.querySelector('.p-normal-input').value.trim();
-                          const mMatch = val.match(/(-?[\d.]+)\s*[-–—]\s*(-?[\d.]+)/); 
-                          if (mMatch) {
-                              p.normalRange = { min: mMatch[1], max: mMatch[2] }; 
-                          } else if (val.startsWith('≥')) {
-                              p.normalRange = { min: val.replace('≥', '').trim(), max: null };
-                          } else if (val.startsWith('≤')) {
-                              p.normalRange = { min: null, max: val.replace('≤', '').trim() };
-                          }
-                      } 
-                      parameters.push(p); 
-                  });
-                  const sMeth = secBlock.querySelector('.rs-methodology').value.trim();
-                  const sSamp = secBlock.querySelector('.rs-sample-type').value.trim();
-                  const sKit = secBlock.querySelector('.rs-kit-used').value.trim();
-                  if (sName || parameters.length > 0 || sText || sMeth || sSamp || sKit) {
-                      sections.push({ 
-                          sectionName: sName || '', 
-                          text: sText, 
-                          ...(sMeth && { methodology: sMeth }),
-                          ...(sSamp && { sampleType: sSamp }),
-                          ...(sKit && { kitUsed: sKit }),
-                          parameters: parameters.length > 0 ? parameters : undefined,
-                          templateId: secBlock.dataset.templateId || undefined
-                      });
-                  }
+                const sName = secBlock.querySelector('.rs-name').value;
+                const sText = secBlock.querySelector('.rs-text').value, parameters = [];
+                secBlock.querySelectorAll('.param-line').forEach(pl => {
+                    if (!pl.dataset.paramData) return;
+                    const p = JSON.parse(pl.dataset.paramData);
+                    p.name = pl.querySelector('.p-name').value;
+                    p.result = pl.querySelector('.p-result').value;
+                    p.units = pl.querySelector('.p-units-input').value;
+
+                    // For MIN_MAX, update normalRange if manually edited (though most are template-locked)
+                    const ruleType = p.ruleType || (p.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX');
+                    if (ruleType === 'MIN_MAX') {
+                        const val = pl.querySelector('.p-normal-input').value.trim();
+                        const mMatch = val.match(/(-?[\d.]+)\s*[-–—]\s*(-?[\d.]+)/);
+                        if (mMatch) {
+                            p.normalRange = { min: mMatch[1], max: mMatch[2] };
+                        } else if (val.startsWith('≥')) {
+                            p.normalRange = { min: val.replace('≥', '').trim(), max: null };
+                        } else if (val.startsWith('≤')) {
+                            p.normalRange = { min: null, max: val.replace('≤', '').trim() };
+                        }
+                    }
+                    parameters.push(p);
+                });
+                const sMeth = secBlock.querySelector('.rs-methodology').value.trim();
+                const sSamp = secBlock.querySelector('.rs-sample-type').value.trim();
+                const sKit = secBlock.querySelector('.rs-kit-used').value.trim();
+                if (sName || parameters.length > 0 || sText || sMeth || sSamp || sKit) {
+                    sections.push({
+                        sectionName: sName || '',
+                        text: sText,
+                        ...(sMeth && { methodology: sMeth }),
+                        ...(sSamp && { sampleType: sSamp }),
+                        ...(sKit && { kitUsed: sKit }),
+                        parameters: parameters.length > 0 ? parameters : undefined,
+                        templateId: secBlock.dataset.templateId || undefined
+                    });
+                }
             });
 
             if (!isDraft && sections.length === 0) return UI.showToast('Findings cannot be empty.', 'error');
-            
+
             const templateIds = Array.from(document.querySelectorAll('#templates-checkbox-container input:checked')).map(cb => cb.value), reportId = document.getElementById('report-id').value;
             const saveBtnId = isDraft ? 'btn-save-draft' : 'btn-save-report';
             const originalLabel = isDraft ? '<i class="fas fa-save mr-2 text-slate-400"></i> Save Draft' : '<i class="fas fa-check mr-2"></i> Save & Sign';
 
             UI.toggleLoader(saveBtnId, true, 'Saving...');
             try {
-                const payload = { 
-                    patientId, 
-                    sections, 
-                    performedBy, 
-                    templateIds, 
-                    performedByLabTechId, 
-                    verifierId: performedByLabTechId, 
+                const payload = {
+                    patientId,
+                    sections,
+                    performedBy,
+                    templateIds,
+                    performedByLabTechId,
+                    verifierId: performedByLabTechId,
                     referredBy,
-                    status: isDraft ? 'draft' : undefined 
+                    status: isDraft ? 'draft' : undefined
                 };
-                
-                const res = await api.request(reportId ? `/reports/${reportId}` : '/reports', reportId ? 'PUT' : 'POST', payload); 
+
+                const res = await api.request(reportId ? `/reports/${reportId}` : '/reports', reportId ? 'PUT' : 'POST', payload);
                 const savedReport = res.data;
-                
-                document.getElementById('report-id').value = savedReport._id; 
-                document.getElementById('report-status').value = savedReport.status; 
-                
-                UI.showToast(savedReport.status === 'saved' ? 'Finalized & Signed' : 'Saved as Draft', 'success'); 
-                document.getElementById('last-saved-info').textContent = `Last Saved: ${new Date().toLocaleTimeString()}`; 
-                
-                DraftManager.clear(getActiveDraftKey()); 
+
+                document.getElementById('report-id').value = savedReport._id;
+                document.getElementById('report-status').value = savedReport.status;
+
+                UI.showToast(savedReport.status === 'saved' ? 'Finalized & Signed' : 'Saved as Draft', 'success');
+                document.getElementById('last-saved-info').textContent = `Last Saved: ${new Date().toLocaleTimeString()}`;
+
+                DraftManager.clear(getActiveDraftKey());
                 toggleActionState(savedReport.status);
-            } catch (err) { 
-                UI.showToast(err.message || 'Failed to save report', 'error'); 
-            } finally { 
-                UI.toggleLoader(saveBtnId, false, originalLabel); 
+            } catch (err) {
+                UI.showToast(err.message || 'Failed to save report', 'error');
+            } finally {
+                UI.toggleLoader(saveBtnId, false, originalLabel);
             }
         }
 
         function toggleActionState(state) {
-            const saveBtn = document.getElementById('btn-save-report'), 
-                  draftBtn = document.getElementById('btn-save-draft'),
-                  shareActions = document.getElementById('header-post-save-actions'); 
+            const saveBtn = document.getElementById('btn-save-report'),
+                draftBtn = document.getElementById('btn-save-draft'),
+                shareActions = document.getElementById('header-post-save-actions');
             if (!saveBtn || !shareActions) return;
 
-            if (state === 'saved') { 
-                saveBtn.classList.add('hidden'); 
+            if (state === 'saved') {
+                saveBtn.classList.add('hidden');
                 if (draftBtn) draftBtn.classList.add('hidden');
                 shareActions.classList.remove('hidden');
-                updateStatusBadgeUI(document.getElementById('report-status').value || 'saved'); 
+                updateStatusBadgeUI(document.getElementById('report-status').value || 'saved');
             }
-            else { 
-                saveBtn.classList.remove('hidden'); 
+            else {
+                saveBtn.classList.remove('hidden');
                 if (draftBtn) draftBtn.classList.remove('hidden');
-                shareActions.classList.add('hidden'); 
+                shareActions.classList.add('hidden');
             }
         }
 
@@ -1177,9 +1322,66 @@
             badge.textContent = status.toUpperCase(); wrapper.className = (status.toLowerCase() === 'draft') ? 'bg-slate-50 text-slate-600 px-3 py-1.5 rounded-md border border-slate-200' : 'bg-green-50 text-green-700 px-3 py-1.5 rounded-md border border-green-200';
         }
 
-        function downloadPdf() { const id = document.getElementById('report-id').value, token = localStorage.getItem('lis_token'); fetch(`${BASE_URL}/reports/${id}/pdf`, { headers: { 'Authorization': `Bearer ${token}` } }).then(res => res.blob()).then(blob => { const url = window.URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = `Diagnostic_Report_${id.slice(-6)}.pdf`; a.click(); }); }
+        async function downloadPdf() {
+            const btn = document.getElementById('btn-download-pdf');
+            if (!btn || btn.disabled) return;
+
+            const icon = btn.querySelector('i');
+            const originalIconClass = icon ? icon.className : '';
+
+            // Set loading state
+            btn.disabled = true;
+            btn.style.pointerEvents = 'none';
+            if (icon) {
+                icon.className = 'fas fa-spinner animate-spin text-3xl text-brand-600';
+            }
+
+            const id = document.getElementById('report-id').value;
+            const token = localStorage.getItem('lis_token');
+
+            try {
+                const res = await fetch(`${BASE_URL}/reports/${id}/pdf`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) {
+                    throw new Error('Failed to generate PDF');
+                }
+                
+                // Extract filename from Content-Disposition header if available
+                let filename = `Diagnostic_Report_${id.slice(-6)}.pdf`;
+                const disposition = res.headers.get('content-disposition');
+                if (disposition) {
+                    const match = disposition.match(/filename="?([^";\n]+)"?/);
+                    if (match && match[1]) {
+                        filename = match[1];
+                    }
+                }
+
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error(err);
+                if (typeof UI !== 'undefined' && UI.showToast) {
+                    UI.showToast(err.message || 'Error generating PDF', 'error');
+                } else {
+                    alert('Error generating PDF');
+                }
+            } finally {
+                // Restore original state
+                btn.disabled = false;
+                btn.style.pointerEvents = 'auto';
+                if (icon) {
+                    icon.className = originalIconClass;
+                }
+            }
+        }
         async function sendReport(method) { const id = document.getElementById('report-id').value; try { await api.request(`/reports/${id}/send`, 'POST', { method }); UI.showToast('Notification Sent Successfully', 'success'); } catch (err) { UI.showToast(err.message, 'error'); } }
-        
+
         function restorePerformedBy(performedById) {
             if (!performedById || !signaturesData) return;
             const sig = signaturesData.find(s => s._id === performedById || s.userId === performedById || s.doctorId === performedById);
@@ -1196,26 +1398,26 @@
                 addReportSection(false);
                 return;
             }
-            
+
             if (restorePatient && draft.patient) {
                 await selectPatientById(draft.patient._id);
             }
-            
+
             if (draft.performedBy) {
                 restorePerformedBy(draft.performedBy);
             }
-            
+
             if (draft.referredBy) {
                 selectReferral(draft.referredBy);
             }
-            
+
             if (draft.templateIds) {
                 draft.templateIds.forEach(id => {
                     const cb = document.getElementById(`tpl-${id}`);
                     if (cb) cb.checked = true;
                 });
             }
-            
+
             if (draft.sections && draft.sections.length > 0) {
                 document.getElementById('report-sections-container').innerHTML = '';
                 draft.sections.forEach(sec => {
@@ -1223,7 +1425,7 @@
                     if (sec.templateId) block.dataset.templateId = sec.templateId;
                     block.querySelector('.rs-name').value = sec.sectionName || '';
                     block.querySelector('.rs-text').value = sec.text || '';
-                    
+
                     const methEl = block.querySelector('.rs-methodology'), sampEl = block.querySelector('.rs-sample-type'), kitEl = block.querySelector('.rs-kit-used');
                     if (methEl && sec.methodology) methEl.value = sec.methodology;
                     if (sampEl && sec.sampleType) sampEl.value = sec.sampleType;
@@ -1233,7 +1435,7 @@
                         if (sampEl) { sampEl.readOnly = true; sampEl.classList.add('locked-field'); }
                         if (kitEl) { kitEl.readOnly = true; kitEl.classList.add('locked-field'); }
                     }
-                    
+
                     if (sec.parameters) sec.parameters.forEach(p => addParamLine(block.querySelector('button'), p, sec.templateId ? true : false));
                 });
             } else {
@@ -1245,45 +1447,45 @@
             if (isRestoringDraft) return;
             if (document.getElementById('report-id').value) return;
             const sections = []; document.querySelectorAll('.rep-section').forEach(secBlock => {
-                  const sName = secBlock.querySelector('.rs-name').value, sText = secBlock.querySelector('.rs-text').value;
-                  const sMeth = secBlock.querySelector('.rs-methodology').value.trim();
-                  const sSamp = secBlock.querySelector('.rs-sample-type').value.trim();
-                  const sKit = secBlock.querySelector('.rs-kit-used').value.trim();
-                  const parameters = [];
-                  secBlock.querySelectorAll('.param-line').forEach(pl => { 
-                      if (!pl.dataset.paramData) return; 
-                      const p = JSON.parse(pl.dataset.paramData); 
-                      p.name = pl.querySelector('.p-name').value; 
-                      p.result = pl.querySelector('.p-result').value; 
-                      p.units = pl.querySelector('.p-units-input').value; 
-                      const ruleType = p.ruleType || (p.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX');
-                      if (ruleType === 'MIN_MAX') { 
-                          const val = pl.querySelector('.p-normal-input').value.trim();
-                          const mMatch = val.match(/(-?[\d.]+)\s*[-–—]\s*(-?[\d.]+)/); 
-                          if (mMatch) {
-                              p.normalRange = { min: mMatch[1], max: mMatch[2] }; 
-                          } else if (val.startsWith('≥')) {
-                              p.normalRange = { min: val.replace('≥', '').trim(), max: null };
-                          } else if (val.startsWith('≤')) {
-                              p.normalRange = { min: null, max: val.replace('≤', '').trim() };
-                          }
-                      }
-                      parameters.push(p); 
-                  });
-                  sections.push({ 
-                      sectionName: sName, 
-                      text: sText, 
-                      ...(sMeth && { methodology: sMeth }),
-                      ...(sSamp && { sampleType: sSamp }),
-                      ...(sKit && { kitUsed: sKit }),
-                      parameters,
-                      templateId: secBlock.dataset.templateId || undefined
-                  });
+                const sName = secBlock.querySelector('.rs-name').value, sText = secBlock.querySelector('.rs-text').value;
+                const sMeth = secBlock.querySelector('.rs-methodology').value.trim();
+                const sSamp = secBlock.querySelector('.rs-sample-type').value.trim();
+                const sKit = secBlock.querySelector('.rs-kit-used').value.trim();
+                const parameters = [];
+                secBlock.querySelectorAll('.param-line').forEach(pl => {
+                    if (!pl.dataset.paramData) return;
+                    const p = JSON.parse(pl.dataset.paramData);
+                    p.name = pl.querySelector('.p-name').value;
+                    p.result = pl.querySelector('.p-result').value;
+                    p.units = pl.querySelector('.p-units-input').value;
+                    const ruleType = p.ruleType || (p.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX');
+                    if (ruleType === 'MIN_MAX') {
+                        const val = pl.querySelector('.p-normal-input').value.trim();
+                        const mMatch = val.match(/(-?[\d.]+)\s*[-–—]\s*(-?[\d.]+)/);
+                        if (mMatch) {
+                            p.normalRange = { min: mMatch[1], max: mMatch[2] };
+                        } else if (val.startsWith('≥')) {
+                            p.normalRange = { min: val.replace('≥', '').trim(), max: null };
+                        } else if (val.startsWith('≤')) {
+                            p.normalRange = { min: null, max: val.replace('≤', '').trim() };
+                        }
+                    }
+                    parameters.push(p);
+                });
+                sections.push({
+                    sectionName: sName,
+                    text: sText,
+                    ...(sMeth && { methodology: sMeth }),
+                    ...(sSamp && { sampleType: sSamp }),
+                    ...(sKit && { kitUsed: sKit }),
+                    parameters,
+                    templateId: secBlock.dataset.templateId || undefined
+                });
             });
             const draft = { patient: currentPatient, performedBy: document.getElementById('report-performed-by').value, referredBy: document.getElementById('report-referred-by').value, templateIds: Array.from(document.querySelectorAll('#templates-checkbox-container input:checked')).map(cb => cb.value), sections };
             const hasFilledSection = sections.some(s => s.sectionName || s.text || s.methodology || s.sampleType || s.kitUsed || (s.parameters && s.parameters.length > 0));
             const hasDraftData = draft.patient || draft.performedBy || draft.referredBy || hasFilledSection;
-            
+
             if (hasDraftData) {
                 DraftManager.save(getActiveDraftKey(), draft);
             } else {
@@ -1296,7 +1498,7 @@
             const icon = document.getElementById('template-expand-icon');
             const text = document.getElementById('template-expand-text');
             const isExpanded = container.classList.contains('max-h-[500px]');
-            
+
             if (isExpanded) {
                 container.classList.remove('max-h-[500px]');
                 container.classList.add('max-h-[85px]');
@@ -1314,7 +1516,31 @@
 
         function openPatientModal() { document.getElementById('new-patient-form').reset(); document.getElementById('new-patient-modal').classList.remove('hidden'); }
         function closePatientModal() { document.getElementById('new-patient-modal').classList.add('hidden'); }
-        async function saveNewPatient(e) { e.preventDefault(); try { const res = await api.request(`/patients`, 'POST', { name: document.getElementById('new-p-name').value, phone: document.getElementById('new-p-phone').value, email: document.getElementById('new-p-email').value, age: document.getElementById('new-p-age').value, gender: document.getElementById('new-p-gender').value, address: document.getElementById('new-p-address').value }); selectPatient(res.data); closePatientModal(); } catch (err) { UI.showToast(err.message, 'error'); } }
+        let isSavingNewPatient = false;
+        async function saveNewPatient(e) {
+            e.preventDefault();
+            if (isSavingNewPatient) return;
+            isSavingNewPatient = true;
+            UI.toggleLoader('btn-save-new-patient', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Registering...');
+            try {
+                const res = await api.request(`/patients`, 'POST', {
+                    name: document.getElementById('new-p-name').value,
+                    phone: document.getElementById('new-p-phone').value,
+                    email: document.getElementById('new-p-email').value,
+                    age: document.getElementById('new-p-age').value,
+                    gender: document.getElementById('new-p-gender').value,
+                    address: document.getElementById('new-p-address').value
+                });
+                selectPatient(res.data);
+                closePatientModal();
+            } catch (err) {
+                UI.showToast(err.message, 'error');
+            } finally {
+                UI.toggleLoader('btn-save-new-patient', false, 'Register');
+                isSavingNewPatient = false;
+            }
+        }
     </script>
 </body>
+
 </html>

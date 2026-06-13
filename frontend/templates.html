@@ -1,13 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Report Templates - MyPathoLabs</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <script>
         tailwind.config = {
@@ -26,107 +24,86 @@
         }
     </script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-        }
+        body { font-family: 'Inter', sans-serif; }
 
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-
-        .ui-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        }
-
-        input:focus,
-        textarea:focus,
-        select:focus {
-            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
-        }
-
-        /* Prevent number input arrows in modern browsers for cleaner UI */
+        /* Number input spinner removal */
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
+
+        /* Template list item active state */
+        .tpl-item.active {
+            background: #f0f9ff;
+            border-left-color: #0284c7;
+        }
+        .tpl-item.active .tpl-icon {
+            background: #e0f2fe;
+            color: #0284c7;
+            border-color: #bae6fd;
+        }
+        .tpl-item.active .tpl-name {
+            color: #0369a1;
+        }
     </style>
 </head>
-
-<body class="text-slate-800 antialiased selection:bg-brand-500 selection:text-white h-full overflow-hidden">
+<body class="bg-slate-50 antialiased text-slate-800 selection:bg-brand-500 selection:text-white">
 
     <div id="toast-container" class="fixed bottom-6 right-6 z-[200] flex flex-col gap-3"></div>
 
-    <div class="flex h-screen overflow-hidden">
+    <div class="flex h-screen overflow-hidden bg-slate-100">
 
-        <main class="flex-1 flex flex-col relative overflow-hidden h-full">
+        <!-- Sidebar Layout Injected via JS -->
 
-            <header
-                class="bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between z-50 shrink-0">
+        <!-- Main Content -->
+        <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar pb-12">
+
+            <!-- Top Header -->
+            <header class="bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between sticky top-0 z-10 shrink-0">
                 <div class="flex items-center gap-4">
-                    <div>
-                        <nav class="hidden sm:flex text-xs font-medium text-slate-500 mb-1">
+                    <div class="hidden sm:block">
+                        <nav class="flex text-xs font-medium text-slate-500 mb-0.5" aria-label="Breadcrumb">
                             <ol class="flex items-center space-x-2">
-                                <li class="hover:text-brand-600 transition-colors"><a
-                                        href="dashboard.html">Dashboard</a></li>
+                                <li class="hover:text-brand-600 transition-colors">
+                                    <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-1"></i>Dashboard</a>
+                                </li>
                                 <li><i class="fas fa-chevron-right text-[10px] opacity-50"></i></li>
-                                <li class="text-slate-700 font-semibold">Report Templates</li>
+                                <li class="text-slate-800 font-bold">Templates</li>
                             </ol>
                         </nav>
-                        <h1 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight" id="page-title">Manage
-                            Templates</h1>
+                        <h1 class="text-xl font-bold text-slate-900 tracking-tight">Report Templates</h1>
                     </div>
                 </div>
-
-                <div class="flex items-center gap-2 sm:gap-4 ml-auto" id="header-actions">
-                    <button onclick="openShareModal()"
-                        class="p-2 sm:px-5 sm:py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all shadow-sm flex items-center"
-                        title="Share / Import">
-                        <i class="fas fa-share-alt text-brand-600 sm:mr-2"></i> <span class="hidden sm:inline">Share / Import</span>
+                <div class="flex items-center gap-2 sm:gap-3" id="header-actions">
+                    <button onclick="openShareModal()" class="p-2 sm:px-4 sm:py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center" title="Share / Import">
+                        <i class="fas fa-share-alt text-brand-600 sm:mr-2"></i><span class="hidden sm:inline">Share / Import</span>
                     </button>
-                    <button onclick="createNewTemplate()"
-                        class="p-2 sm:px-5 sm:py-2.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all shadow-sm flex items-center"
-                        title="New Template">
-                        <i class="fas fa-plus text-brand-600 sm:mr-2"></i> <span class="hidden sm:inline">New
-                            Template</span>
-                    </button>
-                    <div class="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
-                    <button type="button" class="text-slate-400 hover:text-slate-700 transition-colors p-1"
-                        title="Close" onclick="window.location.href='dashboard.html'"><i
-                            class="fas fa-times text-xl"></i></button>
                 </div>
             </header>
 
-            <div class="flex-1 bg-slate-50/50 p-4 sm:p-6 overflow-hidden flex flex-col">
-                <div class="max-w-[1400px] w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
+            <!-- Page Content -->
+            <div class="px-4 py-6 sm:px-8 sm:py-8 max-w-[1600px] mx-auto">
 
-                    <div class="lg:col-span-4 xl:col-span-3 flex flex-col h-full min-h-0">
-                        <div class="ui-card flex flex-col h-full overflow-hidden">
-                            <div
-                                class="px-5 py-4 border-b border-slate-100 bg-white rounded-t-xl flex justify-between items-center shrink-0">
-                                <h2 class="text-sm font-bold text-slate-800"><i
-                                        class="fas fa-list-ul text-brand-500 mr-2"></i>Saved Inventory</h2>
-                                <button onclick="loadTemplates()"
-                                    class="text-slate-400 hover:text-brand-600 transition-colors"><i
-                                        class="fas fa-sync-alt text-xs"></i></button>
+                <!-- Main Grid: Sidebar List + Editor -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                    <!-- Left: Template List Panel -->
+                    <div class="lg:col-span-4 xl:col-span-3">
+                        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                            <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+                                <h2 class="text-sm font-bold text-slate-800 flex items-center">
+                                    <i class="fas fa-folder-open text-brand-500 mr-2"></i>Saved Templates
+                                </h2>
+                                <div class="flex items-center gap-2">
+                                    <span id="template-count" class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full"></span>
+                                    <button onclick="loadTemplates()" class="text-slate-400 hover:text-brand-600 transition-colors" title="Refresh">
+                                        <i class="fas fa-sync-alt text-xs"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <ul id="templates-list"
-                                class="overflow-y-auto flex-1 custom-scrollbar divide-y divide-slate-50 bg-white">
-                                <li class="p-6 text-center text-slate-400 flex flex-col items-center justify-center">
+                            <ul id="templates-list" class="divide-y divide-slate-50 max-h-[65vh] overflow-y-auto custom-scrollbar">
+                                <li class="p-8 text-center text-slate-400 flex flex-col items-center justify-center">
                                     <i class="fas fa-circle-notch fa-spin text-2xl mb-2"></i>
                                     <span class="font-medium text-sm">Loading templates...</span>
                                 </li>
@@ -134,43 +111,44 @@
                         </div>
                     </div>
 
-                    <div class="lg:col-span-8 xl:col-span-9 flex flex-col h-full min-h-0">
-                        <div class="ui-card flex flex-col h-full overflow-hidden relative">
-                            <div
-                                class="px-4 sm:px-6 py-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row justify-between sm:items-center gap-4 rounded-t-xl shrink-0 z-10 shadow-[0_4px_6px_-1px_rgb(0,0,0,0.02)]">
+                    <!-- Right: Editor Panel -->
+                    <div class="lg:col-span-8 xl:col-span-9">
+                        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-visible">
+                            <!-- Editor Header -->
+                            <div class="px-5 sm:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                                 <div>
-                                    <h2 class="text-lg font-bold text-slate-800" id="editor-title">Create New Template
+                                    <h2 class="text-lg font-bold text-slate-800 flex items-center" id="editor-title">
+                                        <i class="fas fa-plus-circle text-brand-500 mr-2 text-base"></i>Create New Template
                                     </h2>
-                                    <p class="text-[11px] sm:text-sm text-slate-500 mt-0.5" id="editor-subtitle">Define
-                                        sections and default parameters.</p>
+                                    <p class="text-xs text-slate-400 mt-0.5 ml-7" id="editor-subtitle">Define sections and default parameters.</p>
                                 </div>
-                                <button id="btn-save-template" onclick="saveTemplate()"
-                                    class="w-full sm:w-auto justify-center px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-lg shadow-sm transition-all flex items-center">
-                                    <i class="fas fa-save mr-2"></i> Save Template
-                                </button>
+                                <div class="flex items-center gap-2.5 w-full sm:w-auto">
+                                    <button onclick="createNewTemplate(event)" class="w-full sm:w-auto justify-center px-5 py-2.5 bg-white border border-brand-600 hover:bg-brand-50 hover:text-brand-700 hover:border-brand-700 text-brand-600 font-bold text-sm rounded-xl transition-all flex items-center shadow-sm">
+                                        <i class="fas fa-plus mr-2"></i> New Template
+                                    </button>
+                                    <button id="btn-save-template" onclick="saveTemplate(event)" class="w-full sm:w-auto justify-center px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow-sm transition-all flex items-center">
+                                        <i class="fas fa-save mr-2"></i> Save Template
+                                    </button>
+                                </div>
                             </div>
 
-                            <div
-                                class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 p-4 sm:p-6 flex flex-col">
+                            <!-- Editor Body -->
+                            <div class="p-5 sm:p-6">
                                 <input type="hidden" id="template-id">
 
-                                <div
-                                    class="mb-6 shrink-0 bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                    <div class="absolute top-0 left-0 w-1 h-full bg-brand-500"></div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 ml-2">
-                                        <div class="col-span-1 sm:col-span-2">
-                                            <label
-                                                class="block text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Template
-                                                Master Name <span class="text-red-500">*</span></label>
-                                            <input type="text" id="t-name"
-                                                placeholder="e.g. Comprehensive Metabolic Panel"
-                                                class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 focus:bg-white transition-all text-base sm:text-xl font-bold text-slate-800 placeholder-slate-400 max-w-[calc(100%-0.5rem)]">
+                                <!-- Template Meta Fields -->
+                                <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 mb-6">
+                                    <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-4 flex items-center">
+                                        <i class="fas fa-info-circle text-brand-500 mr-2"></i> Template Information
+                                    </h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                                        <div class="sm:col-span-3">
+                                            <label class="block text-xs font-bold text-slate-600 mb-2">Template Name <span class="text-red-500">*</span></label>
+                                            <input type="text" id="t-name" placeholder="e.g. Comprehensive Metabolic Panel" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all text-base sm:text-lg font-bold text-slate-800 placeholder-slate-400">
                                         </div>
                                         <div>
-                                            <label
-                                                class="block text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Department</label>
-                                            <select id="t-department"
-                                                class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm font-semibold text-slate-700">
+                                            <label class="block text-xs font-bold text-slate-600 mb-2">Department</label>
+                                            <select id="t-department" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm font-semibold text-slate-700 cursor-pointer appearance-none">
                                                 <option value="GENERAL">General</option>
                                                 <option value="BIOCHEMISTRY">Biochemistry</option>
                                                 <option value="MICROBIOLOGY">Microbiology</option>
@@ -183,11 +161,8 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label
-                                                class="block text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Report
-                                                Type</label>
-                                            <select id="t-report-type"
-                                                class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm font-semibold text-slate-700">
+                                            <label class="block text-xs font-bold text-slate-600 mb-2">Report Type</label>
+                                            <select id="t-report-type" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm font-semibold text-slate-700 cursor-pointer appearance-none">
                                                 <option value="DISCRETE">Discrete</option>
                                                 <option value="NARRATIVE">Narrative</option>
                                                 <option value="HYBRID">Hybrid</option>
@@ -197,22 +172,24 @@
                                     </div>
                                 </div>
 
-                                <div class="flex justify-between items-center mb-4 mt-2 shrink-0">
-                                    <h3 class="text-sm font-bold text-slate-700 flex items-center">
-                                        <i class="fas fa-layer-group text-slate-400 mr-2"></i> Document Sections
+                                <!-- Sections Header -->
+                                <div class="flex justify-between items-center mb-5">
+                                    <h3 class="text-base font-bold text-slate-800 flex items-center">
+                                        <i class="fas fa-layer-group text-brand-500 mr-2"></i> Sections
                                     </h3>
-                                    <button onclick="addSection()"
-                                        class="text-xs font-bold uppercase tracking-wider text-brand-600 hover:text-brand-800 hover:bg-brand-50 transition-colors flex items-center bg-white border border-slate-200 px-3 py-2 rounded-lg shadow-sm">
-                                        <i class="fas fa-plus mr-1.5"></i> Add Section
+                                    <button onclick="addSection()" class="text-sm font-bold text-brand-600 hover:text-brand-800 hover:bg-brand-50 transition-all flex items-center bg-white border border-slate-200 px-4 py-2.5 rounded-xl shadow-sm">
+                                        <i class="fas fa-plus mr-2"></i> Add Section
                                     </button>
                                 </div>
 
-                                <div id="sections-container" class="space-y-6 flex-1 pb-4">
+                                <!-- Sections Container -->
+                                <div id="sections-container" class="space-y-6">
                                     <!-- Sections injected here -->
                                 </div>
-                                <div class="mt-4 pb-4">
-                                    <button onclick="addSection()"
-                                        class="w-full text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-brand-600 hover:bg-white hover:border-brand-300 transition-colors flex items-center justify-center bg-transparent border-2 border-dashed border-slate-300 px-3 py-3 rounded-xl">
+
+                                <!-- Add Section Footer -->
+                                <div class="mt-6">
+                                    <button onclick="addSection()" class="w-full text-sm font-bold text-slate-400 hover:text-brand-600 hover:bg-white hover:border-brand-300 transition-colors flex items-center justify-center bg-transparent border-2 border-dashed border-slate-200 px-4 py-4 rounded-2xl">
                                         <i class="fas fa-plus mr-2"></i> Add Another Section
                                     </button>
                                 </div>
@@ -224,105 +201,107 @@
         </main>
     </div>
 
+    <!-- ===== SECTION TEMPLATE ===== -->
     <template id="section-template">
-        <div
-            class="section-block bg-white border border-slate-200 rounded-lg shadow-sm relative transition-all group mb-4">
+        <div class="section-block bg-white border border-slate-200 rounded-2xl shadow-sm relative transition-all group">
 
-            <div class="bg-slate-50 px-5 py-3 border-b border-slate-200 flex justify-between items-center rounded-t-lg">
-                <input type="text"
-                    class="sec-name font-semibold text-slate-800 bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-lg px-3 py-1.5 w-full sm:w-3/4 text-base placeholder:text-slate-400 placeholder:font-normal outline-none transition-all shadow-sm"
-                    placeholder="Section Heading (e.g., Hematology Findings)">
+            <!-- Section Header -->
+            <div class="bg-gradient-to-r from-slate-50 to-white px-5 sm:px-6 py-4 border-b border-slate-200 flex justify-between items-center rounded-t-2xl">
+                <div class="flex items-center gap-3 flex-1 mr-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+                        <i class="fas fa-bookmark text-sm"></i>
+                    </div>
+                    <input type="text"
+                        class="sec-name font-bold text-slate-800 bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-xl px-4 py-2.5 w-full text-sm placeholder:text-slate-400 placeholder:font-normal outline-none transition-all shadow-sm"
+                        placeholder="Section Name (e.g. Hematology)">
+                </div>
                 <button onclick="this.closest('.section-block').remove()"
-                    class="text-slate-400 hover:text-red-500 transition-colors p-1" title="Delete Section"><i
-                        class="fas fa-trash text-sm"></i></button>
+                    class="text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all p-2 rounded-xl shrink-0" title="Delete Section">
+                    <i class="fas fa-trash text-sm"></i>
+                </button>
             </div>
 
             <div class="p-0">
-                <div class="px-5 py-3 border-b border-slate-100 bg-white">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-tight mb-1">Default
-                        Interpretation/Notes</label>
-                    <textarea rows="1"
-                        class="sec-text w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-brand-500 text-sm text-slate-700 outline-none transition-all resize-y shadow-sm placeholder:text-slate-400"
-                        placeholder="Optional standard remarks/notes for this section..."
+                <!-- Section Notes -->
+                <div class="px-5 sm:px-6 py-4 border-b border-slate-100 bg-white">
+                    <label class="block text-xs font-bold text-slate-600 mb-2">
+                        <i class="fas fa-sticky-note text-slate-400 mr-1.5"></i>Default Interpretation / Notes
+                    </label>
+                    <textarea rows="2"
+                        class="sec-text w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand-500 focus:bg-white text-sm text-slate-700 outline-none transition-all resize-y placeholder:text-slate-400"
+                        placeholder="Optional standard remarks for this section..."
                         oninput="adjustNotesHeight(this)"></textarea>
 
+                    <!-- Advanced Setup (Section-Level) -->
                     <details class="w-full group mt-3">
-                        <summary
-                            class="text-[11px] font-bold text-slate-400 hover:text-brand-600 cursor-pointer list-none flex items-center gap-1.5 transition-colors select-none pl-1 w-max">
-                            <i
-                                class="fas fa-chevron-right text-[10px] transition-transform duration-200 group-open:rotate-90"></i>
-                            Advanced Setup (Methodology, Sample, Kit)
+                        <summary class="text-xs font-bold text-slate-500 hover:text-brand-600 cursor-pointer list-none flex items-center gap-2 transition-colors select-none w-max py-1">
+                            <i class="fas fa-chevron-right text-[10px] transition-transform duration-200 group-open:rotate-90"></i>
+                            <i class="fas fa-cog text-slate-400 text-[11px]"></i> Advanced Settings (Methodology, Sample, Kit)
                         </summary>
-                        <div
-                            class="w-full bg-slate-50/50 border border-slate-200 rounded-lg p-3 mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-inner relative overflow-hidden">
-                            <div class="absolute left-0 top-0 w-1 h-full bg-brand-200"></div>
-                            <div class="pl-2">
-                                <label
-                                    class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                                    <i class="fas fa-microscope text-brand-500 opacity-80"></i> Methodology
+                        <div class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 mt-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5 block">
+                                    <i class="fas fa-microscope text-brand-500 text-[11px]"></i> Methodology
                                 </label>
-                                <input type="text"
-                                    class="sec-methodology w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400 shadow-sm transition-all"
-                                    placeholder="e.g. CMIA">
+                                <input type="text" class="sec-methodology w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none placeholder-slate-400 transition-all" placeholder="e.g. CMIA">
                             </div>
-                            <div class="pl-2">
-                                <label
-                                    class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                                    <i class="fas fa-vial text-brand-500 opacity-80"></i> Sample Type
+                            <div>
+                                <label class="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5 block">
+                                    <i class="fas fa-vial text-brand-500 text-[11px]"></i> Sample Type
                                 </label>
-                                <input type="text"
-                                    class="sec-sample-type w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400 shadow-sm transition-all"
-                                    placeholder="e.g. Serum">
+                                <input type="text" class="sec-sample-type w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none placeholder-slate-400 transition-all" placeholder="e.g. Serum">
                             </div>
-                            <div class="pl-2">
-                                <label
-                                    class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                                    <i class="fas fa-box-open text-brand-500 opacity-80"></i> Kit Used
+                            <div>
+                                <label class="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5 block">
+                                    <i class="fas fa-box-open text-brand-500 text-[11px]"></i> Kit Used
                                 </label>
-                                <input type="text"
-                                    class="sec-kit-used w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400 shadow-sm transition-all"
-                                    placeholder="e.g. SD Bioline">
+                                <input type="text" class="sec-kit-used w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none placeholder-slate-400 transition-all" placeholder="e.g. SD Bioline">
                             </div>
                         </div>
                     </details>
                 </div>
 
-                <div
-                    class="hidden sm:grid grid-cols-12 gap-3 px-5 py-2 bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold text-slate-500 uppercase tracking-widest shrink-0">
-                    <div class="col-span-4 pl-2">Parameter Name</div>
-                    <div class="col-span-2">Unit</div>
-                    <div class="col-span-5 ml-1">Reference Range</div>
-                    <div class="col-span-1 text-right"></div>
+                <!-- Parameters Heading -->
+                <div class="px-5 sm:px-6 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                    <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center">
+                        <i class="fas fa-list-check text-brand-500 mr-2"></i> Test Parameters
+                    </h4>
+                    <span class="text-[10px] font-medium text-slate-400">Name · Type · Unit · Range</span>
                 </div>
 
-                <div class="sec-params flex flex-col">
+                <!-- Parameters Container -->
+                <div class="sec-params flex flex-col gap-4 p-5 sm:p-6">
                     <!-- Param rows injected here -->
                 </div>
 
-                <div class="px-5 py-3 border-t border-slate-100 bg-white rounded-b-lg flex items-center">
+                <!-- Add Parameter Button -->
+                <div class="px-5 sm:px-6 py-4 bg-white flex items-center rounded-b-2xl">
                     <button type="button" onclick="addParamRow(this)"
-                        class="text-sm font-medium text-brand-600 hover:text-brand-800 transition-colors flex items-center">
-                        <i class="fas fa-plus-circle mr-1.5"></i> Add Parameter Row
+                        class="text-sm font-bold text-brand-600 hover:text-brand-800 hover:bg-brand-50 transition-all flex items-center px-3 py-2 rounded-lg -ml-3">
+                        <i class="fas fa-plus-circle mr-2"></i> Add Parameter
                     </button>
                 </div>
             </div>
         </div>
     </template>
 
+    <!-- ===== PARAMETER ROW TEMPLATE ===== -->
     <template id="param-row-template">
-        <div
-            class="param-row flex flex-col gap-3 px-4 sm:px-5 py-4 sm:py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors group">
-            <div class="flex flex-col sm:grid sm:grid-cols-12 gap-3 items-start sm:items-center w-full">
-                <div class="w-full sm:col-span-3">
-                    <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Parameter Name</label>
+        <div class="param-row bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5 hover:border-brand-200 transition-all group relative">
+            <!-- Row 1: Core fields in a clean grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-x-4 gap-y-3 items-end">
+                <!-- Parameter Name -->
+                <div class="sm:col-span-4">
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Parameter Name</label>
                     <input type="text"
-                        class="pr-name w-full bg-white border border-slate-200 focus:border-brand-400 rounded px-2 py-1.5 font-semibold text-slate-800 text-[13px] placeholder-slate-300 transition-all outline-none shadow-sm"
+                        class="pr-name w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 font-semibold text-slate-800 text-sm placeholder-slate-400 transition-all outline-none"
                         placeholder="e.g. Hemoglobin">
                 </div>
-                <div class="w-full sm:col-span-2">
-                    <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Data Type</label>
+                <!-- Data Type -->
+                <div class="sm:col-span-3">
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Data Type</label>
                     <select
-                        class="pr-data-type w-full bg-white border border-slate-200 focus:border-brand-400 rounded px-2 py-1.5 text-xs text-slate-600 outline-none shadow-sm cursor-pointer"
+                        class="pr-data-type w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none cursor-pointer appearance-none"
                         onchange="toggleDataTypeFields(this)">
                         <option value="NUMERIC">Numeric</option>
                         <option value="TEXT">Text / Qualitative</option>
@@ -333,218 +312,238 @@
                         <option value="CULTURE_SENSITIVITY">Culture & Sensitivity</option>
                     </select>
                 </div>
-                <div class="w-full sm:col-span-1 pr-units-container">
-                    <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Unit</label>
+                <!-- Unit -->
+                <div class="sm:col-span-2 pr-units-container">
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5">Unit</label>
                     <input type="text"
-                        class="pr-units w-full bg-white border border-slate-200 focus:border-brand-400 rounded px-2 py-1.5 text-[11px] text-slate-600 transition-all outline-none placeholder-slate-300 shadow-sm"
-                        placeholder="g/dL">
+                        class="pr-units w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 transition-all outline-none placeholder-slate-400"
+                        placeholder="e.g. g/dL">
                 </div>
-                <div class="w-full sm:col-span-5 flex flex-col gap-2">
-                    <!-- NUMERIC CONFIG -->
-                    <div class="pr-numeric-config flex flex-col gap-2">
-                        <div class="flex items-center gap-1.5 shrink-0">
-                            <select
-                                class="pr-rule-type bg-white border border-slate-200 rounded px-1.5 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-tight outline-none focus:border-brand-400 shadow-sm cursor-pointer"
-                                onchange="toggleRuleFields(this)">
-                                <option value="MIN_MAX">Min/Max</option>
-                                <option value="GENDER_SPECIFIC">M/F Range</option>
-                                <option value="THRESHOLD_COMPARISON">Threshold</option>
-                            </select>
-                        </div>
-
-                        <div class="rule-min-max flex flex-1 items-center gap-1.5">
-                            <input type="number" step="any"
-                                class="pr-min w-14 sm:w-full max-w-[70px] px-2 py-1 bg-white border border-slate-200 rounded text-xs font-medium text-slate-700 outline-none focus:border-brand-400 shadow-sm placeholder-slate-300 text-center"
-                                placeholder="Min">
-                            <span class="text-slate-400 text-xs">-</span>
-                            <input type="number" step="any"
-                                class="pr-max w-14 sm:w-full max-w-[70px] px-2 py-1 bg-white border border-slate-200 rounded text-xs font-medium text-slate-700 outline-none focus:border-brand-400 shadow-sm placeholder-slate-300 text-center"
-                                placeholder="Max">
-                        </div>
-
-                        <div class="rule-gender hidden flex-col gap-1.5">
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[10px] font-extrabold text-blue-500 w-3">M</span>
-                                <input type="number" step="any"
-                                    class="pr-male-min w-12 sm:w-full max-w-[60px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-blue-400 shadow-sm placeholder-slate-300 text-center"
-                                    placeholder="Min">
-                                <span class="text-slate-400 text-[10px]">-</span>
-                                <input type="number" step="any"
-                                    class="pr-male-max w-12 sm:w-full max-w-[60px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-blue-400 shadow-sm placeholder-slate-300 text-center"
-                                    placeholder="Max">
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-[10px] font-extrabold text-pink-500 w-3">F</span>
-                                <input type="number" step="any"
-                                    class="pr-female-min w-12 sm:w-full max-w-[60px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-pink-400 shadow-sm placeholder-slate-300 text-center"
-                                    placeholder="Min">
-                                <span class="text-slate-400 text-[10px]">-</span>
-                                <input type="number" step="any"
-                                    class="pr-female-max w-12 sm:w-full max-w-[60px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-pink-400 shadow-sm placeholder-slate-300 text-center"
-                                    placeholder="Max">
-                            </div>
-                        </div>
-
-                        <div class="rule-comparison hidden flex-col gap-1.5">
-                            <div class="comparison-rules-list flex flex-col gap-1"></div>
-                            <button type="button" onclick="addComparisonRule(this)"
-                                class="text-[10px] font-bold text-brand-600 hover:text-brand-800 flex items-center gap-1 mt-0.5 self-start">
-                                <i class="fas fa-plus-circle"></i> Add Rule
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- TEXT CONFIG -->
-                    <div class="pr-text-config hidden flex-col gap-2">
-                        <input type="text"
-                            class="pr-text-normal w-full px-2 py-1.5 bg-white border border-slate-200 focus:border-brand-400 rounded text-xs outline-none shadow-sm placeholder-slate-400"
-                            placeholder="Expected Normal Result (e.g. NEGATIVE)">
-                    </div>
-
-                    <!-- NARRATIVE CONFIG -->
-                    <div class="pr-narrative-config hidden">
-                        <span class="text-[10px] font-semibold text-slate-400 italic">No ranges required for
-                            narrative.</span>
-                    </div>
-                </div>
-                <div class="w-full sm:col-span-1 flex justify-end pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
+                <!-- Delete Button -->
+                <div class="sm:col-span-3 flex items-end justify-end sm:justify-end">
                     <button type="button" onclick="this.closest('.param-row').remove()"
-                        class="text-slate-400 hover:text-red-500 transition-colors p-1 flex items-center gap-2 text-xs font-medium sm:text-base opacity-100 sm:opacity-0 group-hover:opacity-100">
-                        <i class="fas fa-trash-alt sm:hidden"></i>
-                        <i class="fas fa-times hidden sm:block"></i>
+                        class="text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all p-2 rounded-xl flex items-center gap-2 text-xs font-semibold opacity-100 sm:opacity-0 group-hover:opacity-100">
+                        <i class="fas fa-trash-alt text-sm"></i>
                         <span class="sm:hidden text-red-500">Remove</span>
                     </button>
                 </div>
             </div>
 
-            <details class="w-full group mt-2 mb-1">
-                <summary
-                    class="text-[11px] font-bold text-slate-400 hover:text-brand-600 cursor-pointer list-none flex items-center gap-1.5 transition-colors select-none pl-1 w-max">
-                    <i
-                        class="fas fa-chevron-right text-[10px] transition-transform duration-200 group-open:rotate-90"></i>
-                    Advanced Setup (Methodology, Sample, Kit)
+            <!-- Row 2: Reference Range Config -->
+            <div class="mt-3">
+                <!-- NUMERIC CONFIG -->
+                <div class="pr-numeric-config flex flex-col gap-3">
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                        <div class="flex flex-wrap items-center gap-3 mb-3">
+                            <label class="text-xs font-bold text-slate-600">Reference Range</label>
+                            <select
+                                class="pr-rule-type bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-600 outline-none focus:border-brand-500 cursor-pointer appearance-none w-48"
+                                onchange="toggleRuleFields(this)">
+                                <option value="MIN_MAX">Min / Max</option>
+                                <option value="GENDER_SPECIFIC">Male / Female</option>
+                                <option value="THRESHOLD_COMPARISON">Threshold Rules</option>
+                            </select>
+                        </div>
+
+                        <!-- Min/Max -->
+                        <div class="rule-min-max flex items-center gap-3">
+                            <div class="flex-1 max-w-[180px]">
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1">MIN VALUE</label>
+                                <input type="number" step="any"
+                                    class="pr-min w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-brand-500 placeholder-slate-400 text-center"
+                                    placeholder="0">
+                            </div>
+                            <span class="text-slate-300 text-lg font-bold mt-4">–</span>
+                            <div class="flex-1 max-w-[180px]">
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1">MAX VALUE</label>
+                                <input type="number" step="any"
+                                    class="pr-max w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-brand-500 placeholder-slate-400 text-center"
+                                    placeholder="100">
+                            </div>
+                        </div>
+
+                        <!-- Gender Specific -->
+                        <div class="rule-gender hidden flex-col gap-3">
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-1.5 bg-blue-50 border border-blue-100 rounded-lg px-3 py-0.5">
+                                    <i class="fas fa-mars text-blue-500 text-xs"></i>
+                                    <span class="text-xs font-extrabold text-blue-600">Male</span>
+                                </div>
+                                <div class="flex-1 max-w-[160px]">
+                                    <input type="number" step="any" class="pr-male-min w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-blue-500 placeholder-slate-400 text-center" placeholder="Min">
+                                </div>
+                                <span class="text-slate-300 font-bold">–</span>
+                                <div class="flex-1 max-w-[160px]">
+                                    <input type="number" step="any" class="pr-male-max w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-blue-500 placeholder-slate-400 text-center" placeholder="Max">
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-1.5 bg-pink-50 border border-pink-100 rounded-lg px-3 py-0.5">
+                                    <i class="fas fa-venus text-pink-500 text-xs"></i>
+                                    <span class="text-xs font-extrabold text-pink-600">Female</span>
+                                </div>
+                                <div class="flex-1 max-w-[160px]">
+                                    <input type="number" step="any" class="pr-female-min w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-pink-500 placeholder-slate-400 text-center" placeholder="Min">
+                                </div>
+                                <span class="text-slate-300 font-bold">–</span>
+                                <div class="flex-1 max-w-[160px]">
+                                    <input type="number" step="any" class="pr-female-max w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-pink-500 placeholder-slate-400 text-center" placeholder="Max">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Threshold Comparison -->
+                        <div class="rule-comparison hidden flex-col gap-2">
+                            <div class="comparison-rules-list flex flex-col gap-2"></div>
+                            <button type="button" onclick="addComparisonRule(this)"
+                                class="text-xs font-bold text-brand-600 hover:text-brand-800 hover:bg-brand-50 flex items-center gap-1.5 mt-1 self-start px-2 py-1 rounded-lg transition-colors">
+                                <i class="fas fa-plus-circle"></i> Add Rule
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TEXT CONFIG -->
+                <div class="pr-text-config hidden flex-col gap-2">
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                        <label class="block text-xs font-bold text-slate-600 mb-1.5">Expected Normal Result</label>
+                        <input type="text"
+                            class="pr-text-normal w-full px-4 py-2.5 bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl text-sm font-medium text-slate-700 outline-none placeholder-slate-400"
+                            placeholder="e.g. NEGATIVE, Non-Reactive">
+                    </div>
+                </div>
+
+                <!-- NARRATIVE CONFIG -->
+                <div class="pr-narrative-config hidden">
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                        <span class="text-xs font-medium text-slate-500 flex items-center gap-2">
+                            <i class="fas fa-info-circle text-slate-400"></i> No reference ranges required for this data type.
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Per-Parameter Advanced Setup -->
+            <details class="w-full group mt-3">
+                <summary class="text-xs font-bold text-slate-500 hover:text-brand-600 cursor-pointer list-none flex items-center gap-2 transition-colors select-none w-max py-1">
+                    <i class="fas fa-chevron-right text-[10px] transition-transform duration-200 group-open:rotate-90"></i>
+                    <i class="fas fa-cog text-slate-400 text-[11px]"></i> Advanced Setup (Methodology, Sample, Kit)
                 </summary>
-                <div
-                    class="w-full bg-white border border-slate-200 rounded-lg p-3 mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4 shadow-[0_2px_4px_rgb(0,0,0,0.02)] relative overflow-hidden">
-                    <div class="absolute left-0 top-0 w-1 h-full bg-slate-200"></div>
-                    <div class="pl-2">
-                        <label
-                            class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                            <i class="fas fa-microscope text-brand-500 opacity-80"></i> Methodology
+                <div class="w-full bg-slate-50 border border-slate-100 rounded-xl p-4 mt-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5 block">
+                            <i class="fas fa-microscope text-brand-500 text-[11px]"></i> Methodology
                         </label>
-                        <input type="text"
-                            class="pr-methodology w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400 shadow-sm transition-all"
-                            placeholder="e.g. CMIA">
+                        <input type="text" class="pr-methodology w-full bg-white border border-slate-200 focus:border-brand-500 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none placeholder-slate-400 transition-all" placeholder="e.g. CMIA">
                     </div>
-                    <div class="pl-2">
-                        <label
-                            class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                            <i class="fas fa-vial text-brand-500 opacity-80"></i> Sample Type
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5 block">
+                            <i class="fas fa-vial text-brand-500 text-[11px]"></i> Sample Type
                         </label>
-                        <input type="text"
-                            class="pr-sample-type w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400 shadow-sm transition-all"
-                            placeholder="e.g. Serum">
+                        <input type="text" class="pr-sample-type w-full bg-white border border-slate-200 focus:border-brand-500 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none placeholder-slate-400 transition-all" placeholder="e.g. Serum">
                     </div>
-                    <div class="pl-2">
-                        <label
-                            class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                            <i class="fas fa-box-open text-brand-500 opacity-80"></i> Kit Used
+                    <div>
+                        <label class="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5 block">
+                            <i class="fas fa-box-open text-brand-500 text-[11px]"></i> Kit Used
                         </label>
-                        <input type="text"
-                            class="pr-kit-used w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400 shadow-sm transition-all"
-                            placeholder="e.g. SD Bioline">
+                        <input type="text" class="pr-kit-used w-full bg-white border border-slate-200 focus:border-brand-500 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none placeholder-slate-400 transition-all" placeholder="e.g. SD Bioline">
                     </div>
                 </div>
             </details>
         </div>
     </template>
 
+    <!-- ===== COMPARISON RULE TEMPLATE ===== -->
     <template id="comparison-rule-template">
-        <div
-            class="comparison-rule flex flex-nowrap items-center gap-1 bg-slate-50 rounded px-1.5 py-1 border border-slate-100">
-            <select
-                class="cmp-operator bg-white border border-slate-200 rounded px-1 py-0.5 text-[11px] font-mono font-bold text-slate-700 outline-none focus:border-brand-400 w-[72px]"
-                onchange="toggleBetweenField(this)">
-                <option value="<">&lt;</option>
-                <option value="<=">&le;</option>
-                <option value=">">&gt;</option>
-                <option value=">=">&ge;</option>
-                <option value="==">&#61;</option>
-                <option value="between">↔</option>
-                <option value="equals">equals</option>
-                <option value="contains">contains</option>
+        <div class="comparison-rule flex flex-wrap items-center gap-2 bg-white rounded-lg p-2.5 border border-slate-200 shadow-sm">
+            <select class="cmp-operator bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-brand-500 w-auto cursor-pointer appearance-none" onchange="toggleBetweenField(this)">
+                <option value="<">&lt; Less than</option>
+                <option value="<=">&le; Less or equal</option>
+                <option value=">">&gt; Greater than</option>
+                <option value=">=">&ge; Greater or equal</option>
+                <option value="==">= Equals</option>
+                <option value="between">↔ Between</option>
+                <option value="equals">Exact match</option>
+                <option value="contains">Contains</option>
             </select>
-            <input type="text"
-                class="cmp-value w-[70px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-brand-400 text-center"
-                placeholder="Val">
-            <input type="text"
-                class="cmp-value-to w-[70px] px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-brand-400 text-center hidden"
-                placeholder="To">
-            <input type="text"
-                class="cmp-classification w-[65px] px-1 py-0.5 bg-white border border-slate-200 rounded text-[11px] font-medium text-slate-700 outline-none focus:border-brand-400"
-                placeholder="Label">
-            <select
-                class="cmp-action bg-white border border-slate-200 rounded px-1 py-0.5 text-[10px] font-bold uppercase text-slate-500 outline-none focus:border-brand-400 w-[68px]">
-                <option value="NORMAL">Normal</option>
-                <option value="HIGHLIGHT">Highlight</option>
-                <option value="CRITICAL">Critical</option>
+            <input type="text" class="cmp-value w-36 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-brand-500 text-center" placeholder="Value">
+            <input type="text" class="cmp-value-to w-36 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-brand-500 text-center hidden" placeholder="To">
+            <input type="text" class="cmp-classification w-44 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 outline-none focus:border-brand-500" placeholder="Label">
+            <select class="cmp-action bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-600 outline-none focus:border-brand-500 w-auto cursor-pointer appearance-none">
+                <option value="NORMAL">✅ Normal</option>
+                <option value="HIGHLIGHT">⚠️ Highlight</option>
+                <option value="CRITICAL">🔴 Critical</option>
             </select>
-            <button type="button" onclick="this.closest('.comparison-rule').remove()"
-                class="text-slate-400 hover:text-red-500 transition-colors p-0.5 text-xs leading-none shrink-0"
-                title="Remove rule">&times;</button>
-            </>
+            <button type="button" onclick="this.closest('.comparison-rule').remove()" class="text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all p-1.5 rounded-lg text-sm leading-none shrink-0" title="Remove rule">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
     </template>
 
-    <!-- Share / Import Modal -->
+    <!-- ===== SHARE / IMPORT MODAL ===== -->
     <div id="share-modal" class="fixed inset-0 z-[150] hidden">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeShareModal()"></div>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0">
-                <h2 class="text-lg font-bold text-slate-800"><i class="fas fa-share-alt text-brand-500 mr-2"></i>Share / Import Templates</h2>
-                <button onclick="closeShareModal()" class="text-slate-400 hover:text-slate-700 transition-colors"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            
-            <div class="flex border-b border-slate-100 shrink-0 px-6 pt-2 gap-6 bg-slate-50/50">
-                <button onclick="switchShareTab('generate')" id="tab-btn-generate" class="pb-3 text-sm font-bold border-b-2 border-brand-500 text-brand-600 transition-colors">Generate Code</button>
-                <button onclick="switchShareTab('manage')" id="tab-btn-manage" class="pb-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors">Active Shares</button>
-                <button onclick="switchShareTab('import')" id="tab-btn-import" class="pb-3 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors">Import Templates</button>
+        <div class="absolute inset-0 bg-slate-800/30 backdrop-blur-[2px]" onclick="closeShareModal()"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-2xl shadow-xl flex flex-col max-h-[85vh] mx-4 overflow-hidden border border-slate-100">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 pt-6 pb-2 shrink-0">
+                <h2 class="text-base font-extrabold text-slate-900 flex items-center">
+                    <i class="fas fa-share-alt text-brand-500 mr-2 text-sm"></i>Share & Import
+                </h2>
+                <button onclick="closeShareModal()" class="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
             </div>
 
+            <!-- Tab Pills (Segment Control) -->
+            <div class="px-6 py-2 shrink-0">
+                <div class="flex bg-slate-100/80 p-1 rounded-xl gap-1">
+                    <button onclick="switchShareTab('generate')" id="tab-btn-generate" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm transition-all animate-none">Generate</button>
+                    <button onclick="switchShareTab('manage')" id="tab-btn-manage" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 hover:text-slate-800 transition-all bg-transparent border-none">Active Shares</button>
+                    <button onclick="switchShareTab('import')" id="tab-btn-import" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 hover:text-slate-800 transition-all bg-transparent border-none">Import</button>
+                </div>
+            </div>
+
+            <!-- Modal Content -->
             <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
                 <!-- Tab 1: Generate -->
                 <div id="tab-content-generate" class="block">
-                    <p class="text-sm text-slate-600 mb-4">Select templates to bundle into a single 24-hour share code.</p>
-                    <div id="share-template-list" class="space-y-2 max-h-[40vh] overflow-y-auto border border-slate-200 rounded-lg p-2 mb-4 bg-slate-50 custom-scrollbar">
+                    <p class="text-xs text-slate-500 mb-3.5 leading-relaxed">Select templates to bundle into a single 24-hour share code.</p>
+                    <div id="share-template-list" class="space-y-1.5 max-h-[35vh] overflow-y-auto border border-slate-100 rounded-xl p-3 mb-4 bg-slate-50/50 custom-scrollbar">
                         <!-- Checkboxes injected here -->
                     </div>
                     <div class="flex flex-col gap-3">
-                        <button onclick="generateShareCode()" id="btn-generate-code" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-lg shadow-sm transition-all flex justify-center items-center">
+                        <button onclick="generateShareCode()" id="btn-generate-code" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow-sm transition-all flex justify-center items-center">
                             Generate Share Code
                         </button>
-                        <div id="generated-code-container" class="hidden flex flex-col items-center gap-2 bg-green-50 border border-green-200 p-4 rounded-lg mt-2 text-center">
-                            <span class="text-xs font-bold text-green-700 uppercase tracking-widest">Your Share Code (Valid for 24h)</span>
-                            <div class="flex items-center gap-2 w-full justify-center">
-                                <input type="text" id="generated-code-input" readonly class="bg-white border border-green-300 rounded px-4 py-2 text-xl font-mono font-bold text-slate-800 w-48 text-center outline-none">
-                                <button onclick="copyShareCode()" class="p-2 bg-green-600 hover:bg-green-700 text-white rounded shadow-sm transition-colors" title="Copy"><i class="fas fa-copy"></i></button>
+                        <div id="generated-code-container" class="hidden flex flex-col items-center gap-3 mt-2">
+                            <div class="flex flex-col items-center gap-2 bg-green-50/50 border border-green-100 p-4 rounded-xl text-center w-full">
+                                <span class="text-[10px] font-bold text-green-700 uppercase tracking-widest">Your Share Code (Valid for 24h)</span>
+                                <div class="flex items-center gap-2 w-full justify-center">
+                                    <input type="text" id="generated-code-input" readonly class="bg-white border border-green-200 rounded-lg px-4 py-2 text-xl font-mono font-bold text-slate-800 w-40 text-center outline-none selection:bg-green-100">
+                                    <button onclick="copyShareCode()" class="p-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-sm transition-colors" title="Copy"><i class="fas fa-copy text-sm"></i></button>
+                                </div>
                             </div>
+                            <button onclick="resetGenerateUI()" id="btn-generate-new-code" class="w-full py-2.5 bg-white border border-brand-200 hover:border-brand-300 text-brand-600 hover:text-brand-700 font-bold text-sm rounded-xl shadow-sm transition-all flex justify-center items-center">
+                                <i class="fas fa-plus mr-2"></i>Generate New Code
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Tab 2: Manage -->
                 <div id="tab-content-manage" class="hidden">
-                    <p class="text-sm text-slate-600 mb-4">Your actively shared template bundles.</p>
-                    <div class="overflow-x-auto border border-slate-200 rounded-lg">
-                        <table class="w-full text-left border-collapse">
+                    <p class="text-xs text-slate-500 mb-3.5 leading-relaxed">Your actively shared template bundles.</p>
+                    <div class="overflow-x-auto border border-slate-100 rounded-xl bg-white">
+                        <table class="w-full text-left border-collapse text-xs">
                             <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                <tr class="bg-slate-50/80 border-b border-slate-100 font-bold text-slate-500 uppercase tracking-wider">
                                     <th class="p-3">Share Code</th>
                                     <th class="p-3">Templates</th>
                                     <th class="p-3">Created</th>
                                     <th class="p-3 text-right">Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="active-shares-tbody" class="divide-y divide-slate-100 text-sm text-slate-700 bg-white">
+                            <tbody id="active-shares-tbody" class="divide-y divide-slate-100 text-slate-700 bg-white">
                                 <!-- Rows injected here -->
                             </tbody>
                         </table>
@@ -553,30 +552,30 @@
 
                 <!-- Tab 3: Import -->
                 <div id="tab-content-import" class="hidden">
-                    <p class="text-sm text-slate-600 mb-4">Enter a share code provided by another lab to import their templates.</p>
-                    <div class="flex gap-2 mb-6">
-                        <input type="text" id="import-code-input" placeholder="e.g. A1B2C3D4" class="flex-1 bg-white border border-slate-300 focus:border-brand-500 rounded-lg px-4 py-2.5 font-mono font-bold text-slate-800 uppercase outline-none transition-all shadow-sm">
-                        <button onclick="previewShareCode()" id="btn-preview-share" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm rounded-lg shadow-sm transition-all whitespace-nowrap">
+                    <p class="text-xs text-slate-500 mb-3.5 leading-relaxed">Enter a share code provided by another lab to import their templates.</p>
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="import-code-input" placeholder="e.g. A1B2C3D4" class="flex-1 bg-white border border-slate-200 focus:border-brand-500 rounded-xl px-4 py-2.5 font-mono font-bold text-slate-800 uppercase outline-none transition-all text-sm shadow-sm placeholder:text-slate-400">
+                        <button onclick="previewShareCode()" id="btn-preview-share" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow-sm transition-all whitespace-nowrap">
                             Preview
                         </button>
                     </div>
 
-                    <div id="import-preview-container" class="hidden border border-brand-200 bg-brand-50 rounded-lg p-5 flex-col gap-4">
+                    <div id="import-preview-container" class="hidden border border-brand-100 bg-brand-50/30 rounded-xl p-4 flex flex-col gap-4">
                         <div class="flex items-start gap-3">
-                            <div class="w-10 h-10 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-lg shrink-0"><i class="fas fa-user-md"></i></div>
+                            <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-sm shrink-0"><i class="fas fa-user-md"></i></div>
                             <div>
-                                <h3 class="font-bold text-slate-800 text-sm">Shared by <span id="preview-sender-name" class="text-brand-700"></span></h3>
-                                <p class="text-xs text-slate-500 font-medium" id="preview-lab-name"></p>
+                                <h3 class="font-bold text-slate-800 text-xs">Shared by <span id="preview-sender-name" class="text-brand-700"></span></h3>
+                                <p class="text-[10px] text-slate-500 font-medium" id="preview-lab-name"></p>
                             </div>
                         </div>
-                        <div class="bg-white border border-slate-200 rounded px-4 py-3">
-                            <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Templates in this bundle:</h4>
-                            <ul id="preview-template-list" class="list-disc list-inside text-sm text-slate-700 font-medium space-y-1">
+                        <div class="bg-white border border-slate-100 rounded-lg p-3">
+                            <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Templates in this bundle (<span id="preview-template-count">0</span>):</h4>
+                            <ul id="preview-template-list" class="list-disc list-inside text-xs text-slate-600 font-medium space-y-1">
                                 <!-- Items injected here -->
                             </ul>
                         </div>
-                        <button onclick="confirmImport()" id="btn-confirm-import" class="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold text-sm rounded-lg shadow-sm transition-all flex justify-center items-center mt-2">
-                            <i class="fas fa-file-import mr-2"></i> Confirm & Import Templates
+                        <button onclick="confirmImport()" id="btn-confirm-import" class="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white font-bold text-sm rounded-xl shadow-sm transition-all flex justify-center items-center mt-1">
+                            <i class="fas fa-file-import mr-2"></i> Confirm & Import
                         </button>
                     </div>
                 </div>
@@ -584,6 +583,7 @@
         </div>
     </div>
 
+    <!-- ===== SCRIPTS ===== -->
     <script src="js/layout.js"></script>
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
@@ -638,15 +638,32 @@
                 const draft = DraftManager.load('template');
                 if (draft) {
                     document.getElementById('t-name').value = draft.name || '';
+                    if (draft.department) {
+                        document.getElementById('t-department').value = draft.department;
+                    }
+                    if (draft.reportType) {
+                        document.getElementById('t-report-type').value = draft.reportType;
+                    }
                     if (draft.sections && draft.sections.length > 0) {
                         document.getElementById('sections-container').innerHTML = '';
                         draft.sections.forEach(sec => {
-                            const block = addSection();
+                            const block = addSection(true);
                             block.querySelector('.sec-name').value = sec.sectionName || '';
                             block.querySelector('.sec-text').value = sec.defaultText || '';
-                            if (sec.parameters) {
+                            
+                            if (sec.methodology || sec.sampleType || sec.kitUsed) {
+                                block.querySelector('.sec-methodology').value = sec.methodology || '';
+                                block.querySelector('.sec-sample-type').value = sec.sampleType || '';
+                                block.querySelector('.sec-kit-used').value = sec.kitUsed || '';
+                                const detailsEl = block.querySelector('.sec-text').closest('div').querySelector('details');
+                                if (detailsEl) detailsEl.open = true;
+                            }
+                            if (sec.parameters && sec.parameters.length > 0) {
                                 const addBtn = block.querySelector('button[onclick="addParamRow(this)"]');
                                 sec.parameters.forEach(p => addParamRow(addBtn, p));
+                            } else {
+                                const addBtn = block.querySelector('button[onclick="addParamRow(this)"]');
+                                if (addBtn) addParamRow(addBtn);
                             }
                         });
                     } else {
@@ -659,16 +676,25 @@
         });
 
         window.templatesData = {}; // Store templates globally
+        let activeTemplateId = null; // Track active template in sidebar
 
         async function loadTemplates() {
             const list = document.getElementById('templates-list');
-            list.innerHTML = `<li class="p-6 text-center text-slate-400 flex flex-col items-center justify-center"><i class="fas fa-circle-notch fa-spin text-2xl mb-2"></i><span class="font-medium text-sm">Refreshing...</span></li>`;
+            list.innerHTML = `<li class="p-8 text-center text-slate-400 flex flex-col items-center justify-center"><i class="fas fa-circle-notch fa-spin text-2xl mb-2"></i><span class="font-medium text-sm">Refreshing...</span></li>`;
             try {
                 const res = await api.request('/templates');
                 const data = res.data;
 
+                // Update count badge
+                const countEl = document.getElementById('template-count');
+                if (countEl) countEl.textContent = data.length > 0 ? data.length : '';
+
                 if (data.length === 0) {
-                    list.innerHTML = `<li class="p-8 text-center flex flex-col items-center justify-center h-full"><div class="bg-slate-50 p-3 rounded-full mb-2"><i class="fas fa-inbox text-xl text-slate-400"></i></div><p class="text-sm font-medium text-slate-600">No templates found.</p></li>`;
+                    list.innerHTML = `<li class="p-10 text-center flex flex-col items-center justify-center">
+                        <div class="bg-slate-50 p-4 rounded-full mb-3"><i class="fas fa-inbox text-2xl text-slate-300"></i></div>
+                        <p class="text-sm font-medium text-slate-500 mb-1">No templates yet</p>
+                        <p class="text-xs text-slate-400">Click "New Template" to create one.</p>
+                    </li>`;
                     return;
                 }
 
@@ -676,16 +702,23 @@
 
                 list.innerHTML = data.map(t => {
                     window.templatesData[t._id] = t;
+                    const isActive = activeTemplateId === t._id;
+                    const dept = (t.department || 'GENERAL').charAt(0) + (t.department || 'GENERAL').slice(1).toLowerCase();
+                    const paramCount = t.sections.reduce((sum, s) => sum + (s.parameters ? s.parameters.length : 0), 0);
                     return `
-                    <li class="px-5 py-3 hover:bg-slate-50 cursor-pointer flex justify-between items-center transition-all border-l-2 border-transparent hover:border-brand-500 group" onclick="prepareTemplateLoad(window.templatesData['${t._id}'])">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center text-sm group-hover:bg-brand-50 group-hover:text-brand-600 transition-colors border border-slate-200"><i class="fas fa-file-alt"></i></div>
-                            <div class="truncate max-w-[180px]">
-                                <p class="font-medium text-slate-800 text-sm group-hover:text-brand-700 transition-colors truncate">${sanitizeHTML(t.templateName)}</p>
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tight mt-0.5">${t.sections.length} ${t.sections.length === 1 ? 'section' : 'sections'}</p>
+                    <li class="tpl-item px-4 py-3 hover:bg-slate-50 cursor-pointer flex justify-between items-center transition-all border-l-2 ${isActive ? 'active border-l-brand-600 bg-brand-50/50' : 'border-transparent'} group" onclick="prepareTemplateLoad(window.templatesData['${t._id}'])">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="tpl-icon w-9 h-9 rounded-lg ${isActive ? 'bg-brand-100 text-brand-600 border-brand-200' : 'bg-slate-50 text-slate-400 border-slate-100'} flex items-center justify-center text-sm shrink-0 border transition-colors">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="tpl-name font-semibold ${isActive ? 'text-brand-700' : 'text-slate-700'} text-sm truncate max-w-[180px] transition-colors">${sanitizeHTML(t.templateName)}</p>
+                                <p class="text-[10px] font-medium text-slate-400 mt-0.5">${dept} · ${t.sections.length} ${t.sections.length === 1 ? 'section' : 'sections'}${paramCount > 0 ? ' · ' + paramCount + ' params' : ''}</p>
                             </div>
                         </div>
-                        <button onclick="deleteTemplate(event, '${t._id}')" class="text-slate-300 hover:text-red-500 focus:outline-none p-1.5 rounded transition-colors opacity-0 group-hover:opacity-100" title="Delete Template"><i class="fas fa-trash text-sm"></i></button>
+                        <button onclick="deleteTemplate(event, '${t._id}')" class="text-slate-300 hover:text-red-500 focus:outline-none p-1.5 rounded-lg hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 shrink-0" title="Delete">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
                     </li>
                 `}).join('');
             } catch (err) {
@@ -695,18 +728,101 @@
         }
 
         function prepareTemplateLoad(t) {
+            activeTemplateId = t._id;
             loadTemplateIntoEditor(t);
+            // Re-render list to show active state
+            loadTemplates();
         }
 
-        function createNewTemplate() {
+        function hasEnteredData() {
+            // Check Template Name, ID, Department, Report Type
+            if (document.getElementById('template-id').value) return true;
+            if (document.getElementById('t-name').value.trim() !== '') return true;
+            if (document.getElementById('t-department').value !== 'GENERAL') return true;
+            if (document.getElementById('t-report-type').value !== 'DISCRETE') return true;
+
+            const sections = document.querySelectorAll('.section-block');
+            if (sections.length > 1) return true;
+
+            for (const section of sections) {
+                if (section.querySelector('.sec-name').value.trim() !== '') return true;
+                if (section.querySelector('.sec-text').value.trim() !== '') return true;
+                
+                const secMethod = section.querySelector('.sec-methodology');
+                if (secMethod && secMethod.value.trim() !== '') return true;
+                const secSample = section.querySelector('.sec-sample-type');
+                if (secSample && secSample.value.trim() !== '') return true;
+                const secKit = section.querySelector('.sec-kit-used');
+                if (secKit && secKit.value.trim() !== '') return true;
+
+                const params = section.querySelectorAll('.param-row');
+                if (params.length > 1) return true;
+
+                for (const param of params) {
+                    if (param.querySelector('.pr-name').value.trim() !== '') return true;
+                    if (param.querySelector('.pr-units').value.trim() !== '') return true;
+                    
+                    const dataTypeSelect = param.querySelector('.pr-data-type');
+                    if (dataTypeSelect && dataTypeSelect.value !== 'NUMERIC') return true;
+
+                    const ruleSelect = param.querySelector('.pr-rule-type');
+                    if (ruleSelect && ruleSelect.value !== 'MIN_MAX') return true;
+
+                    const prMin = param.querySelector('.pr-min');
+                    if (prMin && prMin.value.trim() !== '') return true;
+                    const prMax = param.querySelector('.pr-max');
+                    if (prMax && prMax.value.trim() !== '') return true;
+
+                    const prMaleMin = param.querySelector('.pr-male-min');
+                    if (prMaleMin && prMaleMin.value.trim() !== '') return true;
+                    const prMaleMax = param.querySelector('.pr-male-max');
+                    if (prMaleMax && prMaleMax.value.trim() !== '') return true;
+                    
+                    const prFemaleMin = param.querySelector('.pr-female-min');
+                    if (prFemaleMin && prFemaleMin.value.trim() !== '') return true;
+                    const prFemaleMax = param.querySelector('.pr-female-max');
+                    if (prFemaleMax && prFemaleMax.value.trim() !== '') return true;
+
+                    const prTextNormal = param.querySelector('.pr-text-normal');
+                    if (prTextNormal && prTextNormal.value.trim() !== '') return true;
+                }
+            }
+
+            return false;
+        }
+
+        function resetEditorForm() {
+            DraftManager.clear('template');
+            activeTemplateId = null;
             document.getElementById('template-id').value = '';
             document.getElementById('t-name').value = '';
             document.getElementById('t-department').value = 'GENERAL';
             document.getElementById('t-report-type').value = 'DISCRETE';
-            document.getElementById('editor-title').textContent = 'Create New Template';
+            document.getElementById('editor-title').innerHTML = '<i class="fas fa-plus-circle text-brand-500 mr-2 text-base"></i>Create New Template';
             document.getElementById('editor-subtitle').textContent = 'Define sections and default parameters.';
             document.getElementById('sections-container').innerHTML = '';
             addSection();
+            // Sync custom selects
+            if (typeof UI !== 'undefined' && UI.initCustomSelects) UI.initCustomSelects();
+        }
+
+        async function createNewTemplate(e) {
+            if (e) e.preventDefault();
+            if (hasEnteredData()) {
+                const confirmed = await UI.showConfirm(
+                    'Discard Unsaved Changes?',
+                    'You have unsaved changes in your template. If you start a new template, these changes will be lost.',
+                    'Discard & Create',
+                    'danger'
+                );
+                if (!confirmed) return;
+            }
+
+            resetEditorForm();
+            // Scroll to editor on mobile
+            document.getElementById('editor-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Re-render list to clear active state
+            loadTemplates();
         }
 
         function loadTemplateIntoEditor(t) {
@@ -714,14 +830,14 @@
             document.getElementById('t-name').value = t.templateName;
             document.getElementById('t-department').value = t.department || 'GENERAL';
             document.getElementById('t-report-type').value = t.reportType || 'DISCRETE';
-            document.getElementById('editor-title').textContent = 'Edit Template Info';
-            document.getElementById('editor-subtitle').innerHTML = `Currently modifying <span class="font-bold text-brand-600">${t.templateName}</span>`;
+            document.getElementById('editor-title').innerHTML = `<i class="fas fa-edit text-brand-500 mr-2 text-base"></i>Edit Template`;
+            document.getElementById('editor-subtitle').innerHTML = `Modifying <span class="font-bold text-brand-600">${sanitizeHTML(t.templateName)}</span>`;
 
             const container = document.getElementById('sections-container');
             container.innerHTML = '';
 
             t.sections.forEach(sec => {
-                const block = addSection();
+                const block = addSection(true);
                 block.querySelector('.sec-name').value = sec.sectionName || '';
                 block.querySelector('.sec-text').value = sec.defaultText || '';
 
@@ -729,8 +845,8 @@
                     block.querySelector('.sec-methodology').value = sec.methodology || '';
                     block.querySelector('.sec-sample-type').value = sec.sampleType || '';
                     block.querySelector('.sec-kit-used').value = sec.kitUsed || '';
-                    const detailsEl = block.querySelector('.sec-text').nextElementSibling;
-                    if (detailsEl && detailsEl.tagName === 'DETAILS') detailsEl.open = true;
+                    const detailsEl = block.querySelector('.sec-text').closest('div').querySelector('details');
+                    if (detailsEl) detailsEl.open = true;
                 }
                 if (sec.parameters && Array.isArray(sec.parameters)) {
                     const addBtn = block.querySelector('button[onclick="addParamRow(this)"]');
@@ -753,9 +869,15 @@
                     }
                 }
             });
+
+            // Sync custom selects after loading
+            if (typeof UI !== 'undefined' && UI.initCustomSelects) UI.initCustomSelects();
+
+            // Scroll to editor on mobile
+            document.getElementById('editor-title').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function addSection() {
+        function addSection(skipAutoParam = false) {
             const template = document.getElementById('section-template');
             const clone = template.content.cloneNode(true);
             const container = document.getElementById('sections-container');
@@ -763,6 +885,14 @@
             wrapperDiv.classList.add('animate-fade-in-up');
             wrapperDiv.appendChild(clone);
             container.appendChild(wrapperDiv);
+
+            // Auto-add first parameter row if not skipped
+            if (!skipAutoParam) {
+                const addBtn = wrapperDiv.querySelector('button[onclick="addParamRow(this)"]');
+                if (addBtn) {
+                    addParamRow(addBtn);
+                }
+            }
 
             const notesTextarea = wrapperDiv.querySelector('.sec-text');
             if (notesTextarea) {
@@ -909,7 +1039,6 @@
                     row.querySelector('.pr-units').value = data.units || '';
 
                     // Determine the effective ruleType (with legacy compat)
-                    // Prioritize GENDER_SPECIFIC if isGenderSpecific is true, even if ruleType defaulted to MIN_MAX
                     let ruleType = data.ruleType || 'MIN_MAX';
                     if (data.isGenderSpecific === true && ruleType === 'MIN_MAX') {
                         ruleType = 'GENDER_SPECIFIC';
@@ -919,7 +1048,6 @@
                     ruleSelect.value = ruleType;
 
                     if (ruleType === 'GENDER_SPECIFIC') {
-                        // Show gender fields
                         row.querySelector('.rule-min-max').classList.add('hidden');
                         row.querySelector('.rule-min-max').classList.remove('flex');
                         row.querySelector('.rule-gender').classList.remove('hidden');
@@ -935,12 +1063,10 @@
                             }
                         }
                     } else if (ruleType === 'THRESHOLD_COMPARISON') {
-                        // Show comparison fields
                         row.querySelector('.rule-min-max').classList.add('hidden');
                         row.querySelector('.rule-min-max').classList.remove('flex');
                         row.querySelector('.rule-comparison').classList.remove('hidden');
                         row.querySelector('.rule-comparison').classList.add('flex');
-                        // Populate comparison rules
                         if (data.comparisons && data.comparisons.length > 0) {
                             const addRuleBtn = row.querySelector('.rule-comparison button[onclick="addComparisonRule(this)"]');
                             data.comparisons.forEach(cmp => addComparisonRule(addRuleBtn, cmp));
@@ -1015,7 +1141,6 @@
                                 const action = ruleEl.querySelector('.cmp-action').value;
                                 if (valStr === '') return;
 
-                                // Coerce to number if numeric, otherwise save as string
                                 const parsedVal = (!isNaN(valStr) && !isNaN(parseFloat(valStr))) ? parseFloat(valStr) : valStr;
                                 const cmp = { operator, value: parsedVal, classification, action };
 
@@ -1029,7 +1154,7 @@
                                 }
                                 param.comparisons.push(cmp);
                             });
-                            delete param.normalRange; // Not used for threshold
+                            delete param.normalRange;
                         } else {
                             // MIN_MAX
                             const minVal = row.querySelector('.pr-min').value.trim();
@@ -1070,13 +1195,14 @@
             return { name, department, reportType, sections };
         }
 
-        async function saveTemplate() {
+        async function saveTemplate(e) {
+            if (e) e.preventDefault();
             const id = document.getElementById('template-id').value;
             const { name, department, reportType, sections } = extractTemplateData();
 
             if (!name) {
                 document.getElementById('t-name').focus();
-                return UI.showToast('Template Master Name is required', 'error');
+                return UI.showToast('Template Name is required', 'error');
             }
 
             if (sections.length === 0) return UI.showToast('Please provide valid section details', 'error');
@@ -1086,15 +1212,13 @@
             try {
                 if (id) {
                     await api.request(`/templates/${id}`, 'PUT', { templateName: name, department, reportType, sections });
-                    UI.showToast('Template structure updated successfully', 'success');
+                    UI.showToast('Template updated successfully', 'success');
                 } else {
                     const res = await api.request('/templates', 'POST', { templateName: name, department, reportType, sections });
-                    document.getElementById('template-id').value = res.data._id;
-                    document.getElementById('editor-title').textContent = 'Edit Template Info';
-                    document.getElementById('editor-subtitle').innerHTML = `Currently modifying <span class="font-bold text-brand-600">${name}</span>`;
                     UI.showToast('New template created successfully', 'success');
                 }
-                DraftManager.clear('template');
+                
+                resetEditorForm();
                 loadTemplates();
             } catch (err) {
                 UI.showToast(err.message, 'error');

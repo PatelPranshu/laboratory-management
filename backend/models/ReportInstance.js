@@ -145,5 +145,7 @@ const ReportInstanceSchema = new mongoose.Schema({
 // Index for test parameter search might require specialized index if values is an object, 
 // but for text search we could index common text fields
 ReportInstanceSchema.index({ 'sections.text': 'text', 'sections.values': 'text' });
+// Index for optimal querying and filtering by doctor and creation date
+ReportInstanceSchema.index({ doctorId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('ReportInstance', ReportInstanceSchema);

@@ -16,6 +16,17 @@ const SharedBundleSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ReportTemplate'
   }],
+  importedBy: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    labName: String,
+    importedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   createdAt: {
     type: Date,
     default: Date.now,

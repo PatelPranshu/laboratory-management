@@ -11,15 +11,20 @@ const http = require('http');
 const socketService = require('./services/socketService');
 const xss = require('xss');
 
+// Fields that should NOT be HTML escaped because they contain math symbols, passwords, or code
+const NO_XSS_KEYS = ['operator', 'value', 'valueTo', 'min', 'max', 'textNormal', 'password', 'result', 'referenceRange', 'formula'];
+
 // In-place recursive sanitization for Express 5 compatibility
-const cleanXSS = (data) => {
+const cleanXSS = (data, keyName = null) => {
+  if (NO_XSS_KEYS.includes(keyName)) return data;
+
   if (typeof data === 'string') return xss(data);
   if (Array.isArray(data)) {
-    for (let i = 0; i < data.length; i++) data[i] = cleanXSS(data[i]);
+    for (let i = 0; i < data.length; i++) data[i] = cleanXSS(data[i], keyName);
   } else if (typeof data === 'object' && data !== null) {
     for (const key in data) {
       if (Object.prototype.hasOwnProperty.call(data, key)) {
-        data[key] = cleanXSS(data[key]);
+        data[key] = cleanXSS(data[key], key);
       }
     }
   }
@@ -70,6 +75,7 @@ app.use(cors({
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Disposition'],
   credentials: true,
   optionsSuccessStatus: 200
 }));
