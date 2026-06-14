@@ -76,6 +76,17 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3" id="header-actions">
+                    <!-- Sticky Actions (Hidden by default) -->
+                    <div id="sticky-editor-actions" class="hidden items-center gap-2 animate-fade-in-up">
+                        <button onclick="createNewTemplate(event)" class="px-3 py-2 bg-white border border-brand-600 text-brand-600 font-bold text-sm rounded-xl hover:bg-brand-50 transition-all flex items-center shadow-sm">
+                            <i class="fas fa-plus"></i> <span class="hidden md:inline ml-2">New</span>
+                        </button>
+                        <button id="btn-save-template-sticky" onclick="saveTemplate(event)" class="px-4 py-2 bg-brand-600 text-white font-bold text-sm rounded-xl hover:bg-brand-700 shadow-sm transition-all flex items-center">
+                            <i class="fas fa-save mr-2"></i> <span class="hidden md:inline">Save</span>
+                        </button>
+                        <div class="w-px h-6 bg-slate-200 mx-1 hidden sm:block"></div>
+                    </div>
+
                     <button onclick="openShareModal()" class="p-2 sm:px-4 sm:py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center" title="Share / Import">
                         <i class="fas fa-share-alt text-brand-600 sm:mr-2"></i><span class="hidden sm:inline">Share / Import</span>
                     </button>
@@ -122,7 +133,7 @@
                                     </h2>
                                     <p class="text-xs text-slate-400 mt-0.5 ml-7" id="editor-subtitle">Define sections and default parameters.</p>
                                 </div>
-                                <div class="flex items-center gap-2.5 w-full sm:w-auto">
+                                <div id="primary-action-buttons" class="flex items-center gap-2.5 w-full sm:w-auto">
                                     <button onclick="createNewTemplate(event)" class="w-full sm:w-auto justify-center px-5 py-2.5 bg-white border border-brand-600 hover:bg-brand-50 hover:text-brand-700 hover:border-brand-700 text-brand-600 font-bold text-sm rounded-xl transition-all flex items-center shadow-sm">
                                         <i class="fas fa-plus mr-2"></i> New Template
                                     </button>
@@ -295,7 +306,9 @@
                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Parameter Name</label>
                     <input type="text"
                         class="pr-name w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 font-semibold text-slate-800 text-sm placeholder-slate-400 transition-all outline-none"
-                        placeholder="e.g. Hemoglobin">
+                        placeholder="e.g. Hemoglobin"
+                        onfocus="this.dataset.oldName = this.value"
+                        oninput="handleParamNameChange(this)">
                 </div>
                 <!-- Data Type -->
                 <div class="sm:col-span-3">
@@ -1043,9 +1056,6 @@
             });
         }
 
-        /**
-         * Inserts a [Tag Name] string at the cursor position (or end) of the formula textarea.
-         */
         function insertFormulaTag(row, tagName) {
             const textarea = row.querySelector('.pr-formula');
             if (!textarea) return;
@@ -1058,6 +1068,46 @@
             const newPos = start + tag.length;
             textarea.setSelectionRange(newPos, newPos);
             textarea.focus();
+        }
+
+        function handleParamNameChange(input) {
+            const oldName = input.dataset.oldName || '';
+            const newName = input.value.trim();
+            
+            if (!oldName) {
+                if (newName) input.dataset.oldName = newName;
+                return;
+            }
+            
+            if (!newName) {
+                // Keep the oldName in dataset until they type something valid
+                return;
+            }
+
+            if (oldName === newName) {
+                return;
+            }
+            
+            // Find all calculated formulas in the template
+            document.querySelectorAll('.pr-formula').forEach(textarea => {
+                let formula = textarea.value;
+                if (!formula) return;
+                
+                const searchStr = `[${oldName}]`;
+                const replaceStr = `[${newName}]`;
+                
+                if (formula.includes(searchStr)) {
+                    textarea.value = formula.split(searchStr).join(replaceStr);
+                }
+            });
+
+            // Also update tag pickers for visible calculated rows
+            document.querySelectorAll('.pr-calculated-config.flex').forEach(config => {
+                const row = config.closest('.param-row');
+                populateTagPicker(row);
+            });
+
+            input.dataset.oldName = newName;
         }
 
         function toggleRuleFields(selectElement) {
@@ -1132,6 +1182,7 @@
 
             if (data) {
                 row.querySelector('.pr-name').value = data.name || '';
+                row.querySelector('.pr-name').dataset.oldName = data.name || '';
 
                 const dataTypeSelect = row.querySelector('.pr-data-type');
                 dataTypeSelect.value = data.dataType || 'NUMERIC';
@@ -1404,6 +1455,9 @@
             if (sections.length === 0) return UI.showToast('Please provide valid section details', 'error');
 
             UI.toggleLoader('btn-save-template', true, 'Saving...');
+            if (document.getElementById('btn-save-template-sticky')) {
+                UI.toggleLoader('btn-save-template-sticky', true, 'Saving...');
+            }
 
             try {
                 if (id) {
@@ -1420,6 +1474,9 @@
                 UI.showToast(err.message, 'error');
             } finally {
                 UI.toggleLoader('btn-save-template', false, '<i class="fas fa-save mr-2"></i> Save Template');
+                if (document.getElementById('btn-save-template-sticky')) {
+                    UI.toggleLoader('btn-save-template-sticky', false, '<i class="fas fa-save mr-2"></i> <span class="hidden md:inline">Save</span>');
+                }
             }
         }
 
@@ -1439,6 +1496,36 @@
                 }
             }
         }
+
+        // --- Intersection Observer for Sticky Actions ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const primaryActions = document.getElementById('primary-action-buttons');
+            const stickyActions = document.getElementById('sticky-editor-actions');
+
+            if (primaryActions && stickyActions) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        // Show sticky actions when primary actions are out of view above the screen.
+                        // Since we use a top rootMargin, the element will stop intersecting when it's
+                        // still around 80px from the top of the viewport. 
+                        // Checking if it's in the top half of the window is a bulletproof way to know it went out the top.
+                        if (!entry.isIntersecting && entry.boundingClientRect.top < (window.innerHeight / 2)) {
+                            stickyActions.classList.remove('hidden');
+                            stickyActions.classList.add('flex');
+                        } else {
+                            stickyActions.classList.add('hidden');
+                            stickyActions.classList.remove('flex');
+                        }
+                    });
+                }, {
+                    root: null, // viewport
+                    threshold: 0,
+                    rootMargin: "-80px 0px 0px 0px" // Offset by header height to trigger slightly earlier
+                });
+
+                observer.observe(primaryActions);
+            }
+        });
 
         if (!document.getElementById('custom-animations')) {
             const style = document.createElement('style');

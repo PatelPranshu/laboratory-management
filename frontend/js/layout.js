@@ -452,6 +452,12 @@ function setupNotificationSocket(token) {
             UI.showToast(data.title, 'success');
         }
     });
+
+    socket.on('stats_updated', () => {
+        if (typeof loadSummary === 'function') {
+            loadSummary();
+        }
+    });
 }
 // ---------------- Responsive Navigation Helpers ---------------- //
 function toggleMobileSidebar() {
