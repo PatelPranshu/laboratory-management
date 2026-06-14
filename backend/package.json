@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "bwip-js": "^4.11.1",
     "cloudinary": "^2.4.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",

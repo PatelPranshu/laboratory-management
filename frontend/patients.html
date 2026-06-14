@@ -196,7 +196,7 @@
                                     </div>
                                     <div class="ml-4">
                                         <a href="patient-profile.html?id=${p._id}" class="text-sm font-bold text-slate-800 hover:text-brand-600 transition-colors">${sanitizeHTML(p.name)}</a>
-                                        <div class="text-xs text-slate-500 font-medium mt-0.5">ID: ${p._id.slice(-6).toUpperCase()}</div>
+                                        <div class="text-xs text-slate-500 font-medium mt-0.5">ID: ${p._id.slice(-12).toUpperCase()}</div>
                                     </div>
                                 </div>
                             </td>
@@ -325,7 +325,7 @@
 
                 const headers = ['Identity', 'Name', 'Phone', 'Email', 'Age', 'Gender', 'Registration Date'];
                 const csvData = patients.map(p => [
-                    p._id.slice(-6).toUpperCase(),
+                    p._id.slice(-12).toUpperCase(),
                     `"${p.name.replace(/"/g, '""')}"`,
                     p.phone || 'N/A',
                     p.email || 'N/A',

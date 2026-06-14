@@ -101,13 +101,33 @@ exports.getReports = async (req, res) => {
     query.patientId = req.query.patientId;
   }
 
-  // Search by patient name (requires joining or separate query if not indexed)
+  // Search by patient name, phone, patient id or report id
   if (req.query.search) {
-    const patientIds = await Patient.find({ 
+    const searchStr = String(req.query.search).trim();
+    const searchRegex = new RegExp('^' + searchStr.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'i');
+    
+    const patientFilter = {
       doctorId: adminId,
-      name: { $regex: req.query.search, $options: 'i' } 
-    }).distinct('_id');
-    query.patientId = { $in: patientIds };
+      $or: [
+        { name: { $regex: searchRegex } },
+        { phone: { $regex: searchRegex } }
+      ]
+    };
+    if (searchStr.length <= 24) {
+       patientFilter.$or.push({ $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: searchStr, options: "i" } } });
+    }
+
+    const patientIds = await Patient.find(patientFilter).distinct('_id');
+    
+    const reportOr = [
+        { patientId: { $in: patientIds } }
+    ];
+    
+    if (searchStr.length <= 24) {
+        reportOr.push({ $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: searchStr, options: "i" } } });
+    }
+
+    query.$or = reportOr;
   }
 
   const reports = await ReportInstance.find(query)

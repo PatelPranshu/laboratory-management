@@ -25,8 +25,10 @@ exports.globalSearch = async (req, res) => {
 
     // 3. Build Text Search Criteria
     let textFilter = {};
+    let isSearchQuery = false;
+    let sanitizedQuery = '';
     if (query && typeof query === 'string' && query.trim().length >= 2) {
-        const sanitizedQuery = query.trim().substring(0, 50);
+        sanitizedQuery = query.trim().substring(0, 50);
         const searchRegex = new RegExp('^' + sanitizedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
         textFilter = {
             $or: [
@@ -34,6 +36,10 @@ exports.globalSearch = async (req, res) => {
                 { phone: { $regex: searchRegex } }
             ]
         };
+        if (sanitizedQuery.length <= 24) {
+            textFilter.$or.push({ $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: sanitizedQuery, options: "i" } } });
+        }
+        isSearchQuery = true;
     } else if (!fromDate && !toDate) {
         // Return empty if no query AND no date filters provided
         return res.status(200).json({ success: true, data: { patients: [], reports: [] } });
@@ -49,33 +55,30 @@ exports.globalSearch = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
-    // Search Reports (Merge matching patient filter if needed)
-    const reportMatch = { ...baseMatch, ...dateFilter };
-    if (Object.keys(textFilter).length > 0) {
-        // We'll use populate match to filter reports by patient name if text search is active
+    // Search Reports
+    let reportMatch = { ...baseMatch, ...dateFilter };
+    if (isSearchQuery) {
+        const matchedPatientIds = await Patient.find({ ...baseMatch, ...textFilter }).distinct('_id');
+        reportMatch.$or = [
+            { patientId: { $in: matchedPatientIds } }
+        ];
+        if (sanitizedQuery.length <= 24) {
+            reportMatch.$or.push({ $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: sanitizedQuery, options: "i" } } });
+        }
     }
 
     const reports = await ReportInstance.find(reportMatch)
-      .populate({
-        path: 'patientId',
-        match: textFilter.$or ? { name: textFilter.$or[0].name } : {}, // Simplification for population match
-        select: 'name phone'
-      })
+      .populate('patientId', 'name phone')
       .select('_id patientId date status createdAt')
-      .limit(20)
+      .limit(8)
       .sort({ createdAt: -1 })
       .lean();
-
-    // Filter out reports that don't match populated patient name (if searching by text)
-    const filteredReports = reports
-        .filter(r => !Object.keys(textFilter).length || r.patientId)
-        .slice(0, 8);
 
     res.status(200).json({
       success: true,
       data: {
         patients,
-        reports: filteredReports
+        reports
       }
     });
   };

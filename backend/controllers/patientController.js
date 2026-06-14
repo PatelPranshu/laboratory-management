@@ -37,6 +37,9 @@ exports.getPatients = async (req, res) => {
         { name: { $regex: searchRegex } },
         { phone: { $regex: searchRegex } }
       ];
+      if (searchStr.length <= 24) {
+        query.$or.push({ $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: searchStr, options: "i" } } });
+      }
     }
   }
 

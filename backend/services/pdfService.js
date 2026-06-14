@@ -195,7 +195,24 @@ exports.generateReportPdf = async (report, patient, settings) => {
   }
 
   const reportDate = report.date ? new Date(report.date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
-  const reportId = report._id ? report._id.toString().slice(-6).toUpperCase() : 'N/A';
+  const reportId = report._id ? report._id.toString().slice(-12).toUpperCase() : 'N/A';
+
+  let reportIdBarcodeBase64 = null;
+  if (reportId !== 'N/A') {
+    try {
+      const bwipjs = require('bwip-js');
+      const buffer = await bwipjs.toBuffer({
+        bcid: 'code128',
+        text: reportId,
+        scale: 3,
+        height: 10,
+        includetext: false,
+      });
+      reportIdBarcodeBase64 = 'data:image/png;base64,' + buffer.toString('base64');
+    } catch (err) {
+      console.warn("Failed to generate barcode:", err);
+    }
+  }
 
   groupedBlocks.forEach((block, blockIdx) => {
     let currentTemplateName = 'TEST RESULTS';
@@ -229,10 +246,12 @@ exports.generateReportPdf = async (report, patient, settings) => {
           [
             { text: 'Patient Name:', colSpan: 2, bold: true, color: '#334155' },
             {},
-            { text: (patient.name || 'N/A').toUpperCase(), colSpan: 2, bold: true },
+            { text: (patient.name || 'N/A').toUpperCase(), colSpan: 3, bold: true },
             {},
-            { text: 'Report ID:', bold: true, color: '#334155' },
-            { text: reportId }
+            {},
+            reportIdBarcodeBase64 
+              ? { image: reportIdBarcodeBase64, width: 120, height: 14, alignment: 'center' } 
+              : { text: reportId, alignment: 'center' }
           ],
           [
             { text: 'Age:', bold: true, color: '#334155' },

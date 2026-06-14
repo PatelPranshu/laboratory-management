@@ -245,7 +245,7 @@
                 document.getElementById('p-basic-info').textContent = `${p.age} years • ${p.gender}`;
                 document.getElementById('p-phone').textContent = p.phone || 'N/A';
                 document.getElementById('p-email').textContent = p.email || 'No email provided';
-                document.getElementById('p-id').textContent = p._id.slice(-6).toUpperCase();
+                document.getElementById('p-id').textContent = p._id.slice(-12).toUpperCase();
                 
                 const regDate = new Date(p.createdAt || Date.now());
                 document.getElementById('p-date').textContent = regDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
