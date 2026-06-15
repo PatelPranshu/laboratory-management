@@ -7,7 +7,7 @@
     <title>Create Report - MyPathoLabs</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
     <script>
@@ -20,7 +20,8 @@
                         }
                     },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        sans: ['Outfit', 'Inter', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
                     }
                 }
             }
@@ -28,7 +29,6 @@
     </script>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
         }
 
@@ -116,8 +116,8 @@
         <main class="flex-1 flex flex-col relative overflow-hidden h-full">
 
             <header
-                class="bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between z-50 shrink-0">
-                <div class="flex items-center gap-4">
+                class="bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between sticky top-0 z-50 shrink-0">
+                <div class="hidden lg:flex items-center gap-4">
                     <div class="hidden sm:block">
                         <nav class="flex text-xs font-medium text-slate-500 mb-1">
                             <ol class="flex items-center space-x-2">
@@ -127,21 +127,26 @@
                                 <li class="text-slate-700 font-semibold">Report Creation</li>
                             </ol>
                         </nav>
-                        <h1 class="text-xl font-bold text-slate-900 tracking-tight" id="page-title">Generate Report</h1>
+                        <h1 class="text-xl font-bold text-slate-900 tracking-tight page-title-display">Generate Report</h1>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4" id="header-actions">
-                    <div class="hidden xl:flex items-center relative gap-2 group">
+                <!-- Mobile-only Placeholder (keeps layout on mobile, hidden on desktop) -->
+                <div class="lg:hidden flex-1 w-full max-w-2xl flex relative opacity-0">
+                    <!-- Placeholder to keep layout even if not using global search here -->
+                </div>
+
+                <div class="ml-auto lg:ml-0 flex items-center gap-1 sm:gap-3 shrink-0" id="header-actions">
+                    <div class="hidden lg:flex items-center relative gap-2 group">
                         <div id="referral-dropdown-toggle" onclick="toggleReferralDropdown()"
-                            class="hidden sm:flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 gap-2 transition-all hover:border-brand-300 cursor-pointer min-w-[150px]">
+                            class="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 gap-2 transition-all hover:border-brand-300 cursor-pointer min-w-[150px]">
                             <i class="fas fa-user-md text-slate-400 text-xs group-hover:text-brand-500"></i>
                             <div class="flex flex-col flex-1 min-w-0">
                                 <span
                                     class="text-[9px] font-bold text-slate-400 uppercase tracking-tight leading-none mb-0.5">Referred
                                     By</span>
-                                <span id="selected-referral-name"
-                                    class="text-xs font-bold text-slate-700 truncate">Select Referrer</span>
+                                <span
+                                    class="text-xs font-bold text-slate-700 truncate ref-name-display">Select Referrer</span>
                             </div>
                             <i class="fas fa-chevron-down text-[10px] text-slate-400"></i>
                         </div>
@@ -150,45 +155,45 @@
 
                         <div id="referral-dropdown-menu"
                             class="hidden absolute top-full right-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-xl z-[100] overflow-hidden py-1.5 animate-fade-in-up">
-                            <ul id="referral-list" class="max-h-60 overflow-y-auto custom-scrollbar">
+                            <ul class="max-h-60 overflow-y-auto custom-scrollbar referral-list-container">
                                 <li class="px-4 py-3 text-center text-slate-400 text-sm italic">Loading sources...</li>
                             </ul>
                         </div>
                     </div>
 
-                    <div class="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
+                    <div class="h-6 w-px bg-slate-200 mx-1 hidden lg:block"></div>
 
-                    <span class="text-xs font-medium text-slate-400 hidden xl:inline" id="last-saved-info">Unsaved
+                    <span class="text-xs font-medium text-slate-400 hidden xl:inline last-saved-info-display">Unsaved
                         Report</span>
 
-                    <button id="btn-save-draft" onclick="saveReport(true)"
-                        class="p-2.5 sm:px-5 sm:py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0"
+                    <button onclick="saveReport(true)"
+                        class="hidden lg:flex p-2.5 sm:px-5 sm:py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-sm rounded-lg shadow-sm transition-all items-center shrink-0 action-save-draft"
                         title="Save Draft">
                         <i class="fas fa-save sm:mr-2 text-slate-400"></i> <span class="hidden sm:inline">Save
                             Draft</span>
                     </button>
 
-                    <button id="btn-save-report" onclick="saveReport(false)"
-                        class="p-2.5 sm:px-5 sm:py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg shadow-sm transition-all flex items-center shrink-0"
+                    <button onclick="saveReport(false)"
+                        class="hidden lg:flex p-2.5 sm:px-5 sm:py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm rounded-lg shadow-sm transition-all items-center shrink-0 action-save-report"
                         title="Save & Sign">
                         <i class="fas fa-check sm:mr-2"></i> <span class="hidden sm:inline">Save & Sign</span>
                     </button>
 
-                    <div id="header-post-save-actions" class="hidden flex items-center gap-3">
-                        <div id="header-status-wrapper"
+                    <div class="hidden lg:flex items-center gap-3 post-save-actions-container" style="display: none;">
+                        <div
                             class="flex items-center bg-green-50 text-green-700 px-3 py-1.5 rounded-md border border-green-200">
-                            <span class="text-xs font-semibold" id="header-status-badge">Saved</span>
+                            <span class="text-xs font-semibold status-badge-display">Saved</span>
                         </div>
-                        <button id="btn-download-pdf" onclick="downloadPdf()" class="text-slate-400 hover:text-brand-600 transition-colors"
+                        <button onclick="downloadPdf()" class="text-slate-400 hover:text-brand-600 transition-colors"
                             title="Download PDF"><i class="fas fa-file-pdf text-3xl"></i></button>
                         <button onclick="sendReport('whatsapp')"
                             class="hidden text-slate-400 hover:text-emerald-600 transition-colors" title="WhatsApp"><i
                                 class="fab fa-whatsapp text-xl"></i></button>
                     </div>
 
-                    <div class="h-6 w-px bg-slate-200 mx-2 hidden sm:block"></div>
+                    <div class="h-6 w-px bg-slate-200 mx-2 hidden lg:block"></div>
                     <button type="button" onclick="handleHeaderCancel()"
-                        class="text-slate-400 hover:text-slate-700 transition-colors" title="Close"><i
+                        class="hidden lg:block text-slate-400 hover:text-slate-700 transition-colors" title="Close"><i
                             class="fas fa-times text-xl"></i></button>
                 </div>
             </header>
@@ -325,7 +330,27 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- Mobile-only Referred By (shown after Performed By) -->
+                        <div class="lg:hidden mt-4 pt-4 border-t border-slate-200">
+                            <label class="block text-sm font-bold text-slate-700 mb-3">Referred By</label>
+                            <div class="relative w-full">
+                                <div id="referral-dropdown-toggle-mobile" onclick="toggleReferralDropdownMobile()" class="flex items-center gap-3 bg-white border border-slate-300 rounded-lg px-4 py-2.5 hover:border-brand-400 transition-all cursor-pointer w-full">
+                                    <i class="fas fa-user-md text-emerald-500 text-lg"></i>
+                                    <span class="text-sm font-semibold text-slate-700 truncate ref-name-display">Select Referrer</span>
+                                    <i class="fas fa-chevron-down text-xs text-slate-400 ml-auto"></i>
+                                </div>
+                                <div id="referral-dropdown-menu-mobile" class="hidden absolute z-[100] bottom-full left-0 right-0 mb-2 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden py-1.5 animate-fade-in-up">
+                                    <ul class="max-h-60 overflow-y-auto custom-scrollbar referral-list-container">
+                                        <li class="px-4 py-3 text-center text-slate-400 text-sm italic">Loading sources...</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Mobile bottom spacer so Referred By isn't cut off -->
+                    <div class="lg:hidden h-[50px]"></div>
 
                 </div>
             </div>
@@ -664,10 +689,9 @@
 
                 // Unified Save Button Label for all Roles
                 const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
-                const saveBtn = document.getElementById('btn-save-report');
-                if (saveBtn) {
-                    saveBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Save & Sign';
-                }
+                document.querySelectorAll('.action-save-report').forEach(btn => {
+                    btn.innerHTML = '<i class="fas fa-check mr-2"></i> Save & Sign';
+                });
 
                 document.getElementById('report-sections-container').addEventListener('input', () => { toggleActionState('editing'); saveReportDraft(); });
 
@@ -753,21 +777,22 @@
         async function loadReferrals() {
             try {
                 const res = await api.request('/referrals');
-                const list = document.getElementById('referral-list');
-                if (!list || !res.data) return;
+                const lists = document.querySelectorAll('.referral-list-container');
+                if (lists.length === 0 || !res.data) return;
 
                 if (res.data.length === 0) {
-                    list.innerHTML = '<li class="px-4 py-3 text-center text-slate-400 text-sm italic">No referral sources found</li>';
+                    lists.forEach(l => l.innerHTML = '<li class="px-4 py-3 text-center text-slate-400 text-sm italic">No referral sources found</li>');
                     return;
                 }
 
-                list.innerHTML = res.data.map(ref => `
+                const htmlStr = res.data.map(ref => `
                     <li onclick="selectReferral('${sanitizeHTML(ref.name)}')" 
                         class="px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-brand-50 hover:text-brand-600 cursor-pointer transition-all flex items-center gap-3">
                         <div class="w-6 h-6 rounded-lg bg-emerald-50 flex items-center justify-center text-[10px] text-emerald-600 font-bold">${sanitizeHTML(ref.name.charAt(0).toUpperCase())}</div>
                         <span>${sanitizeHTML(ref.name)}</span>
                     </li>
                 `).join('');
+                lists.forEach(l => l.innerHTML = htmlStr);
             } catch (err) { console.error('Error loading referrals:', err); }
         }
 
@@ -782,12 +807,23 @@
             menu.classList.toggle('hidden');
         }
 
+        function toggleReferralDropdownMobile() {
+            const menu = document.getElementById('referral-dropdown-menu-mobile');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
         function selectReferral(name) {
             const toggle = document.getElementById('referral-dropdown-toggle');
             if (toggle) toggle.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
+            const toggleM = document.getElementById('referral-dropdown-toggle-mobile');
+            if (toggleM) toggleM.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
+            
             document.getElementById('report-referred-by').value = name;
-            document.getElementById('selected-referral-name').textContent = name;
+            document.querySelectorAll('.ref-name-display').forEach(el => el.textContent = name);
             document.getElementById('referral-dropdown-menu').classList.add('hidden');
+            const mobileMenu = document.getElementById('referral-dropdown-menu-mobile');
+            if (mobileMenu) mobileMenu.classList.add('hidden');
+            
             toggleActionState('editing');
             saveReportDraft();
         }
@@ -826,6 +862,12 @@
             const rMenu = document.getElementById('referral-dropdown-menu');
             if (rToggle && !rToggle.contains(e.target) && !rMenu.contains(e.target)) {
                 rMenu.classList.add('hidden');
+            }
+            
+            const rToggleM = document.getElementById('referral-dropdown-toggle-mobile');
+            const rMenuM = document.getElementById('referral-dropdown-menu-mobile');
+            if (rToggleM && rMenuM && !rToggleM.contains(e.target) && !rMenuM.contains(e.target)) {
+                rMenuM.classList.add('hidden');
             }
         });
 
@@ -894,6 +936,9 @@
             const referralToggle = document.getElementById('referral-dropdown-toggle');
             if (referralToggle) referralToggle.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
 
+            const referralToggleM = document.getElementById('referral-dropdown-toggle-mobile');
+            if (referralToggleM) referralToggleM.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
+
             // 2. Clear Report Sections
             const container = document.getElementById('report-sections-container');
             container.innerHTML = `
@@ -905,7 +950,7 @@
             // 3. Reset IDs & Status
             document.getElementById('report-id').value = '';
             document.getElementById('report-status').value = '';
-            document.getElementById('last-saved-info').textContent = 'Unsaved Draft';
+            document.querySelectorAll('.last-saved-info-display').forEach(el => el.textContent = 'Unsaved Draft');
 
             // 4. Reset Template Checkboxes
             document.querySelectorAll('#templates-checkbox-container input').forEach(cb => cb.checked = false);
@@ -1191,8 +1236,9 @@
             const patientSearch = document.getElementById('patient-search-input');
             const doctorToggle = document.getElementById('doctor-dropdown-toggle');
             const referralToggle = document.getElementById('referral-dropdown-toggle');
+            const referralToggleM = document.getElementById('referral-dropdown-toggle-mobile');
 
-            [patientSearch, doctorToggle, referralToggle].forEach(el => {
+            [patientSearch, doctorToggle, referralToggle, referralToggleM].forEach(el => {
                 if (el) el.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
             });
 
@@ -1284,10 +1330,16 @@
             if (!isDraft && sections.length === 0) return UI.showToast('Findings cannot be empty.', 'error');
 
             const templateIds = Array.from(document.querySelectorAll('#templates-checkbox-container input:checked')).map(cb => cb.value), reportId = document.getElementById('report-id').value;
-            const saveBtnId = isDraft ? 'btn-save-draft' : 'btn-save-report';
-            const originalLabel = isDraft ? '<i class="fas fa-save mr-2 text-slate-400"></i> Save Draft' : '<i class="fas fa-check mr-2"></i> Save & Sign';
+            const saveBtnClass = isDraft ? '.action-save-draft' : '.action-save-report';
+            const buttonsToUpdate = document.querySelectorAll(saveBtnClass);
+            
+            // Store original innerHTML in dataset if not present
+            buttonsToUpdate.forEach(btn => {
+                if (!btn.dataset.originalHtml) btn.dataset.originalHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-circle-notch fa-spin sm:mr-2"></i> <span class="hidden sm:inline">Saving...</span>';
+            });
 
-            UI.toggleLoader(saveBtnId, true, 'Saving...');
             try {
                 const payload = {
                     patientId,
@@ -1300,64 +1352,104 @@
                     status: isDraft ? 'draft' : undefined
                 };
 
-                const res = await api.request(reportId ? `/reports/${reportId}` : '/reports', reportId ? 'PUT' : 'POST', payload);
-                const savedReport = res.data;
+                const url = reportId ? `/reports/${reportId}` : '/reports';
+                const method = reportId ? 'PUT' : 'POST';
 
-                document.getElementById('report-id').value = savedReport._id;
-                document.getElementById('report-status').value = savedReport.status;
+                const res = await api.request(url, method, payload);
+                document.getElementById('report-id').value = res.data._id;
+                document.getElementById('report-status').value = res.data.status;
+                
+                if (typeof updateStatusBadgeUI === 'function') updateStatusBadgeUI(res.data.status);
 
-                UI.showToast(savedReport.status === 'saved' ? 'Finalized & Signed' : 'Saved as Draft', 'success');
-                document.getElementById('last-saved-info').textContent = `Last Saved: ${new Date().toLocaleTimeString()}`;
-
+                UI.showToast(isDraft ? 'Draft saved successfully' : 'Report saved and signed', 'success');
                 DraftManager.clear(getActiveDraftKey());
-                toggleActionState(savedReport.status);
+                toggleActionState(res.data.status);
             } catch (err) {
+                console.error(err);
                 UI.showToast(err.message || 'Failed to save report', 'error');
             } finally {
-                UI.toggleLoader(saveBtnId, false, originalLabel);
+                buttonsToUpdate.forEach(btn => {
+                    btn.disabled = false;
+                    btn.innerHTML = btn.dataset.originalHtml;
+                });
             }
         }
 
-        function toggleActionState(state) {
-            const saveBtn = document.getElementById('btn-save-report'),
-                draftBtn = document.getElementById('btn-save-draft'),
-                shareActions = document.getElementById('header-post-save-actions');
-            if (!saveBtn || !shareActions) return;
+        function toggleActionState(status) {
+            const saveBtns = document.querySelectorAll('.action-save-report'),
+                draftBtns = document.querySelectorAll('.action-save-draft'),
+                postSaveContainers = document.querySelectorAll('.post-save-actions-container'),
+                mobileEditingActions = document.querySelectorAll('.mobile-editing-actions'),
+                badgeDisplays = document.querySelectorAll('.status-badge-display');
+                
+            const statusEl = document.getElementById('report-status');
+            const currentStatus = (status || statusEl.value || '').toLowerCase();
 
-            if (state === 'saved') {
-                saveBtn.classList.add('hidden');
-                if (draftBtn) draftBtn.classList.add('hidden');
-                shareActions.classList.remove('hidden');
-                updateStatusBadgeUI(document.getElementById('report-status').value || 'saved');
+            const isSaved = currentStatus === 'saved' || currentStatus === 'verified';
+
+            if (isSaved) {
+                // Hide all save buttons
+                saveBtns.forEach(b => b.style.display = 'none');
+                draftBtns.forEach(b => b.style.display = 'none');
+                // Hide mobile editing actions wrapper
+                mobileEditingActions.forEach(c => c.style.display = 'none');
+                // Show post-save containers
+                postSaveContainers.forEach(container => {
+                    container.style.display = 'flex';
+                });
+            } else {
+                // Show save buttons (editing state)
+                saveBtns.forEach(b => { b.style.display = ''; b.classList.remove('hidden'); });
+                draftBtns.forEach(b => { b.style.display = ''; b.classList.remove('hidden'); });
+                // Show mobile editing actions wrapper
+                mobileEditingActions.forEach(c => c.style.display = 'flex');
+                // Hide post-save containers
+                postSaveContainers.forEach(container => {
+                    container.style.display = 'none';
+                });
             }
-            else {
-                saveBtn.classList.remove('hidden');
-                if (draftBtn) draftBtn.classList.remove('hidden');
-                shareActions.classList.add('hidden');
+
+            if (currentStatus === 'verified') {
+                badgeDisplays.forEach(badge => {
+                    badge.textContent = 'Verified & Signed';
+                    const wrapper = badge.closest('[class*="items-center"]');
+                    if (wrapper) wrapper.className = 'flex items-center bg-brand-50 text-brand-700 px-2.5 py-1.5 rounded-lg border border-brand-200';
+                });
+            } else if (currentStatus === 'saved') {
+                badgeDisplays.forEach(badge => {
+                    badge.textContent = 'Saved';
+                    const wrapper = badge.closest('[class*="items-center"]');
+                    if (wrapper) wrapper.className = 'flex items-center bg-green-50 text-green-700 px-2.5 py-1.5 rounded-lg border border-green-200';
+                });
             }
         }
 
         function updateStatusBadgeUI(status) {
-            const badge = document.getElementById('header-status-badge'), wrapper = document.getElementById('header-status-wrapper'); if (!badge || !wrapper) return;
-            badge.textContent = status.toUpperCase(); wrapper.className = (status.toLowerCase() === 'draft') ? 'bg-slate-50 text-slate-600 px-3 py-1.5 rounded-md border border-slate-200' : 'bg-green-50 text-green-700 px-3 py-1.5 rounded-md border border-green-200';
+            const badges = document.querySelectorAll('.status-badge-display');
+            badges.forEach(badge => {
+                badge.textContent = status.toUpperCase();
+                const wrapper = badge.closest('[class*="items-center"]');
+                if (wrapper) {
+                    wrapper.className = (status.toLowerCase() === 'draft') 
+                        ? 'flex items-center bg-slate-50 text-slate-600 px-2.5 py-1.5 rounded-lg border border-slate-200' 
+                        : 'flex items-center bg-green-50 text-green-700 px-2.5 py-1.5 rounded-lg border border-green-200';
+                }
+            });
         }
 
         async function downloadPdf() {
-            const btn = document.getElementById('btn-download-pdf');
-            if (!btn || btn.disabled) return;
-
-            const icon = btn.querySelector('i');
-            const originalIconClass = icon ? icon.className : '';
-
-            // Set loading state
-            btn.disabled = true;
-            btn.style.pointerEvents = 'none';
-            if (icon) {
-                icon.className = 'fas fa-spinner animate-spin text-3xl text-brand-600';
-            }
-
             const id = document.getElementById('report-id').value;
+            if (!id) return;
             const token = localStorage.getItem('lis_token');
+
+            // Find all PDF buttons and set loading state
+            const pdfButtons = document.querySelectorAll('[onclick="downloadPdf()"]');
+            pdfButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.style.pointerEvents = 'none';
+                const icon = btn.querySelector('i');
+                if (icon) icon.className = 'fas fa-spinner animate-spin text-xl text-brand-600';
+            });
 
             try {
                 const res = await fetch(`${BASE_URL}/reports/${id}/pdf`, {
@@ -1393,11 +1485,12 @@
                 }
             } finally {
                 // Restore original state
-                btn.disabled = false;
-                btn.style.pointerEvents = 'auto';
-                if (icon) {
-                    icon.className = originalIconClass;
-                }
+                pdfButtons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.pointerEvents = 'auto';
+                    const icon = btn.querySelector('i');
+                    if (icon) icon.className = 'fas fa-file-pdf text-xl';
+                });
             }
         }
         async function sendReport(method) { const id = document.getElementById('report-id').value; try { await api.request(`/reports/${id}/send`, 'POST', { method }); UI.showToast('Notification Sent Successfully', 'success'); } catch (err) { UI.showToast(err.message, 'error'); } }

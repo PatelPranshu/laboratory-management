@@ -178,27 +178,34 @@ async function loadActiveShares() {
                 : '<div class="text-xs text-slate-500 italic bg-white p-3 rounded border border-slate-100">No one has imported this bundle yet.</div>';
 
             return `
-                <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0">
-                    <td class="p-3 font-mono font-bold text-slate-800 align-middle">${b.shareCode}</td>
-                    <td class="p-3 align-middle">
+                <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 block sm:table-row p-4 sm:p-0">
+                    <td class="p-0 sm:px-4 sm:py-4 pb-2 sm:pb-0 font-mono font-bold text-slate-800 align-middle block sm:table-cell flex justify-between items-center">
+                        <span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase">Share Code</span>
+                        <span>${b.shareCode}</span>
+                    </td>
+                    <td class="p-0 sm:px-4 sm:py-4 pb-2 sm:pb-0 align-middle block sm:table-cell flex justify-between items-center">
+                        <span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase">Templates</span>
                         <span class="inline-flex items-center justify-center px-2 py-1 text-[10px] font-bold bg-brand-100 text-brand-700 rounded-lg">
                             ${b.templateIds ? b.templateIds.length : 0} Items
                         </span>
                     </td>
-                    <td class="p-3 text-xs text-slate-500 align-middle">${date}</td>
-                    <td class="p-3 text-right align-middle">
-                        <div class="flex items-center justify-end gap-2">
-                            <button onclick="toggleShareDetails('${b._id}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors">
+                    <td class="p-0 sm:px-4 sm:py-4 pb-3 sm:pb-0 text-xs text-slate-500 align-middle block sm:table-cell flex justify-between items-center whitespace-nowrap">
+                        <span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase">Created</span>
+                        <span>${date}</span>
+                    </td>
+                    <td class="p-0 sm:px-4 sm:py-4 pt-3 sm:pt-0 border-t border-slate-100 sm:border-0 text-right align-middle block sm:table-cell">
+                        <div class="flex items-center justify-end gap-2 w-full mt-1 sm:mt-0">
+                            <button onclick="toggleShareDetails('${b._id}')" class="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">
                                 View More
                             </button>
-                            <button onclick="revokeShare('${b._id}')" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-colors">
+                            <button onclick="revokeShare('${b._id}')" class="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold transition-colors whitespace-nowrap">
                                 Stop Sharing
                             </button>
                         </div>
                     </td>
                 </tr>
                 <tr id="details-${b._id}" class="hidden bg-slate-50/50 border-b border-slate-100 shadow-inner">
-                    <td colspan="4" class="p-0">
+                    <td colspan="4" class="p-0 block sm:table-cell">
                         <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <h4 class="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2 flex items-center"><i class="fas fa-layer-group text-brand-500 mr-2"></i> Shared Templates</h4>
@@ -228,8 +235,10 @@ window.toggleShareDetails = function(id) {
     if (detailsRow) {
         if (detailsRow.classList.contains('hidden')) {
             detailsRow.classList.remove('hidden');
+            detailsRow.classList.add('block', 'sm:table-row');
         } else {
             detailsRow.classList.add('hidden');
+            detailsRow.classList.remove('block', 'sm:table-row');
         }
     }
 }

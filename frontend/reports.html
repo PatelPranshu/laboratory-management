@@ -11,6 +11,10 @@
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Inter', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
+                    },
                     colors: {
                         brand: {
                             50: '#f0f9ff',
@@ -24,6 +28,7 @@
             }
         }
     </script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body class="bg-slate-50 antialiased text-slate-800 selection:bg-brand-500 selection:text-white">
 
@@ -35,28 +40,64 @@
         <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar pb-12">
             
             <!-- Top Header -->
-            <header class="bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 py-4 sm:py-5 sticky top-0 z-10">
-                <div class="flex-1 w-full max-w-2xl flex relative opacity-0">
+            <header class="bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 py-4 sm:py-5 sticky top-0 z-10 gap-4">
+                <!-- Desktop-only Header Content -->
+                <div class="hidden lg:flex items-center flex-1">
+                    <div class="flex flex-col">
+                        <!-- Breadcrumbs -->
+                        <nav class="flex mb-1" aria-label="Breadcrumb">
+                          <ol class="inline-flex items-center space-x-1 text-xs font-semibold text-slate-500">
+                            <li class="inline-flex items-center hover:text-brand-600 transition-colors">
+                              <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-1.5 text-[10px]"></i>Dashboard</a>
+                            </li>
+                            <li>
+                              <div class="flex items-center text-slate-400">
+                                <i class="fas fa-chevron-right text-[9px] mx-1"></i>
+                                <span class="text-slate-700 font-bold">Reports</span>
+                              </div>
+                            </li>
+                          </ol>
+                        </nav>
+                        <h1 class="text-xl font-bold text-slate-900 tracking-tight leading-none mt-1">Reports Registry</h1>
+                    </div>
+                    
+                    <!-- Desktop Page Actions -->
+                    <div class="flex items-center gap-3 ml-auto mr-2">
+                         <a href="report-create.html" class="bg-brand-600 hover:bg-brand-500 text-white px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center font-bold text-sm active:scale-95">
+                            <i class="fas fa-plus mr-2"></i> Create Report
+                         </a>
+                    </div>
                 </div>
-                <!-- Breadcrumbs -->
-                <nav class="flex absolute left-14 sm:left-8 top-1/2 transform -translate-y-1/2" aria-label="Breadcrumb">
-                  <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
-                    <li class="inline-flex items-center text-slate-500 hover:text-brand-600 transition-colors">
-                      <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-2"></i>Dashboard</a>
-                    </li>
-                    <li>
-                      <div class="flex items-center">
-                        <i class="fas fa-chevron-right text-slate-400 text-xs mx-2"></i>
-                        <span class="text-slate-800 font-bold">Reports</span>
-                      </div>
-                    </li>
-                  </ol>
-                </nav>
+
+                <!-- Mobile-only Placeholder (keeps layout on mobile, hidden on desktop) -->
+                <div class="lg:hidden flex-1 w-full max-w-2xl flex relative opacity-0">
+                    <!-- Placeholder to keep layout even if not using global search here -->
+                </div>
+
+                <!-- Notification Bell Container (visible on both mobile and desktop) -->
+                <div class="ml-auto lg:ml-0 flex items-center space-x-4 shrink-0" id="header-actions">
+                </div>
             </header>
 
             <div class="px-4 py-6 sm:px-8 sm:py-8 max-w-[1600px] mx-auto">
                 
-                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8">
+                <!-- Mobile-only Breadcrumbs (hidden on desktop) -->
+                <nav class="flex mb-4 lg:hidden" aria-label="Breadcrumb">
+                  <ol class="inline-flex items-center space-x-1 md:space-x-2 text-xs font-semibold text-slate-500">
+                    <li class="inline-flex items-center hover:text-brand-600 transition-colors">
+                      <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-1.5 text-[10px]"></i>Dashboard</a>
+                    </li>
+                    <li>
+                      <div class="flex items-center text-slate-400">
+                        <i class="fas fa-chevron-right text-[9px] mx-1"></i>
+                        <span class="text-slate-700 font-bold">Reports</span>
+                      </div>
+                    </li>
+                  </ol>
+                </nav>
+                
+                <!-- Mobile-only Title/Actions Row (hidden on desktop) -->
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8 lg:hidden">
                     <div>
                         <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Reports Registry</h1>
                         <p class="text-xs sm:text-sm text-slate-500 mt-1">Manage and track all patient diagnostic reports across the laboratory.</p>
@@ -75,27 +116,27 @@
                         <div class="md:col-span-3 relative group">
                             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Search Patient</label>
                             <div class="relative">
-                                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-300 group-focus-within:text-brand-500 transition-colors"></i>
-                                <input type="text" id="report-search" placeholder="Patient name..." class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-semibold text-slate-700 transition-all placeholder-slate-300">
+                                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
+                                <input type="text" id="report-search" placeholder="Patient name..." class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-semibold text-slate-900 transition-all placeholder-slate-400">
                             </div>
                         </div>
 
                         <!-- Start Date -->
                         <div class="md:col-span-2">
                             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Start Date</label>
-                            <input type="date" id="filter-start-date" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-bold text-slate-600 cursor-pointer">
+                            <input type="date" id="filter-start-date" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-bold text-slate-800 cursor-pointer">
                         </div>
 
                         <!-- End Date -->
                         <div class="md:col-span-2">
                             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">End Date</label>
-                            <input type="date" id="filter-end-date" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-bold text-slate-600 cursor-pointer">
+                            <input type="date" id="filter-end-date" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-bold text-slate-800 cursor-pointer">
                         </div>
 
                         <!-- Status Filter -->
                         <div class="md:col-span-3">
                             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Report Status</label>
-                            <select id="filter-status" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-bold text-slate-600 appearance-none cursor-pointer">
+                            <select id="filter-status" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 text-xs font-bold text-slate-800 appearance-none cursor-pointer">
                                 <option value="">All Statuses</option>
                                 <option value="draft">Draft (Pending)</option>
                                 <option value="saved">Saved (Verified)</option>
@@ -115,8 +156,8 @@
                 <!-- Table -->
                 <div class="glass-card overflow-hidden bg-white border border-slate-200">
                     <div class="overflow-x-auto min-h-[400px]">
-                        <table class="min-w-full divide-y divide-slate-100 border-collapse">
-                            <thead class="bg-slate-50">
+                        <table class="min-w-full divide-y divide-slate-100 border-collapse block sm:table">
+                            <thead class="bg-slate-50 hidden sm:table-header-group">
                                 <tr>
                                     <th class="px-7 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Patient Details</th>
                                     <th class="px-7 py-5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Test Profiles</th>
@@ -125,15 +166,19 @@
                                     <th class="px-7 py-5 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="reports-list" class="divide-y divide-slate-100 bg-white">
+                            <tbody id="reports-list" class="divide-y divide-slate-100 bg-white block sm:table-row-group">
                                 <!-- Populated via JS -->
-                                <tr><td colspan="5" class="text-center py-20"><i class="fas fa-circle-notch fa-spin text-4xl text-brand-500"></i></td></tr>
+                                <tr><td colspan="5" class="text-center py-20 block sm:table-cell"><i class="fas fa-circle-notch fa-spin text-4xl text-brand-500"></i></td></tr>
                             </tbody>
                         </table>
                     </div>
                     
                     <!-- Pagination -->
                     <div class="bg-white px-6 py-4 border-t border-slate-100 flex items-center justify-between">
+                        <div class="flex-1 flex justify-between sm:hidden">
+                            <button onclick="loadReports(currentPage > 1 ? currentPage - 1 : 1)" class="relative inline-flex items-center px-4 py-2 border border-slate-200 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50">Previous</button>
+                            <button onclick="loadReports(currentPage + 1)" class="ml-3 relative inline-flex items-center px-4 py-2 border border-slate-200 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50">Next</button>
+                        </div>
                         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                             <div>
                                 <p class="text-sm font-medium text-slate-500" id="pagination-info">
@@ -185,7 +230,7 @@
         async function loadReports(page = 1) {
             currentPage = page;
             const tbody = document.getElementById('reports-list');
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-20"><i class="fas fa-circle-notch fa-spin text-4xl text-brand-500"></i></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-20 block sm:table-cell"><i class="fas fa-circle-notch fa-spin text-4xl text-brand-500"></i></td></tr>`;
             
             try {
                 const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
@@ -198,7 +243,7 @@
                 const pagination = res.pagination;
 
                 if (data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-20 text-slate-500 font-medium">No reports found matching your criteria.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-20 text-slate-500 font-medium block sm:table-cell">No reports found matching your criteria.</td></tr>`;
                 } else {
                     const statusColors = {
                         draft: 'bg-slate-100 text-slate-600 border-slate-200',
@@ -207,19 +252,37 @@
                     };
 
                     tbody.innerHTML = data.map(r => `
-                        <tr class="hover:bg-brand-50/40 transition-colors group">
-                            <td class="px-7 py-4 whitespace-nowrap">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center font-bold border border-slate-200">
+                        <tr class="flex sm:table-row flex-col sm:flex-row hover:bg-brand-50/40 transition-colors group p-5 sm:p-0 border-b border-slate-100 last:border-0 sm:border-0 cursor-default">
+                            <td class="p-0 sm:px-7 sm:py-4 flex sm:table-cell items-center min-w-0 w-full sm:w-1/3">
+                                <div class="flex items-center min-w-0 w-full">
+                                    <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center font-bold border border-slate-200 shadow-sm shrink-0">
                                         <i class="fas fa-file-medical-alt text-xs"></i>
                                     </div>
-                                    <div class="ml-4">
-                                        <div class="text-sm font-bold text-slate-800">${r.patientId ? sanitizeHTML(r.patientId.name) : 'Unknown Patient'}</div>
-                                        <div class="text-xs text-slate-500 font-medium mt-0.5">${r.patientId ? r.patientId.phone : 'N/A'}</div>
+                                    <div class="ml-3 sm:ml-4 min-w-0 flex-1">
+                                        <div class="text-sm font-bold text-slate-800 truncate">${r.patientId ? sanitizeHTML(r.patientId.name) : 'Unknown Patient'}</div>
+                                        <div class="text-xs text-slate-500 font-bold mt-0.5 sm:text-slate-500 sm:font-medium">${r.patientId ? sanitizeHTML(r.patientId.phone) : 'N/A'}</div>
+                                        
+                                        <!-- Mobile-only details (hidden on desktop) -->
+                                        <div class="mt-2.5 flex flex-wrap items-center gap-2 sm:hidden">
+                                            <span class="px-2 py-0.5 text-[9px] font-black rounded-lg border uppercase tracking-widest ${statusColors[r.status] || statusColors.draft} shadow-sm">
+                                                ${sanitizeHTML(r.status)}
+                                            </span>
+                                            <span class="px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-600 rounded-md border border-slate-200/50">
+                                                ${new Date(r.createdAt).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'})}
+                                            </span>
+                                        </div>
+                                        
+                                        <!-- Mobile-only templates (hidden on desktop) -->
+                                        <div class="mt-2 flex flex-wrap gap-1 max-w-xs sm:hidden">
+                                            ${r.templateIds && r.templateIds.length > 0 
+                                                ? r.templateIds.map(t => `<span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[9px] font-bold rounded uppercase tracking-tight border border-slate-200/50">${sanitizeHTML(t.templateName)}</span>`).join('')
+                                                : '<span class="text-slate-400 text-[9px] italic">No templates</span>'
+                                            }
+                                        </div>
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-7 py-4 whitespace-nowrap">
+                            <td class="hidden sm:table-cell px-7 py-4 whitespace-nowrap">
                                 <div class="flex flex-wrap gap-1 max-w-xs">
                                     ${r.templateIds && r.templateIds.length > 0 
                                         ? r.templateIds.map(t => `<span class="px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded uppercase tracking-tight border border-slate-200/50">${sanitizeHTML(t.templateName)}</span>`).join('')
@@ -227,28 +290,28 @@
                                     }
                                 </div>
                             </td>
-                            <td class="px-7 py-4 whitespace-nowrap">
+                            <td class="hidden sm:table-cell px-7 py-4 whitespace-nowrap">
                                 <div class="text-sm font-bold text-slate-700">${new Date(r.createdAt).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'})}</div>
                                 <div class="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider">${new Date(r.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
                             </td>
-                            <td class="px-7 py-4 whitespace-nowrap">
+                            <td class="hidden sm:table-cell px-7 py-4 whitespace-nowrap">
                                 <span class="px-3 py-1 inline-flex text-[10px] font-black rounded-lg border uppercase tracking-widest ${statusColors[r.status] || statusColors.draft} shadow-sm">
                                     ${sanitizeHTML(r.status)}
                                 </span>
                             </td>
-                            <td class="px-7 py-4 whitespace-nowrap text-right text-sm">
-                                <div class="flex justify-end space-x-2">
+                            <td class="p-0 sm:px-7 sm:py-4 flex sm:table-cell items-center justify-end mt-3.5 sm:mt-0 w-full sm:w-auto border-t border-slate-100 sm:border-0 pt-3 sm:pt-0 shrink-0" onclick="event.stopPropagation()">
+                                <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
                                     ${r.status !== 'draft' ? `
-                                    <a href="${BASE_URL}/reports/${r._id}/pdf?token=${localStorage.getItem('lis_token')}" target="_blank" class="p-2 bg-slate-50 text-slate-500 hover:bg-brand-50 hover:text-brand-600 rounded-lg transition-colors tooltip-container" title="View PDF">
-                                        <i class="fas fa-file-pdf"></i>
+                                    <a href="${BASE_URL}/reports/${r._id}/pdf?token=${localStorage.getItem('lis_token')}" target="_blank" class="p-2.5 sm:p-2 bg-slate-50 text-slate-500 hover:bg-brand-50 hover:text-brand-600 rounded-xl sm:rounded-lg transition-colors tooltip-container font-bold text-xs flex items-center gap-1.5" title="View PDF">
+                                        <i class="fas fa-file-pdf text-sm sm:text-xs"></i><span class="sm:hidden">PDF</span>
                                     </a>` : ''}
                                     
-                                    <a href="report-create.html?edit=${r._id}" class="p-2 bg-slate-50 text-slate-500 hover:bg-brand-50 hover:text-brand-600 rounded-lg transition-colors tooltip-container" title="Edit Report">
-                                        <i class="fas fa-edit"></i>
+                                    <a href="report-create.html?edit=${r._id}" class="p-2.5 sm:p-2 bg-slate-50 text-slate-500 hover:bg-brand-50 hover:text-brand-600 rounded-xl sm:rounded-lg transition-colors tooltip-container font-bold text-xs flex items-center gap-1.5" title="Edit Report">
+                                        <i class="fas fa-edit text-sm sm:text-xs"></i><span class="sm:hidden">Edit</span>
                                     </a>
 
-                                    <button onclick="deleteReport('${r._id}')" class="p-2 bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 rounded-lg transition-colors tooltip-container" title="Delete Report">
-                                        <i class="fas fa-trash-alt"></i>
+                                    <button onclick="deleteReport('${r._id}')" class="p-2.5 sm:p-2 bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 rounded-xl sm:rounded-lg transition-colors tooltip-container font-bold text-xs flex items-center gap-1.5" title="Delete Report">
+                                        <i class="fas fa-trash-alt text-sm sm:text-xs"></i><span class="sm:hidden">Delete</span>
                                     </button>
                                 </div>
                             </td>
@@ -259,7 +322,7 @@
                 updatePaginationUI(pagination);
             } catch (err) {
                 UI.showToast('Failed to load reports', 'error');
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-20 text-red-500 font-bold">Failed to load data.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-20 text-red-500 font-bold block sm:table-cell">Failed to load data.</td></tr>`;
             }
         }
 

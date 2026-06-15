@@ -17,15 +17,14 @@
                         }
                     },
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
+                        sans: ['Outfit', 'Inter', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-
         /* Number input spinner removal */
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button {
@@ -46,7 +45,15 @@
         .tpl-item.active .tpl-name {
             color: #0369a1;
         }
+
+        /* Mobile overrides for layout.js injected notification wrapper */
+        @media (max-width: 640px) {
+            #notification-wrapper {
+                margin-left: 0.25rem !important; /* Fix for header overflow */
+            }
+        }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body class="bg-slate-50 antialiased text-slate-800 selection:bg-brand-500 selection:text-white">
 
@@ -60,34 +67,47 @@
         <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar pb-12">
 
             <!-- Top Header -->
-            <header class="bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between sticky top-0 z-10 shrink-0">
-                <div class="flex items-center gap-4">
-                    <div class="hidden sm:block">
-                        <nav class="flex text-xs font-medium text-slate-500 mb-0.5" aria-label="Breadcrumb">
-                            <ol class="flex items-center space-x-2">
-                                <li class="hover:text-brand-600 transition-colors">
-                                    <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-1"></i>Dashboard</a>
-                                </li>
-                                <li><i class="fas fa-chevron-right text-[10px] opacity-50"></i></li>
-                                <li class="text-slate-800 font-bold">Templates</li>
-                            </ol>
+            <header class="bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between sticky top-0 z-10 gap-4 shrink-0">
+                <!-- Desktop-only Header Content -->
+                <div class="hidden lg:flex items-center flex-1">
+                    <div class="flex flex-col">
+                        <!-- Breadcrumbs -->
+                        <nav class="flex mb-1" aria-label="Breadcrumb">
+                          <ol class="inline-flex items-center space-x-1 text-xs font-semibold text-slate-500">
+                            <li class="inline-flex items-center hover:text-brand-600 transition-colors">
+                              <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-1.5 text-[10px]"></i>Dashboard</a>
+                            </li>
+                            <li>
+                              <div class="flex items-center text-slate-400">
+                                <i class="fas fa-chevron-right text-[9px] mx-1"></i>
+                                <span class="text-slate-700 font-bold">Templates</span>
+                              </div>
+                            </li>
+                          </ol>
                         </nav>
-                        <h1 class="text-xl font-bold text-slate-900 tracking-tight">Report Templates</h1>
+                        <h1 class="text-xl font-bold text-slate-900 tracking-tight leading-none mt-1">Report Templates</h1>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 sm:gap-3" id="header-actions">
+
+                <!-- Mobile-only Placeholder (keeps layout on mobile, hidden on desktop) -->
+                <div class="lg:hidden flex-1 w-full max-w-2xl flex relative opacity-0">
+                    <!-- Placeholder to keep layout even if not using global search here -->
+                </div>
+
+                <!-- Notification Bell and Actions Container -->
+                <div class="ml-auto lg:ml-0 flex items-center gap-1 sm:gap-3 shrink-0" id="header-actions">
                     <!-- Sticky Actions (Hidden by default) -->
-                    <div id="sticky-editor-actions" class="hidden items-center gap-2 animate-fade-in-up">
-                        <button onclick="createNewTemplate(event)" class="px-3 py-2 bg-white border border-brand-600 text-brand-600 font-bold text-sm rounded-xl hover:bg-brand-50 transition-all flex items-center shadow-sm">
+                    <div id="sticky-editor-actions" class="hidden items-center gap-1 sm:gap-2 animate-fade-in-up">
+                        <button onclick="createNewTemplate(event)" class="p-2 md:px-3 md:py-2 bg-white border border-brand-600 text-brand-600 font-bold text-sm rounded-xl hover:bg-brand-50 transition-all flex items-center shadow-sm active:scale-95">
                             <i class="fas fa-plus"></i> <span class="hidden md:inline ml-2">New</span>
                         </button>
-                        <button id="btn-save-template-sticky" onclick="saveTemplate(event)" class="px-4 py-2 bg-brand-600 text-white font-bold text-sm rounded-xl hover:bg-brand-700 shadow-sm transition-all flex items-center">
-                            <i class="fas fa-save mr-2"></i> <span class="hidden md:inline">Save</span>
+                        <button id="btn-save-template-sticky" onclick="saveTemplate(event)" class="p-2 md:px-4 md:py-2 bg-brand-600 text-white font-bold text-sm rounded-xl hover:bg-brand-700 shadow-sm transition-all flex items-center active:scale-95">
+                            <i class="fas fa-save md:mr-2"></i> <span class="hidden md:inline">Save</span>
                         </button>
                         <div class="w-px h-6 bg-slate-200 mx-1 hidden sm:block"></div>
                     </div>
 
-                    <button onclick="openShareModal()" class="p-2 sm:px-4 sm:py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center" title="Share / Import">
+                    <button onclick="openShareModal()" class="p-2 sm:px-4 sm:py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center active:scale-95" title="Share / Import">
                         <i class="fas fa-share-alt text-brand-600 sm:mr-2"></i><span class="hidden sm:inline">Share / Import</span>
                     </button>
                 </div>
@@ -96,30 +116,54 @@
             <!-- Page Content -->
             <div class="px-4 py-6 sm:px-8 sm:py-8 max-w-[1600px] mx-auto">
 
+                <!-- Mobile-only Breadcrumbs (hidden on desktop) -->
+                <nav class="flex mb-4 lg:hidden" aria-label="Breadcrumb">
+                  <ol class="inline-flex items-center space-x-1 md:space-x-2 text-xs font-semibold text-slate-500">
+                    <li class="inline-flex items-center hover:text-brand-600 transition-colors">
+                      <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-1.5 text-[10px]"></i>Dashboard</a>
+                    </li>
+                    <li>
+                      <div class="flex items-center text-slate-400">
+                        <i class="fas fa-chevron-right text-[9px] mx-1"></i>
+                        <span class="text-slate-700 font-bold">Templates</span>
+                      </div>
+                    </li>
+                  </ol>
+                </nav>
+                
+                <!-- Mobile-only Title/Actions Row (hidden on desktop) -->
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8 lg:hidden">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Report Templates</h1>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-1">Design, import, and manage standardized report templates and equations.</p>
+                    </div>
+                </div>
+
                 <!-- Main Grid: Sidebar List + Editor -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
                     <!-- Left: Template List Panel -->
                     <div class="lg:col-span-4 xl:col-span-3">
-                        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                            <div class="px-5 py-4 border-b border-slate-100 flex justify-between items-center">
+                        <details open class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden group lg:open [&:not([open])]:border-slate-200 block">
+                            <summary class="px-5 py-4 border-b border-slate-100 flex justify-between items-center cursor-pointer lg:cursor-default select-none outline-none list-none lg:pointer-events-none [&::-webkit-details-marker]:hidden">
                                 <h2 class="text-sm font-bold text-slate-800 flex items-center">
+                                    <i class="fas fa-chevron-right text-[10px] text-slate-400 mr-2 transition-transform duration-200 group-open:rotate-90 lg:hidden"></i>
                                     <i class="fas fa-folder-open text-brand-500 mr-2"></i>Saved Templates
                                 </h2>
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-2 lg:pointer-events-auto" onclick="event.stopPropagation()">
                                     <span id="template-count" class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full"></span>
                                     <button onclick="loadTemplates()" class="text-slate-400 hover:text-brand-600 transition-colors" title="Refresh">
                                         <i class="fas fa-sync-alt text-xs"></i>
                                     </button>
                                 </div>
-                            </div>
-                            <ul id="templates-list" class="divide-y divide-slate-50 max-h-[65vh] overflow-y-auto custom-scrollbar">
+                            </summary>
+                            <ul id="templates-list" class="divide-y divide-slate-50 max-h-[40vh] lg:max-h-[65vh] overflow-y-auto custom-scrollbar">
                                 <li class="p-8 text-center text-slate-400 flex flex-col items-center justify-center">
                                     <i class="fas fa-circle-notch fa-spin text-2xl mb-2"></i>
                                     <span class="font-medium text-sm">Loading templates...</span>
                                 </li>
                             </ul>
-                        </div>
+                        </details>
                     </div>
 
                     <!-- Right: Editor Panel -->
@@ -148,18 +192,18 @@
                                 <input type="hidden" id="template-id">
 
                                 <!-- Template Meta Fields -->
-                                <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-100 mb-6">
+                                <div class="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-200 mb-6">
                                     <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-4 flex items-center">
                                         <i class="fas fa-info-circle text-brand-500 mr-2"></i> Template Information
                                     </h3>
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
                                         <div class="sm:col-span-3">
                                             <label class="block text-xs font-bold text-slate-600 mb-2">Template Name <span class="text-red-500">*</span></label>
-                                            <input type="text" id="t-name" placeholder="e.g. Comprehensive Metabolic Panel" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all text-base sm:text-lg font-bold text-slate-800 placeholder-slate-400">
+                                            <input type="text" id="t-name" placeholder="e.g. Comprehensive Metabolic Panel" class="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all text-base sm:text-lg font-bold text-slate-900 placeholder-slate-400">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-bold text-slate-600 mb-2">Department</label>
-                                            <select id="t-department" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm font-semibold text-slate-700 cursor-pointer appearance-none">
+                                            <select id="t-department" class="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm font-semibold text-slate-800 cursor-pointer appearance-none">
                                                 <option value="GENERAL">General</option>
                                                 <option value="BIOCHEMISTRY">Biochemistry</option>
                                                 <option value="MICROBIOLOGY">Microbiology</option>
@@ -173,7 +217,7 @@
                                         </div>
                                         <div>
                                             <label class="block text-xs font-bold text-slate-600 mb-2">Report Type</label>
-                                            <select id="t-report-type" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm font-semibold text-slate-700 cursor-pointer appearance-none">
+                                            <select id="t-report-type" class="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 text-sm font-semibold text-slate-800 cursor-pointer appearance-none">
                                                 <option value="DISCRETE">Discrete</option>
                                                 <option value="NARRATIVE">Narrative</option>
                                                 <option value="HYBRID">Hybrid</option>
@@ -223,7 +267,7 @@
                         <i class="fas fa-bookmark text-sm"></i>
                     </div>
                     <input type="text"
-                        class="sec-name font-bold text-slate-800 bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-xl px-4 py-2.5 w-full text-sm placeholder:text-slate-400 placeholder:font-normal outline-none transition-all shadow-sm"
+                        class="sec-name font-bold text-slate-900 bg-white border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 rounded-xl px-4 py-2.5 w-full text-sm placeholder:text-slate-400 placeholder:font-normal outline-none transition-all shadow-sm"
                         placeholder="Section Name (e.g. Hematology)">
                 </div>
                 <button onclick="this.closest('.section-block').remove()"
@@ -239,7 +283,7 @@
                         <i class="fas fa-sticky-note text-slate-400 mr-1.5"></i>Default Interpretation / Notes
                     </label>
                     <textarea rows="2"
-                        class="sec-text w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand-500 focus:bg-white text-sm text-slate-700 outline-none transition-all resize-y placeholder:text-slate-400"
+                        class="sec-text w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl focus:border-brand-500 focus:bg-white text-sm text-slate-800 outline-none transition-all resize-y placeholder:text-slate-400"
                         placeholder="Optional standard remarks for this section..."
                         oninput="adjustNotesHeight(this)"></textarea>
 
@@ -254,19 +298,19 @@
                                 <label class="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5 block">
                                     <i class="fas fa-microscope text-brand-500 text-[11px]"></i> Methodology
                                 </label>
-                                <input type="text" class="sec-methodology w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none placeholder-slate-400 transition-all" placeholder="e.g. CMIA">
+                                <input type="text" class="sec-methodology w-full bg-white border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-800 outline-none placeholder-slate-400 transition-all" placeholder="e.g. CMIA">
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5 block">
                                     <i class="fas fa-vial text-brand-500 text-[11px]"></i> Sample Type
                                 </label>
-                                <input type="text" class="sec-sample-type w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none placeholder-slate-400 transition-all" placeholder="e.g. Serum">
+                                <input type="text" class="sec-sample-type w-full bg-white border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-800 outline-none placeholder-slate-400 transition-all" placeholder="e.g. Serum">
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5 block">
                                     <i class="fas fa-box-open text-brand-500 text-[11px]"></i> Kit Used
                                 </label>
-                                <input type="text" class="sec-kit-used w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none placeholder-slate-400 transition-all" placeholder="e.g. SD Bioline">
+                                <input type="text" class="sec-kit-used w-full bg-white border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-800 outline-none placeholder-slate-400 transition-all" placeholder="e.g. SD Bioline">
                             </div>
                         </div>
                     </details>
@@ -300,21 +344,21 @@
     <template id="param-row-template">
         <div class="param-row bg-slate-50 border border-slate-200 rounded-xl p-4 sm:p-5 hover:border-brand-200 transition-all group relative">
             <!-- Row 1: Core fields in a clean grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-12 gap-x-4 gap-y-3 items-end">
+            <div class="grid grid-cols-2 sm:grid-cols-12 gap-x-4 gap-y-3 items-end">
                 <!-- Parameter Name -->
-                <div class="sm:col-span-4">
+                <div class="col-span-2 sm:col-span-4">
                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Parameter Name</label>
                     <input type="text"
-                        class="pr-name w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 font-semibold text-slate-800 text-sm placeholder-slate-400 transition-all outline-none"
+                        class="pr-name w-full bg-white border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 font-bold text-slate-900 text-sm placeholder-slate-400 transition-all outline-none"
                         placeholder="e.g. Hemoglobin"
                         onfocus="this.dataset.oldName = this.value"
                         oninput="handleParamNameChange(this)">
                 </div>
                 <!-- Data Type -->
-                <div class="sm:col-span-3">
+                <div class="col-span-1 sm:col-span-3">
                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Data Type</label>
                     <select
-                        class="pr-data-type w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none cursor-pointer appearance-none"
+                        class="pr-data-type w-full bg-white border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 outline-none cursor-pointer appearance-none"
                         onchange="toggleDataTypeFields(this)">
                         <option value="NUMERIC">Numeric</option>
                         <option value="CALCULATED">⚡ Calculated</option>
@@ -328,18 +372,18 @@
                     </select>
                 </div>
                 <!-- Unit -->
-                <div class="sm:col-span-2 pr-units-container">
+                <div class="col-span-1 sm:col-span-2 pr-units-container">
                     <label class="block text-xs font-bold text-slate-600 mb-1.5">Unit</label>
                     <input type="text"
-                        class="pr-units w-full bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 transition-all outline-none placeholder-slate-400"
+                        class="pr-units w-full bg-white border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 transition-all outline-none placeholder-slate-400"
                         placeholder="e.g. g/dL">
                 </div>
                 <!-- Delete Button -->
-                <div class="sm:col-span-3 flex items-end justify-end sm:justify-end">
+                <div class="col-span-2 sm:col-span-3 flex items-end justify-end">
                     <button type="button" onclick="this.closest('.param-row').remove()"
-                        class="text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all p-2 rounded-xl flex items-center gap-2 text-xs font-semibold opacity-100 sm:opacity-0 group-hover:opacity-100">
+                        class="text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all p-2 rounded-xl flex items-center gap-2 text-xs font-bold opacity-100 sm:opacity-0 group-hover:opacity-100">
                         <i class="fas fa-trash-alt text-sm"></i>
-                        <span class="sm:hidden text-red-500">Remove</span>
+                        <span class="sm:hidden text-red-500">Remove Parameter</span>
                     </button>
                 </div>
             </div>
@@ -348,11 +392,11 @@
             <div class="mt-3">
                 <!-- NUMERIC CONFIG -->
                 <div class="pr-numeric-config flex flex-col gap-3">
-                    <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
                         <div class="flex flex-wrap items-center gap-3 mb-3">
                             <label class="text-xs font-bold text-slate-600">Reference Range</label>
                             <select
-                                class="pr-rule-type bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-bold text-slate-600 outline-none focus:border-brand-500 cursor-pointer appearance-none w-48"
+                                class="pr-rule-type bg-white border border-slate-300 rounded-xl px-4 py-2 text-xs font-bold text-slate-800 outline-none focus:border-brand-500 cursor-pointer appearance-none w-48"
                                 onchange="toggleRuleFields(this)">
                                 <option value="MIN_MAX">Min / Max</option>
                                 <option value="GENDER_SPECIFIC">Male / Female</option>
@@ -365,14 +409,14 @@
                             <div class="flex-1 max-w-[180px]">
                                 <label class="block text-[10px] font-bold text-slate-500 mb-1">MIN VALUE</label>
                                 <input type="number" step="any"
-                                    class="pr-min w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-brand-500 placeholder-slate-400 text-center"
+                                    class="pr-min w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-brand-500 placeholder-slate-400 text-center"
                                     placeholder="0">
                             </div>
                             <span class="text-slate-300 text-lg font-bold mt-4">–</span>
                             <div class="flex-1 max-w-[180px]">
                                 <label class="block text-[10px] font-bold text-slate-500 mb-1">MAX VALUE</label>
                                 <input type="number" step="any"
-                                    class="pr-max w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-brand-500 placeholder-slate-400 text-center"
+                                    class="pr-max w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-brand-500 placeholder-slate-400 text-center"
                                     placeholder="100">
                             </div>
                         </div>
@@ -385,11 +429,11 @@
                                     <span class="text-xs font-extrabold text-blue-600">Male</span>
                                 </div>
                                 <div class="flex-1 max-w-[160px]">
-                                    <input type="number" step="any" class="pr-male-min w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-blue-500 placeholder-slate-400 text-center" placeholder="Min">
+                                    <input type="number" step="any" class="pr-male-min w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 placeholder-slate-400 text-center" placeholder="Min">
                                 </div>
                                 <span class="text-slate-300 font-bold">–</span>
                                 <div class="flex-1 max-w-[160px]">
-                                    <input type="number" step="any" class="pr-male-max w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-blue-500 placeholder-slate-400 text-center" placeholder="Max">
+                                    <input type="number" step="any" class="pr-male-max w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-blue-500 placeholder-slate-400 text-center" placeholder="Max">
                                 </div>
                             </div>
                             <div class="flex items-center gap-3">
@@ -398,11 +442,11 @@
                                     <span class="text-xs font-extrabold text-pink-600">Female</span>
                                 </div>
                                 <div class="flex-1 max-w-[160px]">
-                                    <input type="number" step="any" class="pr-female-min w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-pink-500 placeholder-slate-400 text-center" placeholder="Min">
+                                    <input type="number" step="any" class="pr-female-min w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-pink-500 placeholder-slate-400 text-center" placeholder="Min">
                                 </div>
                                 <span class="text-slate-300 font-bold">–</span>
                                 <div class="flex-1 max-w-[160px]">
-                                    <input type="number" step="any" class="pr-female-max w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-pink-500 placeholder-slate-400 text-center" placeholder="Max">
+                                    <input type="number" step="any" class="pr-female-max w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-pink-500 placeholder-slate-400 text-center" placeholder="Max">
                                 </div>
                             </div>
                         </div>
@@ -423,7 +467,7 @@
                     <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
                         <label class="block text-xs font-bold text-slate-600 mb-1.5">Expected Normal Result</label>
                         <input type="text"
-                            class="pr-text-normal w-full px-4 py-2.5 bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl text-sm font-medium text-slate-700 outline-none placeholder-slate-400"
+                            class="pr-text-normal w-full px-4 py-2.5 bg-white border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl text-sm font-semibold text-slate-800 outline-none placeholder-slate-400"
                             placeholder="e.g. NEGATIVE, Non-Reactive">
                     </div>
                 </div>
@@ -433,7 +477,7 @@
                     <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
                         <label class="block text-xs font-bold text-slate-600 mb-1.5">Default Value</label>
                         <input type="text"
-                            class="pr-default-value w-full px-4 py-2.5 bg-white border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl text-sm font-medium text-slate-700 outline-none placeholder-slate-400"
+                            class="pr-default-value w-full px-4 py-2.5 bg-white border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl text-sm font-semibold text-slate-800 outline-none placeholder-slate-400"
                             placeholder="Enter the default value">
                     </div>
                 </div>
@@ -485,19 +529,19 @@
                         <label class="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5 block">
                             <i class="fas fa-microscope text-brand-500 text-[11px]"></i> Methodology
                         </label>
-                        <input type="text" class="pr-methodology w-full bg-white border border-slate-200 focus:border-brand-500 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none placeholder-slate-400 transition-all" placeholder="e.g. CMIA">
+                        <input type="text" class="pr-methodology w-full bg-white border border-slate-300 focus:border-brand-500 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 outline-none placeholder-slate-400 transition-all" placeholder="e.g. CMIA">
                     </div>
                     <div>
                         <label class="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5 block">
                             <i class="fas fa-vial text-brand-500 text-[11px]"></i> Sample Type
                         </label>
-                        <input type="text" class="pr-sample-type w-full bg-white border border-slate-200 focus:border-brand-500 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none placeholder-slate-400 transition-all" placeholder="e.g. Serum">
+                        <input type="text" class="pr-sample-type w-full bg-white border border-slate-300 focus:border-brand-500 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 outline-none placeholder-slate-400 transition-all" placeholder="e.g. Serum">
                     </div>
                     <div>
                         <label class="text-xs font-bold text-slate-600 mb-1.5 flex items-center gap-1.5 block">
                             <i class="fas fa-box-open text-brand-500 text-[11px]"></i> Kit Used
                         </label>
-                        <input type="text" class="pr-kit-used w-full bg-white border border-slate-200 focus:border-brand-500 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none placeholder-slate-400 transition-all" placeholder="e.g. SD Bioline">
+                        <input type="text" class="pr-kit-used w-full bg-white border border-slate-300 focus:border-brand-500 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-800 outline-none placeholder-slate-400 transition-all" placeholder="e.g. SD Bioline">
                     </div>
                 </div>
             </details>
@@ -507,7 +551,7 @@
     <!-- ===== COMPARISON RULE TEMPLATE ===== -->
     <template id="comparison-rule-template">
         <div class="comparison-rule flex flex-wrap items-center gap-2 bg-white rounded-lg p-2.5 border border-slate-200 shadow-sm">
-            <select class="cmp-operator bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 outline-none focus:border-brand-500 w-auto cursor-pointer appearance-none" onchange="toggleBetweenField(this)">
+            <select class="cmp-operator bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-brand-500 w-auto cursor-pointer appearance-none" onchange="toggleBetweenField(this)">
                 <option value="<">&lt; Less than</option>
                 <option value="<=">&le; Less or equal</option>
                 <option value=">">&gt; Greater than</option>
@@ -517,10 +561,10 @@
                 <option value="equals">Exact match</option>
                 <option value="contains">Contains</option>
             </select>
-            <input type="text" class="cmp-value w-36 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-brand-500 text-center" placeholder="Value">
-            <input type="text" class="cmp-value-to w-36 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 outline-none focus:border-brand-500 text-center hidden" placeholder="To">
-            <input type="text" class="cmp-classification w-44 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 outline-none focus:border-brand-500" placeholder="Label">
-            <select class="cmp-action bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold text-slate-600 outline-none focus:border-brand-500 w-auto cursor-pointer appearance-none">
+            <input type="text" class="cmp-value w-36 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-brand-500 text-center" placeholder="Value">
+            <input type="text" class="cmp-value-to w-36 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-900 outline-none focus:border-brand-500 text-center hidden" placeholder="To">
+            <input type="text" class="cmp-classification w-44 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-semibold text-slate-850 outline-none focus:border-brand-500" placeholder="Label">
+            <select class="cmp-action bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-brand-500 w-auto cursor-pointer appearance-none">
                 <option value="NORMAL">✅ Normal</option>
                 <option value="HIGHLIGHT">⚠️ Highlight</option>
                 <option value="CRITICAL">🔴 Critical</option>
@@ -534,7 +578,7 @@
     <!-- ===== SHARE / IMPORT MODAL ===== -->
     <div id="share-modal" class="fixed inset-0 z-[150] hidden">
         <div class="absolute inset-0 bg-slate-800/30 backdrop-blur-[2px]" onclick="closeShareModal()"></div>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-2xl shadow-xl flex flex-col max-h-[85vh] mx-4 overflow-hidden border border-slate-100">
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-2xl bg-white rounded-2xl shadow-xl flex flex-col max-h-[85vh] overflow-hidden border border-slate-100">
             <!-- Modal Header -->
             <div class="flex items-center justify-between px-6 pt-6 pb-2 shrink-0">
                 <h2 class="text-base font-extrabold text-slate-900 flex items-center">
@@ -546,11 +590,11 @@
             </div>
 
             <!-- Tab Pills (Segment Control) -->
-            <div class="px-6 py-2 shrink-0">
-                <div class="flex bg-slate-100/80 p-1 rounded-xl gap-1">
-                    <button onclick="switchShareTab('generate')" id="tab-btn-generate" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm transition-all animate-none">Generate</button>
-                    <button onclick="switchShareTab('manage')" id="tab-btn-manage" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 hover:text-slate-800 transition-all bg-transparent border-none">Active Shares</button>
-                    <button onclick="switchShareTab('import')" id="tab-btn-import" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 hover:text-slate-800 transition-all bg-transparent border-none">Import</button>
+            <div class="px-4 sm:px-6 py-2 shrink-0 overflow-x-auto custom-scrollbar">
+                <div class="flex bg-slate-100/80 p-1 rounded-xl gap-1 min-w-min">
+                    <button onclick="switchShareTab('generate')" id="tab-btn-generate" class="flex-1 py-2 px-3 text-[11px] sm:text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm transition-all animate-none whitespace-nowrap">Generate</button>
+                    <button onclick="switchShareTab('manage')" id="tab-btn-manage" class="flex-1 py-2 px-3 text-[11px] sm:text-xs font-bold rounded-lg text-slate-500 hover:text-slate-800 transition-all bg-transparent border-none whitespace-nowrap">Active Shares</button>
+                    <button onclick="switchShareTab('import')" id="tab-btn-import" class="flex-1 py-2 px-3 text-[11px] sm:text-xs font-bold rounded-lg text-slate-500 hover:text-slate-800 transition-all bg-transparent border-none whitespace-nowrap">Import</button>
                 </div>
             </div>
 
@@ -567,10 +611,10 @@
                             Generate Share Code
                         </button>
                         <div id="generated-code-container" class="hidden flex flex-col items-center gap-3 mt-2">
-                            <div class="flex flex-col items-center gap-2 bg-green-50/50 border border-green-100 p-4 rounded-xl text-center w-full">
+                            <div class="flex flex-col items-center gap-2 bg-green-50/50 border border-green-100 p-4 rounded-xl text-center w-full overflow-hidden">
                                 <span class="text-[10px] font-bold text-green-700 uppercase tracking-widest">Your Share Code (Valid for 24h)</span>
                                 <div class="flex items-center gap-2 w-full justify-center">
-                                    <input type="text" id="generated-code-input" readonly class="bg-white border border-green-200 rounded-lg px-4 py-2 text-xl font-mono font-bold text-slate-800 w-40 text-center outline-none selection:bg-green-100">
+                                    <input type="text" id="generated-code-input" readonly class="bg-white border border-green-200 rounded-lg px-3 sm:px-4 py-2 text-lg sm:text-xl font-mono font-bold text-slate-800 w-32 sm:w-40 text-center outline-none selection:bg-green-100">
                                     <button onclick="copyShareCode()" class="p-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-sm transition-colors" title="Copy"><i class="fas fa-copy text-sm"></i></button>
                                 </div>
                             </div>
@@ -585,16 +629,16 @@
                 <div id="tab-content-manage" class="hidden">
                     <p class="text-xs text-slate-500 mb-3.5 leading-relaxed">Your actively shared template bundles.</p>
                     <div class="overflow-x-auto border border-slate-100 rounded-xl bg-white">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead>
+                        <table class="w-full text-left border-collapse text-xs block sm:table">
+                            <thead class="hidden sm:table-header-group">
                                 <tr class="bg-slate-50/80 border-b border-slate-100 font-bold text-slate-500 uppercase tracking-wider">
-                                    <th class="p-3">Share Code</th>
-                                    <th class="p-3">Templates</th>
-                                    <th class="p-3">Created</th>
-                                    <th class="p-3 text-right">Action</th>
+                                    <th class="p-3 sm:px-4 sm:py-4">Share Code</th>
+                                    <th class="p-3 sm:px-4 sm:py-4">Templates</th>
+                                    <th class="p-3 sm:px-4 sm:py-4">Created</th>
+                                    <th class="p-3 sm:px-4 sm:py-4 text-right">Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="active-shares-tbody" class="divide-y divide-slate-100 text-slate-700 bg-white">
+                            <tbody id="active-shares-tbody" class="divide-y divide-slate-100 text-slate-700 bg-white block sm:table-row-group">
                                 <!-- Rows injected here -->
                             </tbody>
                         </table>

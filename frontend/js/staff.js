@@ -26,33 +26,39 @@ async function fetchStaff() {
         }
 
         tbody.innerHTML = data.data.map(user => `
-            <tr class="hover:bg-slate-50/80 transition-colors group">
-                <td class="px-6 py-4 whitespace-nowrap">
+            <tr class="hover:bg-slate-50/80 transition-colors group block sm:table-row p-4 sm:p-0 border-b border-slate-100 sm:border-0 last:border-0">
+                <td class="px-0 sm:px-6 py-2 sm:py-4 whitespace-nowrap flex sm:table-cell justify-between items-center">
+                    <span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase">Staff Member</span>
                     <div class="flex items-center">
-                        <div class="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-50 flex items-center justify-center text-indigo-500 font-bold shadow-inner uppercase">
+                        <div class="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-50 flex items-center justify-center text-indigo-500 font-bold shadow-inner uppercase shrink-0">
                             ${sanitizeHTML(user.name.substring(0, 2))}
                         </div>
                         <div class="ml-4">
-                            <div class="text-sm font-bold text-slate-800">${sanitizeHTML(user.name)}</div>
+                            <div class="text-sm font-bold text-slate-800 text-right sm:text-left">${sanitizeHTML(user.name)}</div>
                         </div>
                     </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                    ${sanitizeHTML(user.email)}
+                <td class="px-0 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-sm text-slate-500 flex sm:table-cell justify-between items-center">
+                    <span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase">Email</span>
+                    <span>${sanitizeHTML(user.email)}</span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-0 sm:px-6 py-2 sm:py-4 whitespace-nowrap flex sm:table-cell justify-between items-center">
+                    <span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase">Role</span>
                     <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-md bg-slate-100 text-slate-700">
                         ${sanitizeHTML(user.role)}
                     </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-0 sm:px-6 py-2 sm:py-4 whitespace-nowrap flex sm:table-cell justify-between items-center">
+                    <span class="sm:hidden text-[10px] font-bold text-slate-400 uppercase">Status</span>
                     <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-md ${user.accountStatus === 'Active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
                         ${sanitizeHTML(user.accountStatus || 'Unknown')}
                     </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button onclick="resetStaffPassword('${user._id}', '${sanitizeHTML(user.name)}')" class="text-indigo-600 hover:text-indigo-900 mr-3" title="Reset Password"><i class="fas fa-key"></i></button>
-                    ${user.role !== 'Admin' ? `<button onclick="deleteStaff('${user._id}', '${sanitizeHTML(user.name)}')" class="text-red-500 hover:text-red-700" title="Remove User"><i class="fas fa-trash"></i></button>` : `<span class="text-slate-300 pointer-events-none" title="Cannot delete root admin"><i class="fas fa-trash"></i></span>`}
+                <td class="px-0 sm:px-6 pt-3 sm:pt-4 pb-2 sm:pb-4 whitespace-nowrap text-right text-sm font-medium block sm:table-cell border-t border-slate-100 sm:border-0 mt-2 sm:mt-0">
+                    <div class="flex items-center justify-end gap-2 w-full sm:w-auto">
+                        <button onclick="resetStaffPassword('${user._id}', '${sanitizeHTML(user.name)}')" class="flex-1 sm:flex-none px-3 py-2 sm:p-0 bg-slate-100 hover:bg-slate-200 sm:bg-transparent text-indigo-600 sm:hover:text-indigo-900 rounded-lg sm:rounded-none transition-colors sm:mr-3 flex items-center justify-center" title="Reset Password"><i class="fas fa-key sm:mr-0 mr-2"></i><span class="sm:hidden">Reset Pass</span></button>
+                        ${user.role !== 'Admin' ? `<button onclick="deleteStaff('${user._id}', '${sanitizeHTML(user.name)}')" class="flex-1 sm:flex-none px-3 py-2 sm:p-0 bg-red-50 hover:bg-red-100 sm:bg-transparent text-red-500 sm:hover:text-red-700 rounded-lg sm:rounded-none transition-colors flex items-center justify-center" title="Remove User"><i class="fas fa-trash sm:mr-0 mr-2"></i><span class="sm:hidden">Remove</span></button>` : `<span class="flex-1 sm:flex-none px-3 py-2 sm:p-0 bg-slate-50 sm:bg-transparent text-slate-300 pointer-events-none rounded-lg sm:rounded-none text-center flex items-center justify-center" title="Cannot delete root admin"><i class="fas fa-trash sm:mr-0 mr-2"></i><span class="sm:hidden">Admin</span></span>`}
+                    </div>
                 </td>
             </tr>
         `).join('');

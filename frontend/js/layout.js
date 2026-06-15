@@ -34,10 +34,10 @@ function loadCommonLayout() {
         const style = document.createElement('style');
         style.id = 'sidebar-strict-styles';
         style.innerHTML = `
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700;900&display=swap');
             
             #main-sidebar {
-                font-family: 'Inter', sans-serif !important;
+                font-family: 'Outfit', 'Inter', sans-serif !important;
                 background-color: #1e1b4b !important;
                 background-image: none !important;
             }
