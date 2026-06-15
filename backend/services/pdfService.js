@@ -5,17 +5,11 @@ const { evaluatePatientResult } = require('../utils/resultEvaluator');
 
 const path = require('path');
 const fonts = {
-  Helvetica: {
-    normal: 'Helvetica',
-    bold: 'Helvetica-Bold',
-    italics: 'Helvetica-Oblique',
-    bolditalics: 'Helvetica-BoldOblique'
-  },
   Roboto: {
-    normal: 'Helvetica',
-    bold: 'Helvetica-Bold',
-    italics: 'Helvetica-Oblique',
-    bolditalics: 'Helvetica-BoldOblique'
+    normal: path.join(__dirname, '../fonts/Roboto/Roboto-Regular.ttf'),
+    bold: path.join(__dirname, '../fonts/Roboto/Roboto-Bold.ttf'),
+    italics: path.join(__dirname, '../fonts/Roboto/Roboto-Italic.ttf'),
+    bolditalics: path.join(__dirname, '../fonts/Roboto/Roboto-BoldItalic.ttf')
   }
 };
 
@@ -589,7 +583,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
       patientInfo: { lineHeight: 1.4 }
     },
     defaultStyle: {
-      font: 'Helvetica',
+      font: 'Roboto',
       fontSize: baseFontSize
     }
   };
