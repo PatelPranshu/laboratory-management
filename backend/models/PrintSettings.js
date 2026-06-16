@@ -16,17 +16,19 @@ const PrintSettingsSchema = new mongoose.Schema({
     default: ''
   },
   layoutPreferences: {
-    marginTop: { type: Number, default: 20 },
-    marginBottom: { type: Number, default: 20 },
-    marginLeft: { type: Number, default: 20 },
-    marginRight: { type: Number, default: 20 },
-    fontSize: { type: Number, default: 12 },
-    patientInfoFontSize: { type: Number, default: 12 },
-    templateInfoFontSize: { type: Number, default: 12 },
-    signatureFontSize: { type: Number, default: 12 },
+    marginTop: { type: Number, default: 20, min: 0, max: 1000 },
+    marginBottom: { type: Number, default: 20, min: 0, max: 1000 },
+    marginLeft: { type: Number, default: 20, min: 0, max: 1000 },
+    marginRight: { type: Number, default: 20, min: 0, max: 1000 },
+    marginTopWithoutHeader: { type: Number, default: 20, min: 0, max: 1000 },
+    marginBottomWithoutFooter: { type: Number, default: 20, min: 0, max: 1000 },
+    fontSize: { type: Number, default: 12, min: 1, max: 99 },
+    patientInfoFontSize: { type: Number, default: 12, min: 1, max: 99 },
+    templateInfoFontSize: { type: Number, default: 12, min: 1, max: 99 },
+    signatureFontSize: { type: Number, default: 12, min: 1, max: 99 },
     fontFamily: { type: String, default: 'Helvetica' },
-    headerHeight: { type: Number, default: 0 },
-    footerHeight: { type: Number, default: 0 }
+    headerHeight: { type: Number, default: 0, min: 0, max: 1000 },
+    footerHeight: { type: Number, default: 0, min: 0, max: 1000 }
   }
 }, { timestamps: true });
 

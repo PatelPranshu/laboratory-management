@@ -1442,7 +1442,6 @@
             if (!id) return;
             const token = localStorage.getItem('lis_token');
 
-            // Find all PDF buttons and set loading state
             const pdfButtons = document.querySelectorAll('[onclick="downloadPdf()"]');
             pdfButtons.forEach(btn => {
                 btn.disabled = true;
@@ -1452,14 +1451,105 @@
             });
 
             try {
-                const res = await fetch(`${BASE_URL}/reports/${id}/pdf`, {
+                let hasHeaderFooter = false;
+                try {
+                    const settingsRes = await api.request('/settings/print', 'GET');
+                    if (settingsRes && settingsRes.data) {
+                        hasHeaderFooter = !!(settingsRes.data.headerImageURL || settingsRes.data.footerImageURL);
+                    }
+                } catch (err) {
+                    console.warn('Failed to fetch print settings', err);
+                }
+
+                if (hasHeaderFooter) {
+                    promptHeaderFooter(id, token, pdfButtons);
+                } else {
+                    await executePdfDownload(id, token, true, pdfButtons);
+                }
+            } catch (err) {
+                console.error(err);
+                if (typeof UI !== 'undefined' && UI.showToast) {
+                    UI.showToast(err.message || 'Error initiating PDF download', 'error');
+                } else {
+                    alert('Error initiating PDF download');
+                }
+                restorePdfButtons(pdfButtons);
+            }
+        }
+
+        function restorePdfButtons(pdfButtons) {
+            pdfButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.style.pointerEvents = 'auto';
+                const icon = btn.querySelector('i');
+                if (icon) icon.className = 'fas fa-file-pdf text-xl';
+            });
+        }
+
+        function promptHeaderFooter(id, token, pdfButtons) {
+            const existing = document.getElementById('hf-modal');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'hf-modal';
+            overlay.className = 'fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] backdrop-blur-sm';
+            overlay.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 overflow-hidden transform transition-all">
+                    <div class="p-6">
+                        <div class="w-12 h-12 bg-brand-50 rounded-full flex items-center justify-center mb-4 mx-auto">
+                            <i class="fas fa-file-pdf text-brand-600 text-xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-center text-slate-800 mb-2">Download PDF</h3>
+                        <p class="text-sm text-center text-slate-500 mb-6">Do you want to include the lab's header and footer in this PDF?</p>
+                        <div class="flex flex-col gap-3">
+                            <button id="hf-btn-with" class="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-xl transition-colors">
+                                With Header & Footer
+                            </button>
+                            <button id="hf-btn-without" class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-colors">
+                                Without Header & Footer
+                            </button>
+                            <button id="hf-btn-cancel" class="w-full py-2 px-4 text-slate-400 hover:text-slate-600 font-medium rounded-xl transition-colors mt-1">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const close = () => {
+                overlay.remove();
+                restorePdfButtons(pdfButtons);
+            };
+
+            document.getElementById('hf-btn-with').onclick = () => {
+                overlay.remove();
+                executePdfDownload(id, token, true, pdfButtons);
+            };
+            document.getElementById('hf-btn-without').onclick = () => {
+                overlay.remove();
+                executePdfDownload(id, token, false, pdfButtons);
+            };
+            document.getElementById('hf-btn-cancel').onclick = close;
+        }
+
+        async function executePdfDownload(id, token, withHeaderFooter, pdfButtons) {
+            pdfButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.style.pointerEvents = 'none';
+                const icon = btn.querySelector('i');
+                if (icon) icon.className = 'fas fa-spinner animate-spin text-xl text-brand-600';
+            });
+
+            try {
+                const url = `${BASE_URL}/reports/${id}/pdf${!withHeaderFooter ? '?withHeaderFooter=false' : ''}`;
+                const res = await fetch(url, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!res.ok) {
                     throw new Error('Failed to generate PDF');
                 }
                 
-                // Extract filename from Content-Disposition header if available
                 let filename = `Diagnostic_Report_${id.slice(-12)}.pdf`;
                 const disposition = res.headers.get('content-disposition');
                 if (disposition) {
@@ -1470,12 +1560,12 @@
                 }
 
                 const blob = await res.blob();
-                const url = window.URL.createObjectURL(blob);
+                const blobUrl = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.href = url;
+                a.href = blobUrl;
                 a.download = filename;
                 a.click();
-                window.URL.revokeObjectURL(url);
+                window.URL.revokeObjectURL(blobUrl);
             } catch (err) {
                 console.error(err);
                 if (typeof UI !== 'undefined' && UI.showToast) {
@@ -1484,13 +1574,7 @@
                     alert('Error generating PDF');
                 }
             } finally {
-                // Restore original state
-                pdfButtons.forEach(btn => {
-                    btn.disabled = false;
-                    btn.style.pointerEvents = 'auto';
-                    const icon = btn.querySelector('i');
-                    if (icon) icon.className = 'fas fa-file-pdf text-xl';
-                });
+                restorePdfButtons(pdfButtons);
             }
         }
         async function sendReport(method) { const id = document.getElementById('report-id').value; try { await api.request(`/reports/${id}/send`, 'POST', { method }); UI.showToast('Notification Sent Successfully', 'success'); } catch (err) { UI.showToast(err.message, 'error'); } }

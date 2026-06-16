@@ -105,11 +105,23 @@ async function uploadSignature() {
     
     try {
         if (loader) loader.classList.remove('hidden');
+        
+        // Delete existing unsaved image if user uploads another one before saving
+        const existingUrl = document.getElementById('signature-url').value;
+        if (existingUrl && window.lastUploadedSignatureUrl === existingUrl) {
+            try {
+                await api.request('/settings/delete-image', 'POST', { imageUrl: existingUrl });
+            } catch (err) {
+                console.warn('Failed to cleanup old unsaved image', err);
+            }
+        }
+
         const formData = new FormData();
         formData.append('image', file);
 
         const res = await api.request('/settings/upload', 'POST', formData);
         const url = res.data.url;
+        window.lastUploadedSignatureUrl = url; // Track unsaved uploads for cleanup
         document.getElementById('signature-url').value = url;
         updateSignatureUI(url);
         UI.showToast('Signature uploaded successfully', 'success');

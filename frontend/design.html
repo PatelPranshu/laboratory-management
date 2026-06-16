@@ -29,6 +29,16 @@
         }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .tab-btn.active { 
+            background: white; 
+            color: #0ea5e9; 
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+    </style>
 </head>
 <body class="bg-slate-50 antialiased text-slate-800 selection:bg-brand-500 selection:text-white">
 
@@ -41,46 +51,90 @@
         <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar pb-12">
             
             <!-- Top Header -->
-            <header class="bg-white/40 backdrop-blur-xl border-b border-white/40 shadow-[0_4px_30px_rgba(0,0,0,0.02)] flex items-center justify-between px-8 py-5 sticky top-0 z-10 transition-custom">
-                <div class="flex-1 w-full max-w-2xl flex relative opacity-0">
-                    <!-- Placeholder to keep layout even -->
+            <!-- Top Header -->
+            <header class="bg-white/40 backdrop-blur-xl border-b border-white/40 shadow-[0_4px_30px_rgba(0,0,0,0.02)] flex items-center justify-between px-4 sm:px-8 py-4 sm:py-5 sticky top-0 z-10 transition-custom gap-4">
+                
+                <!-- Desktop-only Header Content -->
+                <div class="hidden lg:flex items-center flex-1">
+                    <div class="flex flex-col">
+                        <!-- Breadcrumbs -->
+                        <nav class="flex mb-1" aria-label="Breadcrumb">
+                          <ol class="inline-flex items-center space-x-1 md:space-x-3 text-xs sm:text-sm font-medium">
+                            <li class="inline-flex items-center text-slate-500 hover:text-brand-600 transition-colors">
+                              <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-2"></i><span>Dashboard</span></a>
+                            </li>
+                            <li>
+                              <div class="flex items-center">
+                                <i class="fas fa-chevron-right text-slate-400 text-xs mx-1 sm:mx-2"></i>
+                                <span class="text-slate-800 font-bold">Print Settings</span>
+                              </div>
+                            </li>
+                          </ol>
+                        </nav>
+                        <h1 class="text-xl font-bold text-slate-900 tracking-tight leading-none mt-1">Branding & Print Settings</h1>
+                    </div>
+                    
+                    <!-- Desktop Page Actions -->
+                    <div class="flex items-center gap-3 ml-auto mr-2">
+                    </div>
                 </div>
-                <!-- Breadcrumbs -->
-                <nav class="flex absolute left-8 top-1/2 transform -translate-y-1/2" aria-label="Breadcrumb">
-                  <ol class="inline-flex items-center space-x-1 md:space-x-3 text-sm font-medium">
-                    <li class="inline-flex items-center text-slate-500 hover:text-brand-600 transition-colors">
-                      <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-2"></i>Dashboard</a>
+
+                <!-- Mobile-only Placeholder (keeps layout aligned on mobile when global sidebar toggle is inserted) -->
+                <div class="lg:hidden flex-1 w-full max-w-2xl flex relative opacity-0"></div>
+
+                <!-- Shared Tab Switcher -->
+                <div class="flex bg-slate-100 p-1 rounded-xl items-center shrink-0">
+                    <button onclick="switchTab('layout')" id="tab-layout" class="tab-btn active px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 text-brand-600">
+                        <i class="fas fa-sliders-h"></i>
+                        <span class="hidden sm:inline">Layout Preferences</span>
+                    </button>
+                    <button onclick="switchTab('images')" id="tab-images" class="tab-btn px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-700 transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-images"></i>
+                        <span class="hidden sm:inline">Letterhead Images</span>
+                    </button>
+                </div>
+
+                <!-- Notification Bell Container (injected by layout.js) -->
+                <div class="ml-2 sm:ml-4 flex items-center space-x-4 shrink-0" id="header-actions"></div>
+            </header>
+
+            <div class="px-4 py-6 sm:px-8 sm:py-8 max-w-[1600px] mx-auto">
+                
+                <!-- Mobile-only Breadcrumbs -->
+                <nav class="flex mb-4 lg:hidden" aria-label="Breadcrumb">
+                  <ol class="inline-flex items-center space-x-1 md:space-x-2 text-xs font-semibold text-slate-500">
+                    <li class="inline-flex items-center hover:text-brand-600 transition-colors">
+                      <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-1.5 text-[10px]"></i>Dashboard</a>
                     </li>
                     <li>
-                      <div class="flex items-center">
-                        <i class="fas fa-chevron-right text-slate-400 text-xs mx-2"></i>
-                        <span class="text-slate-800 font-bold">Branding & Print Settings</span>
+                      <div class="flex items-center text-slate-400">
+                        <i class="fas fa-chevron-right text-[9px] mx-1"></i>
+                        <span class="text-slate-700 font-bold">Print Settings</span>
                       </div>
                     </li>
                   </ol>
                 </nav>
-            </header>
 
-            <div class="px-8 py-8 max-w-[1600px] mx-auto">
-                
-                <div class="flex justify-between items-end mb-8">
+                <!-- Mobile-only Title/Actions Row -->
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-6 lg:hidden">
                     <div>
-                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Branding & Print Settings</h1>
-                        <p class="text-sm text-slate-500 mt-1">Customize your laboratory's letterhead, logos, and report layout preferences.</p>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Branding & Print Settings</h1>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-1">Customize your laboratory's letterhead, logos, and report layout preferences.</p>
                     </div>
-                    <button id="btn-save-settings" onclick="saveSettings()" class="bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white px-6 py-2.5 rounded-xl shadow-lg shadow-brand-500/30 transition-all flex items-center font-bold">
-                        <i class="fas fa-save mr-2"></i> Save Settings
-                    </button>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- Left Column: Controls -->
+                    <div class="lg:col-span-6 space-y-6">
                     
                     <!-- Images Upload -->
-                    <div class="glass-card overflow-hidden">
+                    <div id="content-images" class="tab-content hidden glass-card overflow-hidden">
                          <div class="px-7 py-5 border-b border-slate-100/50 bg-white/40">
                             <h2 class="text-lg font-bold text-slate-800 flex items-center"><i class="fas fa-images text-brand-500 mr-2"></i> Letterhead Images</h2>
                          </div>
-                         <div class="p-7 space-y-8">
+                         <div class="p-4 sm:p-7 space-y-8">
                              <!-- Header Image -->
                              <div>
                                  <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Header Image (Logo & Address)</label>
@@ -132,104 +186,98 @@
                     </div>
 
                     <!-- Layout Preferences -->
-                    <div class="glass-card overflow-visible">
+                    <div id="content-layout" class="tab-content glass-card overflow-visible">
                         <div class="px-7 py-5 border-b border-slate-100/50 bg-white/40 flex justify-between items-center">
                             <h2 class="text-lg font-bold text-slate-800 flex items-center"><i class="fas fa-sliders-h text-brand-500 mr-2"></i> Layout Preferences</h2>
-                            <button onclick="resetLayout()" class="text-xs font-bold text-slate-500 hover:text-brand-600 bg-white hover:bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm transition-colors flex items-center tooltip-container" title="Restore default layout settings">
-                                <i class="fas fa-undo mr-1.5"></i> Reset
-                            </button>
+                            <div class="flex items-center gap-3">
+                                <button onclick="resetLayout()" class="text-xs font-bold text-slate-500 hover:text-brand-600 bg-white hover:bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm transition-colors flex items-center tooltip-container" title="Restore default layout settings">
+                                    <i class="fas fa-undo mr-1.5"></i> Reset
+                                </button>
+                                <button id="btn-save-settings" onclick="saveSettings()" class="bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white px-4 py-1.5 rounded-lg shadow-sm transition-all flex items-center font-bold text-xs sm:text-sm">
+                                    <i class="fas fa-save mr-1.5"></i> Save
+                                </button>
+                            </div>
                         </div>
-                        <div class="p-7">
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Page Margins (pt)</label>
-                            <div class="grid grid-cols-2 gap-5 mb-8">
-                                <div>
-                                    <label class="block text-sm font-bold text-slate-700 mb-1.5">Top Margin</label>
-                                    <input type="number" id="m-top" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                        <div class="p-4 sm:p-7 pb-24 sm:pb-32 space-y-6 bg-slate-50/50">
+                            <!-- Margins Section -->
+                            <div>
+                                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3 flex items-center border-b border-slate-200 pb-2">
+                                    <i class="fas fa-border-style mr-2"></i> Page Margins (pt)
+                                </h3>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Top Margin</label>
+                                        <input type="number" id="m-top" min="0" max="1000" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Bottom Margin</label>
+                                        <input type="number" id="m-bottom" min="0" max="1000" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Left Margin</label>
+                                        <input type="number" id="m-left" min="0" max="1000" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Right Margin</label>
+                                        <input type="number" id="m-right" min="0" max="1000" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
+                                    </div>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-slate-700 mb-1.5">Bottom Margin</label>
-                                    <input type="number" id="m-bottom" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-slate-700 mb-1.5">Left Margin</label>
-                                    <input type="number" id="m-left" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-slate-700 mb-1.5">Right Margin</label>
-                                    <input type="number" id="m-right" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                            </div>
+                            
+                            <!-- Margins without Header/Footer -->
+                            <div class="mt-6 border border-brand-100 bg-brand-50/30 rounded-xl p-4 sm:p-5 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-brand-400"></div>
+                                <h3 class="text-[10px] font-black text-brand-600 uppercase tracking-[0.15em] mb-3 flex items-center border-b border-brand-200/50 pb-2">
+                                    <i class="fas fa-file-export mr-2"></i> Margins without Header/Footer
+                                </h3>
+                                <p class="text-xs text-slate-500 mb-3 leading-relaxed">These alternate margins will automatically apply when you download a PDF and choose <b>not</b> to include your header and footer images.</p>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-brand-600 mb-1">Top Margin <span class="text-[9px] font-medium text-brand-400 ml-0.5">(No Header)</span></label>
+                                        <input type="number" id="m-top-no-header" min="0" max="1000" class="w-full px-3 py-2 bg-white border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm" placeholder="e.g. 100">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-brand-600 mb-1">Bottom Margin <span class="text-[9px] font-medium text-brand-400 ml-0.5">(No Footer)</span></label>
+                                        <input type="number" id="m-bottom-no-footer" min="0" max="1000" class="w-full px-3 py-2 bg-white border border-brand-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm" placeholder="e.g. 80">
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-6">
+                                <!-- Heights Section -->
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Image Heights (pt)</label>
-                                    <div class="space-y-4">
+                                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3 flex items-center border-b border-slate-200 pb-2">
+                                        <i class="fas fa-arrows-alt-v mr-2"></i> Image Heights (pt)
+                                    </h3>
+                                    <div class="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Header Max Height <span class="text-xs text-slate-400 font-normal ml-1">(0 = auto)</span></label>
-                                            <input type="number" id="header-height" min="0" placeholder="e.g. 100" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Header <span class="text-[9px] font-medium text-slate-400 ml-0.5">(0=auto)</span></label>
+                                            <input type="number" id="header-height" min="0" max="1000" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Footer Max Height <span class="text-xs text-slate-400 font-normal ml-1">(0 = auto)</span></label>
-                                            <input type="number" id="footer-height" min="0" placeholder="e.g. 60" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800">
+                                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Footer <span class="text-[9px] font-medium text-slate-400 ml-0.5">(0=auto)</span></label>
+                                            <input type="number" id="footer-height" min="0" max="1000" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Typography Section -->
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Typography</label>
-                                    <div class="space-y-4">
+                                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3 flex items-center border-b border-slate-200 pb-2">
+                                        <i class="fas fa-font mr-2"></i> Typography
+                                    </h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                         <div>
-                                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Patient Info Font Size</label>
-                                            <div class="relative">
-                                                <select id="patient-font-size" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all font-medium text-slate-800 appearance-none cursor-pointer shadow-sm">
-                                                    <option value="8">8 pt</option>
-                                                    <option value="9">9 pt</option>
-                                                    <option value="10">10 pt</option>
-                                                    <option value="11">11 pt</option>
-                                                    <option value="12">12 pt (Default)</option>
-                                                    <option value="13">13 pt</option>
-                                                    <option value="14">14 pt</option>
-                                                    <option value="15">15 pt</option>
-                                                </select>
-                                                <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500">
-                                                    <i class="fas fa-chevron-down text-sm"></i>
-                                                </div>
-                                            </div>
+                                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Patient Info (pt)</label>
+                                            <input type="number" id="patient-font-size" min="1" max="99" oninput="if(this.value.length > 2) this.value = this.value.slice(0, 2);" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Template Info Font Size</label>
-                                            <div class="relative">
-                                                <select id="template-font-size" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all font-medium text-slate-800 appearance-none cursor-pointer shadow-sm">
-                                                    <option value="8">8 pt</option>
-                                                    <option value="9">9 pt</option>
-                                                    <option value="10">10 pt</option>
-                                                    <option value="11">11 pt</option>
-                                                    <option value="12">12 pt (Default)</option>
-                                                    <option value="13">13 pt</option>
-                                                    <option value="14">14 pt</option>
-                                                    <option value="15">15 pt</option>
-                                                </select>
-                                                <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500">
-                                                    <i class="fas fa-chevron-down text-sm"></i>
-                                                </div>
-                                            </div>
+                                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Template (pt)</label>
+                                            <input type="number" id="template-font-size" min="1" max="99" oninput="if(this.value.length > 2) this.value = this.value.slice(0, 2);" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-bold text-slate-700 mb-1.5">Signatures Font Size</label>
-                                            <div class="relative">
-                                                <select id="signature-font-size" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/50 transition-all font-medium text-slate-800 appearance-none cursor-pointer shadow-sm">
-                                                    <option value="8">8 pt</option>
-                                                    <option value="9">9 pt</option>
-                                                    <option value="10">10 pt</option>
-                                                    <option value="11">11 pt</option>
-                                                    <option value="12">12 pt (Default)</option>
-                                                    <option value="13">13 pt</option>
-                                                    <option value="14">14 pt</option>
-                                                    <option value="15">15 pt</option>
-                                                </select>
-                                                <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-slate-500">
-                                                    <i class="fas fa-chevron-down text-sm"></i>
-                                                </div>
-                                            </div>
+                                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Signatures (pt)</label>
+                                            <input type="number" id="signature-font-size" min="1" max="99" oninput="if(this.value.length > 2) this.value = this.value.slice(0, 2);" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
                                         </div>
                                     </div>
                                 </div>
@@ -237,6 +285,91 @@
                         </div>
                     </div>
 
+                    </div> <!-- End of Controls Column -->
+
+                    <!-- Right Column: Visualization -->
+                    <div class="lg:col-span-6">
+                        <div class="sticky top-[100px] bg-slate-200/50 p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-inner flex flex-col min-h-[500px]">
+                            
+                            <!-- Zoom Controls -->
+                            <div class="flex items-center justify-between mb-4 bg-white/80 backdrop-blur-sm p-2 px-3 rounded-xl border border-slate-200/60 shadow-sm z-10">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider"><i class="fas fa-search-plus mr-1"></i> Preview</span>
+                                    <label class="flex items-center space-x-1.5 text-[11px] font-bold text-slate-500 cursor-pointer hover:text-brand-600 transition-colors bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-md">
+                                        <input type="checkbox" id="sim-hide-header-footer" class="rounded border-slate-300 text-brand-500 focus:ring-brand-500 cursor-pointer" onchange="updateSimulator()">
+                                        <span>Hide Header/Footer</span>
+                                    </label>
+                                </div>
+                                <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                                    <button onclick="changeZoom(-0.1)" class="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-white hover:text-brand-600 rounded-md transition-all hover:shadow-sm" title="Zoom Out">
+                                        <i class="fas fa-minus text-xs"></i>
+                                    </button>
+                                    <span id="zoom-level" class="text-xs font-bold text-slate-700 w-12 text-center select-none">60%</span>
+                                    <button onclick="changeZoom(0.1)" class="w-8 h-8 flex items-center justify-center text-slate-600 hover:bg-white hover:text-brand-600 rounded-md transition-all hover:shadow-sm" title="Zoom In">
+                                        <i class="fas fa-plus text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Scrollable Wrapper for A4 Simulator -->
+                            <div class="flex-1 overflow-auto rounded-xl flex justify-center items-start custom-scrollbar relative p-4 bg-slate-200/30">
+                                <!-- Actual A4 Simulator -->
+                                <div id="pdf-simulator" class="bg-white shadow-2xl relative transition-all duration-300 ease-out flex flex-col mx-auto shrink-0" style="width: 595px; height: 842px; padding: 20px; transform-origin: top center; transform: scale(0.6);">
+                                <!-- Header Simulator -->
+                                <div id="sim-header" class="w-full flex items-center justify-center bg-slate-50 border border-dashed border-slate-200 overflow-hidden mb-4 transition-all" style="height: 80px;">
+                                    <span id="sim-header-placeholder" class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Header Space</span>
+                                    <img id="sim-header-img" src="" class="max-w-full max-h-full object-contain hidden" alt="Header">
+                                </div>
+
+                                <!-- Body Simulator (Patient Info + Test Table) -->
+                                <div class="flex-1 flex flex-col gap-4 overflow-hidden border border-dashed border-slate-100 p-2">
+                                    <!-- Patient Info block -->
+                                    <div class="grid grid-cols-2 gap-1 pb-2 border-b border-slate-200 transition-all leading-tight" id="sim-patient-info" style="font-size: 12px;">
+                                        <div class="font-bold text-slate-800">John Doe</div>
+                                        <div class="text-right text-slate-500">PID: 10293</div>
+                                        <div class="text-slate-500">Age: 35 / Male</div>
+                                        <div class="text-right text-slate-500">Date: 2026-06-16</div>
+                                    </div>
+                                    
+                                    <!-- Report Title -->
+                                    <div class="text-center font-bold text-slate-800 uppercase tracking-widest text-[13px] underline mt-1">Complete Blood Count</div>
+
+                                    <!-- Dummy Table -->
+                                    <table class="w-full text-left mt-1 transition-all" id="sim-test-table" style="font-size: 12px;">
+                                        <thead>
+                                            <tr class="border-b-2 border-slate-800 font-bold">
+                                                <th class="py-1">Test Name</th>
+                                                <th class="py-1">Result</th>
+                                                <th class="py-1 text-slate-400 font-normal">Range</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="text-slate-700">
+                                            <tr class="border-b border-slate-100"><td class="py-1">Hemoglobin</td><td class="py-1 font-bold text-red-600">11.5</td><td class="py-1 text-slate-400">13.0 - 17.0</td></tr>
+                                            <tr class="border-b border-slate-100"><td class="py-1">WBC Count</td><td class="py-1">7500</td><td class="py-1 text-slate-400">4000 - 11000</td></tr>
+                                            <tr class="border-b border-slate-100"><td class="py-1">Platelets</td><td class="py-1">250000</td><td class="py-1 text-slate-400">150k - 450k</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Footer Simulator -->
+                                <div class="mt-4 flex flex-col gap-2">
+                                    <!-- Signatures -->
+                                    <div class="flex justify-end gap-8 mb-2 transition-all leading-tight" id="sim-signatures" style="font-size: 12px;">
+                                        <div class="text-center">
+                                            <div class="h-10 w-24 bg-slate-100 rounded mb-1 mx-auto"></div>
+                                            <div class="font-bold text-slate-800">Dr. Smith</div>
+                                            <div class="text-slate-500">Pathologist</div>
+                                        </div>
+                                    </div>
+                                    <div id="sim-footer" class="w-full flex items-center justify-center bg-slate-50 border border-dashed border-slate-200 overflow-hidden transition-all shrink-0" style="height: 60px;">
+                                        <span id="sim-footer-placeholder" class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Footer Space</span>
+                                        <img id="sim-footer-img" src="" class="max-w-full max-h-full object-contain hidden" alt="Footer">
+                                    </div>
+                                </div>
+                            </div> <!-- End pdf-simulator -->
+                            </div> <!-- End overflow wrapper -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
@@ -265,6 +398,8 @@
                  document.getElementById('m-bottom').value = lp.marginBottom || 20;
                  document.getElementById('m-left').value = lp.marginLeft || 20;
                  document.getElementById('m-right').value = lp.marginRight || 20;
+                 document.getElementById('m-top-no-header').value = lp.marginTopWithoutHeader || 20;
+                 document.getElementById('m-bottom-no-footer').value = lp.marginBottomWithoutFooter || 20;
                  const pSelect = document.getElementById('patient-font-size');
                  pSelect.value = String(lp.patientInfoFontSize || lp.fontSize || 12);
                  pSelect.dispatchEvent(new Event('change'));
@@ -278,6 +413,9 @@
                  sSelect.dispatchEvent(new Event('change'));
                  document.getElementById('header-height').value = lp.headerHeight || 0;
                  document.getElementById('footer-height').value = lp.footerHeight || 0;
+
+                 // After loading values, initialize the simulator
+                 initSimulator();
 
              } catch(err) {
                  UI.showToast('Failed to load settings', 'error');
@@ -298,7 +436,8 @@
             try {
                 const res = await api.request('/settings/upload', 'POST', formData);
                 updateImageUI(target, res.data.url);
-                UI.showToast(`${target.charAt(0).toUpperCase() + target.slice(1)} uploaded successfully`, 'success');
+                await saveSettings(); // Auto-save when uploaded
+                UI.showToast(`${target.charAt(0).toUpperCase() + target.slice(1)} uploaded and saved successfully`, 'success');
             } catch (err) {
                 UI.showToast(err.message, 'error');
             } finally {
@@ -309,21 +448,36 @@
         }
 
         function updateImageUI(target, url) {
-             document.getElementById(`${target}-url`).value = url;
-             const img = document.getElementById(`${target}-preview`);
-             img.src = url;
-             img.classList.remove('hidden');
-             document.getElementById(`${target}-placeholder`).classList.add('hidden');
-             document.getElementById(`btn-upload-${target}`).classList.add('hidden');
-             document.getElementById(`btn-clear-${target}`).classList.remove('hidden');
-        }
+              document.getElementById(`${target}-url`).value = url;
+              const img = document.getElementById(`${target}-preview`);
+              img.src = url;
+              img.classList.remove('hidden');
+              document.getElementById(`${target}-placeholder`).classList.add('hidden');
+              document.getElementById(`btn-upload-${target}`).classList.add('hidden');
+              document.getElementById(`btn-clear-${target}`).classList.remove('hidden');
+
+              // Update Simulator too
+              const simImg = document.getElementById(`sim-${target}-img`);
+              const simPlaceholder = document.getElementById(`sim-${target}-placeholder`);
+              if(simImg && simPlaceholder) {
+                  simImg.src = url;
+                  simImg.classList.remove('hidden');
+                  simPlaceholder.classList.add('hidden');
+                  document.getElementById(`sim-${target}`).classList.remove('border-dashed', 'bg-slate-50');
+              }
+         }
 
         async function clearImage(target) {
+            const confirmed = await UI.showConfirm('Clear Image', `Are you sure you want to remove the ${target} image?`, 'Clear', 'red');
+            if (!confirmed) return;
+
             const imageUrl = document.getElementById(`${target}-url`).value;
             
             if (imageUrl) {
                 try {
                     await api.request('/settings/delete-image', 'POST', { imageUrl });
+                    document.getElementById(`${target}-url`).value = '';
+                    await saveSettings(); // Auto-save the cleared state
                     UI.showToast(`${target.charAt(0).toUpperCase() + target.slice(1)} image removed`, 'success');
                 } catch (err) {
                     UI.showToast('Failed to delete image: ' + err.message, 'error');
@@ -337,25 +491,52 @@
             document.getElementById(`${target}-placeholder`).classList.remove('hidden');
             document.getElementById(`btn-upload-${target}`).classList.remove('hidden');
             document.getElementById(`btn-clear-${target}`).classList.add('hidden');
+
+            // Clear Simulator too
+            const simImg = document.getElementById(`sim-${target}-img`);
+            const simPlaceholder = document.getElementById(`sim-${target}-placeholder`);
+            if(simImg && simPlaceholder) {
+                simImg.src = '';
+                simImg.classList.add('hidden');
+                simPlaceholder.classList.remove('hidden');
+                document.getElementById(`sim-${target}`).classList.add('border-dashed', 'bg-slate-50');
+            }
         }
 
         async function saveSettings() {
-            UI.toggleLoader('btn-save-settings', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Saving...');
+            // Validate font sizes strictly
+            const pFont = Number(document.getElementById('patient-font-size').value);
+            const tFont = Number(document.getElementById('template-font-size').value);
+            const sFont = Number(document.getElementById('signature-font-size').value);
+
+            if (!pFont || isNaN(pFont) || pFont < 1 || pFont > 99 || 
+                !tFont || isNaN(tFont) || tFont < 1 || tFont > 99 || 
+                !sFont || isNaN(sFont) || sFont < 1 || sFont > 99) {
+                UI.showToast('Font size must be a valid number between 1 and 99', 'error');
+                return;
+            }
+
+            UI.toggleLoader('btn-save-settings', true, '<i class="fas fa-circle-notch fa-spin mr-1.5"></i> Saving...');
+
+            // Clamping utility for margins/heights only
+            const clamp = (val, min, max) => Math.min(Math.max(Number(val) || min, min), max);
 
             const payload = {
                 headerImageURL: document.getElementById('header-url').value,
                 footerImageURL: document.getElementById('footer-url').value,
                 layoutPreferences: {
-                    marginTop: parseInt(document.getElementById('m-top').value) || 20,
-                    marginBottom: parseInt(document.getElementById('m-bottom').value) || 20,
-                    marginLeft: parseInt(document.getElementById('m-left').value) || 20,
-                    marginRight: parseInt(document.getElementById('m-right').value) || 20,
-                    patientInfoFontSize: parseInt(document.getElementById('patient-font-size').value) || 12,
-                    templateInfoFontSize: parseInt(document.getElementById('template-font-size').value) || 12,
-                    signatureFontSize: parseInt(document.getElementById('signature-font-size').value) || 12,
-                    fontSize: parseInt(document.getElementById('template-font-size').value) || 12, // fallback
-                    headerHeight: parseInt(document.getElementById('header-height').value) || 0,
-                    footerHeight: parseInt(document.getElementById('footer-height').value) || 0
+                    marginTop: clamp(document.getElementById('m-top').value, 0, 1000),
+                    marginBottom: clamp(document.getElementById('m-bottom').value, 0, 1000),
+                    marginLeft: clamp(document.getElementById('m-left').value, 0, 1000),
+                    marginRight: clamp(document.getElementById('m-right').value, 0, 1000),
+                    marginTopWithoutHeader: clamp(document.getElementById('m-top-no-header').value, 0, 1000),
+                    marginBottomWithoutFooter: clamp(document.getElementById('m-bottom-no-footer').value, 0, 1000),
+                    patientInfoFontSize: pFont,
+                    templateInfoFontSize: tFont,
+                    signatureFontSize: sFont,
+                    fontSize: tFont, // fallback
+                    headerHeight: clamp(document.getElementById('header-height').value, 0, 1000),
+                    footerHeight: clamp(document.getElementById('footer-height').value, 0, 1000)
                 }
             };
 
@@ -365,7 +546,7 @@
             } catch(err) {
                 UI.showToast('Failed to save settings: ' + err.message, 'error');
             } finally {
-                UI.toggleLoader('btn-save-settings', false, '<i class="fas fa-save mr-2"></i> Save Settings');
+                UI.toggleLoader('btn-save-settings', false, '<i class="fas fa-save mr-1.5"></i> Save');
             }
         }
 
@@ -392,6 +573,165 @@
                  UI.showToast("Layout parameters reset. Click Save to apply.", "success");
             }
         }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'text-brand-600');
+                btn.classList.add('text-slate-500');
+            });
+            const activeBtn = document.getElementById(`tab-${tab}`);
+            activeBtn.classList.add('active', 'text-brand-600');
+            activeBtn.classList.remove('text-slate-500');
+
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+            
+            if (tab === 'layout') {
+                document.getElementById('content-layout').classList.remove('hidden');
+            } else {
+                document.getElementById('content-images').classList.remove('hidden');
+            }
+        }
+
+        // --- Live Visualization Logic ---
+        function initSimulator() {
+            const inputs = ['m-top', 'm-bottom', 'm-left', 'm-right', 'm-top-no-header', 'm-bottom-no-footer', 'header-height', 'footer-height', 'patient-font-size', 'template-font-size', 'signature-font-size'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.addEventListener('input', updateSimulator);
+                    el.addEventListener('change', updateSimulator);
+                }
+            });
+            updateSimulator();
+        }
+
+        function updateSimulator() {
+            const sim = document.getElementById('pdf-simulator');
+            if(!sim) return;
+
+            const hideHF = document.getElementById('sim-hide-header-footer') && document.getElementById('sim-hide-header-footer').checked;
+
+            // Apply Margins
+            let t, b;
+            if (hideHF) {
+                t = document.getElementById('m-top-no-header').value || 20;
+                b = document.getElementById('m-bottom-no-footer').value || 20;
+            } else {
+                t = document.getElementById('m-top').value || 20;
+                b = document.getElementById('m-bottom').value || 20;
+            }
+            
+            const l = document.getElementById('m-left').value || 20;
+            const r = document.getElementById('m-right').value || 20;
+            sim.style.padding = `${t}px ${r}px ${b}px ${l}px`;
+
+            // Apply Typography
+            const pFont = document.getElementById('patient-font-size').value || 12;
+            const tFont = document.getElementById('template-font-size').value || 12;
+            const sFont = document.getElementById('signature-font-size').value || 12;
+            
+            document.getElementById('sim-patient-info').style.fontSize = `${pFont}px`;
+            document.getElementById('sim-test-table').style.fontSize = `${tFont}px`;
+            document.getElementById('sim-signatures').style.fontSize = `${sFont}px`;
+
+            // Apply Heights
+            const simH = document.getElementById('sim-header');
+            if (hideHF) {
+                simH.style.display = 'none';
+            } else {
+                simH.style.display = 'flex';
+                const hHeight = document.getElementById('header-height').value;
+                if (hHeight && hHeight > 0) {
+                    simH.style.height = `${hHeight}px`;
+                } else {
+                    simH.style.height = '80px';
+                }
+            }
+
+            const simF = document.getElementById('sim-footer');
+            if (hideHF) {
+                simF.style.display = 'none';
+            } else {
+                simF.style.display = 'flex';
+                const fHeight = document.getElementById('footer-height').value;
+                if (fHeight && fHeight > 0) {
+                    simF.style.height = `${fHeight}px`;
+                } else {
+                    simF.style.height = '60px';
+                }
+            }
+        }
+
+        // --- Zoom Logic ---
+        let currentZoom = 0.6;
+        function changeZoom(delta) {
+            let newZoom = currentZoom + delta;
+            // clamp between 0.3 (30%) and 2.0 (200%)
+            if(newZoom < 0.3) newZoom = 0.3;
+            if(newZoom > 2.0) newZoom = 2.0;
+            currentZoom = newZoom;
+            
+            // Apply scale
+            const sim = document.getElementById('pdf-simulator');
+            if(sim) {
+                sim.style.transform = `scale(${currentZoom})`;
+                // We must also adjust the margin-bottom of the simulator relative to its scaled height 
+                // so the scroll container knows exactly how much to scroll, but a simple fix is to 
+                // wrap the scaled element in a container or just let `transform` do its thing. 
+                // Using transform-origin top center keeps the top visible.
+                // To fix scroll boundaries when scaling, we dynamically set the wrapper's spacer if needed,
+                // but since it's just a visualizer, overflow-auto with scale usually works passably 
+                // if we don't scale it too large. For perfect scroll, we'd adjust margin-bottom.
+                const scaledHeight = 842 * currentZoom;
+                const offset = 842 - scaledHeight;
+                sim.style.marginBottom = `-${offset}px`;
+            }
+            
+            // Update UI
+            document.getElementById('zoom-level').innerText = Math.round(currentZoom * 100) + '%';
+        }
+
+        // Initialize default margin offset and attach zoom listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            changeZoom(0); // Trigger initial offset calculation
+
+            const sim = document.getElementById('pdf-simulator');
+            if(sim && sim.parentElement) {
+                // Listen to scroll events on the simulator wrapper
+                sim.parentElement.addEventListener('wheel', (e) => {
+                    // Check if the user is trying to zoom (Ctrl + Mouse Wheel, or Trackpad Pinch)
+                    if (e.ctrlKey) {
+                        e.preventDefault(); // Prevent the browser from zooming the entire page
+                        
+                        // DeltaY is negative when scrolling up (zoom in), positive when scrolling down (zoom out)
+                        // For trackpad pinch, it behaves similarly.
+                        const zoomSpeed = 0.05; // Slightly finer control for wheel/pinch
+                        const delta = e.deltaY < 0 ? zoomSpeed : -zoomSpeed;
+                        changeZoom(delta);
+                    }
+                }, { passive: false }); // passive: false is required to allow preventDefault()
+                
+                // Also intercept keyboard Zoom (Ctrl + '+' / Ctrl + '-')
+                // We listen globally but only prevent default if we're on the design page
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        if (e.key === '=' || e.key === '+' || e.code === 'NumpadAdd') {
+                            e.preventDefault();
+                            changeZoom(0.1);
+                        } else if (e.key === '-' || e.code === 'NumpadSubtract') {
+                            e.preventDefault();
+                            changeZoom(-0.1);
+                        } else if (e.key === '0' || e.code === 'Numpad0') {
+                            // Reset zoom on Ctrl+0
+                            e.preventDefault();
+                            currentZoom = 0.6;
+                            changeZoom(0);
+                        }
+                    }
+                }, { passive: false });
+            }
+        });
+
     </script>
 </body>
 </html>

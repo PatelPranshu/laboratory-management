@@ -225,6 +225,7 @@ exports.createReport = async (req, res) => {
       sanitizedBody.status = 'saved';
       sanitizedBody.performedByLabTechId = signature._id;
       sanitizedBody.verifierId = signature._id;
+      sanitizedBody.performedBy = signature.fullName || signature.doctorName;
     } else {
       sanitizedBody.status = 'draft';
       sanitizedBody.verifierId = sanitizedBody.performedByLabTechId;
@@ -362,6 +363,7 @@ exports.updateReport = async (req, res) => {
         sanitizedBody.status = 'saved';
         sanitizedBody.performedByLabTechId = signature._id;
         sanitizedBody.verifierId = signature._id;
+        sanitizedBody.performedBy = signature.fullName || signature.doctorName;
     } else {
         sanitizedBody.status = 'draft';
         sanitizedBody.verifierId = sanitizedBody.performedByLabTechId;
@@ -481,11 +483,31 @@ exports.generatePdf = async (req, res) => {
 
   const settings = await PrintSettings.findOne({ doctorId: adminId });
   
+  let finalSettings = null;
+  if (settings) {
+    finalSettings = settings.toObject();
+    if (req.query.withHeaderFooter === 'false') {
+      finalSettings.headerImageURL = null;
+      finalSettings.footerImageURL = null;
+      finalSettings.headerHeight = 0;
+      finalSettings.footerHeight = 0;
+
+      if (finalSettings.layoutPreferences) {
+        if (finalSettings.layoutPreferences.marginTopWithoutHeader !== undefined) {
+          finalSettings.layoutPreferences.marginTop = finalSettings.layoutPreferences.marginTopWithoutHeader;
+        }
+        if (finalSettings.layoutPreferences.marginBottomWithoutFooter !== undefined) {
+          finalSettings.layoutPreferences.marginBottom = finalSettings.layoutPreferences.marginBottomWithoutFooter;
+        }
+      }
+    }
+  }
+
   // Convert Mongoose docs to plain objects to avoid serialization issues in pdfmake
   const reportObj = report.toObject();
   const patientObj = report.patientId.toObject ? report.patientId.toObject() : report.patientId;
   
-  const pdfBuffer = await pdfService.generateReportPdf(reportObj, patientObj, settings ? settings.toObject() : null);
+  const pdfBuffer = await pdfService.generateReportPdf(reportObj, patientObj, finalSettings);
 
   // Add audit log for download
   report.auditLogs.push({ action: 'Downloaded PDF', userId: req.user.id });

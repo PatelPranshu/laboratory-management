@@ -531,14 +531,28 @@ exports.generateReportPdf = async (report, patient, settings) => {
         color: '#475569'
     });
 
-    if (signatureImageData && report.performedByLabTechId) {
-        const signerName = (report.performedByLabTechId.fullName || report.performedByLabTechId.doctorName || report.performedBy || 'Authorized Signatory').toUpperCase();
+    const hasSignatureData = signatureImageData && report.performedByLabTechId;
+    const hasSignerName = report.performedBy || (report.performedByLabTechId && (report.performedByLabTechId.fullName || report.performedByLabTechId.doctorName));
+
+    if (hasSignatureData || hasSignerName) {
+        const signerName = (report.performedBy || (report.performedByLabTechId && (report.performedByLabTechId.fullName || report.performedByLabTechId.doctorName)) || 'Authorized Signatory').toUpperCase();
         
+        const sigStack = [];
+        if (signatureImageData) {
+            sigStack.push({ image: signatureImageData, fit: [120, 60], alignment: 'center' });
+        } else {
+            // Leave vertical space for a physical signature if image is deleted or unavailable
+            sigStack.push({ text: '\n\n\n', fontSize: signatureFontSize });
+        }
+        
+        sigStack.push({ text: signerName, fontSize: signatureFontSize, bold: true, color: '#1e293b' });
+        sigStack.push({ text: 'PERFORMED BY / AUTHORIZED SIGNATORY', fontSize: signatureFontSize - 4, color: '#64748b', margin: [0, 2, 0, 0], bold: true, characterSpacing: 0.5 });
+
         endOfReportBlock.push({
             columns: [
                 { 
                     width: '*', 
-                    text: 'Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated and authenticated document.',
+                    text: '*Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated and authenticated document.',
                     fontSize: signatureFontSize - 4,
                     color: '#64748b',
                     italics: true,
@@ -548,17 +562,13 @@ exports.generateReportPdf = async (report, patient, settings) => {
                     width: 200,
                     alignment: 'center',
                     margin: [0, 10, 0, 0],
-                    stack: [
-                        { image: signatureImageData, fit: [120, 60], alignment: 'center' },
-                        { text: signerName, fontSize: signatureFontSize, bold: true, color: '#1e293b' },
-                        { text: 'PERFORMED BY / AUTHORIZED SIGNATORY', fontSize: signatureFontSize - 4, color: '#64748b', margin: [0, 2, 0, 0], bold: true, characterSpacing: 0.5 }
-                    ]
+                    stack: sigStack
                 }
             ]
         });
     } else {
         endOfReportBlock.push({
-            text: 'Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated document.',
+            text: '*Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated document.',
             fontSize: signatureFontSize - 4,
             color: '#64748b',
             italics: true,
