@@ -125,10 +125,11 @@ exports.generateReportPdf = async (report, patient, settings) => {
   
   // Layout preferences setup
   const lp = settings?.layoutPreferences || {};
-  const ml = lp.marginLeft || 40;
-  const mt = lp.marginTop || 40;
-  const mr = lp.marginRight || 40;
-  const mb = lp.marginBottom || 40;
+  const parseMargin = (val, def) => (val !== undefined && val !== null && val !== '') ? Number(val) : def;
+  const ml = parseMargin(lp.marginLeft, 40);
+  const mt = parseMargin(lp.marginTop, 40);
+  const mr = parseMargin(lp.marginRight, 40);
+  const mb = parseMargin(lp.marginBottom, 40);
   
   // Font sizes
   const baseFontSize = lp.fontSize || 12;
@@ -271,12 +272,6 @@ exports.generateReportPdf = async (report, patient, settings) => {
             {},
             { text: 'Referred By:', bold: true, color: '#334155' },
             { text: (report.referredBy || 'Self').toUpperCase(), bold: true }
-          ],
-          [
-            { text: 'Test Name:', colSpan: 2, bold: true, color: '#334155' },
-            {},
-            { text: currentTemplateName, colSpan: 4, bold: true, color: '#0f172a' },
-            {}, {}, {}
           ]
         ]
       },
@@ -290,7 +285,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
         paddingTop: () => 4,
         paddingBottom: () => 4
       },
-      margin: [0, 5, 0, 15]
+      margin: [0, 5, 0, 5]
     };
 
     if (!headerImageData && blockIdx > 0) {
@@ -298,8 +293,6 @@ exports.generateReportPdf = async (report, patient, settings) => {
     }
 
     content.push(patientInfoTable);
-    content.push({ canvas: [{ type: 'line', x1: 0, y1: 0, x2: contentWidth, y2: 0, lineWidth: 2, lineColor: '#1e293b' }] });
-    content.push({text: '\n', fontSize: 5});
 
     for (let sIdx = 0; sIdx < block.sections.length; sIdx++) {
       const sec = block.sections[sIdx];
@@ -308,7 +301,22 @@ exports.generateReportPdf = async (report, patient, settings) => {
       const sectionTableBody = [];
 
       if (isFirstSection) {
+        
 
+        sectionTableBody.push([
+          { 
+            text: currentTemplateName, 
+            colSpan: 4, 
+            alignment: 'center', 
+            bold: true, 
+            fillColor: '#e2e8f0', 
+            color: '#0f172a',
+            margin: [0, 4, 0, 4],
+            fontSize: templateInfoFontSize
+          },
+          {}, {}, {}
+        ]);
+        
         sectionTableBody.push([
           { text: 'TEST DESCRIPTION', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
           { text: 'RESULT', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
@@ -637,15 +645,17 @@ exports.generateReportPdf = async (report, patient, settings) => {
     appendices.forEach((app, idx) => {
       content.push({
         text: `APPENDIX ${idx + 1}: ${app.title.toUpperCase()}`,
-        style: 'header',
+        fontSize: 14,
+        bold: true,
         alignment: 'center',
-        margin: [0, 0, 0, 20],
+        margin: [-ml, -mt + 20, -mr, 20], // Completely negate global margins, add 20px top spacing
         pageBreak: 'before'
       });
       content.push({
         image: app.image,
-        fit: [contentWidth, 700],
-        alignment: 'center'
+        fit: [595.28, 730], // Restricted height to guarantee it stays on the same page as the title
+        alignment: 'center',
+        margin: [-ml, 0, -mr, -mb - 20] // Completely negate all global page margins (left, right, bottom)
       });
     });
   }
