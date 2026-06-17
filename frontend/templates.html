@@ -482,6 +482,55 @@
                     </div>
                 </div>
 
+                <!-- BOOLEAN CONFIG -->
+                <div class="pr-boolean-config hidden flex-col gap-2">
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                        <label class="block text-xs font-bold text-slate-600 mb-3">Custom Labels for Yes/No Dropdown</label>
+                        <div class="flex items-center gap-4">
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1">TRUE / POSITIVE LABEL</label>
+                                <input type="text"
+                                    class="pr-bool-true w-full px-4 py-2 bg-white border border-slate-300 focus:border-brand-500 rounded-xl text-sm font-semibold text-slate-800 outline-none placeholder-slate-400"
+                                    placeholder="e.g. Positive" value="Positive">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-slate-500 mb-1">FALSE / NEGATIVE LABEL</label>
+                                <input type="text"
+                                    class="pr-bool-false w-full px-4 py-2 bg-white border border-slate-300 focus:border-brand-500 rounded-xl text-sm font-semibold text-slate-800 outline-none placeholder-slate-400"
+                                    placeholder="e.g. Negative" value="Negative">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MULTI-SELECT CONFIG -->
+                <div class="pr-multi-select-config hidden flex-col gap-2">
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                        <label class="block text-xs font-bold text-slate-600 mb-2">Dropdown Options</label>
+                        <div class="ms-options-list flex flex-wrap gap-2 mb-2">
+                            <!-- Options injected here -->
+                        </div>
+                        <div class="flex items-center gap-2 max-w-sm">
+                            <input type="text" class="ms-new-option w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:border-brand-500 outline-none placeholder-slate-400" placeholder="Type a new option...">
+                            <button type="button" onclick="addMultiSelectOption(this)" class="text-xs font-bold text-slate-600 bg-slate-200 hover:bg-slate-300 px-3 py-2 rounded-lg transition-colors shrink-0 flex items-center gap-1.5"><i class="fas fa-plus"></i> Add</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CULTURE & SENSITIVITY CONFIG -->
+                <div class="pr-culture-config hidden flex-col gap-2">
+                    <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                        <label class="block text-xs font-bold text-slate-600 mb-2">Default Antibiotics List (Optional)</label>
+                        <div class="culture-antibiotics-list flex flex-wrap gap-2 mb-2">
+                            <!-- Antibiotics injected here -->
+                        </div>
+                        <div class="flex items-center gap-2 max-w-sm">
+                            <input type="text" class="culture-new-antibiotic w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:border-brand-500 outline-none placeholder-slate-400" placeholder="e.g. Amoxicillin">
+                            <button type="button" onclick="addCultureAntibiotic(this)" class="text-xs font-bold text-slate-600 bg-slate-200 hover:bg-slate-300 px-3 py-2 rounded-lg transition-colors shrink-0 flex items-center gap-1.5"><i class="fas fa-plus"></i> Add</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- NARRATIVE CONFIG -->
                 <div class="pr-narrative-config hidden">
                     <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
@@ -1011,6 +1060,9 @@
             const narrativeConfig = row.querySelector('.pr-narrative-config');
             const calculatedConfig = row.querySelector('.pr-calculated-config');
             const defaultValueConfig = row.querySelector('.pr-default-value-config');
+            const booleanConfig = row.querySelector('.pr-boolean-config');
+            const multiSelectConfig = row.querySelector('.pr-multi-select-config');
+            const cultureConfig = row.querySelector('.pr-culture-config');
 
             // Reset all configs to hidden
             numericConfig.classList.add('hidden');
@@ -1025,6 +1077,18 @@
             if (defaultValueConfig) {
                 defaultValueConfig.classList.add('hidden');
                 defaultValueConfig.classList.remove('flex');
+            }
+            if (booleanConfig) {
+                booleanConfig.classList.add('hidden');
+                booleanConfig.classList.remove('flex');
+            }
+            if (multiSelectConfig) {
+                multiSelectConfig.classList.add('hidden');
+                multiSelectConfig.classList.remove('flex');
+            }
+            if (cultureConfig) {
+                cultureConfig.classList.add('hidden');
+                cultureConfig.classList.remove('flex');
             }
 
             if (dataType === 'NUMERIC') {
@@ -1052,7 +1116,26 @@
                     defaultValueConfig.classList.remove('hidden');
                     defaultValueConfig.classList.add('flex');
                 }
+            } else if (dataType === 'BOOLEAN') {
+                unitsContainer.classList.add('opacity-0', 'pointer-events-none');
+                if (booleanConfig) {
+                    booleanConfig.classList.remove('hidden');
+                    booleanConfig.classList.add('flex');
+                }
+            } else if (dataType === 'MULTI_SELECT') {
+                unitsContainer.classList.add('opacity-0', 'pointer-events-none');
+                if (multiSelectConfig) {
+                    multiSelectConfig.classList.remove('hidden');
+                    multiSelectConfig.classList.add('flex');
+                }
+            } else if (dataType === 'CULTURE_SENSITIVITY') {
+                unitsContainer.classList.add('opacity-0', 'pointer-events-none');
+                if (cultureConfig) {
+                    cultureConfig.classList.remove('hidden');
+                    cultureConfig.classList.add('flex');
+                }
             } else {
+                // DATETIME, ATTACHMENT
                 unitsContainer.classList.add('opacity-0', 'pointer-events-none');
                 narrativeConfig.classList.remove('hidden');
             }
@@ -1256,6 +1339,21 @@
                     if (defaultValEl) {
                         defaultValEl.value = data.defaultValue || '';
                     }
+                } else if (data.dataType === 'BOOLEAN') {
+                    if (data.options && data.options.length >= 2) {
+                        row.querySelector('.pr-bool-true').value = data.options[0];
+                        row.querySelector('.pr-bool-false').value = data.options[1];
+                    }
+                } else if (data.dataType === 'MULTI_SELECT') {
+                    if (data.options) {
+                        const btn = row.querySelector('.ms-new-option');
+                        data.options.forEach(opt => addMultiSelectOption(btn, opt));
+                    }
+                } else if (data.dataType === 'CULTURE_SENSITIVITY') {
+                    if (data.options) {
+                        const btn = row.querySelector('.culture-new-antibiotic');
+                        data.options.forEach(abx => addCultureAntibiotic(btn, abx));
+                    }
                 } else if (data.dataType === 'CALCULATED') {
                     // Restore formula
                     const formulaEl = row.querySelector('.pr-formula');
@@ -1353,6 +1451,40 @@
 
             const paramsContainer = btn.closest('.p-0').querySelector('.sec-params');
             paramsContainer.appendChild(clone);
+        }
+
+        function addMultiSelectOption(btn, val = '') {
+            const container = btn.closest('.pr-multi-select-config');
+            const list = container.querySelector('.ms-options-list');
+            const input = container.querySelector('.ms-new-option');
+            const optionText = val || input.value.trim();
+            if (!optionText) return;
+
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-3 py-1 text-xs font-bold';
+            div.innerHTML = `
+                <span class="ms-option-text">${sanitizeHTML(optionText)}</span>
+                <button type="button" onclick="this.closest('div').remove()" class="text-blue-400 hover:text-blue-600 transition-colors"><i class="fas fa-times"></i></button>
+            `;
+            list.appendChild(div);
+            if (!val) input.value = '';
+        }
+
+        function addCultureAntibiotic(btn, val = '') {
+            const container = btn.closest('.pr-culture-config');
+            const list = container.querySelector('.culture-antibiotics-list');
+            const input = container.querySelector('.culture-new-antibiotic');
+            const abxText = val || input.value.trim();
+            if (!abxText) return;
+
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full px-3 py-1 text-xs font-bold';
+            div.innerHTML = `
+                <span class="culture-abx-text">${sanitizeHTML(abxText)}</span>
+                <button type="button" onclick="this.closest('div').remove()" class="text-indigo-400 hover:text-indigo-600 transition-colors"><i class="fas fa-times"></i></button>
+            `;
+            list.appendChild(div);
+            if (!val) input.value = '';
         }
 
         function extractTemplateData() {
@@ -1462,6 +1594,25 @@
                         param.defaultValue = row.querySelector('.pr-default-value').value.trim();
                         delete param.normalRange;
                         delete param.ruleType;
+                    } else if (dataType === 'BOOLEAN') {
+                        const trueLbl = row.querySelector('.pr-bool-true')?.value.trim() || 'Positive';
+                        const falseLbl = row.querySelector('.pr-bool-false')?.value.trim() || 'Negative';
+                        param.options = [trueLbl, falseLbl];
+                        delete param.normalRange;
+                        delete param.ruleType;
+                        delete param.units;
+                    } else if (dataType === 'MULTI_SELECT') {
+                        const opts = Array.from(row.querySelectorAll('.ms-option-text')).map(el => el.textContent.trim()).filter(t => t);
+                        param.options = opts;
+                        delete param.normalRange;
+                        delete param.ruleType;
+                        delete param.units;
+                    } else if (dataType === 'CULTURE_SENSITIVITY') {
+                        const abxs = Array.from(row.querySelectorAll('.culture-abx-text')).map(el => el.textContent.trim()).filter(t => t);
+                        param.options = abxs;
+                        delete param.normalRange;
+                        delete param.ruleType;
+                        delete param.units;
                     } else {
                         delete param.normalRange;
                         delete param.ruleType;

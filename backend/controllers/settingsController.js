@@ -13,8 +13,8 @@ const getAdminId = (req) => {
 // Allowed fields for print settings update
 const SETTINGS_FIELDS = ['headerImageURL', 'footerImageURL', 'layoutPreferences'];
 
-// Allowed image MIME types
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+// Allowed MIME types
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 
 // @desc    Get Print Settings
 // @route   GET /api/settings/print
@@ -75,7 +75,7 @@ exports.uploadImage = async (req, res) => {
     if (!ALLOWED_MIME_TYPES.includes(req.file.mimetype)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid file type. Only JPEG, PNG, and WebP images are allowed'
+        error: 'Invalid file type. Only JPEG, PNG, WebP images and PDFs are allowed'
       });
     }
 
@@ -84,8 +84,8 @@ exports.uploadImage = async (req, res) => {
             const stream = cloudinary.uploader.upload_stream(
               {
                 folder: 'lis_app',
-                allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-                resource_type: 'image'
+                allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
+                resource_type: 'auto'
               },
               (error, result) => {
                 if (result) {

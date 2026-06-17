@@ -1015,7 +1015,111 @@
             if (!defaultResultVal && paramData.dataType === 'DEFAULT_VALUE' && paramData.defaultValue !== undefined) {
                 defaultResultVal = paramData.defaultValue;
             }
-            line.querySelector('.p-result').value = defaultResultVal;
+            
+            const resultContainer = line.querySelector('.p-result').parentElement;
+            let resultEl = line.querySelector('.p-result');
+            resultEl.value = defaultResultVal;
+
+            if (paramData.dataType === 'BOOLEAN') {
+                const trueLbl = paramData.options?.[0] || 'Positive';
+                const falseLbl = paramData.options?.[1] || 'Negative';
+                const select = document.createElement('select');
+                select.className = resultEl.className;
+                select.innerHTML = `<option value="">Select...</option><option value="${trueLbl}">${trueLbl}</option><option value="${falseLbl}">${falseLbl}</option>`;
+                select.value = defaultResultVal;
+                select.onchange = () => { resultEl.value = select.value; checkAbnormal(resultEl); saveReportDraft(); };
+                
+                resultEl.type = 'hidden';
+                resultContainer.appendChild(select);
+            } else if (paramData.dataType === 'DATETIME') {
+                const dtInput = document.createElement('input');
+                dtInput.type = 'datetime-local';
+                dtInput.className = resultEl.className;
+                dtInput.value = defaultResultVal;
+                dtInput.oninput = () => { resultEl.value = dtInput.value; saveReportDraft(); };
+                
+                resultEl.type = 'hidden';
+                resultContainer.appendChild(dtInput);
+            } else if (paramData.dataType === 'ATTACHMENT') {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'flex flex-col gap-2';
+                wrapper.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <label class="cursor-pointer bg-brand-50 hover:bg-brand-100 text-brand-600 px-3 py-1.5 rounded text-sm font-semibold transition-colors flex items-center gap-2 border border-brand-200">
+                            <i class="fas fa-upload"></i> Upload File
+                            <input type="file" class="hidden" accept="image/*,application/pdf" onchange="handleParamImageUpload(this)">
+                        </label>
+                        <span class="upload-status text-xs text-slate-500 font-medium truncate"></span>
+                    </div>
+                    <div class="preview-container mt-1 empty:hidden flex items-center gap-2"></div>
+                `;
+                resultEl.type = 'hidden';
+                if (paramData.filename) resultEl.dataset.filename = paramData.filename;
+                resultContainer.appendChild(wrapper);
+                
+                if (defaultResultVal) {
+                    const preview = wrapper.querySelector('.preview-container');
+                    let filename = paramData.filename || defaultResultVal.split('/').pop() || 'Attached File';
+                    preview.innerHTML = `
+                        <a href="${defaultResultVal}" target="_blank" class="text-sm font-medium text-blue-600 hover:underline flex items-center gap-1"><i class="fas fa-paperclip"></i> ${filename}</a>
+                        <button type="button" onclick="removeParamImage(this, '${defaultResultVal}')" class="text-slate-400 hover:text-red-500 text-xs transition-colors p-1" title="Remove attachment"><i class="fas fa-trash"></i></button>
+                    `;
+                }
+            } else if (paramData.dataType === 'MULTI_SELECT') {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'relative w-full';
+                const opts = paramData.options || [];
+                let selectedOpts = defaultResultVal ? defaultResultVal.split(', ') : [];
+                const btnText = selectedOpts.length > 0 ? selectedOpts.join(', ') : 'Select options...';
+                
+                wrapper.innerHTML = `
+                    <div class="ms-display cursor-pointer w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                        <span class="truncate pr-4">${sanitizeHTML(btnText)}</span>
+                        <i class="fas fa-chevron-down text-[10px] text-slate-400"></i>
+                    </div>
+                    <div class="ms-dropdown hidden absolute z-50 mt-1 w-full bg-white border border-slate-200 shadow-lg rounded-lg max-h-48 overflow-y-auto">
+                        ${opts.map(opt => `
+                            <label class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 text-sm font-medium text-slate-700">
+                                <input type="checkbox" value="${sanitizeHTML(opt)}" class="ms-checkbox rounded border-slate-300 text-brand-500 focus:ring-brand-500" ${selectedOpts.includes(opt) ? 'checked' : ''} onchange="updateMultiSelect(this)">
+                                ${sanitizeHTML(opt)}
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+                
+                resultEl.type = 'hidden';
+                resultContainer.appendChild(wrapper);
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!wrapper.contains(e.target)) {
+                        wrapper.querySelector('.ms-dropdown').classList.add('hidden');
+                    }
+                });
+            } else if (paramData.dataType === 'CULTURE_SENSITIVITY') {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full px-3 py-2 sm:py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded text-sm font-bold transition-colors flex justify-center items-center gap-2';
+                btn.innerHTML = '<i class="fas fa-microscope"></i> Edit Culture Data';
+                btn.onclick = () => openCulturePanel(btn);
+                
+                resultEl.type = 'hidden';
+                resultContainer.appendChild(btn);
+                
+                const cultureContainer = document.createElement('div');
+                cultureContainer.className = 'culture-results-container w-full mt-2 empty:hidden flex flex-col gap-2';
+                
+                // We will append cultureContainer at the end of the line, not inside the grid column
+                line.appendChild(cultureContainer);
+                
+                if (defaultResultVal) {
+                    try {
+                        const parsed = JSON.parse(defaultResultVal);
+                        renderCultureResults(cultureContainer, parsed);
+                    } catch(e){}
+                }
+            }
+            
             unitEl.value = paramData.units || '';
 
             // Determine display text for the reference range
@@ -1293,7 +1397,9 @@
                     if (!pl.dataset.paramData) return;
                     const p = JSON.parse(pl.dataset.paramData);
                     p.name = pl.querySelector('.p-name').value;
-                    p.result = pl.querySelector('.p-result').value;
+                    const resultInput = pl.querySelector('.p-result');
+                    p.result = resultInput.value;
+                    if (resultInput.dataset.filename) p.filename = resultInput.dataset.filename;
                     p.units = pl.querySelector('.p-units-input').value;
 
                     // For MIN_MAX, update normalRange if manually edited (though most are template-locked)
@@ -1531,6 +1637,238 @@
                 executePdfDownload(id, token, false, pdfButtons);
             };
             document.getElementById('hf-btn-cancel').onclick = close;
+        }
+
+        async function handleParamImageUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const container = input.closest('.flex-col');
+            const statusEl = container.querySelector('.upload-status');
+            const resultInput = container.parentElement.querySelector('input.p-result[type="hidden"]');
+            const oldUrl = resultInput.value;
+            
+            if (file.size > 5 * 1024 * 1024) {
+                return UI.showToast('File must be smaller than 5MB', 'error');
+            }
+
+            statusEl.textContent = 'Uploading...';
+            statusEl.className = 'upload-status text-xs text-brand-500 font-medium truncate';
+            
+            // Delete old file if it exists
+            if (oldUrl && oldUrl.startsWith('http')) {
+                try {
+                    const token = localStorage.getItem('lis_token');
+                    await fetch(`${BASE_URL}/settings/delete-image`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ imageUrl: oldUrl })
+                    });
+                } catch(e) { console.warn("Failed to delete old image", e); }
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                const token = localStorage.getItem('lis_token');
+                
+                const res = await fetch(`${BASE_URL}/settings/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Upload failed');
+                
+                const url = (data.data && data.data.url) || data.imageUrl || data.url;
+                if (!url) throw new Error('Invalid response from server');
+                
+                resultInput.value = url;
+                resultInput.dataset.filename = file.name;
+                statusEl.textContent = 'Uploaded';
+                statusEl.className = 'upload-status text-xs text-green-600 font-medium truncate';
+                
+                const preview = container.querySelector('.preview-container');
+                preview.innerHTML = `
+                    <a href="${url}" target="_blank" class="text-sm font-medium text-blue-600 hover:underline flex items-center gap-1"><i class="fas fa-paperclip"></i> ${file.name}</a>
+                    <button type="button" onclick="removeParamImage(this, '${url}')" class="text-slate-400 hover:text-red-500 text-xs transition-colors p-1" title="Remove attachment"><i class="fas fa-trash"></i></button>
+                `;
+                
+                saveReportDraft();
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = 'Upload failed';
+                statusEl.className = 'upload-status text-xs text-red-500 font-medium truncate';
+                UI.showToast(err.message, 'error');
+            }
+        }
+
+        async function removeParamImage(btn, url) {
+            const confirmed = await UI.showConfirm('Remove Attachment', 'Are you sure you want to completely remove this attachment?', 'Remove', 'danger');
+            if (!confirmed) return;
+            const container = btn.closest('.flex-col');
+            const resultInput = container.parentElement.querySelector('input.p-result[type="hidden"]');
+            const preview = container.querySelector('.preview-container');
+            const statusEl = container.querySelector('.upload-status');
+            
+            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
+            btn.disabled = true;
+
+            try {
+                const token = localStorage.getItem('lis_token');
+                await fetch(`${BASE_URL}/settings/delete-image`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageUrl: url })
+                });
+                
+                resultInput.value = '';
+                preview.innerHTML = '';
+                statusEl.textContent = '';
+                statusEl.className = 'upload-status text-xs text-slate-500 font-medium truncate';
+                saveReportDraft();
+            } catch(e) {
+                console.error(e);
+                UI.showToast('Failed to delete file', 'error');
+                btn.innerHTML = '<i class="fas fa-trash"></i>';
+                btn.disabled = false;
+            }
+        }
+
+
+        function updateMultiSelect(checkbox) {
+            const wrapper = checkbox.closest('.relative');
+            const displaySpan = wrapper.querySelector('.ms-display span');
+            const resultInput = wrapper.parentElement.querySelector('input.p-result[type="hidden"]');
+            
+            const checkedOpts = Array.from(wrapper.querySelectorAll('.ms-checkbox:checked')).map(cb => cb.value);
+            resultInput.value = checkedOpts.join(', ');
+            
+            displaySpan.textContent = checkedOpts.length > 0 ? checkedOpts.join(', ') : 'Select options...';
+            saveReportDraft();
+        }
+
+        function openCulturePanel(btn) {
+            const row = btn.closest('.param-line');
+            const container = row.querySelector('.culture-results-container');
+            if (container.children.length === 0) {
+                addCultureRow(container);
+            }
+            container.classList.toggle('hidden');
+        }
+
+        function addCultureRow(container, data = null) {
+            const index = container.children.length;
+            const div = document.createElement('div');
+            div.className = 'culture-row bg-slate-50 border border-slate-200 p-3 sm:p-4 rounded-xl flex flex-col gap-3 relative animate-fade-in';
+            div.innerHTML = `
+                <button type="button" onclick="this.closest('.culture-row').remove(); serializeCultureData(this.closest('.culture-results-container'))" class="absolute top-3 right-3 text-slate-400 hover:text-red-500 transition-colors"><i class="fas fa-times"></i></button>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Isolated Organism</label>
+                        <input type="text" class="culture-organism w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-sm font-semibold text-slate-800 outline-none focus:border-indigo-500" placeholder="e.g. E. coli" value="${data?.organism || ''}" oninput="serializeCultureData(this.closest('.culture-results-container'))">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Colony Count</label>
+                        <input type="text" class="culture-count w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-sm font-semibold text-slate-800 outline-none focus:border-indigo-500" placeholder="e.g. >10^5 CFU/mL" value="${data?.colonyCount || ''}" oninput="serializeCultureData(this.closest('.culture-results-container'))">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Antibiotic Sensitivities</label>
+                    <div class="culture-abx-container grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        <!-- ABX injected here -->
+                    </div>
+                    <button type="button" onclick="addCultureAbx(this)" class="mt-2 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition-colors flex items-center gap-1"><i class="fas fa-plus"></i> Add Antibiotic</button>
+                </div>
+            `;
+            container.appendChild(div);
+            
+            const abxContainer = div.querySelector('.culture-abx-container');
+            if (data && data.sensitivities && data.sensitivities.length > 0) {
+                data.sensitivities.forEach(abx => addCultureAbx(abxContainer, abx));
+            } else {
+                // Determine if there are default antibiotics for this parameter
+                const paramLine = container.closest('.param-line');
+                const paramDataStr = paramLine.dataset.paramData;
+                if (paramDataStr) {
+                    try {
+                        const paramData = JSON.parse(paramDataStr);
+                        if (paramData.options && paramData.options.length > 0) {
+                            paramData.options.forEach(opt => {
+                                addCultureAbx(abxContainer, { antibiotic: opt, interpretation: '' });
+                            });
+                        } else {
+                            addCultureAbx(abxContainer); // Add one empty
+                        }
+                    } catch(e) {}
+                } else {
+                    addCultureAbx(abxContainer);
+                }
+            }
+        }
+
+        function addCultureAbx(target, data = null) {
+            let container = target;
+            if (target.tagName === 'BUTTON') {
+                container = target.previousElementSibling;
+            }
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-1 bg-white border border-slate-200 rounded p-1 shadow-sm';
+            
+            const abxVal = data?.antibiotic || '';
+            const intVal = data?.interpretation || '';
+            
+            div.innerHTML = `
+                <input type="text" class="culture-abx-name flex-1 bg-transparent px-2 py-1 text-[11px] sm:text-xs font-semibold text-slate-800 outline-none min-w-0" placeholder="Antibiotic" value="${abxVal}" oninput="serializeCultureData(this.closest('.culture-results-container'))">
+                <select class="culture-abx-int w-24 bg-slate-50 border border-slate-200 rounded px-1 py-1 text-[11px] sm:text-xs font-bold text-slate-700 outline-none" onchange="serializeCultureData(this.closest('.culture-results-container')); this.className = 'culture-abx-int w-24 border rounded px-1 py-1 text-[11px] sm:text-xs font-bold outline-none ' + (this.value === 'S' ? 'bg-green-50 text-green-700 border-green-200' : this.value === 'R' ? 'bg-red-50 text-red-700 border-red-200' : this.value === 'I' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-700 border-slate-200')">
+                    <option value="">N/A</option>
+                    <option value="S" ${intVal==='S'?'selected':''}>Sensitive</option>
+                    <option value="I" ${intVal==='I'?'selected':''}>Intermediate</option>
+                    <option value="R" ${intVal==='R'?'selected':''}>Resistant</option>
+                </select>
+                <button type="button" onclick="this.closest('div').remove(); serializeCultureData(this.closest('.culture-results-container'))" class="text-slate-300 hover:text-red-500 px-1"><i class="fas fa-times text-[10px]"></i></button>
+            `;
+            container.appendChild(div);
+            // Trigger color update
+            div.querySelector('select').dispatchEvent(new Event('change'));
+        }
+
+        function serializeCultureData(container) {
+            const rows = container.querySelectorAll('.culture-row');
+            const data = Array.from(rows).map(row => {
+                const organism = row.querySelector('.culture-organism').value.trim();
+                const colonyCount = row.querySelector('.culture-count').value.trim();
+                const sensitivities = Array.from(row.querySelectorAll('.culture-abx-name')).map(input => {
+                    const intSelect = input.nextElementSibling;
+                    return {
+                        antibiotic: input.value.trim(),
+                        interpretation: intSelect.value
+                    };
+                }).filter(abx => abx.antibiotic);
+                return { organism, colonyCount, sensitivities };
+            }).filter(item => item.organism || item.colonyCount || item.sensitivities.length > 0);
+            
+            const resultInput = container.parentElement.querySelector('input.p-result[type="hidden"]');
+            resultInput.value = data.length > 0 ? JSON.stringify(data) : '';
+            saveReportDraft();
+        }
+
+        function renderCultureResults(container, data) {
+            container.innerHTML = '';
+            if (Array.isArray(data)) {
+                data.forEach(item => addCultureRow(container, item));
+            }
+            if (container.children.length > 0) {
+                container.classList.remove('hidden');
+                
+                // Add button to add more organisms
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full py-1.5 border border-dashed border-indigo-300 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded text-xs font-bold transition-colors';
+                btn.innerHTML = '<i class="fas fa-plus mr-1"></i> Add Another Organism';
+                btn.onclick = () => addCultureRow(container);
+                container.appendChild(btn);
+            }
         }
 
         async function executePdfDownload(id, token, withHeaderFooter, pdfButtons) {

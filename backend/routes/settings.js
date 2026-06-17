@@ -15,13 +15,13 @@ const router = express.Router();
 // Memory storage for multer to safely pass buffer to Cloudinary using streamifier
 const storage = multer.memoryStorage();
 
-// File filter — only allow image uploads
+// File filter — only allow image and PDF uploads
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Only JPEG, PNG, and WebP images are allowed'), false);
+    cb(new Error('Only JPEG, PNG, WebP images and PDFs are allowed'), false);
   }
 };
 

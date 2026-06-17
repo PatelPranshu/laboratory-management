@@ -25,6 +25,7 @@ const SectionSchema = new mongoose.Schema({
     formula: { type: String },
     formulaDependencies: [{ type: String }],
     defaultValue: { type: String },
+    options: [{ type: String }],
     // Legacy field — kept for backwards compatibility with existing documents
     isGenderSpecific: { type: Boolean, default: false },
     ruleType: {

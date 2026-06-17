@@ -195,10 +195,10 @@ exports.generateReportPdf = async (report, patient, settings) => {
   }
 
   const reportDate = report.date ? new Date(report.date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
-  const reportId = report._id ? report._id.toString().slice(-12).toUpperCase() : 'N/A';
+  const reportId = report._id ? report._id.toString().slice(-12).toUpperCase() : '--';
 
   let reportIdBarcodeBase64 = null;
-  if (reportId !== 'N/A') {
+  if (reportId !== '--') {
     try {
       const bwipjs = require('bwip-js');
       const buffer = await bwipjs.toBuffer({
@@ -214,7 +214,10 @@ exports.generateReportPdf = async (report, patient, settings) => {
     }
   }
 
-  groupedBlocks.forEach((block, blockIdx) => {
+  const appendices = [];
+
+  for (let blockIdx = 0; blockIdx < groupedBlocks.length; blockIdx++) {
+    const block = groupedBlocks[blockIdx];
     let currentTemplateName = 'TEST RESULTS';
     if (block.templateId !== 'unassigned') {
       const tmpl = (report.templateIds || []).find(t => t && typeof t === 'object' && t._id && t._id.toString() === block.templateId);
@@ -246,7 +249,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
           [
             { text: 'Patient Name:', colSpan: 2, bold: true, color: '#334155' },
             {},
-            { text: (patient.name || 'N/A').toUpperCase(), colSpan: 3, bold: true },
+            { text: (patient.name || '--').toUpperCase(), colSpan: 3, bold: true },
             {},
             {},
             reportIdBarcodeBase64 
@@ -255,16 +258,16 @@ exports.generateReportPdf = async (report, patient, settings) => {
           ],
           [
             { text: 'Age:', bold: true, color: '#334155' },
-            { text: patient.age || 'N/A' },
+            { text: patient.age || '--' },
             { text: 'Gender:', bold: true, color: '#334155' },
-            { text: patient.gender || 'N/A' },
+            { text: patient.gender || '--' },
             { text: 'Report Date:', bold: true, color: '#334155' },
             { text: reportDate }
           ],
           [
             { text: 'Phone:', colSpan: 2, bold: true, color: '#334155' },
             {},
-            { text: patient.phone || 'N/A', colSpan: 2 },
+            { text: patient.phone || '--', colSpan: 2 },
             {},
             { text: 'Referred By:', bold: true, color: '#334155' },
             { text: (report.referredBy || 'Self').toUpperCase(), bold: true }
@@ -298,26 +301,14 @@ exports.generateReportPdf = async (report, patient, settings) => {
     content.push({ canvas: [{ type: 'line', x1: 0, y1: 0, x2: contentWidth, y2: 0, lineWidth: 2, lineColor: '#1e293b' }] });
     content.push({text: '\n', fontSize: 5});
 
-    block.sections.forEach((sec, sIdx) => {
+    for (let sIdx = 0; sIdx < block.sections.length; sIdx++) {
+      const sec = block.sections[sIdx];
       const isFirstSection = (sIdx === 0);
       const isLastSection = (sIdx === block.sections.length - 1);
       const sectionTableBody = [];
 
       if (isFirstSection) {
-        sectionTableBody.push([
-          { 
-            text: currentTemplateName, 
-            colSpan: 4, 
-            alignment: 'center', 
-            bold: true, 
-            fillColor: '#e2e8f0', 
-            color: '#0f172a',
-            margin: [0, 4, 0, 4],
-            fontSize: templateInfoFontSize
-          },
-          {}, {}, {}
-        ]);
-        
+
         sectionTableBody.push([
           { text: 'TEST DESCRIPTION', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
           { text: 'RESULT', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
@@ -362,7 +353,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
 
       const params = sec.parameters || [];
       if (params.length > 0) {
-        params.forEach(p => {
+        for (const p of params) {
           const resultStr = p.result || '';
           const unitsStr = p.units || '';
 
@@ -370,13 +361,71 @@ exports.generateReportPdf = async (report, patient, settings) => {
           const normalRangeStr = evaluation.rangeDisplay;
           const isAbnormal = evaluation.isAbnormal;
 
-          const resultCell = {
+          let resultCell = {
             text: resultStr,
             bold: isAbnormal,
             margin: [0, 0, 0, 0]
           };
+          
+          if (p.dataType === 'DATETIME' && resultStr) {
+              const d = new Date(resultStr);
+              if (!isNaN(d.getTime())) {
+                  const opts = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true };
+                  resultCell = { text: d.toLocaleString('en-US', opts).replace(/,/g, '') }; // 15 May 2024 02:30 PM
+              }
+          } else if (p.dataType === 'CULTURE_SENSITIVITY' && resultStr) {
+            try {
+                const parsed = JSON.parse(resultStr);
+                const cultureStack = [];
+                parsed.forEach(org => {
+                    cultureStack.push({ text: `Organism: ${org.organism}`, bold: true, fontSize: templateInfoFontSize - 1, margin: [0, 2, 0, 0] });
+                    if (org.colonyCount) cultureStack.push({ text: `Colony Count: ${org.colonyCount}`, fontSize: templateInfoFontSize - 2, italics: true, color: '#475569', margin: [0, 0, 0, 2] });
+                    
+                    if (org.sensitivities && org.sensitivities.length > 0) {
+                        const sList = org.sensitivities.filter(s => s.interpretation === 'Sensitive').map(s => s.antibiotic).join(', ');
+                        const iList = org.sensitivities.filter(s => s.interpretation === 'Intermediate').map(s => s.antibiotic).join(', ');
+                        const rList = org.sensitivities.filter(s => s.interpretation === 'Resistant').map(s => s.antibiotic).join(', ');
+                        
+                        const innerTableBody = [];
+                        if (sList) innerTableBody.push([{ text: 'Sensitive:', bold: true, color: '#15803d', fontSize: templateInfoFontSize - 2 }, { text: sList, fontSize: templateInfoFontSize - 2, color: '#15803d' }]);
+                        if (iList) innerTableBody.push([{ text: 'Intermediate:', bold: true, color: '#b45309', fontSize: templateInfoFontSize - 2 }, { text: iList, fontSize: templateInfoFontSize - 2, color: '#b45309' }]);
+                        if (rList) innerTableBody.push([{ text: 'Resistant:', bold: true, color: '#b91c1c', fontSize: templateInfoFontSize - 2 }, { text: rList, fontSize: templateInfoFontSize - 2, color: '#b91c1c' }]);
+                        
+                        if (innerTableBody.length > 0) {
+                            cultureStack.push({
+                                margin: [5, 2, 0, 5],
+                                table: {
+                                    widths: [75, '*'],
+                                    body: innerTableBody
+                                },
+                                layout: 'noBorders'
+                            });
+                        }
+                    } else {
+                        cultureStack.push({ text: '', margin: [0, 2, 0, 2] });
+                    }
+                });
+                resultCell = { stack: cultureStack, margin: [0, 0, 0, 0] };
+            } catch(e) {}
+          } else if (p.dataType === 'ATTACHMENT' && resultStr && (resultStr.startsWith('http') || resultStr.startsWith('data:'))) {
+            try {
+                let imgUrl = resultStr;
+                if (imgUrl.endsWith('.pdf')) {
+                    imgUrl = imgUrl.replace('.pdf', '.jpg');
+                }
+                const b64 = imgUrl.startsWith('data:') ? imgUrl : await downloadImageAsBase64(imgUrl);
+                if (b64) {
+                    appendices.push({ image: b64, title: p.name });
+                    resultCell = { text: `See Appendix ${appendices.length}`, italics: true, color: '#2563eb', bold: true, margin: [0, 5, 0, 5] };
+                } else {
+                    resultCell = { text: '[Image Unavailable]', italics: true, color: '#64748b' };
+                }
+            } catch(e) {
+                resultCell = { text: '[Image Error]', italics: true, color: '#64748b' };
+            }
+          }
 
-          if (evaluation.critical) {
+          if (evaluation.critical && !resultCell.stack && !resultCell.image) {
             resultCell.color = '#dc2626';
           }
 
@@ -413,7 +462,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
               { text: normalRangeStr, fontSize: templateInfoFontSize - 2, margin: [0, 0, 0, 0] }
             ]);
           }
-        });
+        }
       } else if (sec.values) {
         const valuesObj = (sec.values && typeof sec.values.toJSON === 'function') 
           ? sec.values.toJSON() 
@@ -478,7 +527,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
         margin: [0, isFirstSection ? 10 : 0, 0, isLastSection ? 10 : 0], 
         unbreakable: true
       });
-    });
+    }
 
     const blockRemarks = remarksByTemplate[block.templateId];
     if (blockRemarks && blockRemarks.length > 0) {
@@ -582,7 +631,24 @@ exports.generateReportPdf = async (report, patient, settings) => {
       margin: [0, 10, 0, 0]
     });
 
-  });
+  }
+
+  if (appendices.length > 0) {
+    appendices.forEach((app, idx) => {
+      content.push({
+        text: `APPENDIX ${idx + 1}: ${app.title.toUpperCase()}`,
+        style: 'header',
+        alignment: 'center',
+        margin: [0, 0, 0, 20],
+        pageBreak: 'before'
+      });
+      content.push({
+        image: app.image,
+        fit: [contentWidth, 700],
+        alignment: 'center'
+      });
+    });
+  }
 
   const docDefinition = {
     content: content,
