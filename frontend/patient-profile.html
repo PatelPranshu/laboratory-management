@@ -298,7 +298,10 @@
                     return `
                     <div class="report-item flex flex-col sm:grid sm:grid-cols-12 gap-3 sm:gap-4 px-4 sm:px-6 py-5 sm:py-4 border-b border-slate-50 items-start sm:items-center hover:bg-slate-50/80 transition-colors group" 
                          data-date="${r.date || r.createdAt}">
-                        <div class="sm:col-span-2 text-xs sm:text-sm font-bold text-slate-500 sm:text-slate-700 uppercase sm:normal-case search-date-text">${d}</div>
+                        <div class="sm:col-span-2 text-xs sm:text-sm font-bold text-slate-500 sm:text-slate-700 uppercase sm:normal-case search-date-text">
+                            ${d}
+                            <div class="text-xs text-slate-500 font-mono mt-1 font-semibold">ID: ${r._id.slice(-12).toUpperCase()}</div>
+                        </div>
                         <div class="w-full sm:col-span-4 text-sm font-bold sm:font-normal text-slate-800 sm:text-slate-600 sm:truncate sm:pr-4" title="${testNames}">${testNames}</div>
                         <div class="sm:col-span-3 text-xs sm:text-sm text-slate-500 font-medium truncate sm:pr-4"><i class="fas fa-user-md sm:hidden mr-1.5 opacity-50"></i>${sanitizeHTML(r.performedBy || 'Self')}</div>
                         <div class="sm:col-span-2">${statusBadge}</div>

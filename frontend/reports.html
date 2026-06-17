@@ -260,7 +260,7 @@
                                     </div>
                                     <div class="ml-3 sm:ml-4 min-w-0 flex-1">
                                         <div class="text-sm font-bold text-slate-800 truncate">${r.patientId ? sanitizeHTML(r.patientId.name) : 'Unknown Patient'}</div>
-                                        <div class="text-xs text-slate-500 font-bold mt-0.5 sm:text-slate-500 sm:font-medium">${r.patientId ? sanitizeHTML(r.patientId.phone) : 'N/A'}</div>
+                                        <div class="text-xs text-slate-500 font-mono mt-1 font-semibold">ID: ${r._id.slice(-12).toUpperCase()}</div>
                                         
                                         <!-- Mobile-only details (hidden on desktop) -->
                                         <div class="mt-2.5 flex flex-wrap items-center gap-2 sm:hidden">

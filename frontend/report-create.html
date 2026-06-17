@@ -231,6 +231,7 @@
                                             id="sp-name">Patient Name</h3>
                                         <p class="text-[11px] sm:text-sm text-slate-500 mt-0.5 truncate"
                                             id="sp-details">Phone • Age/Gender</p>
+                                        <p class="text-xs text-slate-500 mt-1 font-mono font-semibold hidden" id="sp-report-id"></p>
                                         <input type="hidden" id="sp-id">
                                     </div>
                                 </div>
@@ -1280,7 +1281,14 @@
 
         async function loadExistingReport(id) {
             try {
-                const res = await api.request(`/reports/${id}`), r = res.data; document.getElementById('report-id').value = r._id; document.getElementById('report-status').value = r.status; if (typeof updateStatusBadgeUI === 'function') updateStatusBadgeUI(r.status);
+                const res = await api.request(`/reports/${id}`), r = res.data; 
+                document.getElementById('report-id').value = r._id; 
+                const spReportId = document.getElementById('sp-report-id'); 
+                if(spReportId) { 
+                    spReportId.textContent = 'ID: ' + r._id.slice(-12).toUpperCase(); 
+                    spReportId.classList.remove('hidden'); 
+                }
+                document.getElementById('report-status').value = r.status; if (typeof updateStatusBadgeUI === 'function') updateStatusBadgeUI(r.status);
                 if (r.performedByLabTechId) {
                     const sig = r.performedByLabTechId;
                     selectDoctor(sig._id, sig.fullName || sig.doctorName, sig.signatureUrl);
@@ -1438,6 +1446,11 @@
 
                 const res = await api.request(url, method, payload);
                 document.getElementById('report-id').value = res.data._id;
+                const spReportId = document.getElementById('sp-report-id'); 
+                if(spReportId) { 
+                    spReportId.textContent = 'ID: ' + res.data._id.slice(-12).toUpperCase(); 
+                    spReportId.classList.remove('hidden'); 
+                }
                 document.getElementById('report-status').value = res.data.status;
                 
                 if (typeof updateStatusBadgeUI === 'function') updateStatusBadgeUI(res.data.status);
@@ -1461,7 +1474,8 @@
                 draftBtns = document.querySelectorAll('.action-save-draft'),
                 postSaveContainers = document.querySelectorAll('.post-save-actions-container'),
                 mobileEditingActions = document.querySelectorAll('.mobile-editing-actions'),
-                badgeDisplays = document.querySelectorAll('.status-badge-display');
+                badgeDisplays = document.querySelectorAll('.status-badge-display'),
+                lastSavedDisplays = document.querySelectorAll('.last-saved-info-display');
                 
             const statusEl = document.getElementById('report-status');
             const currentStatus = (status || statusEl.value || '').toLowerCase();
@@ -1478,6 +1492,8 @@
                 postSaveContainers.forEach(container => {
                     container.style.display = 'flex';
                 });
+                // Hide 'Unsaved Report' label
+                lastSavedDisplays.forEach(el => el.style.display = 'none');
             } else {
                 // Show save buttons (editing state)
                 saveBtns.forEach(b => { b.style.display = ''; b.classList.remove('hidden'); });
@@ -1487,6 +1503,11 @@
                 // Hide post-save containers
                 postSaveContainers.forEach(container => {
                     container.style.display = 'none';
+                });
+                // Update or show 'Unsaved Report' label
+                lastSavedDisplays.forEach(el => {
+                    el.style.display = ''; 
+                    el.textContent = currentStatus === 'draft' ? 'Draft Saved' : 'Unsaved Report';
                 });
             }
 
