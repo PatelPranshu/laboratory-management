@@ -46,6 +46,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.editEmail.value = user.email;
             elements.editLabName.value = user.labName;
 
+            if (user.role !== 'Admin') {
+                elements.editLabName.readOnly = true;
+                elements.editLabName.classList.add('bg-slate-100', 'cursor-not-allowed', 'opacity-70');
+                elements.editLabName.title = "Only Administrators can change the Laboratory Name";
+            }
+
             // Sync with local storage user object
             localStorage.setItem('lis_user', JSON.stringify({
                 id: user._id,

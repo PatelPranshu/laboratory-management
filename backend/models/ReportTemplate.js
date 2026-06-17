@@ -79,6 +79,10 @@ const ReportTemplateSchema = new mongoose.Schema({
     enum: ['DISCRETE', 'NARRATIVE', 'HYBRID', 'CULTURE'],
     default: 'DISCRETE'
   },
+  usageCount: {
+    type: Number,
+    default: 0
+  },
   sections: [SectionSchema]
 }, { timestamps: true });
 

@@ -195,10 +195,13 @@
     <script>
         let currentPage = 1;
         let searchQuery = '';
+        let currentUserRole = '';
 
         document.addEventListener('DOMContentLoaded', () => {
             loadCommonLayout();
             checkAuth();
+            const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
+            currentUserRole = user.role;
             loadPatients(1);
 
             // Auto-refresh patients list when user switches back to this tab (10s throttle)
@@ -228,7 +231,7 @@
                     tbody.innerHTML = data.map(p => {
                         const reportActionBtn = `<a href="report-create.html?patient=${p._id}" class="p-2.5 sm:p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:text-emerald-700 rounded-xl sm:rounded-lg transition-colors tooltip-container font-bold text-xs flex items-center gap-1.5" title="Create New Report"><i class="fas fa-file-medical text-sm sm:text-xs"></i><span class="sm:hidden">New Report</span></a>`;
                         const viewProfileBtn = `<a href="patient-profile.html?id=${p._id}" class="p-2.5 sm:p-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 rounded-xl sm:rounded-lg transition-colors tooltip-container font-bold text-xs flex items-center gap-1.5" title="View Patient Profile"><i class="fas fa-user-circle text-sm sm:text-xs"></i><span class="sm:hidden">Profile</span></a>`;
-                        const deleteBtn = `<button onclick="deletePatient('${p._id}')" class="p-2.5 sm:p-2 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 rounded-xl sm:rounded-lg transition-colors tooltip-container font-bold text-xs flex items-center gap-1.5" title="Delete"><i class="fas fa-trash-alt text-sm sm:text-xs"></i><span class="sm:hidden">Delete</span></button>`;
+                        const deleteBtn = currentUserRole === 'Admin' ? `<button onclick="deletePatient('${p._id}')" class="p-2.5 sm:p-2 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 rounded-xl sm:rounded-lg transition-colors tooltip-container font-bold text-xs flex items-center gap-1.5" title="Delete"><i class="fas fa-trash-alt text-sm sm:text-xs"></i><span class="sm:hidden">Delete</span></button>` : '';
                         
                         const genderIcon = p.gender.toLowerCase() === 'male' ? 'mars' : p.gender.toLowerCase() === 'female' ? 'venus' : 'genderless';
                         return `

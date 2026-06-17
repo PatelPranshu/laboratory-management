@@ -24,7 +24,7 @@ router.get('/pending', protect, getPendingReports);
 router.route('/:id')
   .get(protect, validateObjectId, getReport)
   .put(protect, validateObjectId, updateReport)
-  .delete(protect, validateObjectId, deleteReport);
+  .delete(protect, validateObjectId, authorize('Admin'), deleteReport);
 
 router.get('/:id/pdf', protect, validateObjectId, authorize('Admin', 'Doctor', 'LabTech'), generatePdf);
 router.post('/:id/send', protect, validateObjectId, authorize('Admin', 'Doctor', 'LabTech'), sendReport);

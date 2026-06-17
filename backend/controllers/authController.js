@@ -167,9 +167,18 @@ exports.updateProfile = async (req, res) => {
     user.email = email.toLowerCase().trim();
   }
 
-  // Update labName if provided
-  if (labName) {
-    user.labName = labName.trim();
+  // Update labName if provided and changed (Only Admins)
+  if (labName && labName.trim() !== user.labName) {
+    if (user.role === 'Admin') {
+      const newLabName = labName.trim();
+      user.labName = newLabName;
+      
+      // Propagate the labName change to all staff users belonging to this Admin
+      await User.updateMany(
+        { parentAdminId: user._id },
+        { $set: { labName: newLabName } }
+      );
+    }
   }
 
   // Update name if provided

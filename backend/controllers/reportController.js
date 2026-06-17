@@ -8,6 +8,7 @@ const { sendNotification } = require('../utils/notifier');
 const { pickFields } = require('../middlewares/validate');
 const { updateLabStats } = require('../utils/statsHelper');
 const { calculateDerivedResult } = require('../utils/mathHelper');
+const ReportTemplate = require('../models/ReportTemplate');
 
 /**
  * Resolves all CALCULATED parameters across report sections.
@@ -260,6 +261,14 @@ exports.createReport = async (req, res) => {
   try {
     const reports = await ReportInstance.create([sanitizedBody], { session });
     const report = reports[0];
+
+    if (report.templateIds && report.templateIds.length > 0) {
+      await ReportTemplate.updateMany(
+        { _id: { $in: report.templateIds } },
+        { $inc: { usageCount: 1 } },
+        { session }
+      );
+    }
 
     // Update Stats Cache
     const statsUpdate = { 'stats.totalReports': 1 };
@@ -611,6 +620,7 @@ exports.getPendingReports = async (req, res) => {
     .populate('creatorId', 'name role email')
     .populate('verifierId', 'name role email')
     .populate('performedByLabTechId', 'fullName doctorName signatureUrl')
+    .populate('templateIds', 'templateName')
     .sort('-createdAt');
 
   res.status(200).json({ success: true, count: reports.length, data: reports });

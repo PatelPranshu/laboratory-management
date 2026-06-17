@@ -65,7 +65,9 @@ const validateTemplatePayload = (sections) => {
 // @access  Private
 exports.getTemplates = async (req, res) => {
     const doctorId = req.user.role === 'LabTech' ? req.user.parentAdminId : req.user.id;
-    const templates = await ReportTemplate.find({ doctorId });
+    const templates = await ReportTemplate.find({ doctorId })
+      .collation({ locale: 'en' })
+      .sort({ usageCount: -1, templateName: 1 });
 
     res.status(200).json({ success: true, count: templates.length, data: templates });
   };
