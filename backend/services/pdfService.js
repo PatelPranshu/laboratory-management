@@ -69,6 +69,29 @@ function downloadImageAsBase64(url) {
   });
 }
 
+function getImageDimensionsFromBase64(base64Str) {
+  if (!base64Str) return null;
+  try {
+      const parts = base64Str.split(',');
+      if (parts.length < 2) return null;
+      const buffer = Buffer.from(parts[1], 'base64');
+      if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
+          return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
+      } else if (buffer[0] === 0xFF && buffer[1] === 0xD8) {
+          let i = 4;
+          while (i < buffer.length - 8) {
+              let marker = buffer[i - 1] << 8 | buffer[i];
+              let len = buffer.readUInt16BE(i + 1);
+              if (marker >= 0xFFC0 && marker <= 0xFFC3) {
+                  return { height: buffer.readUInt16BE(i + 4), width: buffer.readUInt16BE(i + 6) };
+              }
+              i += len + 2;
+          }
+      }
+  } catch(e) {}
+  return null;
+}
+
 /**
  * Robust numeric check for abnormality using structured bounds.
  * Returns true if result is outside [min, max].
@@ -215,7 +238,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
     }
   }
 
-  const appendices = [];
+
 
   for (let blockIdx = 0; blockIdx < groupedBlocks.length; blockIdx++) {
     const block = groupedBlocks[blockIdx];
@@ -227,20 +250,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
       }
     }
 
-    if (headerImageData) {
-      const headerConfig = {
-        image: headerImageData,
-        alignment: 'center',
-        margin: [0, 0, 0, 20]
-      };
-      if (lp.headerHeight && lp.headerHeight > 0) {
-        headerConfig.fit = [contentWidth, lp.headerHeight];
-      } else {
-        headerConfig.width = contentWidth;
-      }
-      if (blockIdx > 0) headerConfig.pageBreak = 'before';
-      content.push(headerConfig);
-    }
+
 
     const patientInfoTable = {
       fontSize: patientInfoFontSize,
@@ -288,42 +298,37 @@ exports.generateReportPdf = async (report, patient, settings) => {
       margin: [0, 5, 0, 5]
     };
 
-    if (!headerImageData && blockIdx > 0) {
+    if (blockIdx > 0) {
       patientInfoTable.pageBreak = 'before';
     }
 
     content.push(patientInfoTable);
 
+    const sectionTableBody = [];
+
+    sectionTableBody.push([
+      { 
+        text: currentTemplateName, 
+        colSpan: 4, 
+        alignment: 'center', 
+        bold: true, 
+        fillColor: '#e2e8f0', 
+        color: '#0f172a',
+        margin: [0, 4, 0, 4],
+        fontSize: templateInfoFontSize
+      },
+      {}, {}, {}
+    ]);
+    
+    sectionTableBody.push([
+      { text: 'TEST DESCRIPTION', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
+      { text: 'RESULT', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
+      { text: 'UNITS', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
+      { text: 'NORMAL VALUES', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] }
+    ]);
+
     for (let sIdx = 0; sIdx < block.sections.length; sIdx++) {
       const sec = block.sections[sIdx];
-      const isFirstSection = (sIdx === 0);
-      const isLastSection = (sIdx === block.sections.length - 1);
-      const sectionTableBody = [];
-
-      if (isFirstSection) {
-        
-
-        sectionTableBody.push([
-          { 
-            text: currentTemplateName, 
-            colSpan: 4, 
-            alignment: 'center', 
-            bold: true, 
-            fillColor: '#e2e8f0', 
-            color: '#0f172a',
-            margin: [0, 4, 0, 4],
-            fontSize: templateInfoFontSize
-          },
-          {}, {}, {}
-        ]);
-        
-        sectionTableBody.push([
-          { text: 'TEST DESCRIPTION', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
-          { text: 'RESULT', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
-          { text: 'UNITS', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
-          { text: 'NORMAL VALUES', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] }
-        ]);
-      }
 
       if (sec.sectionName || sec.methodology || sec.sampleType || sec.kitUsed) {
         const sectionTextChunks = [];
@@ -353,7 +358,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
             bold: true, 
             fillColor: '#f8fafc',
             color: '#0f172a',
-            margin: [0, isFirstSection ? 2 : 6, 0, 2] 
+            margin: [0, (sIdx === 0) ? 2 : 6, 0, 2] 
           },
           {}, {}, {}
         ]);
@@ -415,22 +420,6 @@ exports.generateReportPdf = async (report, patient, settings) => {
                 });
                 resultCell = { stack: cultureStack, margin: [0, 0, 0, 0] };
             } catch(e) {}
-          } else if (p.dataType === 'ATTACHMENT' && resultStr && (resultStr.startsWith('http') || resultStr.startsWith('data:'))) {
-            try {
-                let imgUrl = resultStr;
-                if (imgUrl.endsWith('.pdf')) {
-                    imgUrl = imgUrl.replace('.pdf', '.jpg');
-                }
-                const b64 = imgUrl.startsWith('data:') ? imgUrl : await downloadImageAsBase64(imgUrl);
-                if (b64) {
-                    appendices.push({ image: b64, title: p.name });
-                    resultCell = { text: `See Appendix ${appendices.length}`, italics: true, color: '#2563eb', bold: true, margin: [0, 5, 0, 5] };
-                } else {
-                    resultCell = { text: '[Image Unavailable]', italics: true, color: '#64748b' };
-                }
-            } catch(e) {
-                resultCell = { text: '[Image Error]', italics: true, color: '#64748b' };
-            }
           }
 
           if (evaluation.critical && !resultCell.stack && !resultCell.image) {
@@ -499,43 +488,40 @@ exports.generateReportPdf = async (report, patient, settings) => {
           ]);
         }
       }
-
-      content.push({
-        stack: [
-          {
-            fontSize: templateInfoFontSize - 1,
-            table: {
-              headerRows: isFirstSection ? 1 : 0, 
-              widths: ['38%', '15%', '15%', '32%'], 
-              body: sectionTableBody
-            },
-            layout: {
-              hLineWidth: function (i, node) {
-                if (isFirstSection && i === 0) return 1.5;
-                if (isFirstSection && i === 1) return 1.5;
-                if (!isFirstSection && i === 0) return 0;
-                if (isLastSection && i === node.table.body.length) return 1.5;
-                return 0.5;
-              },
-              vLineWidth: () => 0,
-              hLineColor: function (i, node) {
-                if (isFirstSection && i === 0) return '#475569';
-                if (isFirstSection && i === 1) return '#475569';
-                if (!isFirstSection && i === 0) return '#e2e8f0';
-                if (isLastSection && i === node.table.body.length) return '#475569';
-                return '#e2e8f0';
-              },
-              paddingLeft: () => 5,
-              paddingRight: () => 5,
-              paddingTop: () => 2,
-              paddingBottom: () => 2
-            }
-          }
-        ],
-        margin: [0, isFirstSection ? 10 : 0, 0, isLastSection ? 10 : 0], 
-        unbreakable: true
-      });
     }
+
+    content.push({
+      stack: [
+        {
+          fontSize: templateInfoFontSize - 1,
+          table: {
+            headerRows: 2, 
+            widths: ['38%', '15%', '15%', '32%'], 
+            body: sectionTableBody
+          },
+          layout: {
+            hLineWidth: function (i, node) {
+              if (i === 0) return 1.5;
+              if (i === 1) return 1.5;
+              if (i === node.table.body.length) return 1.5;
+              return 0.5;
+            },
+            vLineWidth: () => 0,
+            hLineColor: function (i, node) {
+              if (i === 0) return '#475569';
+              if (i === 1) return '#475569';
+              if (i === node.table.body.length) return '#475569';
+              return '#e2e8f0';
+            },
+            paddingLeft: () => 5,
+            paddingRight: () => 5,
+            paddingTop: () => 2,
+            paddingBottom: () => 2
+          }
+        }
+      ],
+      margin: [0, 10, 0, 10]
+    });
 
     const blockRemarks = remarksByTemplate[block.templateId];
     if (blockRemarks && blockRemarks.length > 0) {
@@ -563,19 +549,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
       });
     }
 
-    if (footerImageData) {
-      const footerConfig = {
-        image: footerImageData,
-        alignment: 'center',
-        margin: [0, 30, 0, 0]
-      };
-      if (lp.footerHeight && lp.footerHeight > 0) {
-        footerConfig.fit = [contentWidth, lp.footerHeight];
-      } else {
-        footerConfig.width = contentWidth;
-      }
-      content.push(footerConfig);
-    }
+
 
     const endOfReportBlock = [];
 
@@ -641,28 +615,79 @@ exports.generateReportPdf = async (report, patient, settings) => {
 
   }
 
-  if (appendices.length > 0) {
-    appendices.forEach((app, idx) => {
-      content.push({
-        text: `APPENDIX ${idx + 1}: ${app.title.toUpperCase()}`,
-        fontSize: 14,
-        bold: true,
-        alignment: 'center',
-        margin: [-ml, -mt + 20, -mr, 20], // Completely negate global margins, add 20px top spacing
-        pageBreak: 'before'
-      });
-      content.push({
-        image: app.image,
-        fit: [595.28, 730], // Restricted height to guarantee it stays on the same page as the title
-        alignment: 'center',
-        margin: [-ml, 0, -mr, -mb - 20] // Completely negate all global page margins (left, right, bottom)
-      });
-    });
+
+  const headerContentWidth = lp.differentHFMargins ? (595.28 - parseMargin(lp.headerLeftMargin, 0) - parseMargin(lp.headerRightMargin, 0)) : contentWidth;
+  const footerContentWidth = lp.differentHFMargins ? (595.28 - parseMargin(lp.footerLeftMargin, 0) - parseMargin(lp.footerRightMargin, 0)) : contentWidth;
+
+  // Calculate safe margins for header and footer
+  let headerHeightVal = Number(lp.headerHeight) || 0;
+  if (headerImageData && headerHeightVal === 0) {
+      const dim = getImageDimensionsFromBase64(headerImageData);
+      if (dim && dim.width > 0) {
+          headerHeightVal = (dim.height / dim.width) * headerContentWidth;
+      } else {
+          headerHeightVal = 80;
+      }
   }
 
+  let footerHeightVal = Number(lp.footerHeight) || 0;
+  if (footerImageData && footerHeightVal === 0) {
+      const dim = getImageDimensionsFromBase64(footerImageData);
+      if (dim && dim.width > 0) {
+          footerHeightVal = (dim.height / dim.width) * footerContentWidth;
+      } else {
+          footerHeightVal = 80;
+      }
+  }
+
+  const safeTopMargin = headerImageData ? mt + headerHeightVal + 10 : mt;
+  const safeBottomMargin = footerImageData ? mb + footerHeightVal + 10 : mb + 20;
+
   const docDefinition = {
+    header: headerImageData ? function(currentPage, pageCount) {
+      const headerConfig = {
+        image: headerImageData,
+        alignment: 'center'
+      };
+      if (lp.headerHeight && lp.headerHeight > 0) {
+        headerConfig.fit = [headerContentWidth, lp.headerHeight];
+      } else {
+        headerConfig.width = headerContentWidth;
+      }
+      const hLeft = lp.differentHFMargins ? parseMargin(lp.headerLeftMargin, 0) : ml;
+      const hRight = lp.differentHFMargins ? parseMargin(lp.headerRightMargin, 0) : mr;
+      return {
+        columns: [
+          { width: hLeft, text: '' },
+          { width: '*', stack: [headerConfig] },
+          { width: hRight, text: '' }
+        ],
+        margin: [0, mt, 0, 0]
+      };
+    } : null,
+    footer: footerImageData ? function(currentPage, pageCount) {
+      const footerConfig = {
+        image: footerImageData,
+        alignment: 'center'
+      };
+      if (lp.footerHeight && lp.footerHeight > 0) {
+        footerConfig.fit = [footerContentWidth, lp.footerHeight];
+      } else {
+        footerConfig.width = footerContentWidth;
+      }
+      const fLeft = lp.differentHFMargins ? parseMargin(lp.footerLeftMargin, 0) : ml;
+      const fRight = lp.differentHFMargins ? parseMargin(lp.footerRightMargin, 0) : mr;
+      return {
+        columns: [
+          { width: fLeft, text: '' },
+          { width: '*', stack: [footerConfig] },
+          { width: fRight, text: '' }
+        ],
+        margin: [0, 0, 0, mb]
+      };
+    } : null,
     content: content,
-    pageMargins: [ml, mt, mr, mb + 20], 
+    pageMargins: [ml, safeTopMargin, mr, safeBottomMargin], 
     styles: {
       header: { fontSize: baseFontSize + 6, bold: true },
       subheader: { fontSize: baseFontSize + 2, bold: true },

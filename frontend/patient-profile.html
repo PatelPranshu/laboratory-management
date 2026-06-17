@@ -308,10 +308,10 @@
                                 <span class="sm:hidden ml-2 text-xs font-bold uppercase tracking-wider">Edit</span>
                             </a>
                             ${r.status !== 'draft' ? `
-                                <a href="${BASE_URL}/reports/${r._id}/pdf?token=${localStorage.getItem('lis_token')}" target="_blank" class="flex-1 sm:flex-none flex items-center justify-center p-2 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-800 rounded-lg transition-colors shadow-sm" title="View PDF">
+                                <button onclick="downloadPdfGlobal('${r._id}', event)" class="flex-1 sm:flex-none flex items-center justify-center p-2 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-800 rounded-lg transition-colors shadow-sm" title="View PDF">
                                     <i class="fas fa-file-pdf text-base"></i>
                                     <span class="sm:hidden ml-2 text-xs font-bold uppercase tracking-wider">PDF</span>
-                                </a>
+                                </button>
                             ` : ''}
                         </div>
                     </div>`;

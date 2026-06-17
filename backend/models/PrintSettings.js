@@ -28,7 +28,12 @@ const PrintSettingsSchema = new mongoose.Schema({
     signatureFontSize: { type: Number, default: 12, min: 1, max: 99 },
     fontFamily: { type: String, default: 'Helvetica' },
     headerHeight: { type: Number, default: 0, min: 0, max: 1000 },
-    footerHeight: { type: Number, default: 0, min: 0, max: 1000 }
+    footerHeight: { type: Number, default: 0, min: 0, max: 1000 },
+    differentHFMargins: { type: Boolean, default: false },
+    headerLeftMargin: { type: Number, default: 0, min: 0, max: 1000 },
+    headerRightMargin: { type: Number, default: 0, min: 0, max: 1000 },
+    footerLeftMargin: { type: Number, default: 0, min: 0, max: 1000 },
+    footerRightMargin: { type: Number, default: 0, min: 0, max: 1000 }
   }
 }, { timestamps: true });
 

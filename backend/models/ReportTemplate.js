@@ -19,7 +19,7 @@ const SectionSchema = new mongoose.Schema({
     kitUsed: { type: String },
     dataType: { 
       type: String, 
-      enum: ['NUMERIC', 'TEXT', 'BOOLEAN', 'DATETIME', 'ATTACHMENT', 'MULTI_SELECT', 'CULTURE_SENSITIVITY', 'CALCULATED', 'DEFAULT_VALUE'],
+      enum: ['NUMERIC', 'TEXT', 'BOOLEAN', 'DATETIME', 'MULTI_SELECT', 'CULTURE_SENSITIVITY', 'CALCULATED', 'DEFAULT_VALUE'],
       default: 'NUMERIC'
     },
     formula: { type: String },

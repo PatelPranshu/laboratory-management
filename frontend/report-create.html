@@ -1040,31 +1040,6 @@
                 
                 resultEl.type = 'hidden';
                 resultContainer.appendChild(dtInput);
-            } else if (paramData.dataType === 'ATTACHMENT') {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'flex flex-col gap-2';
-                wrapper.innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <label class="cursor-pointer bg-brand-50 hover:bg-brand-100 text-brand-600 px-3 py-1.5 rounded text-sm font-semibold transition-colors flex items-center gap-2 border border-brand-200">
-                            <i class="fas fa-upload"></i> Upload File
-                            <input type="file" class="hidden" accept="image/*,application/pdf" onchange="handleParamImageUpload(this)">
-                        </label>
-                        <span class="upload-status text-xs text-slate-500 font-medium truncate"></span>
-                    </div>
-                    <div class="preview-container mt-1 empty:hidden flex items-center gap-2"></div>
-                `;
-                resultEl.type = 'hidden';
-                if (paramData.filename) resultEl.dataset.filename = paramData.filename;
-                resultContainer.appendChild(wrapper);
-                
-                if (defaultResultVal) {
-                    const preview = wrapper.querySelector('.preview-container');
-                    let filename = paramData.filename || defaultResultVal.split('/').pop() || 'Attached File';
-                    preview.innerHTML = `
-                        <a href="${defaultResultVal}" target="_blank" class="text-sm font-medium text-blue-600 hover:underline flex items-center gap-1"><i class="fas fa-paperclip"></i> ${filename}</a>
-                        <button type="button" onclick="removeParamImage(this, '${defaultResultVal}')" class="text-slate-400 hover:text-red-500 text-xs transition-colors p-1" title="Remove attachment"><i class="fas fa-trash"></i></button>
-                    `;
-                }
             } else if (paramData.dataType === 'MULTI_SELECT') {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'relative w-full';
@@ -1637,102 +1612,6 @@
                 executePdfDownload(id, token, false, pdfButtons);
             };
             document.getElementById('hf-btn-cancel').onclick = close;
-        }
-
-        async function handleParamImageUpload(input) {
-            const file = input.files[0];
-            if (!file) return;
-            const container = input.closest('.flex-col');
-            const statusEl = container.querySelector('.upload-status');
-            const resultInput = container.parentElement.querySelector('input.p-result[type="hidden"]');
-            const oldUrl = resultInput.value;
-            
-            if (file.size > 5 * 1024 * 1024) {
-                return UI.showToast('File must be smaller than 5MB', 'error');
-            }
-
-            statusEl.textContent = 'Uploading...';
-            statusEl.className = 'upload-status text-xs text-brand-500 font-medium truncate';
-            
-            // Delete old file if it exists
-            if (oldUrl && oldUrl.startsWith('http')) {
-                try {
-                    const token = localStorage.getItem('lis_token');
-                    await fetch(`${BASE_URL}/settings/delete-image`, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ imageUrl: oldUrl })
-                    });
-                } catch(e) { console.warn("Failed to delete old image", e); }
-            }
-            
-            try {
-                const formData = new FormData();
-                formData.append('image', file);
-                const token = localStorage.getItem('lis_token');
-                
-                const res = await fetch(`${BASE_URL}/settings/upload`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
-                });
-                
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.message || 'Upload failed');
-                
-                const url = (data.data && data.data.url) || data.imageUrl || data.url;
-                if (!url) throw new Error('Invalid response from server');
-                
-                resultInput.value = url;
-                resultInput.dataset.filename = file.name;
-                statusEl.textContent = 'Uploaded';
-                statusEl.className = 'upload-status text-xs text-green-600 font-medium truncate';
-                
-                const preview = container.querySelector('.preview-container');
-                preview.innerHTML = `
-                    <a href="${url}" target="_blank" class="text-sm font-medium text-blue-600 hover:underline flex items-center gap-1"><i class="fas fa-paperclip"></i> ${file.name}</a>
-                    <button type="button" onclick="removeParamImage(this, '${url}')" class="text-slate-400 hover:text-red-500 text-xs transition-colors p-1" title="Remove attachment"><i class="fas fa-trash"></i></button>
-                `;
-                
-                saveReportDraft();
-            } catch (err) {
-                console.error(err);
-                statusEl.textContent = 'Upload failed';
-                statusEl.className = 'upload-status text-xs text-red-500 font-medium truncate';
-                UI.showToast(err.message, 'error');
-            }
-        }
-
-        async function removeParamImage(btn, url) {
-            const confirmed = await UI.showConfirm('Remove Attachment', 'Are you sure you want to completely remove this attachment?', 'Remove', 'danger');
-            if (!confirmed) return;
-            const container = btn.closest('.flex-col');
-            const resultInput = container.parentElement.querySelector('input.p-result[type="hidden"]');
-            const preview = container.querySelector('.preview-container');
-            const statusEl = container.querySelector('.upload-status');
-            
-            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
-            btn.disabled = true;
-
-            try {
-                const token = localStorage.getItem('lis_token');
-                await fetch(`${BASE_URL}/settings/delete-image`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ imageUrl: url })
-                });
-                
-                resultInput.value = '';
-                preview.innerHTML = '';
-                statusEl.textContent = '';
-                statusEl.className = 'upload-status text-xs text-slate-500 font-medium truncate';
-                saveReportDraft();
-            } catch(e) {
-                console.error(e);
-                UI.showToast('Failed to delete file', 'error');
-                btn.innerHTML = '<i class="fas fa-trash"></i>';
-                btn.disabled = false;
-            }
         }
 
 

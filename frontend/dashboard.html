@@ -321,7 +321,7 @@
                             <span class="px-3 py-1 inline-flex text-xs font-bold rounded-lg border ${statusColors[r.status] || statusColors.draft} shadow-sm">${sanitizeHTML(r.status.toUpperCase())}</span>
                         </td>
                         <td class="p-0 sm:px-7 sm:py-4 flex sm:table-cell items-center justify-end shrink-0 ml-3 sm:ml-0 text-right text-sm font-medium">
-                            ${r.status !== 'draft' ? `<a href="${BASE_URL}/reports/${r._id}/pdf?token=${localStorage.getItem('lis_token')}" target="_blank" class="p-2 text-brand-600 hover:bg-brand-50 hover:text-brand-800 rounded-lg transition-colors mr-1 tooltip-container" title="View PDF"><i class="fas fa-file-pdf"></i></a>` : ''}
+                            ${r.status !== 'draft' ? `<button onclick="downloadPdfGlobal('${r._id}', event)" class="p-2 text-brand-600 hover:bg-brand-50 hover:text-brand-800 rounded-lg transition-colors mr-1 tooltip-container" title="View PDF"><i class="fas fa-file-pdf"></i></button>` : ''}
                             <a href="report-create.html?edit=${r._id}" class="p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 rounded-lg transition-colors tooltip-container" title="Edit Report"><i class="fas fa-edit"></i></a>
                         </td>
                     </tr>

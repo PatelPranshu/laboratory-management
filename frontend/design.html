@@ -243,6 +243,36 @@
                                 </div>
                             </div>
 
+                            <!-- Different HF Margins -->
+                            <div class="mt-6 border border-purple-100 bg-purple-50/30 rounded-xl p-4 sm:p-5 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-purple-400"></div>
+                                <h3 class="text-[10px] font-black text-purple-600 uppercase tracking-[0.15em] mb-3 flex items-center border-b border-purple-200/50 pb-2">
+                                    <i class="fas fa-arrows-alt-h mr-2"></i> Custom Header & Footer Margins
+                                </h3>
+                                <label class="flex items-center space-x-2 cursor-pointer mb-4">
+                                    <input type="checkbox" id="diff-hf-margins-cb" onchange="toggleHFMargins()" class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                                    <span class="text-xs font-bold text-slate-700">Use different left/right margins for Header & Footer</span>
+                                </label>
+                                <div id="hf-margins-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4 hidden transition-all">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-purple-600 mb-1">Header Left</label>
+                                        <input type="number" id="h-left" min="0" max="1000" class="w-full px-3 py-2 bg-white border border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-bold text-slate-800 shadow-sm" value="0">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-purple-600 mb-1">Header Right</label>
+                                        <input type="number" id="h-right" min="0" max="1000" class="w-full px-3 py-2 bg-white border border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-bold text-slate-800 shadow-sm" value="0">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-purple-600 mb-1">Footer Left</label>
+                                        <input type="number" id="f-left" min="0" max="1000" class="w-full px-3 py-2 bg-white border border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-bold text-slate-800 shadow-sm" value="0">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-purple-600 mb-1">Footer Right</label>
+                                        <input type="number" id="f-right" min="0" max="1000" class="w-full px-3 py-2 bg-white border border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm font-bold text-slate-800 shadow-sm" value="0">
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="space-y-6">
                                 <!-- Heights Section -->
                                 <div>
@@ -313,60 +343,112 @@
 
                             <!-- Scrollable Wrapper for A4 Simulator -->
                             <div class="flex-1 overflow-auto rounded-xl flex justify-center items-start custom-scrollbar relative p-4 bg-slate-200/30">
+                                <div id="sim-wrapper" class="transition-all duration-300 mx-auto shrink-0" style="width: 357px; height: 505.2px;">
                                 <!-- Actual A4 Simulator -->
-                                <div id="pdf-simulator" class="bg-white shadow-2xl relative transition-all duration-300 ease-out flex flex-col mx-auto shrink-0" style="width: 595px; height: 842px; padding: 20px; transform-origin: top center; transform: scale(0.6);">
+                                <div id="pdf-simulator" class="bg-white shadow-2xl relative transition-all duration-300 ease-out flex flex-col shrink-0" style="width: 595px; height: 842px; padding: 20px; transform-origin: top left; transform: scale(0.6);">
                                 <!-- Header Simulator -->
-                                <div id="sim-header" class="w-full flex items-center justify-center bg-slate-50 border border-dashed border-slate-200 overflow-hidden mb-4 transition-all" style="height: 80px;">
-                                    <span id="sim-header-placeholder" class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Header Space</span>
-                                    <img id="sim-header-img" src="" class="max-w-full max-h-full object-contain hidden" alt="Header">
+                                <div id="sim-header" class="flex items-center justify-center bg-blue-50/30 border-2 border-dashed border-blue-400 overflow-hidden mb-4 transition-all relative" style="height: 80px;">
+                                    <span id="sim-header-placeholder" class="text-[10px] text-blue-500 font-bold tracking-widest uppercase">Header Area</span>
+                                    <img id="sim-header-img" src="" class="w-full h-full object-cover hidden" alt="Header">
                                 </div>
 
                                 <!-- Body Simulator (Patient Info + Test Table) -->
-                                <div class="flex-1 flex flex-col gap-4 overflow-hidden border border-dashed border-slate-100 p-2">
+                                <div class="flex flex-col gap-1 overflow-hidden border-2 border-dashed border-rose-400 p-0.5 bg-rose-50/30 relative rounded-lg shrink-0">
+                                    <div class="absolute -top-3 left-3 bg-white px-1 text-[9px] font-bold text-rose-500 tracking-widest uppercase rounded">Body Area</div>
                                     <!-- Patient Info block -->
-                                    <div class="grid grid-cols-2 gap-1 pb-2 border-b border-slate-200 transition-all leading-tight" id="sim-patient-info" style="font-size: 12px;">
-                                        <div class="font-bold text-slate-800">John Doe</div>
-                                        <div class="text-right text-slate-500">PID: 10293</div>
-                                        <div class="text-slate-500">Age: 35 / Male</div>
-                                        <div class="text-right text-slate-500">Date: 2026-06-16</div>
+                                    <div class="border-2 border-dashed border-purple-400 bg-purple-50/50 p-0.5 rounded transition-all leading-tight relative mt-2" style="font-size: 12px;">
+                                        <div class="absolute -top-2 left-2 bg-white px-1 text-[8px] font-bold text-purple-500 tracking-widest uppercase rounded">Patient Info Area</div>
+                                        <table class="w-full mt-2 border-collapse border border-slate-300 bg-white" id="sim-patient-info">
+                                            <colgroup>
+                                                <col style="width: 15%;">
+                                                <col style="width: 10%;">
+                                                <col style="width: 15%;">
+                                                <col style="width: 15%;">
+                                                <col style="width: 20%;">
+                                                <col style="width: 25%;">
+                                            </colgroup>
+                                            <tbody>
+                                                <tr class="border-b border-slate-300">
+                                                    <td class="p-1 border-r border-slate-300 font-bold text-slate-600" colspan="2">Patient Name:</td>
+                                                    <td class="p-1 border-r border-slate-300 font-bold text-slate-800 uppercase" colspan="3">John Doe</td>
+                                                    <td class="p-1 border-r border-slate-300">
+                                                        <div class="h-6 w-full bg-slate-200 border-x-4 border-slate-800 border-dashed mx-auto flex items-center justify-center text-[8px] text-slate-400 font-mono tracking-[0.2em]">|||||||||||||||||</div>
+                                                    </td>
+                                                </tr>
+                                                <tr class="border-b border-slate-300">
+                                                    <td class="p-1 border-r border-slate-300 font-bold text-slate-600">Age:</td>
+                                                    <td class="p-1 border-r border-slate-300 text-slate-800">35</td>
+                                                    <td class="p-1 border-r border-slate-300 font-bold text-slate-600">Gender:</td>
+                                                    <td class="p-1 border-r border-slate-300 text-slate-800">Male</td>
+                                                    <td class="p-1 border-r border-slate-300 font-bold text-slate-600">Report Date:</td>
+                                                    <td class="p-1 text-slate-800">16/6/2026</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="p-1 border-r border-slate-300 font-bold text-slate-600" colspan="2">Phone:</td>
+                                                    <td class="p-1 border-r border-slate-300 text-slate-800" colspan="2">+1234567890</td>
+                                                    <td class="p-1 border-r border-slate-300 font-bold text-slate-600">Referred By:</td>
+                                                    <td class="p-1 font-bold text-slate-800 uppercase">Dr. Smith</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
                                     
-                                    <!-- Report Title -->
-                                    <div class="text-center font-bold text-slate-800 uppercase tracking-widest text-[13px] underline mt-1">Complete Blood Count</div>
+                                    <!-- Template Content Area (Title + Table) -->
+                                    <div class="border-2 border-dashed border-green-400 bg-green-50/50 p-0.5 rounded relative flex flex-col mt-1 shrink-0">
+                                        <div class="absolute -top-2 left-2 bg-white px-1 text-[8px] font-bold text-green-600 tracking-widest uppercase rounded">Template Content Area</div>
+                                        
+                                        <!-- Report Title -->
+                                        <div class="text-center font-bold text-slate-800 uppercase tracking-widest text-[13px] mt-2 mb-1">
+                                            <div class="bg-slate-200 py-1">COMPLETE BLOOD COUNT (CBC)</div>
+                                        </div>
 
-                                    <!-- Dummy Table -->
-                                    <table class="w-full text-left mt-1 transition-all" id="sim-test-table" style="font-size: 12px;">
-                                        <thead>
-                                            <tr class="border-b-2 border-slate-800 font-bold">
-                                                <th class="py-1">Test Name</th>
-                                                <th class="py-1">Result</th>
-                                                <th class="py-1 text-slate-400 font-normal">Range</th>
+                                        <table class="w-full text-left transition-all border-collapse" id="sim-test-table" style="font-size: 12px;">
+                                            <thead>
+                                            <tr class="bg-slate-100 font-bold border-y border-slate-300">
+                                                <th class="py-1 px-1">TEST DESCRIPTION</th>
+                                                <th class="py-1 px-1">RESULT</th>
+                                                <th class="py-1 px-1">UNITS</th>
+                                                <th class="py-1 px-1">NORMAL VALUES</th>
                                             </tr>
-                                        </thead>
-                                        <tbody class="text-slate-700">
-                                            <tr class="border-b border-slate-100"><td class="py-1">Hemoglobin</td><td class="py-1 font-bold text-red-600">11.5</td><td class="py-1 text-slate-400">13.0 - 17.0</td></tr>
-                                            <tr class="border-b border-slate-100"><td class="py-1">WBC Count</td><td class="py-1">7500</td><td class="py-1 text-slate-400">4000 - 11000</td></tr>
-                                            <tr class="border-b border-slate-100"><td class="py-1">Platelets</td><td class="py-1">250000</td><td class="py-1 text-slate-400">150k - 450k</td></tr>
+                                            </thead>
+                                            <tbody class="text-slate-700 leading-tight">
+                                            <tr class="bg-slate-50 font-bold"><td colspan="4" class="py-1 px-1 text-slate-800">BLOOD COUNT</td></tr>
+                                            <tr><td class="py-0.5 px-1">HGB - Haemoglobin</td><td class="py-0.5 px-1 font-bold text-red-600">11.5</td><td class="py-0.5 px-1 text-slate-500">g/dL</td><td class="py-0.5 px-1 text-slate-800">13 - 18 g/dL</td></tr>
+                                            <tr><td class="py-0.5 px-1">RBC - Red Blood Cell</td><td class="py-0.5 px-1">5.1</td><td class="py-0.5 px-1 text-slate-500">mill./cmm</td><td class="py-0.5 px-1 text-slate-800">4.5 - 6 mill./cmm</td></tr>
+                                            <tr><td class="py-0.5 px-1">WBC - White Blood Cell</td><td class="py-0.5 px-1">7500</td><td class="py-0.5 px-1 text-slate-500">/cmm</td><td class="py-0.5 px-1 text-slate-800">4000 - 10000 /cmm</td></tr>
+                                            
+                                            <tr class="bg-slate-50 font-bold"><td colspan="4" class="py-1 px-1 text-slate-800">BLOOD INDICES</td></tr>
+                                            <tr><td class="py-0.5 px-1">HCT (Haematocrit)</td><td class="py-0.5 px-1">45.0</td><td class="py-0.5 px-1 text-slate-500">%</td><td class="py-0.5 px-1 text-slate-800">40 - 50 %</td></tr>
+                                            <tr><td class="py-0.5 px-1">MCV (Mean Cell Volume)</td><td class="py-0.5 px-1">90.0</td><td class="py-0.5 px-1 text-slate-500">fL</td><td class="py-0.5 px-1 text-slate-800">80 - 102 fL</td></tr>
+                                            
+                                            <tr><td colspan="4" class="py-4 text-center text-slate-400 italic text-[10px]">*** END OF COMPLETE BLOOD COUNT (CBC) ***</td></tr>
                                         </tbody>
                                     </table>
+                                    </div>
+                                    <!-- Signatures -->
+                                    <div class="flex justify-end gap-8 mt-1 transition-all leading-tight border-2 border-dashed border-amber-400 bg-amber-50/50 p-1 rounded relative shrink-0" style="font-size: 12px;">
+                                        <div class="absolute -top-2 right-3 bg-white px-1 text-[8px] font-bold text-amber-500 tracking-widest uppercase rounded">Signatures Area</div>
+                                        <div class="text-right w-full flex justify-between" id="sim-signatures">
+                                            <div class="text-[8px] text-slate-400 italic mb-2 text-left w-1/2 flex items-end pb-1">*Please correlate clinically. Partial reproduction of this report is not permitted. This is an electronically generated and authenticated document.</div>
+                                            <div class="inline-block text-center mr-2">
+                                                <div class="h-10 w-32 bg-slate-100 rounded mb-1 mx-auto flex items-center justify-center italic text-slate-800 text-lg">Signature</div>
+                                                <div class="font-bold text-slate-800 uppercase">DR. JOHN DOE</div>
+                                                <div class="text-slate-500 text-[10px] uppercase font-bold text-brand-500">PERFORMED BY / AUTHORIZED SIGNATORY</div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Footer Simulator -->
-                                <div class="mt-4 flex flex-col gap-2">
-                                    <!-- Signatures -->
-                                    <div class="flex justify-end gap-8 mb-2 transition-all leading-tight" id="sim-signatures" style="font-size: 12px;">
-                                        <div class="text-center">
-                                            <div class="h-10 w-24 bg-slate-100 rounded mb-1 mx-auto"></div>
-                                            <div class="font-bold text-slate-800">Dr. Smith</div>
-                                            <div class="text-slate-500">Pathologist</div>
-                                        </div>
-                                    </div>
-                                    <div id="sim-footer" class="w-full flex items-center justify-center bg-slate-50 border border-dashed border-slate-200 overflow-hidden transition-all shrink-0" style="height: 60px;">
-                                        <span id="sim-footer-placeholder" class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Footer Space</span>
-                                        <img id="sim-footer-img" src="" class="max-w-full max-h-full object-contain hidden" alt="Footer">
+                                <div class="mt-auto w-full flex flex-col gap-2">
+
+                                    <div id="sim-footer" class="flex items-center justify-center bg-blue-50/30 border-2 border-dashed border-blue-400 overflow-hidden transition-all shrink-0 relative" style="height: 60px;">
+                                        <span id="sim-footer-placeholder" class="text-[10px] text-blue-500 font-bold tracking-widest uppercase">Footer Area</span>
+                                        <img id="sim-footer-img" src="" class="w-full h-full object-cover hidden" alt="Footer">
                                     </div>
                                 </div>
                             </div> <!-- End pdf-simulator -->
+                            </div> <!-- End sim-wrapper -->
                             </div> <!-- End overflow wrapper -->
                         </div>
                     </div>
@@ -413,6 +495,13 @@
                  sSelect.dispatchEvent(new Event('change'));
                  document.getElementById('header-height').value = lp.headerHeight || 0;
                  document.getElementById('footer-height').value = lp.footerHeight || 0;
+
+                 document.getElementById('diff-hf-margins-cb').checked = lp.differentHFMargins || false;
+                 document.getElementById('h-left').value = lp.headerLeftMargin || 0;
+                 document.getElementById('h-right').value = lp.headerRightMargin || 0;
+                 document.getElementById('f-left').value = lp.footerLeftMargin || 0;
+                 document.getElementById('f-right').value = lp.footerRightMargin || 0;
+                 toggleHFMargins();
 
                  // After loading values, initialize the simulator
                  initSimulator();
@@ -536,7 +625,12 @@
                     signatureFontSize: sFont,
                     fontSize: tFont, // fallback
                     headerHeight: clamp(document.getElementById('header-height').value, 0, 1000),
-                    footerHeight: clamp(document.getElementById('footer-height').value, 0, 1000)
+                    footerHeight: clamp(document.getElementById('footer-height').value, 0, 1000),
+                    differentHFMargins: document.getElementById('diff-hf-margins-cb').checked,
+                    headerLeftMargin: clamp(document.getElementById('h-left').value, 0, 1000),
+                    headerRightMargin: clamp(document.getElementById('h-right').value, 0, 1000),
+                    footerLeftMargin: clamp(document.getElementById('f-left').value, 0, 1000),
+                    footerRightMargin: clamp(document.getElementById('f-right').value, 0, 1000)
                 }
             };
 
@@ -557,6 +651,9 @@
                  document.getElementById('m-bottom').value = 20;
                  document.getElementById('m-left').value = 20;
                  document.getElementById('m-right').value = 20;
+                 document.getElementById('m-top-no-header').value = 20;
+                 document.getElementById('m-bottom-no-footer').value = 20;
+                 
                  const pSelect = document.getElementById('patient-font-size');
                  pSelect.value = "12";
                  pSelect.dispatchEvent(new Event('change'));
@@ -568,8 +665,18 @@
                  const sSelect = document.getElementById('signature-font-size');
                  sSelect.value = "12";
                  sSelect.dispatchEvent(new Event('change'));
+                 
                  document.getElementById('header-height').value = 0;
                  document.getElementById('footer-height').value = 0;
+                 
+                 document.getElementById('diff-hf-margins-cb').checked = false;
+                 document.getElementById('h-left').value = 0;
+                 document.getElementById('h-right').value = 0;
+                 document.getElementById('f-left').value = 0;
+                 document.getElementById('f-right').value = 0;
+                 toggleHFMargins();
+                 
+                 updateSimulator();
                  UI.showToast("Layout parameters reset. Click Save to apply.", "success");
             }
         }
@@ -592,9 +699,19 @@
             }
         }
 
+        function toggleHFMargins() {
+            const cb = document.getElementById('diff-hf-margins-cb');
+            const grid = document.getElementById('hf-margins-grid');
+            if (cb && grid) {
+                if (cb.checked) grid.classList.remove('hidden');
+                else grid.classList.add('hidden');
+                updateSimulator();
+            }
+        }
+
         // --- Live Visualization Logic ---
         function initSimulator() {
-            const inputs = ['m-top', 'm-bottom', 'm-left', 'm-right', 'm-top-no-header', 'm-bottom-no-footer', 'header-height', 'footer-height', 'patient-font-size', 'template-font-size', 'signature-font-size'];
+            const inputs = ['m-top', 'm-bottom', 'm-left', 'm-right', 'm-top-no-header', 'm-bottom-no-footer', 'header-height', 'footer-height', 'patient-font-size', 'template-font-size', 'signature-font-size', 'diff-hf-margins-cb', 'h-left', 'h-right', 'f-left', 'f-right'];
             inputs.forEach(id => {
                 const el = document.getElementById(id);
                 if(el) {
@@ -625,6 +742,27 @@
             const r = document.getElementById('m-right').value || 20;
             sim.style.padding = `${t}px ${r}px ${b}px ${l}px`;
 
+            // Handle Custom HF Margins
+            const cb = document.getElementById('diff-hf-margins-cb');
+            const simH = document.getElementById('sim-header');
+            const simF = document.getElementById('sim-footer');
+            let hLeft = 0, hRight = 0, fLeft = 0, fRight = 0;
+            if (cb && cb.checked) {
+                hLeft = (Number(document.getElementById('h-left').value) || 0) - Number(l);
+                hRight = (Number(document.getElementById('h-right').value) || 0) - Number(r);
+                fLeft = (Number(document.getElementById('f-left').value) || 0) - Number(l);
+                fRight = (Number(document.getElementById('f-right').value) || 0) - Number(r);
+            }
+            
+            if (simH) {
+                simH.style.marginLeft = `${hLeft}px`;
+                simH.style.marginRight = `${hRight}px`;
+            }
+            if (simF) {
+                simF.style.marginLeft = `${fLeft}px`;
+                simF.style.marginRight = `${fRight}px`;
+            }
+
             // Apply Typography
             const pFont = document.getElementById('patient-font-size').value || 12;
             const tFont = document.getElementById('template-font-size').value || 12;
@@ -635,29 +773,41 @@
             document.getElementById('sim-signatures').style.fontSize = `${sFont}px`;
 
             // Apply Heights
-            const simH = document.getElementById('sim-header');
-            if (hideHF) {
-                simH.style.display = 'none';
-            } else {
-                simH.style.display = 'flex';
-                const hHeight = document.getElementById('header-height').value;
-                if (hHeight && hHeight > 0) {
-                    simH.style.height = `${hHeight}px`;
+            const simHImg = document.getElementById('sim-header-img');
+            if (simH) {
+                if (hideHF) {
+                    simH.style.display = 'none';
                 } else {
-                    simH.style.height = '80px';
+                    simH.style.display = 'flex';
+                    const hHeight = document.getElementById('header-height').value;
+                    if (hHeight && hHeight > 0) {
+                        simH.style.height = `${hHeight}px`;
+                        simHImg.style.height = '100%';
+                        simHImg.style.width = 'auto';
+                    } else {
+                        simH.style.height = 'auto';
+                        simHImg.style.height = 'auto';
+                        simHImg.style.width = '100%';
+                    }
                 }
             }
 
-            const simF = document.getElementById('sim-footer');
-            if (hideHF) {
-                simF.style.display = 'none';
-            } else {
-                simF.style.display = 'flex';
-                const fHeight = document.getElementById('footer-height').value;
-                if (fHeight && fHeight > 0) {
-                    simF.style.height = `${fHeight}px`;
+            const simFImg = document.getElementById('sim-footer-img');
+            if (simF) {
+                if (hideHF) {
+                    simF.style.display = 'none';
                 } else {
-                    simF.style.height = '60px';
+                    simF.style.display = 'flex';
+                    const fHeight = document.getElementById('footer-height').value;
+                    if (fHeight && fHeight > 0) {
+                        simF.style.height = `${fHeight}px`;
+                        simFImg.style.height = '100%';
+                        simFImg.style.width = 'auto';
+                    } else {
+                        simF.style.height = 'auto';
+                        simFImg.style.height = 'auto';
+                        simFImg.style.width = '100%';
+                    }
                 }
             }
         }
@@ -673,18 +823,11 @@
             
             // Apply scale
             const sim = document.getElementById('pdf-simulator');
-            if(sim) {
+            const wrapper = document.getElementById('sim-wrapper');
+            if(sim && wrapper) {
                 sim.style.transform = `scale(${currentZoom})`;
-                // We must also adjust the margin-bottom of the simulator relative to its scaled height 
-                // so the scroll container knows exactly how much to scroll, but a simple fix is to 
-                // wrap the scaled element in a container or just let `transform` do its thing. 
-                // Using transform-origin top center keeps the top visible.
-                // To fix scroll boundaries when scaling, we dynamically set the wrapper's spacer if needed,
-                // but since it's just a visualizer, overflow-auto with scale usually works passably 
-                // if we don't scale it too large. For perfect scroll, we'd adjust margin-bottom.
-                const scaledHeight = 842 * currentZoom;
-                const offset = 842 - scaledHeight;
-                sim.style.marginBottom = `-${offset}px`;
+                wrapper.style.width = `${595 * currentZoom}px`;
+                wrapper.style.height = `${842 * currentZoom}px`;
             }
             
             // Update UI

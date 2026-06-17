@@ -19,7 +19,7 @@ const ReportSectionSchema = new mongoose.Schema({
     name: { type: String, required: true },
     dataType: { 
       type: String, 
-      enum: ['NUMERIC', 'TEXT', 'BOOLEAN', 'DATETIME', 'ATTACHMENT', 'MULTI_SELECT', 'CULTURE_SENSITIVITY', 'CALCULATED', 'DEFAULT_VALUE'],
+      enum: ['NUMERIC', 'TEXT', 'BOOLEAN', 'DATETIME', 'MULTI_SELECT', 'CULTURE_SENSITIVITY', 'CALCULATED', 'DEFAULT_VALUE'],
       default: 'NUMERIC'
     },
     formula: { type: String },
@@ -28,7 +28,7 @@ const ReportSectionSchema = new mongoose.Schema({
     valueNumeric: { type: Number },
     valueText: { type: String },
     valueBoolean: { type: Boolean },
-    attachments: [{ type: String }],
+
     cultureResults: [{
       organism: { type: String },
       colonyCount: { type: String },
