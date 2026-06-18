@@ -1041,6 +1041,52 @@
                 
                 resultEl.type = 'hidden';
                 resultContainer.appendChild(dtInput);
+            } else if ((paramData.dataType === 'NUMERIC' || !paramData.dataType) && paramData.requireMinMax) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'flex items-center gap-2 w-full';
+                
+                const minInput = document.createElement('input');
+                minInput.type = 'number';
+                minInput.step = 'any';
+                minInput.placeholder = 'Min';
+                minInput.className = 'w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm';
+                
+                const maxInput = document.createElement('input');
+                maxInput.type = 'number';
+                maxInput.step = 'any';
+                maxInput.placeholder = 'Max';
+                maxInput.className = 'w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm';
+
+                wrapper.appendChild(minInput);
+                const separator = document.createElement('span');
+                separator.textContent = '-';
+                separator.className = 'text-slate-400 font-bold';
+                wrapper.appendChild(separator);
+                wrapper.appendChild(maxInput);
+
+                if (defaultResultVal && defaultResultVal.includes(' - ')) {
+                    const parts = defaultResultVal.split(' - ');
+                    minInput.value = parts[0] || '';
+                    maxInput.value = parts[1] || '';
+                } else if (defaultResultVal) {
+                    minInput.value = defaultResultVal;
+                }
+
+                const updateRange = () => {
+                    if (minInput.value === '' && maxInput.value === '') {
+                        resultEl.value = '';
+                    } else {
+                        resultEl.value = `${minInput.value} - ${maxInput.value}`;
+                    }
+                    checkAbnormal(resultEl);
+                    saveReportDraft();
+                };
+
+                minInput.oninput = updateRange;
+                maxInput.oninput = updateRange;
+
+                resultEl.type = 'hidden';
+                resultContainer.appendChild(wrapper);
             } else if (paramData.dataType === 'MULTI_SELECT') {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'relative w-full';
@@ -1097,6 +1143,10 @@
             }
             
             unitEl.value = paramData.units || '';
+            
+            if (paramData.methodology) line.querySelector('.p-methodology').value = paramData.methodology;
+            if (paramData.sampleType) line.querySelector('.p-sample-type').value = paramData.sampleType;
+            if (paramData.kitUsed) line.querySelector('.p-kit-used').value = paramData.kitUsed;
 
             // Determine display text for the reference range
             // Prioritize GENDER_SPECIFIC if isGenderSpecific is true, even if ruleType defaulted to MIN_MAX
@@ -1119,7 +1169,7 @@
                 rangeEl.readOnly = true; rangeEl.classList.add('locked-field');
             } else if (ruleType === 'QUALITATIVE' || paramData.dataType === 'TEXT' || paramData.dataType === 'QUALITATIVE' || paramData.dataType === 'BOOLEAN' || paramData.dataType === 'MULTI_SELECT') {
                 const textNormal = paramData.normalRange?.textNormal || (paramData.referenceRanges && paramData.referenceRanges[0]?.textNormal);
-                rangeEl.value = textNormal ? `Expected: ${textNormal}` : '';
+                rangeEl.value = textNormal ? textNormal : '';
                 rangeEl.readOnly = true; rangeEl.classList.add('locked-field');
             } else if (paramData.normalRange) {
                 const nr = paramData.normalRange;
@@ -1223,40 +1273,56 @@
                     }
                 }
             } else {
-                const resultMatch = resultStr.match(/(-?[\d.]+)/);
-                if (!resultMatch) return;
-                const resultNum = parseFloat(resultMatch[1]);
-
-                if (ruleType === 'MIN_MAX' && param.normalRange) {
-                    const nr = param.normalRange;
-                    if (nr.min !== null && resultNum < nr.min) isAbnormal = true;
-                    if (nr.max !== null && resultNum > nr.max) isAbnormal = true;
-                } else if (ruleType === 'GENDER_SPECIFIC' && param.normalRange && currentPatient) {
-                    const gender = currentPatient.gender.toLowerCase();
-                    let target = null;
-                    if (gender === 'male') target = param.normalRange.male;
-                    else if (gender === 'female') target = param.normalRange.female;
-                    if (target) {
-                        if (target.min !== null && resultNum < target.min) isAbnormal = true;
-                        if (target.max !== null && resultNum > target.max) isAbnormal = true;
-                    }
-                } else if (ruleType === 'THRESHOLD_COMPARISON' && param.comparisons) {
-                    for (const r of param.comparisons) {
-                        let matches = false;
-                        switch (r.operator) {
-                            case '<': matches = resultNum < r.value; break;
-                            case '<=': matches = resultNum <= r.value; break;
-                            case '>': matches = resultNum > r.value; break;
-                            case '>=': matches = resultNum >= r.value; break;
-                            case '==': matches = resultNum === r.value; break;
-                            case 'between': matches = resultNum >= r.value && resultNum <= r.valueTo; break;
-                        }
-                        if (matches) {
-                            if (r.action === 'HIGHLIGHT' || r.action === 'CRITICAL') isAbnormal = true;
-                            break;
-                        }
-                    }
+                let valuesToCheck = [];
+                if (param.requireMinMax && resultStr.includes(' - ')) {
+                    const parts = resultStr.split(' - ');
+                    if (parts[0] && parts[0].trim() !== '') valuesToCheck.push(parseFloat(parts[0]));
+                    if (parts[1] && parts[1].trim() !== '') valuesToCheck.push(parseFloat(parts[1]));
+                } else {
+                    const resultMatch = resultStr.match(/(-?[\d.]+)/);
+                    if (resultMatch) valuesToCheck.push(parseFloat(resultMatch[1]));
                 }
+
+                if (valuesToCheck.length === 0) return;
+
+                let anyAbnormal = false;
+                for (const resultNum of valuesToCheck) {
+                    if (isNaN(resultNum)) continue;
+                    let numAbnormal = false;
+                    
+                    if (ruleType === 'MIN_MAX' && param.normalRange) {
+                        const nr = param.normalRange;
+                        if (nr.min !== null && resultNum < nr.min) numAbnormal = true;
+                        if (nr.max !== null && resultNum > nr.max) numAbnormal = true;
+                    } else if (ruleType === 'GENDER_SPECIFIC' && param.normalRange && currentPatient) {
+                        const gender = currentPatient.gender.toLowerCase();
+                        let target = null;
+                        if (gender === 'male') target = param.normalRange.male;
+                        else if (gender === 'female') target = param.normalRange.female;
+                        if (target) {
+                            if (target.min !== null && resultNum < target.min) numAbnormal = true;
+                            if (target.max !== null && resultNum > target.max) numAbnormal = true;
+                        }
+                    } else if (ruleType === 'THRESHOLD_COMPARISON' && param.comparisons) {
+                        for (const r of param.comparisons) {
+                            let matches = false;
+                            switch (r.operator) {
+                                case '<': matches = resultNum < r.value; break;
+                                case '<=': matches = resultNum <= r.value; break;
+                                case '>': matches = resultNum > r.value; break;
+                                case '>=': matches = resultNum >= r.value; break;
+                                case '==': matches = resultNum === r.value; break;
+                                case 'between': matches = resultNum >= r.value && resultNum <= r.valueTo; break;
+                            }
+                            if (matches) {
+                                if (r.action === 'HIGHLIGHT' || r.action === 'CRITICAL') numAbnormal = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (numAbnormal) anyAbnormal = true;
+                }
+                isAbnormal = anyAbnormal;
             }
             if (isAbnormal) inputEl.classList.add('text-red-600', 'border-red-300', 'bg-red-50');
         }
@@ -1398,6 +1464,16 @@
                             p.normalRange = { min: null, max: val.replace('≤', '').trim() };
                         }
                     }
+                    
+                    const pMeth = pl.querySelector('.p-methodology').value.trim();
+                    if (pMeth) p.methodology = pMeth; else delete p.methodology;
+                    
+                    const pSamp = pl.querySelector('.p-sample-type').value.trim();
+                    if (pSamp) p.sampleType = pSamp; else delete p.sampleType;
+                    
+                    const pKit = pl.querySelector('.p-kit-used').value.trim();
+                    if (pKit) p.kitUsed = pKit; else delete p.kitUsed;
+
                     parameters.push(p);
                 });
                 const sMeth = secBlock.querySelector('.rs-methodology').value.trim();

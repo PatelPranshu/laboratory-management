@@ -403,6 +403,12 @@
                             </select>
                         </div>
 
+                        <!-- Require Min-Max Input -->
+                        <div class="flex items-center gap-2 mb-4">
+                            <input type="checkbox" class="pr-require-minmax h-4 w-4 text-brand-600 focus:ring-brand-500 border-slate-300 rounded cursor-pointer">
+                            <label class="text-xs font-bold text-slate-600 cursor-pointer select-none" onclick="this.previousElementSibling.click()">min-max value</label>
+                        </div>
+
                         <!-- Min/Max -->
                         <div class="rule-min-max flex items-center gap-3">
                             <div class="flex-1 max-w-[180px]">
@@ -1118,7 +1124,7 @@
                 // Populate tag picker with other NUMERIC/CALCULATED params in the same section
                 populateTagPicker(row);
             } else if (dataType === 'TEXT' || dataType === 'QUALITATIVE') {
-                unitsContainer.classList.add('opacity-0', 'pointer-events-none');
+                unitsContainer.classList.remove('opacity-0', 'pointer-events-none');
                 textConfig.classList.remove('hidden');
                 textConfig.classList.add('flex');
             } else if (dataType === 'DEFAULT_VALUE') {
@@ -1340,6 +1346,7 @@
                 }
 
                 if (data.dataType === 'TEXT' || data.dataType === 'QUALITATIVE') {
+                    row.querySelector('.pr-units').value = data.units || '';
                     if (data.normalRange && data.normalRange.textNormal) {
                         row.querySelector('.pr-text-config .pr-text-normal').value = data.normalRange.textNormal;
                     } else if (data.referenceRanges && data.referenceRanges.length > 0) {
@@ -1422,6 +1429,7 @@
                     setTimeout(() => populateTagPicker(row), 50);
                 } else if (data.dataType === 'NUMERIC' || !data.dataType) {
                     row.querySelector('.pr-units').value = data.units || '';
+                    row.querySelector('.pr-require-minmax').checked = data.requireMinMax || false;
 
                     // Determine the effective ruleType (with legacy compat)
                     let ruleType = data.ruleType || 'MIN_MAX';
@@ -1505,11 +1513,18 @@
         }
 
         function extractTemplateData() {
+            // Remove previous error highlights
+            document.querySelectorAll('.error-highlight').forEach(el => {
+                el.classList.remove('error-highlight', 'border-red-500', 'ring-2', 'ring-red-200');
+            });
+
             const name = document.getElementById('t-name').value;
             const sectionBlocks = document.querySelectorAll('.section-block');
             const sections = [];
+            let validationError = null;
 
             sectionBlocks.forEach(block => {
+                if (validationError) return;
                 const secName = block.querySelector('.sec-name').value;
                 const secText = block.querySelector('.sec-text').value;
                 const secMethodology = block.querySelector('.sec-methodology').value.trim();
@@ -1518,8 +1533,14 @@
                 const parameters = [];
 
                 block.querySelectorAll('.param-row').forEach(row => {
-                    const name = row.querySelector('.pr-name').value.trim();
-                    if (!name) return;
+                    if (validationError) return;
+                    const nameInput = row.querySelector('.pr-name');
+                    const name = nameInput.value.trim();
+                    
+                    if (!name) {
+                        validationError = { el: nameInput, msg: 'Parameter name is required.' };
+                        return;
+                    }
 
                     const units = row.querySelector('.pr-units').value.trim();
                     const dataType = row.querySelector('.pr-data-type').value;
@@ -1542,6 +1563,10 @@
                         if (dataType === 'CALCULATED') {
                             const formulaEl = row.querySelector('.pr-formula');
                             const formula = formulaEl ? formulaEl.value.trim() : '';
+                            if (!formula) {
+                                validationError = { el: formulaEl, msg: `Formula is required for calculated parameter '${name}'.` };
+                                return;
+                            }
                             param.formula = formula;
 
                             // Auto-extract dependencies from [Tag Name] patterns
@@ -1550,7 +1575,7 @@
 
                             // Self-reference validation
                             if (param.formulaDependencies.includes(name)) {
-                                UI.showToast(`Formula for "${name}" cannot reference itself.`, 'error');
+                                validationError = { el: formulaEl, msg: `Formula for '${name}' cannot reference itself.` };
                                 return;
                             }
                         }
@@ -1598,6 +1623,7 @@
                             param.normalRange.min = minVal !== '' ? minVal : null;
                             param.normalRange.max = maxVal !== '' ? maxVal : null;
                         }
+                        param.requireMinMax = row.querySelector('.pr-require-minmax').checked;
                     } else if (dataType === 'TEXT' || dataType === 'QUALITATIVE') {
                         const textNormal = row.querySelector('.pr-text-config .pr-text-normal').value.trim();
                         param.ruleType = 'QUALITATIVE';
@@ -1661,16 +1687,33 @@
             const department = document.getElementById('t-department').value;
             const reportType = document.getElementById('t-report-type').value;
 
-            return { name, department, reportType, sections };
+            if (validationError) return { error: validationError };
+            return { data: { name, department, reportType, sections } };
         }
 
         async function saveTemplate(e) {
             if (e) e.preventDefault();
             const id = document.getElementById('template-id').value;
-            const { name, department, reportType, sections } = extractTemplateData();
+            const extracted = extractTemplateData();
+            
+            if (extracted.error) {
+                if (extracted.error.el) {
+                    extracted.error.el.focus();
+                    extracted.error.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    extracted.error.el.classList.add('error-highlight', 'border-red-500', 'ring-2', 'ring-red-200');
+                    setTimeout(() => extracted.error.el.classList.remove('error-highlight', 'border-red-500', 'ring-2', 'ring-red-200'), 4000);
+                }
+                return UI.showToast(extracted.error.msg, 'error');
+            }
+            
+            const { name, department, reportType, sections } = extracted.data;
 
             if (!name) {
-                document.getElementById('t-name').focus();
+                const nameInput = document.getElementById('t-name');
+                nameInput.focus();
+                nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                nameInput.classList.add('error-highlight', 'border-red-500', 'ring-2', 'ring-red-200');
+                setTimeout(() => nameInput.classList.remove('error-highlight', 'border-red-500', 'ring-2', 'ring-red-200'), 4000);
                 return UI.showToast('Template Name is required', 'error');
             }
 

@@ -196,7 +196,8 @@ exports.generateReportPdf = async (report, patient, settings) => {
       : (typeof sec.values === 'object' && sec.values !== null ? sec.values : {});
     
     const legacyCount = Object.keys(valuesObj).filter(k => k !== '_id' && k !== '$__' && k !== '$isNew' && k !== 'parameters').length;
-    return params.length > 0 || legacyCount > 0;
+    const hasAdvSetup = !!(sec.methodology || sec.sampleType || sec.kitUsed);
+    return params.length > 0 || legacyCount > 0 || hasAdvSetup;
   });
 
   const groupedBlocks = [];
@@ -292,10 +293,10 @@ exports.generateReportPdf = async (report, patient, settings) => {
         vLineColor: () => '#cbd5e1',
         paddingLeft: () => 5,
         paddingRight: () => 5,
-        paddingTop: () => 4,
-        paddingBottom: () => 4
+        paddingTop: () => 2,
+        paddingBottom: () => 2
       },
-      margin: [0, 5, 0, 5]
+      margin: [0, 0, 0, (lp.spacePatientTemplate !== undefined ? lp.spacePatientTemplate : 2)]
     };
 
     if (blockIdx > 0) {
@@ -452,12 +453,21 @@ exports.generateReportPdf = async (report, patient, settings) => {
               {}
             ]);
           } else {
-            sectionTableBody.push([
-              { text: paramTextChunks, margin: [0, 0, 0, 0] },
-              resultCell,
-              { text: unitsStr, margin: [0, 0, 0, 0] },
-              { text: normalRangeStr, fontSize: templateInfoFontSize - 2, margin: [0, 0, 0, 0] }
-            ]);
+            if (!normalRangeStr || normalRangeStr.trim() === '') {
+              sectionTableBody.push([
+                { text: paramTextChunks, margin: [0, 0, 0, 0] },
+                resultCell,
+                { text: unitsStr, margin: [0, 0, 0, 0], colSpan: 2 },
+                {}
+              ]);
+            } else {
+              sectionTableBody.push([
+                { text: paramTextChunks, margin: [0, 0, 0, 0] },
+                resultCell,
+                { text: unitsStr, margin: [0, 0, 0, 0] },
+                { text: normalRangeStr, fontSize: templateInfoFontSize - 2, margin: [0, 0, 0, 0] }
+              ]);
+            }
           }
         }
       } else if (sec.values) {
@@ -557,7 +567,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
         text: `*** END OF ${currentTemplateName} ***`,
         alignment: 'center',
         bold: true,
-        margin: [0, 0, 0, 15],
+        margin: [0, 0, 0, (lp.spaceTemplateSignature !== undefined ? lp.spaceTemplateSignature : 5)],
         fontSize: signatureFontSize - 2,
         color: '#475569'
     });
@@ -570,7 +580,9 @@ exports.generateReportPdf = async (report, patient, settings) => {
         
         const sigStack = [];
         if (signatureImageData) {
-            sigStack.push({ image: signatureImageData, fit: [120, 60], alignment: 'center' });
+            const sigWidth = lp.signatureImageWidth || 120;
+            const sigHeight = lp.signatureImageHeight || 60;
+            sigStack.push({ image: signatureImageData, fit: [sigWidth, sigHeight], alignment: 'center' });
         } else {
             // Leave vertical space for a physical signature if image is deleted or unavailable
             sigStack.push({ text: '\n\n\n', fontSize: signatureFontSize });
@@ -587,12 +599,12 @@ exports.generateReportPdf = async (report, patient, settings) => {
                     fontSize: signatureFontSize - 4,
                     color: '#64748b',
                     italics: true,
-                    margin: [0, 20, 10, 0]
+                    margin: [0, 5, 10, 0]
                 }, 
                 {
                     width: 200,
                     alignment: 'center',
-                    margin: [0, 10, 0, 0],
+                    margin: [0, 0, 0, 0],
                     stack: sigStack
                 }
             ]
@@ -640,8 +652,8 @@ exports.generateReportPdf = async (report, patient, settings) => {
       }
   }
 
-  const safeTopMargin = headerImageData ? mt + headerHeightVal + 10 : mt;
-  const safeBottomMargin = footerImageData ? mb + footerHeightVal + 10 : mb + 20;
+  const safeTopMargin = headerImageData ? mt + headerHeightVal + (lp.spaceHeaderPatient !== undefined ? lp.spaceHeaderPatient : 2) : mt;
+  const safeBottomMargin = footerImageData ? mb + footerHeightVal + (lp.spaceSignatureFooter !== undefined ? lp.spaceSignatureFooter : 10) : mb + 20;
 
   const docDefinition = {
     header: headerImageData ? function(currentPage, pageCount) {

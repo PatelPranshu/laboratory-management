@@ -33,7 +33,13 @@ const PrintSettingsSchema = new mongoose.Schema({
     headerLeftMargin: { type: Number, default: 0, min: 0, max: 1000 },
     headerRightMargin: { type: Number, default: 0, min: 0, max: 1000 },
     footerLeftMargin: { type: Number, default: 0, min: 0, max: 1000 },
-    footerRightMargin: { type: Number, default: 0, min: 0, max: 1000 }
+    footerRightMargin: { type: Number, default: 0, min: 0, max: 1000 },
+    signatureImageWidth: { type: Number, default: 120, min: 10, max: 1000 },
+    signatureImageHeight: { type: Number, default: 60, min: 10, max: 1000 },
+    spaceHeaderPatient: { type: Number, default: 2, min: 0, max: 200 },
+    spacePatientTemplate: { type: Number, default: 2, min: 0, max: 200 },
+    spaceTemplateSignature: { type: Number, default: 5, min: 0, max: 200 },
+    spaceSignatureFooter: { type: Number, default: 10, min: 0, max: 200 }
   }
 }, { timestamps: true });
 

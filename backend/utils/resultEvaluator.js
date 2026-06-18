@@ -169,7 +169,7 @@ function evaluatePatientResult(resultValue, parameterLogic, patientGender) {
           }
         }
       } else if (expectedNormal) {
-        result.rangeDisplay = `Expected: ${expectedNormal}`;
+        result.rangeDisplay = expectedNormal;
         if (textValue && textValue.toLowerCase() !== expectedNormal.toLowerCase()) {
           result.isAbnormal = true;
           result.highlight = true;
@@ -181,17 +181,39 @@ function evaluatePatientResult(resultValue, parameterLogic, patientGender) {
       return result;
   }
 
+  // Create an array of values to evaluate (handles dual-inputs for requireMinMax)
+  let valuesToCheck = [];
+  if (parameterLogic.requireMinMax && String(resultValue || '').includes(' - ')) {
+      const parts = String(resultValue).split(' - ');
+      parts.forEach(p => {
+          const nv = parseNumericResult(p);
+          if (nv !== null) valuesToCheck.push(nv);
+      });
+  } else {
+      if (numericValue !== null) valuesToCheck.push(numericValue);
+  }
+
   switch (ruleType) {
     case 'MIN_MAX': {
       const nr = parameterLogic.normalRange;
       if (!nr) break;
       result.rangeDisplay = formatMinMax(nr.min, nr.max, units);
-      const abnormal = isOutsideBounds(numericValue, nr.min, nr.max);
-      if (abnormal === true) {
+      
+      let anyAbnormal = false;
+      let worstClass = 'Normal';
+      for (const val of valuesToCheck) {
+          const abnormal = isOutsideBounds(val, nr.min, nr.max);
+          if (abnormal === true) {
+              anyAbnormal = true;
+              worstClass = val < nr.min ? 'Low' : 'High';
+          }
+      }
+      
+      if (anyAbnormal) {
         result.isAbnormal = true;
         result.highlight = true;
-        result.classification = numericValue < nr.min ? 'Low' : 'High';
-      } else if (abnormal === false) {
+        result.classification = worstClass;
+      } else if (valuesToCheck.length > 0) {
         result.classification = 'Normal';
       }
       break;
@@ -219,12 +241,21 @@ function evaluatePatientResult(resultValue, parameterLogic, patientGender) {
       }
 
       if (targetRange) {
-        const abnormal = isOutsideBounds(numericValue, targetRange.min, targetRange.max);
-        if (abnormal === true) {
+        let anyAbnormal = false;
+        let worstClass = 'Normal';
+        for (const val of valuesToCheck) {
+            const abnormal = isOutsideBounds(val, targetRange.min, targetRange.max);
+            if (abnormal === true) {
+                anyAbnormal = true;
+                worstClass = val < targetRange.min ? 'Low' : 'High';
+            }
+        }
+        
+        if (anyAbnormal) {
           result.isAbnormal = true;
           result.highlight = true;
-          result.classification = numericValue < targetRange.min ? 'Low' : 'High';
-        } else if (abnormal === false) {
+          result.classification = worstClass;
+        } else if (valuesToCheck.length > 0) {
           result.classification = 'Normal';
         }
       }
@@ -238,20 +269,22 @@ function evaluatePatientResult(resultValue, parameterLogic, patientGender) {
       // Build display string from all rules
       result.rangeDisplay = comparisons.map(r => formatRuleDisplay(r)).join('\n');
 
-      // Find first matching rule (order matters)
-      for (const rule of comparisons) {
-        if (matchesRule(numericValue, rule)) {
-          result.classification = rule.classification || null;
-          const action = (rule.action || 'NORMAL').toUpperCase();
-          if (action === 'HIGHLIGHT') {
-            result.isAbnormal = true;
-            result.highlight = true;
-          } else if (action === 'CRITICAL') {
-            result.isAbnormal = true;
-            result.highlight = true;
-            result.critical = true;
+      // Find first matching rule for any value
+      for (const val of valuesToCheck) {
+        for (const rule of comparisons) {
+          if (matchesRule(val, rule)) {
+            result.classification = rule.classification || null;
+            const action = (rule.action || 'NORMAL').toUpperCase();
+            if (action === 'HIGHLIGHT') {
+              result.isAbnormal = true;
+              result.highlight = true;
+            } else if (action === 'CRITICAL') {
+              result.isAbnormal = true;
+              result.highlight = true;
+              result.critical = true;
+            }
+            break;
           }
-          break;
         }
       }
       break;

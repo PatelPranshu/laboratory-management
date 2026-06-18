@@ -41,19 +41,6 @@ const validateTemplatePayload = (sections) => {
         if (!hasLegacyMinMax && !hasLegacyComparisons && !hasNewRanges) {
           return `Parameter '${param.name}' is CALCULATED but missing reference range limits.`;
         }
-      } else if (param.dataType === 'NUMERIC') {
-        const hasLegacyMinMax = param.normalRange && (param.normalRange.min != null || param.normalRange.max != null || (param.normalRange.male && (param.normalRange.male.min != null || param.normalRange.male.max != null)) || (param.normalRange.female && (param.normalRange.female.min != null || param.normalRange.female.max != null)));
-        const hasLegacyComparisons = param.comparisons && param.comparisons.length > 0;
-        const hasNewRanges = param.referenceRanges && param.referenceRanges.length > 0 && param.referenceRanges.some(r => r.min != null || r.max != null);
-        if (!hasLegacyMinMax && !hasLegacyComparisons && !hasNewRanges) {
-          return `Parameter '${param.name}' is NUMERIC but missing limits.`;
-        }
-      } else if (param.dataType === 'TEXT') {
-        const hasLegacyComparisons = param.comparisons && param.comparisons.length > 0;
-        const hasNewText = param.referenceRanges && param.referenceRanges.length > 0 && param.referenceRanges.some(r => r.textNormal);
-        if (!hasLegacyComparisons && !hasNewText) {
-          return `Parameter '${param.name}' is TEXT but missing expected text limit.`;
-        }
       }
     }
   }

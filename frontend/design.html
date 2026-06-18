@@ -291,6 +291,48 @@
                                     </div>
                                 </div>
 
+                                <!-- Signature Size Section -->
+                                <div>
+                                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3 flex items-center border-b border-slate-200 pb-2">
+                                        <i class="fas fa-signature mr-2"></i> Signature Image Size (pt)
+                                    </h3>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Max Width</label>
+                                            <input type="number" id="signature-width" min="10" max="1000" value="120" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Max Height</label>
+                                            <input type="number" id="signature-height" min="10" max="1000" value="60" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Section Spacing Section -->
+                                <div>
+                                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3 flex items-center border-b border-slate-200 pb-2">
+                                        <i class="fas fa-arrows-alt-v mr-2"></i> Section Spacing (pt)
+                                    </h3>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-slate-600 mb-1" title="Space between Header and Patient Info">Head &rarr; Pat.</label>
+                                            <input type="number" id="space-header-patient" min="0" max="200" value="2" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-slate-600 mb-1" title="Space between Patient Info and Template">Pat. &rarr; Temp.</label>
+                                            <input type="number" id="space-patient-template" min="0" max="200" value="2" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-slate-600 mb-1" title="Space between Template and Signature">Temp. &rarr; Sig.</label>
+                                            <input type="number" id="space-template-signature" min="0" max="200" value="5" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-slate-600 mb-1" title="Space between Signature and Footer">Sig. &rarr; Foot.</label>
+                                            <input type="number" id="space-signature-footer" min="0" max="200" value="10" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm font-bold text-slate-800 transition-all shadow-sm">
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <!-- Typography Section -->
                                 <div>
                                     <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-3 flex items-center border-b border-slate-200 pb-2">
@@ -353,10 +395,10 @@
                                 </div>
 
                                 <!-- Body Simulator (Patient Info + Test Table) -->
-                                <div class="flex flex-col gap-1 overflow-hidden border-2 border-dashed border-rose-400 p-0.5 bg-rose-50/30 relative rounded-lg shrink-0">
+                                <div class="flex flex-col overflow-hidden border-2 border-dashed border-rose-400 p-0.5 bg-rose-50/30 relative rounded-lg shrink-0">
                                     <div class="absolute -top-3 left-3 bg-white px-1 text-[9px] font-bold text-rose-500 tracking-widest uppercase rounded">Body Area</div>
                                     <!-- Patient Info block -->
-                                    <div class="border-2 border-dashed border-purple-400 bg-purple-50/50 p-0.5 rounded transition-all leading-tight relative mt-2" style="font-size: 12px;">
+                                    <div class="border-2 border-dashed border-purple-400 bg-purple-50/50 p-0.5 rounded transition-all leading-tight relative" style="font-size: 12px;">
                                         <div class="absolute -top-2 left-2 bg-white px-1 text-[8px] font-bold text-purple-500 tracking-widest uppercase rounded">Patient Info Area</div>
                                         <table class="w-full mt-2 border-collapse border border-slate-300 bg-white" id="sim-patient-info">
                                             <colgroup>
@@ -394,7 +436,7 @@
                                     </div>
                                     
                                     <!-- Template Content Area (Title + Table) -->
-                                    <div class="border-2 border-dashed border-green-400 bg-green-50/50 p-0.5 rounded relative flex flex-col mt-1 shrink-0">
+                                    <div class="border-2 border-dashed border-green-400 bg-green-50/50 p-0.5 rounded relative flex flex-col shrink-0">
                                         <div class="absolute -top-2 left-2 bg-white px-1 text-[8px] font-bold text-green-600 tracking-widest uppercase rounded">Template Content Area</div>
                                         
                                         <!-- Report Title -->
@@ -426,12 +468,12 @@
                                     </table>
                                     </div>
                                     <!-- Signatures -->
-                                    <div class="flex justify-end gap-8 mt-1 transition-all leading-tight border-2 border-dashed border-amber-400 bg-amber-50/50 p-1 rounded relative shrink-0" style="font-size: 12px;">
+                                    <div id="sim-signature-area" class="flex justify-end gap-8 transition-all leading-tight border-2 border-dashed border-amber-400 bg-amber-50/50 p-1 rounded relative shrink-0" style="font-size: 12px;">
                                         <div class="absolute -top-2 right-3 bg-white px-1 text-[8px] font-bold text-amber-500 tracking-widest uppercase rounded">Signatures Area</div>
                                         <div class="text-right w-full flex justify-between" id="sim-signatures">
                                             <div class="text-[8px] text-slate-400 italic mb-2 text-left w-1/2 flex items-end pb-1">*Please correlate clinically. Partial reproduction of this report is not permitted. This is an electronically generated and authenticated document.</div>
                                             <div class="inline-block text-center mr-2">
-                                                <div class="h-10 w-32 bg-slate-100 rounded mb-1 mx-auto flex items-center justify-center italic text-slate-800 text-lg">Signature</div>
+                                                <div id="sim-signature-box" class="h-10 w-32 bg-slate-100 rounded mb-1 mx-auto flex items-center justify-center italic text-slate-800 text-lg transition-all">Signature</div>
                                                 <div class="font-bold text-slate-800 uppercase">DR. JOHN DOE</div>
                                                 <div class="text-slate-500 text-[10px] uppercase font-bold text-brand-500">PERFORMED BY / AUTHORIZED SIGNATORY</div>
                                             </div>
@@ -495,6 +537,13 @@
                  sSelect.dispatchEvent(new Event('change'));
                  document.getElementById('header-height').value = lp.headerHeight || 0;
                  document.getElementById('footer-height').value = lp.footerHeight || 0;
+                 document.getElementById('signature-width').value = lp.signatureImageWidth || 120;
+                 document.getElementById('signature-height').value = lp.signatureImageHeight || 60;
+                 
+                 document.getElementById('space-header-patient').value = lp.spaceHeaderPatient ?? 2;
+                 document.getElementById('space-patient-template').value = lp.spacePatientTemplate ?? 2;
+                 document.getElementById('space-template-signature').value = lp.spaceTemplateSignature ?? 5;
+                 document.getElementById('space-signature-footer').value = lp.spaceSignatureFooter ?? 10;
 
                  document.getElementById('diff-hf-margins-cb').checked = lp.differentHFMargins || false;
                  document.getElementById('h-left').value = lp.headerLeftMargin || 0;
@@ -630,7 +679,13 @@
                     headerLeftMargin: clamp(document.getElementById('h-left').value, 0, 1000),
                     headerRightMargin: clamp(document.getElementById('h-right').value, 0, 1000),
                     footerLeftMargin: clamp(document.getElementById('f-left').value, 0, 1000),
-                    footerRightMargin: clamp(document.getElementById('f-right').value, 0, 1000)
+                    footerRightMargin: clamp(document.getElementById('f-right').value, 0, 1000),
+                    signatureImageWidth: clamp(document.getElementById('signature-width').value, 10, 1000),
+                    signatureImageHeight: clamp(document.getElementById('signature-height').value, 10, 1000),
+                    spaceHeaderPatient: clamp(document.getElementById('space-header-patient').value, 0, 200),
+                    spacePatientTemplate: clamp(document.getElementById('space-patient-template').value, 0, 200),
+                    spaceTemplateSignature: clamp(document.getElementById('space-template-signature').value, 0, 200),
+                    spaceSignatureFooter: clamp(document.getElementById('space-signature-footer').value, 0, 200)
                 }
             };
 
@@ -711,7 +766,7 @@
 
         // --- Live Visualization Logic ---
         function initSimulator() {
-            const inputs = ['m-top', 'm-bottom', 'm-left', 'm-right', 'm-top-no-header', 'm-bottom-no-footer', 'header-height', 'footer-height', 'patient-font-size', 'template-font-size', 'signature-font-size', 'diff-hf-margins-cb', 'h-left', 'h-right', 'f-left', 'f-right'];
+            const inputs = ['m-top', 'm-bottom', 'm-left', 'm-right', 'm-top-no-header', 'm-bottom-no-footer', 'header-height', 'footer-height', 'patient-font-size', 'template-font-size', 'signature-font-size', 'signature-width', 'signature-height', 'diff-hf-margins-cb', 'h-left', 'h-right', 'f-left', 'f-right', 'space-header-patient', 'space-patient-template', 'space-template-signature', 'space-signature-footer'];
             inputs.forEach(id => {
                 const el = document.getElementById(id);
                 if(el) {
@@ -771,6 +826,31 @@
             document.getElementById('sim-patient-info').style.fontSize = `${pFont}px`;
             document.getElementById('sim-test-table').style.fontSize = `${tFont}px`;
             document.getElementById('sim-signatures').style.fontSize = `${sFont}px`;
+
+            // Apply Signature Box Size
+            const simSigBox = document.getElementById('sim-signature-box');
+            if (simSigBox) {
+                const sigW = document.getElementById('signature-width').value || 120;
+                const sigH = document.getElementById('signature-height').value || 60;
+                simSigBox.style.width = `${sigW}px`;
+                simSigBox.style.height = `${sigH}px`;
+            }
+
+            // Apply Section Spacings
+            const simBody = document.getElementById('sim-patient-info').parentElement; // Actually it's the wrapper div around patient info, but let's select it carefully:
+            const patInfoDiv = document.getElementById('sim-patient-info').parentElement;
+            const tempDiv = document.getElementById('sim-test-table').parentElement;
+            const sigArea = document.getElementById('sim-signature-area');
+
+            const sHP = document.getElementById('space-header-patient').value || 2;
+            const sPT = document.getElementById('space-patient-template').value || 2;
+            const sTS = document.getElementById('space-template-signature').value || 5;
+            const sSF = document.getElementById('space-signature-footer').value || 10;
+
+            if(patInfoDiv) patInfoDiv.style.marginTop = `${sHP}px`;
+            if(tempDiv) tempDiv.style.marginTop = `${sPT}px`;
+            if(sigArea) sigArea.style.marginTop = `${sTS}px`;
+            if(simF) simF.style.marginTop = `${sSF}px`;
 
             // Apply Heights
             const simHImg = document.getElementById('sim-header-img');

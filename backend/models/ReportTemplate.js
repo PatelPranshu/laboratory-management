@@ -26,6 +26,7 @@ const SectionSchema = new mongoose.Schema({
     formulaDependencies: [{ type: String }],
     defaultValue: { type: String },
     options: [{ type: String }],
+    requireMinMax: { type: Boolean, default: false },
     // Legacy field — kept for backwards compatibility with existing documents
     isGenderSpecific: { type: Boolean, default: false },
     ruleType: {
