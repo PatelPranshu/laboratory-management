@@ -67,6 +67,14 @@
             border-color: #e2e8f0 !important;
         }
 
+        .temp-unlocked {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+            border-color: #94a3b8 !important;
+            border-width: 1px !important;
+            border-style: solid !important;
+        }
+
         input:focus,
         textarea:focus,
         select:focus {
@@ -364,11 +372,17 @@
 
             <div class="bg-slate-50 px-5 py-3 border-b border-slate-200 flex justify-between items-center rounded-t-lg">
                 <input type="text"
-                    class="rs-name font-semibold text-slate-800 bg-transparent border-0 focus:ring-0 p-0 w-3/4 text-base placeholder:text-slate-400 placeholder:font-normal"
-                    placeholder="Section Heading (e.g., Lipid Profile)">
-                <button onclick="this.closest('.rep-section').remove(); saveReportDraft()"
-                    class="text-slate-400 hover:text-red-500 transition-colors p-1"><i
-                        class="fas fa-trash text-sm"></i></button>
+                    class="rs-name font-semibold text-slate-800 bg-transparent border-0 focus:ring-0 p-0 w-1/2 text-base placeholder:text-slate-400 placeholder:font-normal"
+                    placeholder="Section Heading (e.g., Lipid Profile)" oninput="saveReportDraft()">
+                <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-500 cursor-pointer hover:text-brand-600 transition-colors" title="Unlock and edit template structure">
+                        <input type="checkbox" class="h-3.5 w-3.5 text-brand-600 focus:ring-brand-500 border-slate-300 rounded cursor-pointer" onchange="toggleSectionEdit(this)">
+                        Edit Section
+                    </label>
+                    <button onclick="this.closest('.rep-section').remove(); saveReportDraft()"
+                        class="text-slate-400 hover:text-red-500 transition-colors p-1"><i
+                            class="fas fa-trash text-sm"></i></button>
+                </div>
             </div>
 
             <div
@@ -395,7 +409,7 @@
                     <textarea
                         class="rs-text w-full px-3 py-2 bg-white border border-slate-300 rounded-md focus:border-brand-500 text-sm text-slate-700 outline-none transition-all resize-y shadow-sm placeholder:text-slate-400"
                         rows="1" placeholder="Clinical notes or interpretation for this section..."
-                        oninput="adjustNotesHeight(this)"></textarea>
+                        oninput="adjustNotesHeight(this); saveReportDraft()"></textarea>
                     <details class="w-full group mt-3">
                         <summary
                             class="text-[11px] font-bold text-slate-400 hover:text-brand-600 cursor-pointer list-none flex items-center gap-1.5 transition-colors select-none pl-1 w-max">
@@ -413,7 +427,7 @@
                                 </label>
                                 <input type="text"
                                     class="rs-methodology w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400"
-                                    placeholder="N/A">
+                                    placeholder="N/A" oninput="saveReportDraft()">
                             </div>
                             <div class="pl-2">
                                 <label
@@ -422,7 +436,7 @@
                                 </label>
                                 <input type="text"
                                     class="rs-sample-type w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400"
-                                    placeholder="N/A">
+                                    placeholder="N/A" oninput="saveReportDraft()">
                             </div>
                             <div class="pl-2">
                                 <label
@@ -431,7 +445,7 @@
                                 </label>
                                 <input type="text"
                                     class="rs-kit-used w-full bg-white border border-slate-200 rounded-md px-3 py-1.5 text-xs font-semibold text-slate-700 outline-none placeholder-slate-400"
-                                    placeholder="N/A">
+                                    placeholder="N/A" oninput="saveReportDraft()">
                             </div>
                         </div>
                     </details>
@@ -449,7 +463,7 @@
                     <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Parameter</label>
                     <input type="text"
                         class="p-name w-full bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded px-0 sm:px-2 py-1 sm:py-1.5 font-bold sm:font-medium text-slate-800 text-sm placeholder-slate-300 transition-all outline-none"
-                        placeholder="Parameter Name">
+                        placeholder="Parameter Name" oninput="saveReportDraft()">
                 </div>
                 <div class="w-full sm:col-span-2">
                     <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Result</label>
@@ -462,14 +476,14 @@
                         <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Unit</label>
                         <input type="text"
                             class="p-units-input w-full px-0 sm:px-2 py-1 sm:py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-xs sm:text-sm text-slate-600 transition-all outline-none"
-                            placeholder="Unit">
+                            placeholder="Unit" oninput="saveReportDraft()">
                     </div>
                     <div class="flex-[1.5]">
                         <label class="sm:hidden text-[10px] font-bold text-slate-400 uppercase mb-1">Ref. Range</label>
                         <textarea
                             class="p-normal-input w-full px-0 sm:px-2 py-1 sm:py-1.5 bg-transparent border border-transparent focus:border-slate-300 focus:bg-white rounded text-[11px] leading-tight text-slate-500 transition-all outline-none placeholder-slate-300 resize-none overflow-hidden"
                             rows="1" placeholder="Min - Max"
-                            oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'; checkAbnormal(this)"></textarea>
+                            oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'; checkAbnormal(this); saveReportDraft()"></textarea>
                     </div>
                 </div>
                 <div class="w-full sm:col-span-1 flex justify-end pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
@@ -698,14 +712,19 @@
 
                 // Auto-focus feature for 'Result' inputs
                 document.getElementById('report-sections-container').addEventListener('keydown', (e) => {
-                    if (e.target.classList.contains('p-result') && e.key === 'Enter') {
-                        e.preventDefault();
-                        const inputs = Array.from(document.querySelectorAll('.p-result'));
-                        const index = inputs.indexOf(e.target);
-                        if (index > -1 && index < inputs.length - 1) {
-                            inputs[index + 1].focus();
-                        } else {
-                            e.target.blur();
+                    if (e.key === 'Enter') {
+                        const isResultInput = e.target.classList.contains('p-result') || e.target.classList.contains('p-interactive-result');
+                        if (isResultInput && !e.target.readOnly) {
+                            e.preventDefault();
+                            const inputs = Array.from(document.querySelectorAll('.p-result:not([type="hidden"]), .p-interactive-result')).filter(el => {
+                                return el.offsetParent !== null && !el.readOnly && !el.disabled;
+                            });
+                            const index = inputs.indexOf(e.target);
+                            if (index > -1 && index < inputs.length - 1) {
+                                inputs[index + 1].focus();
+                            } else {
+                                e.target.blur();
+                            }
                         }
                     }
                 });
@@ -1005,6 +1024,27 @@
             return container.lastElementChild;
         }
 
+        function toggleSectionEdit(checkbox) {
+            const section = checkbox.closest('.rep-section');
+            const isEditing = checkbox.checked;
+            
+            if (isEditing) {
+                const lockedEls = section.querySelectorAll('.locked-field');
+                lockedEls.forEach(el => {
+                    el.readOnly = false;
+                    el.classList.remove('locked-field');
+                    el.classList.add('temp-unlocked');
+                });
+            } else {
+                const unlockedEls = section.querySelectorAll('.temp-unlocked');
+                unlockedEls.forEach(el => {
+                    el.readOnly = true;
+                    el.classList.add('locked-field');
+                    el.classList.remove('temp-unlocked');
+                });
+            }
+        }
+
         function addParamLine(btn, paramData = null, isReadOnly = false) {
             const tpl = document.getElementById('param-line-template'), clone = tpl.content.cloneNode(true), line = clone.querySelector('.param-line');
             if (!paramData) paramData = { name: '', result: '', units: '', ruleType: 'MIN_MAX', normalRange: { min: null, max: null } };
@@ -1049,13 +1089,13 @@
                 minInput.type = 'number';
                 minInput.step = 'any';
                 minInput.placeholder = 'Min';
-                minInput.className = 'w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm';
+                minInput.className = 'p-interactive-result w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm';
                 
                 const maxInput = document.createElement('input');
                 maxInput.type = 'number';
                 maxInput.step = 'any';
                 maxInput.placeholder = 'Max';
-                maxInput.className = 'w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm';
+                maxInput.className = 'p-interactive-result w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm';
 
                 wrapper.appendChild(minInput);
                 const separator = document.createElement('span');
@@ -1088,36 +1128,58 @@
                 resultEl.type = 'hidden';
                 resultContainer.appendChild(wrapper);
             } else if (paramData.dataType === 'MULTI_SELECT') {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'relative w-full';
                 const opts = paramData.options || [];
-                let selectedOpts = defaultResultVal ? defaultResultVal.split(', ') : [];
-                const btnText = selectedOpts.length > 0 ? selectedOpts.join(', ') : 'Select options...';
                 
-                wrapper.innerHTML = `
-                    <div class="ms-display cursor-pointer w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('hidden')">
-                        <span class="truncate pr-4">${sanitizeHTML(btnText)}</span>
-                        <i class="fas fa-chevron-down text-[10px] text-slate-400"></i>
-                    </div>
-                    <div class="ms-dropdown hidden absolute z-50 mt-1 w-full bg-white border border-slate-200 shadow-lg rounded-lg max-h-48 overflow-y-auto">
-                        ${opts.map(opt => `
-                            <label class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 text-sm font-medium text-slate-700">
-                                <input type="checkbox" value="${sanitizeHTML(opt)}" class="ms-checkbox rounded border-slate-300 text-brand-500 focus:ring-brand-500" ${selectedOpts.includes(opt) ? 'checked' : ''} onchange="updateMultiSelect(this)">
-                                ${sanitizeHTML(opt)}
-                            </label>
-                        `).join('')}
-                    </div>
-                `;
-                
-                resultEl.type = 'hidden';
-                resultContainer.appendChild(wrapper);
-                
-                // Close dropdown when clicking outside
-                document.addEventListener('click', (e) => {
-                    if (!wrapper.contains(e.target)) {
-                        wrapper.querySelector('.ms-dropdown').classList.add('hidden');
+                if (paramData.isMultiSelect === false) {
+                    const select = document.createElement('select');
+                    select.className = 'w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm cursor-pointer appearance-none';
+                    let innerHtml = '';
+                    opts.forEach(opt => {
+                        innerHtml += `<option value="${sanitizeHTML(opt)}">${sanitizeHTML(opt)}</option>`;
+                    });
+                    select.innerHTML = innerHtml;
+                    
+                    if (defaultResultVal) {
+                        select.value = defaultResultVal;
+                    } else if (opts.length > 0) {
+                        select.value = opts[0];
+                        resultEl.value = opts[0];
                     }
-                });
+                    
+                    select.onchange = () => { resultEl.value = select.value; checkAbnormal(resultEl); saveReportDraft(); };
+                    resultEl.type = 'hidden';
+                    resultContainer.appendChild(select);
+                } else {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'relative w-full';
+                    let selectedOpts = defaultResultVal ? defaultResultVal.split(', ') : [];
+                    const btnText = selectedOpts.length > 0 ? selectedOpts.join(', ') : 'Select options...';
+                    
+                    wrapper.innerHTML = `
+                        <div class="ms-display cursor-pointer w-full px-3 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 flex justify-between items-center" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                            <span class="truncate pr-4">${sanitizeHTML(btnText)}</span>
+                            <i class="fas fa-chevron-down text-[10px] text-slate-400"></i>
+                        </div>
+                        <div class="ms-dropdown hidden absolute z-50 mt-1 w-full bg-white border border-slate-200 shadow-lg rounded-lg max-h-48 overflow-y-auto">
+                            ${opts.map(opt => `
+                                <label class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-50 last:border-0 text-sm font-medium text-slate-700">
+                                    <input type="checkbox" value="${sanitizeHTML(opt)}" class="ms-checkbox rounded border-slate-300 text-brand-500 focus:ring-brand-500" ${selectedOpts.includes(opt) ? 'checked' : ''} onchange="updateMultiSelect(this)">
+                                    ${sanitizeHTML(opt)}
+                                </label>
+                            `).join('')}
+                        </div>
+                    `;
+                    
+                    resultEl.type = 'hidden';
+                    resultContainer.appendChild(wrapper);
+                    
+                    // Close dropdown when clicking outside
+                    document.addEventListener('click', (e) => {
+                        if (!wrapper.contains(e.target)) {
+                            wrapper.querySelector('.ms-dropdown').classList.add('hidden');
+                        }
+                    });
+                }
             } else if (paramData.dataType === 'CULTURE_SENSITIVITY') {
                 const btn = document.createElement('button');
                 btn.type = 'button';
@@ -1969,7 +2031,9 @@
                     if (!pl.dataset.paramData) return;
                     const p = JSON.parse(pl.dataset.paramData);
                     p.name = pl.querySelector('.p-name').value;
-                    p.result = pl.querySelector('.p-result').value;
+                    const resultInput = pl.querySelector('.p-result');
+                    p.result = resultInput.value;
+                    if (resultInput.dataset.filename) p.filename = resultInput.dataset.filename;
                     p.units = pl.querySelector('.p-units-input').value;
                     const ruleType = p.ruleType || (p.isGenderSpecific ? 'GENDER_SPECIFIC' : 'MIN_MAX');
                     if (ruleType === 'MIN_MAX') {
@@ -1983,6 +2047,16 @@
                             p.normalRange = { min: null, max: val.replace('≤', '').trim() };
                         }
                     }
+                    
+                    const pMeth = pl.querySelector('.p-methodology')?.value.trim();
+                    if (pMeth) p.methodology = pMeth; else delete p.methodology;
+                    
+                    const pSamp = pl.querySelector('.p-sample-type')?.value.trim();
+                    if (pSamp) p.sampleType = pSamp; else delete p.sampleType;
+                    
+                    const pKit = pl.querySelector('.p-kit-used')?.value.trim();
+                    if (pKit) p.kitUsed = pKit; else delete p.kitUsed;
+
                     parameters.push(p);
                 });
                 sections.push({

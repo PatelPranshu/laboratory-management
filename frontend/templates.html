@@ -401,12 +401,12 @@
                                 <option value="GENDER_SPECIFIC">Male / Female</option>
                                 <option value="THRESHOLD_COMPARISON">Threshold Rules</option>
                             </select>
-                        </div>
 
-                        <!-- Require Min-Max Input -->
-                        <div class="flex items-center gap-2 mb-4">
-                            <input type="checkbox" class="pr-require-minmax h-4 w-4 text-brand-600 focus:ring-brand-500 border-slate-300 rounded cursor-pointer">
-                            <label class="text-xs font-bold text-slate-600 cursor-pointer select-none" onclick="this.previousElementSibling.click()">min-max value</label>
+                            <!-- Require Min-Max Input -->
+                            <div class="flex items-center gap-2 ml-4">
+                                <input type="checkbox" class="pr-require-minmax h-4 w-4 text-brand-600 focus:ring-brand-500 border-slate-300 rounded cursor-pointer">
+                                <label class="text-xs font-bold text-slate-600 cursor-pointer select-none" onclick="this.previousElementSibling.click()">min-max value</label>
+                            </div>
                         </div>
 
                         <!-- Min/Max -->
@@ -517,6 +517,10 @@
                 <!-- MULTI-SELECT CONFIG -->
                 <div class="pr-multi-select-config hidden flex-col gap-2">
                     <div class="bg-slate-50 border border-slate-100 rounded-xl p-4">
+                        <div class="flex items-center gap-2 mb-4">
+                            <input type="checkbox" class="pr-is-multi-select h-4 w-4 text-brand-600 focus:ring-brand-500 border-slate-300 rounded cursor-pointer" checked>
+                            <label class="text-xs font-bold text-slate-600 cursor-pointer select-none" onclick="this.previousElementSibling.click()">Allow multiple selections</label>
+                        </div>
                         <label class="block text-xs font-bold text-slate-600 mb-2">Dropdown Options</label>
                         <div class="ms-options-list flex flex-wrap gap-2 mb-2">
                             <!-- Options injected here -->
@@ -785,8 +789,10 @@
 
             const saveDraft = DraftManager.debounce(() => {
                 if (document.getElementById('template-id').value) return;
-                const data = extractTemplateData();
-                if (data.name || data.sections.length > 0) {
+                const extracted = extractTemplateData();
+                if (extracted.error) return; // Do not save partial/invalid drafts
+                const data = extracted.data;
+                if (data && (data.name || data.sections.length > 0)) {
                     DraftManager.save('template', data);
                 }
             }, 500);
@@ -1366,6 +1372,10 @@
                         row.querySelector('.pr-boolean-config .pr-text-normal').value = data.normalRange.textNormal;
                     }
                 } else if (data.dataType === 'MULTI_SELECT') {
+                    const isMultiSelectCb = row.querySelector('.pr-is-multi-select');
+                    if (isMultiSelectCb) {
+                        isMultiSelectCb.checked = data.isMultiSelect !== false;
+                    }
                     if (data.options) {
                         const btn = row.querySelector('.ms-new-option');
                         data.options.forEach(opt => addMultiSelectOption(btn, opt));
@@ -1652,6 +1662,12 @@
                     } else if (dataType === 'MULTI_SELECT') {
                         const opts = Array.from(row.querySelectorAll('.ms-option-text')).map(el => el.textContent.trim()).filter(t => t);
                         param.options = opts;
+                        const isMultiSelectCb = row.querySelector('.pr-is-multi-select');
+                        if (isMultiSelectCb) {
+                            param.isMultiSelect = isMultiSelectCb.checked;
+                        } else {
+                            param.isMultiSelect = true;
+                        }
                         const textNormal = row.querySelector('.pr-multi-select-config .pr-text-normal').value.trim();
                         if (textNormal) {
                             param.normalRange = { textNormal };
