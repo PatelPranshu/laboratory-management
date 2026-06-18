@@ -499,6 +499,12 @@
                                     placeholder="e.g. Negative" value="Negative">
                             </div>
                         </div>
+                        <div class="mt-3">
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5">Expected Normal Result</label>
+                            <input type="text"
+                                class="pr-text-normal w-full px-4 py-2.5 bg-white border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl text-sm font-semibold text-slate-800 outline-none placeholder-slate-400"
+                                placeholder="e.g. Negative">
+                        </div>
                     </div>
                 </div>
 
@@ -512,6 +518,12 @@
                         <div class="flex items-center gap-2 max-w-sm">
                             <input type="text" class="ms-new-option w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-800 focus:border-brand-500 outline-none placeholder-slate-400" placeholder="Type a new option...">
                             <button type="button" onclick="addMultiSelectOption(this)" class="text-xs font-bold text-slate-600 bg-slate-200 hover:bg-slate-300 px-3 py-2 rounded-lg transition-colors shrink-0 flex items-center gap-1.5"><i class="fas fa-plus"></i> Add</button>
+                        </div>
+                        <div class="mt-3">
+                            <label class="block text-xs font-bold text-slate-600 mb-1.5">Expected Normal Result</label>
+                            <input type="text"
+                                class="pr-text-normal w-full px-4 py-2.5 bg-white border border-slate-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/10 rounded-xl text-sm font-semibold text-slate-800 outline-none placeholder-slate-400"
+                                placeholder="e.g. Normal">
                         </div>
                     </div>
                 </div>
@@ -1329,9 +1341,9 @@
 
                 if (data.dataType === 'TEXT' || data.dataType === 'QUALITATIVE') {
                     if (data.normalRange && data.normalRange.textNormal) {
-                        row.querySelector('.pr-text-normal').value = data.normalRange.textNormal;
+                        row.querySelector('.pr-text-config .pr-text-normal').value = data.normalRange.textNormal;
                     } else if (data.referenceRanges && data.referenceRanges.length > 0) {
-                        row.querySelector('.pr-text-normal').value = data.referenceRanges[0].textNormal || '';
+                        row.querySelector('.pr-text-config .pr-text-normal').value = data.referenceRanges[0].textNormal || '';
                     }
                 } else if (data.dataType === 'DEFAULT_VALUE') {
                     const defaultValEl = row.querySelector('.pr-default-value');
@@ -1343,10 +1355,16 @@
                         row.querySelector('.pr-bool-true').value = data.options[0];
                         row.querySelector('.pr-bool-false').value = data.options[1];
                     }
+                    if (data.normalRange && data.normalRange.textNormal) {
+                        row.querySelector('.pr-boolean-config .pr-text-normal').value = data.normalRange.textNormal;
+                    }
                 } else if (data.dataType === 'MULTI_SELECT') {
                     if (data.options) {
                         const btn = row.querySelector('.ms-new-option');
                         data.options.forEach(opt => addMultiSelectOption(btn, opt));
+                    }
+                    if (data.normalRange && data.normalRange.textNormal) {
+                        row.querySelector('.pr-multi-select-config .pr-text-normal').value = data.normalRange.textNormal;
                     }
                 } else if (data.dataType === 'CULTURE_SENSITIVITY') {
                     if (data.options) {
@@ -1581,7 +1599,7 @@
                             param.normalRange.max = maxVal !== '' ? maxVal : null;
                         }
                     } else if (dataType === 'TEXT' || dataType === 'QUALITATIVE') {
-                        const textNormal = row.querySelector('.pr-text-normal').value.trim();
+                        const textNormal = row.querySelector('.pr-text-config .pr-text-normal').value.trim();
                         param.ruleType = 'QUALITATIVE';
                         if (textNormal) {
                             param.normalRange = { textNormal: textNormal };
@@ -1597,13 +1615,23 @@
                         const trueLbl = row.querySelector('.pr-bool-true')?.value.trim() || 'Positive';
                         const falseLbl = row.querySelector('.pr-bool-false')?.value.trim() || 'Negative';
                         param.options = [trueLbl, falseLbl];
-                        delete param.normalRange;
+                        const textNormal = row.querySelector('.pr-boolean-config .pr-text-normal').value.trim();
+                        if (textNormal) {
+                            param.normalRange = { textNormal };
+                        } else {
+                            delete param.normalRange;
+                        }
                         delete param.ruleType;
                         delete param.units;
                     } else if (dataType === 'MULTI_SELECT') {
                         const opts = Array.from(row.querySelectorAll('.ms-option-text')).map(el => el.textContent.trim()).filter(t => t);
                         param.options = opts;
-                        delete param.normalRange;
+                        const textNormal = row.querySelector('.pr-multi-select-config .pr-text-normal').value.trim();
+                        if (textNormal) {
+                            param.normalRange = { textNormal };
+                        } else {
+                            delete param.normalRange;
+                        }
                         delete param.ruleType;
                         delete param.units;
                     } else if (dataType === 'CULTURE_SENSITIVITY') {

@@ -1117,7 +1117,7 @@
                     return `${opSymbols[r.operator] || r.operator} ${r.value}: ${r.classification || ''}`;
                 }).join('\n');
                 rangeEl.readOnly = true; rangeEl.classList.add('locked-field');
-            } else if (ruleType === 'QUALITATIVE' || paramData.dataType === 'TEXT' || paramData.dataType === 'QUALITATIVE') {
+            } else if (ruleType === 'QUALITATIVE' || paramData.dataType === 'TEXT' || paramData.dataType === 'QUALITATIVE' || paramData.dataType === 'BOOLEAN' || paramData.dataType === 'MULTI_SELECT') {
                 const textNormal = paramData.normalRange?.textNormal || (paramData.referenceRanges && paramData.referenceRanges[0]?.textNormal);
                 rangeEl.value = textNormal ? `Expected: ${textNormal}` : '';
                 rangeEl.readOnly = true; rangeEl.classList.add('locked-field');
@@ -1198,7 +1198,7 @@
 
             let isAbnormal = false;
 
-            if (dataType === 'TEXT' || dataType === 'QUALITATIVE' || ruleType === 'QUALITATIVE') {
+            if (dataType === 'TEXT' || dataType === 'QUALITATIVE' || ruleType === 'QUALITATIVE' || dataType === 'BOOLEAN' || dataType === 'MULTI_SELECT') {
                 const textNormal = param.normalRange?.textNormal || (param.referenceRanges && param.referenceRanges[0]?.textNormal);
                 const comps = param.comparisons || [];
 

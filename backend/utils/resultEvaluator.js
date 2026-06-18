@@ -135,8 +135,9 @@ function evaluatePatientResult(resultValue, parameterLogic, patientGender) {
   const gender = (patientGender || '').toLowerCase();
   const numericValue = parseNumericResult(resultValue);
   const textValue = String(resultValue || '').trim();
+  const ruleType = resolveRuleType(parameterLogic);
 
-  if (dataType === 'TEXT' || dataType === 'QUALITATIVE') {
+  if (dataType === 'TEXT' || dataType === 'QUALITATIVE' || ruleType === 'QUALITATIVE' || dataType === 'BOOLEAN' || dataType === 'MULTI_SELECT') {
       const ranges = parameterLogic.referenceRanges || [];
       let expectedNormal = null;
       for (const r of ranges) {
@@ -144,6 +145,9 @@ function evaluatePatientResult(resultValue, parameterLogic, patientGender) {
           if (r.textNormal) expectedNormal = r.textNormal;
           if (expectedNormal) break;
         }
+      }
+      if (!expectedNormal && parameterLogic.normalRange && parameterLogic.normalRange.textNormal) {
+        expectedNormal = parameterLogic.normalRange.textNormal;
       }
 
       const comparisons = parameterLogic.comparisons || [];
@@ -176,8 +180,6 @@ function evaluatePatientResult(resultValue, parameterLogic, patientGender) {
       }
       return result;
   }
-
-  const ruleType = resolveRuleType(parameterLogic);
 
   switch (ruleType) {
     case 'MIN_MAX': {
