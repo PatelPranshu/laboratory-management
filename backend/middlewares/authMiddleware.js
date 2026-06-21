@@ -4,10 +4,10 @@ const User = require('../models/User');
 const protect = async (req, res, next) => {
   let token;
 
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+  if (req.cookies && req.cookies.lis_token) {
+    token = req.cookies.lis_token;
+  } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
-  } else if (req.query && req.query.token) {
-    token = req.query.token;
   }
 
   if (!token) {
@@ -16,9 +16,21 @@ const protect = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // ---------- Zero-Hit Auth (new tokens contain role) ----------
+    if (decoded.role) {
+      req.user = {
+        id: decoded.id,
+        role: decoded.role,
+        parentAdminId: decoded.parentAdminId,
+        name: decoded.name,
+      };
+      return next();
+    }
+
+    // ---------- Fallback for old tokens that only contain { id } ----------
     const user = await User.findById(decoded.id);
 
-    // Critical: user may have been deleted after token was issued
     if (!user) {
       return res.status(401).json({ success: false, error: 'User no longer exists' });
     }

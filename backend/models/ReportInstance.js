@@ -42,6 +42,7 @@ const ReportSectionSchema = new mongoose.Schema({
     sampleType: { type: String },
     kitUsed: { type: String },
     options: [{ type: String }],
+    suggestions: [{ type: String }],
     isMultiSelect: { type: Boolean, default: true },
     requireMinMax: { type: Boolean, default: false },
     // Legacy field — kept for backwards compatibility with existing documents

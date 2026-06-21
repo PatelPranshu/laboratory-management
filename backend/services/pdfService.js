@@ -315,17 +315,17 @@ exports.generateReportPdf = async (report, patient, settings) => {
         bold: true, 
         fillColor: '#e2e8f0', 
         color: '#0f172a',
-        margin: [0, 4, 0, 4],
+        margin: [0, 1, 0, 1],
         fontSize: templateInfoFontSize
       },
       {}, {}, {}
     ]);
     
     sectionTableBody.push([
-      { text: 'TEST DESCRIPTION', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
-      { text: 'RESULT', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
-      { text: 'UNITS', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] },
-      { text: 'NORMAL VALUES', bold: true, fillColor: '#f1f5f9', margin: [0, 2, 0, 2] }
+      { text: 'TEST DESCRIPTION', bold: true, fillColor: '#f1f5f9', margin: [0, 1, 0, 1] },
+      { text: 'RESULT', bold: true, fillColor: '#f1f5f9', margin: [0, 1, 0, 1] },
+      { text: 'UNITS', bold: true, fillColor: '#f1f5f9', margin: [0, 1, 0, 1] },
+      { text: 'NORMAL VALUES', bold: true, fillColor: '#f1f5f9', margin: [0, 1, 0, 1] }
     ]);
 
     for (let sIdx = 0; sIdx < block.sections.length; sIdx++) {
@@ -359,7 +359,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
             bold: true, 
             fillColor: '#f8fafc',
             color: '#0f172a',
-            margin: [0, (sIdx === 0) ? 2 : 6, 0, 2] 
+            margin: [0, (sIdx === 0) ? 1 : 2, 0, 1] 
           },
           {}, {}, {}
         ]);
@@ -444,7 +444,12 @@ exports.generateReportPdf = async (report, patient, settings) => {
             });
           }
 
-          if (p.dataType === 'DEFAULT_VALUE') {
+          const hasUnits = unitsStr && unitsStr.trim() !== '';
+          const hasRange = normalRangeStr && normalRangeStr.trim() !== '';
+          const isThreshold = p.ruleType === 'THRESHOLD_COMPARISON' || (p.comparisons && p.comparisons.length > 0);
+          const rangeFontSize = isThreshold ? (templateInfoFontSize - 3) : (templateInfoFontSize - 1);
+
+          if (!hasUnits && !hasRange) {
             resultCell.colSpan = 3;
             sectionTableBody.push([
               { text: paramTextChunks, margin: [0, 0, 0, 0] },
@@ -452,8 +457,15 @@ exports.generateReportPdf = async (report, patient, settings) => {
               {},
               {}
             ]);
-          } else {
-            if (!normalRangeStr || normalRangeStr.trim() === '') {
+          } else if (!hasUnits && hasRange) {
+              resultCell.colSpan = 2;
+              sectionTableBody.push([
+                { text: paramTextChunks, margin: [0, 0, 0, 0] },
+                resultCell,
+                {},
+                { text: normalRangeStr, fontSize: rangeFontSize, margin: [0, 0, 0, 0] }
+              ]);
+            } else if (hasUnits && !hasRange) {
               sectionTableBody.push([
                 { text: paramTextChunks, margin: [0, 0, 0, 0] },
                 resultCell,
@@ -465,10 +477,9 @@ exports.generateReportPdf = async (report, patient, settings) => {
                 { text: paramTextChunks, margin: [0, 0, 0, 0] },
                 resultCell,
                 { text: unitsStr, margin: [0, 0, 0, 0] },
-                { text: normalRangeStr, fontSize: templateInfoFontSize - 2, margin: [0, 0, 0, 0] }
+                { text: normalRangeStr, fontSize: rangeFontSize, margin: [0, 0, 0, 0] }
               ]);
             }
-          }
         }
       } else if (sec.values) {
         const valuesObj = (sec.values && typeof sec.values.toJSON === 'function') 
@@ -490,12 +501,24 @@ exports.generateReportPdf = async (report, patient, settings) => {
 
           const isAbnormal = isOutsideRangeLegacy(resultStr, normalRangeStr);
 
-          sectionTableBody.push([
-            { text: String(key), margin: [0, 0, 0, 0] },
-            { text: resultStr, bold: isAbnormal, margin: [0, 0, 0, 0] },
-            { text: '', margin: [0, 0, 0, 0] },
-            { text: normalRangeStr, fontSize: templateInfoFontSize - 3, margin: [0, 0, 0, 0] }
-          ]);
+          const hasRange = normalRangeStr && normalRangeStr.trim() !== '';
+
+          if (!hasRange) {
+            sectionTableBody.push([
+              { text: String(key), margin: [0, 0, 0, 0] },
+              { text: resultStr, bold: isAbnormal, margin: [0, 0, 0, 0], colSpan: 3 },
+              {},
+              {}
+            ]);
+          } else {
+            const legacyRangeFontSize = normalRangeStr.includes('\n') ? (templateInfoFontSize - 3) : (templateInfoFontSize - 1);
+            sectionTableBody.push([
+              { text: String(key), margin: [0, 0, 0, 0] },
+              { text: resultStr, bold: isAbnormal, margin: [0, 0, 0, 0], colSpan: 2 },
+              {},
+              { text: normalRangeStr, fontSize: legacyRangeFontSize, margin: [0, 0, 0, 0] }
+            ]);
+          }
         }
       }
     }
@@ -506,7 +529,8 @@ exports.generateReportPdf = async (report, patient, settings) => {
           fontSize: templateInfoFontSize - 1,
           table: {
             headerRows: 2, 
-            widths: ['38%', '15%', '15%', '32%'], 
+            // widths: ['38%', '15%', '15%', '32%'],
+            widths: ['32%', '22%', '14%', '32%'], 
             body: sectionTableBody
           },
           layout: {

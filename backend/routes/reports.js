@@ -12,6 +12,14 @@ const {
 
 const { protect, authorize } = require('../middlewares/authMiddleware');
 const { validateObjectId } = require('../middlewares/validate');
+const rateLimit = require('express-rate-limit');
+
+// Strict rate limiting for PDF generation (heavy RAM usage)
+const pdfLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 5, // limit each IP to 5 PDF generation requests per windowMs
+  message: { success: false, error: 'Too many PDF requests, please try again in a minute' }
+});
 
 const router = express.Router();
 
@@ -26,7 +34,7 @@ router.route('/:id')
   .put(protect, validateObjectId, updateReport)
   .delete(protect, validateObjectId, authorize('Admin'), deleteReport);
 
-router.get('/:id/pdf', protect, validateObjectId, authorize('Admin', 'Doctor', 'LabTech'), generatePdf);
+router.get('/:id/pdf', protect, validateObjectId, pdfLimiter, authorize('Admin', 'Doctor', 'LabTech'), generatePdf);
 router.post('/:id/send', protect, validateObjectId, authorize('Admin', 'Doctor', 'LabTech'), sendReport);
 
 module.exports = router;

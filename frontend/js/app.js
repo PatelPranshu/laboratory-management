@@ -98,10 +98,16 @@ class UI {
     }
 
     const toast = document.createElement('div');
-    toast.className = `toast ${type} shadow-lg !font-bold py-3.5 px-6 rounded-2xl flex items-center gap-3 animate-slide-in`;
+    toast.className = `toast ${type} shadow-lg py-3.5 px-5 rounded-2xl flex items-start gap-3 animate-slide-in max-w-md w-[calc(100vw-2rem)] sm:w-auto z-[9999] border border-slate-100/10`;
     
     const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
-    toast.innerHTML = `<i class="fas ${icon} text-lg opacity-80"></i><span>${sanitizeHTML(message)}</span>`;
+    
+    const sanitizedMsg = sanitizeHTML(message);
+    const msgHtml = sanitizedMsg.includes('\n') 
+      ? `<div class="flex flex-col gap-1 mt-0.5">` + sanitizedMsg.split('\n').map(line => `<span class="text-sm font-bold leading-snug break-words">${line}</span>`).join('') + `</div>`
+      : `<span class="text-sm font-bold mt-0.5 leading-snug break-words">${sanitizedMsg}</span>`;
+
+    toast.innerHTML = `<i class="fas ${icon} text-lg opacity-80 mt-0.5 shrink-0"></i>${msgHtml}`;
 
     container.appendChild(toast);
 
@@ -589,14 +595,49 @@ function downloadPdfGlobal(id, event) {
 
     const close = () => overlay.remove();
 
-    const openPdf = (withHF) => {
+    const openPdf = async (withHF) => {
         const token = localStorage.getItem('lis_token');
-        let url = `${BASE_URL}/reports/${id}/pdf?token=${token}`;
+        let url = `${BASE_URL}/reports/${id}/pdf`;
         if (!withHF) {
-            url += '&withHeaderFooter=false';
+            url += '?withHeaderFooter=false';
         }
-        window.open(url, '_blank');
-        close();
+        
+        const btnId = withHF ? 'hf-btn-with' : 'hf-btn-without';
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.dataset.originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i>Generating...';
+            btn.disabled = true;
+        }
+
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error || 'Failed to generate PDF');
+            }
+            
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank');
+            close();
+        } catch (err) {
+            console.error(err);
+            if (typeof UI !== 'undefined' && UI.showToast) {
+                UI.showToast(err.message, 'error');
+            } else {
+                alert(err.message);
+            }
+            if (btn) {
+                btn.innerHTML = btn.dataset.originalText;
+                btn.disabled = false;
+            }
+        }
     };
 
     document.getElementById('hf-btn-with').onclick = () => openPdf(true);

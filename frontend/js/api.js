@@ -88,6 +88,7 @@ const api = {
     const config = {
       method,
       headers,
+      credentials: 'include',
       signal // Support for AbortController cancellation
     };
 
@@ -112,15 +113,21 @@ const api = {
         return response;
       } else {
         // Non-JSON error response
-        data = { success: false, error: `Request failed with status ${response.status}` };
+        if (response.status === 429) {
+          data = { success: false, error: 'Too many requests. Please try again later.' };
+        } else if (response.status >= 500) {
+          data = { success: false, error: 'Server encountered an error. Please try again later.' };
+        } else if (response.status === 403) {
+          data = { success: false, error: 'Access denied. You do not have permission for this action.' };
+        } else {
+          data = { success: false, error: `Request failed with status ${response.status}` };
+        }
       }
       
       // If unauthorized, redirect to login unless already on index
       if (!response.ok && response.status === 401) {
         if (!window.location.pathname.endsWith('index.html') && !window.location.pathname.endsWith('/')) {
-          localStorage.removeItem('lis_token');
-          localStorage.removeItem('lis_user');
-          window.location.href = 'index.html';
+          this.clearLocalData();
           return;
         }
       }
@@ -133,7 +140,13 @@ const api = {
     } catch (error) {
        // Don't log token in errors
        console.error(`API Error on ${endpoint}:`, error.message || error);
-       throw error;
+       
+       let friendlyMessage = error.message || 'An unexpected error occurred';
+       if (friendlyMessage === 'Failed to fetch' || friendlyMessage.includes('NetworkError')) {
+           friendlyMessage = 'Network Error: Cannot connect to server. Please check your internet connection.';
+       }
+       
+       throw new Error(friendlyMessage);
     }
   },
 
@@ -152,5 +165,20 @@ const api = {
 
   async updateProfile(data) {
     return this.request('/auth/profile', 'PUT', data);
+  },
+
+  clearLocalData() {
+    localStorage.removeItem('lis_token');
+    localStorage.removeItem('lis_user');
+    window.location.href = 'index.html';
+  },
+
+  async logout() {
+    try {
+      await this.request('/auth/logout', 'POST');
+    } catch (err) {
+      console.warn('Logout request failed', err);
+    }
+    this.clearLocalData();
   }
 };

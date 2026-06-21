@@ -1,6 +1,6 @@
 const express = require('express');
 const { z } = require('zod');
-const { register, login, getMe, updateProfile, resetPassword } = require('../controllers/authController');
+const { register, login, getMe, updateProfile, resetPassword, logout } = require('../controllers/authController');
 const { protect } = require('../middlewares/authMiddleware');
 const { validateSchema, passwordSchema } = require('../middlewares/validate');
 
@@ -38,5 +38,5 @@ router.post('/login', validateSchema(loginSchema), login);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, validateSchema(profileSchema), updateProfile);
 router.post('/reset-password', protect, validateSchema(resetPasswordSchema), resetPassword);
-
+router.post('/logout', protect, logout);
 module.exports = router;

@@ -2,11 +2,42 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 
-// Generate JWT Helper — 8 hour expiry
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '8h'
-  });
+const generateToken = (user) => {
+  return jwt.sign(
+    { id: user._id, role: user.role, parentAdminId: user.parentAdminId, name: user.name },
+    process.env.JWT_SECRET,
+    { expiresIn: '8h' }
+  );
+};
+
+// Helper function to send token in HttpOnly cookie
+const sendTokenResponse = (user, statusCode, res) => {
+  const token = generateToken(user);
+
+  const options = {
+    expires: new Date(Date.now() + 8 * 60 * 60 * 1000),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  };
+
+  res
+    .status(statusCode)
+    .cookie('lis_token', token, options)
+    .json({
+      success: true,
+      token, // Kept for backwards compatibility
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        labName: user.labName,
+        parentAdminId: user.parentAdminId,
+        accountStatus: user.accountStatus,
+        mustChangePassword: user.mustChangePassword
+      }
+    });
 };
 
 // @desc    Register user
@@ -63,19 +94,7 @@ exports.register = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    res.status(201).json({
-      success: true,
-      token: generateToken(user._id),
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        labName: user.labName,
-        accountStatus: user.accountStatus,
-        mustChangePassword: user.mustChangePassword
-      }
-    });
+    sendTokenResponse(user, 201, res);
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -113,20 +132,7 @@ exports.login = async (req, res) => {
     throw err;
   }
 
-  res.status(200).json({
-    success: true,
-    token: generateToken(user._id),
-    user: {
-      id: user._id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      labName: user.labName,
-      parentAdminId: user.parentAdminId,
-      accountStatus: user.accountStatus,
-      mustChangePassword: user.mustChangePassword
-    }
-  });
+  sendTokenResponse(user, 200, res);
 };
 
 // @desc    Get current logged in user
@@ -236,17 +242,22 @@ exports.resetPassword = async (req, res) => {
   user.mustChangePassword = false;
   await user.save();
 
+  sendTokenResponse(user, 200, res);
+};
+
+// @desc    Log user out / clear cookie
+// @route   POST /api/auth/logout
+// @access  Private
+exports.logout = async (req, res) => {
+  res.cookie('lis_token', 'none', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  });
+
   res.status(200).json({
     success: true,
-    token: generateToken(user._id),
-    user: {
-      id: user._id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      labName: user.labName,
-      accountStatus: user.accountStatus,
-      mustChangePassword: user.mustChangePassword
-    }
+    data: {}
   });
 };

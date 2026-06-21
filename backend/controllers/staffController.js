@@ -8,10 +8,12 @@ const { sendInvitationEmail } = require('../services/emailService');
 const { sendNotification } = require('../utils/notifier');
 
 // Generate JWT Helper
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '7d'
-  });
+const generateToken = (user) => {
+  return jwt.sign(
+    { id: user._id, role: user.role, parentAdminId: user.parentAdminId, name: user.name },
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' }
+  );
 };
 
 // @desc    Invite Staff (Doctor/LabTech)
@@ -157,9 +159,17 @@ exports.completeRegistration = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    res.status(201).json({
+    const tokenAuth = generateToken(user);
+    const options = {
+      expires: new Date(Date.now() + 8 * 60 * 60 * 1000),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    };
+
+    res.status(201).cookie('lis_token', tokenAuth, options).json({
       success: true,
-      token: generateToken(user._id),
+      token: tokenAuth,
       user: {
         id: user._id,
         email: user.email,

@@ -5,33 +5,16 @@ const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
+const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 const http = require('http');
 const socketService = require('./services/socketService');
-const xss = require('xss');
+
 const morgan = require('morgan');
 const logger = require('./utils/logger');
 
-// Fields that should NOT be HTML escaped because they contain math symbols, passwords, or code
-const NO_XSS_KEYS = ['operator', 'value', 'valueTo', 'min', 'max', 'textNormal', 'password', 'result', 'referenceRange', 'formula'];
 
-// In-place recursive sanitization for Express 5 compatibility
-const cleanXSS = (data, keyName = null) => {
-  if (NO_XSS_KEYS.includes(keyName)) return data;
-
-  if (typeof data === 'string') return xss(data);
-  if (Array.isArray(data)) {
-    for (let i = 0; i < data.length; i++) data[i] = cleanXSS(data[i], keyName);
-  } else if (typeof data === 'object' && data !== null) {
-    for (const key in data) {
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
-        data[key] = cleanXSS(data[key], key);
-      }
-    }
-  }
-  return data;
-};
 
 // Load env vars
 dotenv.config();
@@ -85,9 +68,17 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// Security headers
+// Security headers (stricter CSP)
 app.use(helmet({
-  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
+  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"], // Allow UI scripts but block external malicious scripts
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com"],
+      connectSrc: ["'self'", "https://api.mypatholabs.tech", "https://mylaboratory.onrender.com"]
+    }
+  } : false,
   crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
 
@@ -112,8 +103,9 @@ const authLimiter = rateLimit({
 });
 
 // Body parser with safe limits
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: false, limit: '1mb' }));
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ extended: false, limit: '100kb' }));
+app.use(cookieParser());
 
 // ---------- NoSQL Injection Sanitizer ----------
 // We wrap mongoSanitize to avoid reassigning req.query (which is read-only in Express 5).
@@ -125,13 +117,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ---------- Data Sanitization against XSS ----------
-app.use((req, res, next) => {
-  if (req.body) cleanXSS(req.body);
-  if (req.query) cleanXSS(req.query);
-  if (req.params) cleanXSS(req.params);
-  next();
-});
+
 
 // ---------- Routes ----------
 const auth = require('./routes/auth');
@@ -145,6 +131,24 @@ const staff = require('./routes/staff');
 const signatures = require('./routes/signatures');
 const notifications = require('./routes/notifications');
 const referrals = require('./routes/referralRoutes');
+
+const { protect } = require('./middlewares/authMiddleware');
+
+// ---------- Global API Protection ----------
+// Ensure every backend API requires user login, except specific public endpoints
+app.use('/api', (req, res, next) => {
+  const publicRoutes = [
+    '/auth/login',
+    '/auth/register',
+    '/staff/complete-registration'
+  ];
+
+  if (publicRoutes.includes(req.path) || req.path.startsWith('/staff/verify-invite/')) {
+    return next();
+  }
+
+  return protect(req, res, next);
+});
 
 // Mount routers (auth routes get stricter rate limiting)
 app.use('/api/auth', authLimiter, auth);

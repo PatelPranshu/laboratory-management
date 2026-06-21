@@ -36,7 +36,16 @@ const errorHandler = (err, req, res, next) => {
   // Mongoose validation error
   if (err.name === 'ValidationError') {
     statusCode = 400;
-    message = Object.values(err.errors).map(e => e.message).join(', ');
+    message = Object.values(err.errors).map(e => e.message).join('\n');
+  }
+
+  // Zod validation error
+  if (err.name === 'ZodError') {
+    statusCode = 400;
+    message = err.issues.map(issue => {
+      const field = issue.path.length > 0 ? `[${issue.path.join('.')}] ` : '';
+      return `${field}${issue.message}`;
+    }).join('\n');
   }
 
   // JWT errors

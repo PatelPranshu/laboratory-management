@@ -105,30 +105,26 @@ exports.getReports = async (req, res) => {
   // Search by patient name, phone, patient id or report id
   if (req.query.search) {
     const searchStr = String(req.query.search).trim();
-    const searchRegex = new RegExp('^' + searchStr.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'), 'i');
-    
-    const patientFilter = {
-      doctorId: adminId,
-      $or: [
-        { name: { $regex: searchRegex } },
-        { phone: { $regex: searchRegex } }
-      ]
-    };
-    if (searchStr.length <= 24) {
-       patientFilter.$or.push({ $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: searchStr, options: "i" } } });
-    }
 
-    const patientIds = await Patient.find(patientFilter).distinct('_id');
-    
-    const reportOr = [
-        { patientId: { $in: patientIds } }
-    ];
-    
-    if (searchStr.length <= 24) {
-        reportOr.push({ $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: searchStr, options: "i" } } });
-    }
+    if (mongoose.Types.ObjectId.isValid(searchStr)) {
+      // Exact ObjectId match — index-backed, O(1)
+      query.$or = [
+        { _id: searchStr },
+        { patientId: searchStr },
+      ];
+    } else {
+      // Text index search on name + anchored regex on phone (uses standard index)
+      const safeRegex = '^' + searchStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const patientIds = await Patient.find({
+        doctorId: adminId,
+        $or: [
+          { $text: { $search: searchStr } },
+          { phone: { $regex: safeRegex, $options: 'i' } }
+        ]
+      }).distinct('_id');
 
-    query.$or = reportOr;
+      query.patientId = { $in: patientIds };
+    }
   }
 
   const reports = await ReportInstance.find(query)
@@ -459,6 +455,9 @@ exports.updateReport = async (req, res) => {
   }
 };
 
+// WARNING: pdfmake consumes heavy RAM (50-100MB per PDF). For 512MB servers,
+// this route is a primary crash risk under concurrent load.
+// Move to Vercel Serverless Functions.
 // @desc    Generate PDF
 // @route   GET /api/reports/:id/pdf
 // @access  Private

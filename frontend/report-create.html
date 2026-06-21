@@ -1066,7 +1066,7 @@
                 const falseLbl = paramData.options?.[1] || 'Negative';
                 const select = document.createElement('select');
                 select.className = resultEl.className;
-                select.innerHTML = `<option value="">Select...</option><option value="${trueLbl}">${trueLbl}</option><option value="${falseLbl}">${falseLbl}</option>`;
+                select.innerHTML = `<option value="">Select...</option><option value="${sanitizeHTML(trueLbl)}">${sanitizeHTML(trueLbl)}</option><option value="${sanitizeHTML(falseLbl)}">${sanitizeHTML(falseLbl)}</option>`;
                 select.value = defaultResultVal;
                 select.onchange = () => { resultEl.value = select.value; checkAbnormal(resultEl); saveReportDraft(); };
                 
@@ -1127,6 +1127,86 @@
 
                 resultEl.type = 'hidden';
                 resultContainer.appendChild(wrapper);
+
+                // Add suggestion dropdowns for min-max inputs if suggestions exist
+                if (paramData.suggestions && paramData.suggestions.length > 0) {
+                    wrapper.classList.add('relative');
+                    maxInput.classList.remove('px-3');
+                    maxInput.classList.add('pl-3', 'pr-6');
+                    
+                    const chevron = document.createElement('i');
+                    chevron.className = 'fas fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 pointer-events-none';
+                    wrapper.appendChild(chevron);
+
+                    const dropdown = document.createElement('div');
+                    dropdown.className = 'hidden absolute z-[100] mt-1 w-full bg-white border border-slate-200 shadow-lg rounded-lg max-h-48 overflow-y-auto py-1 left-0 top-full';
+                    
+                    paramData.suggestions.forEach(s => {
+                        const item = document.createElement('div');
+                        item.className = 'px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-700 transition-colors';
+                        item.textContent = s;
+                        item.onmousedown = (e) => {
+                            e.preventDefault();
+                            let parts = [];
+                            if (s.includes(' - ')) {
+                                parts = s.split(' - ');
+                            } else if (s.includes('-')) {
+                                // Try splitting by hyphen if spaces are missing, but beware of negative numbers
+                                const sParts = s.split('-');
+                                if (sParts.length === 2 && sParts[0] !== '') {
+                                    parts = sParts;
+                                }
+                            }
+                            
+                            if (parts.length > 1) {
+                                minInput.value = parts[0].trim();
+                                maxInput.value = parts[1].trim();
+                            } else {
+                                minInput.value = s.trim();
+                                maxInput.value = '';
+                            }
+                            updateRange();
+                            dropdown.classList.add('hidden');
+                        };
+                        dropdown.appendChild(item);
+                    });
+
+                    wrapper.appendChild(dropdown);
+
+                    minInput.addEventListener('focus', () => dropdown.classList.remove('hidden'));
+                    minInput.addEventListener('blur', () => dropdown.classList.add('hidden'));
+                    maxInput.addEventListener('focus', () => dropdown.classList.remove('hidden'));
+                    maxInput.addEventListener('blur', () => dropdown.classList.add('hidden'));
+                }
+            } else if ((paramData.dataType === 'NUMERIC' || !paramData.dataType) && paramData.suggestions && paramData.suggestions.length > 0) {
+                // NUMERIC with suggestions (no requireMinMax) — render as combo box
+                const comboWrapper = document.createElement('div');
+                comboWrapper.className = 'relative w-full suggestion-combo';
+
+                const comboInput = document.createElement('input');
+                comboInput.type = 'text';
+                comboInput.placeholder = 'Value';
+                comboInput.value = defaultResultVal;
+                comboInput.className = 'p-result w-full pl-3 pr-6 py-2 sm:py-1.5 bg-white border border-slate-300 rounded text-sm font-bold text-slate-900 focus:border-brand-500 outline-none transition-all shadow-sm';
+                comboInput.oninput = () => { resultEl.value = comboInput.value; checkAbnormal(resultEl); saveReportDraft(); };
+
+                // Dropdown indicator icon
+                const chevron = document.createElement('i');
+                chevron.className = 'fas fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 pointer-events-none';
+
+                comboWrapper.appendChild(comboInput);
+                comboWrapper.appendChild(chevron);
+
+                // Replace the original p-result input
+                resultEl.type = 'hidden';
+                resultContainer.appendChild(comboWrapper);
+
+                attachSuggestionDropdown(comboInput, paramData.suggestions, (val) => {
+                    comboInput.value = val;
+                    resultEl.value = val;
+                    checkAbnormal(resultEl);
+                    saveReportDraft();
+                });
             } else if (paramData.dataType === 'MULTI_SELECT') {
                 const opts = paramData.options || [];
                 
@@ -1295,10 +1375,46 @@
             if (paramData?.result) checkAbnormal(line.querySelector('.p-result'));
         }
 
+        function attachSuggestionDropdown(inputEl, suggestions, onSelect) {
+            const wrapper = inputEl.parentElement;
+            if (!wrapper.classList.contains('relative')) {
+                wrapper.classList.add('relative');
+            }
+
+            const dropdown = document.createElement('div');
+            dropdown.className = 'hidden absolute z-[100] mt-1 w-full bg-white border border-slate-200 shadow-lg rounded-lg max-h-48 overflow-y-auto py-1 left-0 top-full';
+            
+            suggestions.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm font-medium text-slate-700 transition-colors';
+                item.textContent = s;
+                item.onmousedown = (e) => {
+                    e.preventDefault(); // Prevent blur of input
+                    onSelect(s);
+                    dropdown.classList.add('hidden');
+                };
+                dropdown.appendChild(item);
+            });
+
+            wrapper.appendChild(dropdown);
+
+            inputEl.addEventListener('focus', () => {
+                dropdown.classList.remove('hidden');
+            });
+
+            inputEl.addEventListener('blur', () => {
+                dropdown.classList.add('hidden');
+            });
+        }
+
         function checkAbnormal(inputEl) {
             const line = inputEl.closest('.param-line'); if (!line || !line.dataset.paramData) return;
+            const resultContainer = line.querySelector('.p-result').parentElement;
+            const targetEls = resultContainer.querySelectorAll('input:not([type="hidden"]), select, textarea');
+            
             const resultStr = inputEl.value.trim();
-            inputEl.classList.remove('text-red-600', 'border-red-300', 'bg-red-50');
+            targetEls.forEach(el => el.classList.remove('text-red-600', 'border-red-300', 'bg-red-50'));
+            
             if (!resultStr) return;
 
             const param = JSON.parse(line.dataset.paramData);
@@ -1386,7 +1502,9 @@
                 }
                 isAbnormal = anyAbnormal;
             }
-            if (isAbnormal) inputEl.classList.add('text-red-600', 'border-red-300', 'bg-red-50');
+            if (isAbnormal) {
+                targetEls.forEach(el => el.classList.add('text-red-600', 'border-red-300', 'bg-red-50'));
+            }
         }
 
         function toggleTemplate(checkbox, templateId) {
@@ -1485,16 +1603,20 @@
                     hasError = true;
                 }
                 if (!referredBy) {
-                    if (referralToggle) {
-                        referralToggle.classList.add('border-red-500', 'ring-2', 'ring-red-500/20');
-                        if (!firstErrorEl) firstErrorEl = referralToggle;
+                    const isMobile = window.innerWidth < 1024;
+                    const rToggle = (isMobile && referralToggleM) ? referralToggleM : referralToggle;
+                    if (rToggle) {
+                        rToggle.classList.add('border-red-500', 'ring-2', 'ring-red-500/20');
+                        if (!firstErrorEl) firstErrorEl = rToggle;
                     }
                     UI.showToast('Please select a referring source.', 'error');
                     hasError = true;
                 }
                 if (hasError) {
                     if (firstErrorEl) {
-                        firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        if (firstErrorEl !== referralToggle) {
+                            firstErrorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
                         firstErrorEl.focus();
                     }
                     return;
@@ -1804,11 +1926,11 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Isolated Organism</label>
-                        <input type="text" class="culture-organism w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-sm font-semibold text-slate-800 outline-none focus:border-indigo-500" placeholder="e.g. E. coli" value="${data?.organism || ''}" oninput="serializeCultureData(this.closest('.culture-results-container'))">
+                        <input type="text" class="culture-organism w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-sm font-semibold text-slate-800 outline-none focus:border-indigo-500" placeholder="e.g. E. coli" value="${sanitizeHTML(data?.organism || '')}" oninput="serializeCultureData(this.closest('.culture-results-container'))">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Colony Count</label>
-                        <input type="text" class="culture-count w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-sm font-semibold text-slate-800 outline-none focus:border-indigo-500" placeholder="e.g. >10^5 CFU/mL" value="${data?.colonyCount || ''}" oninput="serializeCultureData(this.closest('.culture-results-container'))">
+                        <input type="text" class="culture-count w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-sm font-semibold text-slate-800 outline-none focus:border-indigo-500" placeholder="e.g. >10^5 CFU/mL" value="${sanitizeHTML(data?.colonyCount || '')}" oninput="serializeCultureData(this.closest('.culture-results-container'))">
                     </div>
                 </div>
                 <div>
@@ -1857,7 +1979,7 @@
             const intVal = data?.interpretation || '';
             
             div.innerHTML = `
-                <input type="text" class="culture-abx-name flex-1 bg-transparent px-2 py-1 text-[11px] sm:text-xs font-semibold text-slate-800 outline-none min-w-0" placeholder="Antibiotic" value="${abxVal}" oninput="serializeCultureData(this.closest('.culture-results-container'))">
+                <input type="text" class="culture-abx-name flex-1 bg-transparent px-2 py-1 text-[11px] sm:text-xs font-semibold text-slate-800 outline-none min-w-0" placeholder="Antibiotic" value="${sanitizeHTML(abxVal)}" oninput="serializeCultureData(this.closest('.culture-results-container'))">
                 <select class="culture-abx-int w-24 bg-slate-50 border border-slate-200 rounded px-1 py-1 text-[11px] sm:text-xs font-bold text-slate-700 outline-none" onchange="serializeCultureData(this.closest('.culture-results-container')); this.className = 'culture-abx-int w-24 border rounded px-1 py-1 text-[11px] sm:text-xs font-bold outline-none ' + (this.value === 'S' ? 'bg-green-50 text-green-700 border-green-200' : this.value === 'R' ? 'bg-red-50 text-red-700 border-red-200' : this.value === 'I' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-700 border-slate-200')">
                     <option value="">N/A</option>
                     <option value="S" ${intVal==='S'?'selected':''}>Sensitive</option>
