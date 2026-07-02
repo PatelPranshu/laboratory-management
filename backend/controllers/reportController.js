@@ -84,6 +84,12 @@ exports.getReports = async (req, res) => {
     query.status = req.query.status;
   }
 
+  // Referred By filtering
+  if (req.query.referredBy) {
+    const safeRegex = String(req.query.referredBy).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    query.referredBy = { $regex: safeRegex, $options: 'i' };
+  }
+
   // Date range filtering
   if (req.query.startDate || req.query.endDate) {
     query.createdAt = {};
