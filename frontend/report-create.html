@@ -597,7 +597,7 @@
             });
 
             const patientContext = {
-                'Patient Age': currentPatient ? currentPatient.age : null,
+                'Patient Age': currentPatient ? `${currentPatient.age} ${currentPatient.ageUnit || 'Years'}` : null,
                 'Patient Weight': currentPatient ? currentPatient.weight : null,
                 'Patient Height': currentPatient ? currentPatient.height : null
             };
@@ -921,7 +921,7 @@
                         if (res.data.length === 0) results.innerHTML = `<div class="p-4 text-center"><p class="text-sm text-slate-500">No Match Found</p><button type="button" onclick="PatientModal.open({ mode: 'create', onSuccess: selectPatient })" class="text-sm font-medium text-brand-600 mt-2">Register New Profile</button></div>`;
                         else results.innerHTML = res.data.map(p => {
                             const pJson = JSON.stringify(p).replace(/'/g, "\\'");
-                            return `<div class="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-all flex items-center gap-3" onclick='selectPatient(${pJson})'><div class="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center font-medium text-sm text-brand-600">${sanitizeHTML(p.name.charAt(0))}</div><div class="truncate"><p class="font-medium text-slate-800 text-sm">${sanitizeHTML(p.name)}</p><p class="text-xs text-slate-500">${sanitizeHTML(p.phone)} • ${sanitizeHTML(p.age)}y / ${sanitizeHTML(p.gender.charAt(0))}</p></div></div>`;
+                            return `<div class="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-all flex items-center gap-3" onclick='selectPatient(${pJson})'><div class="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center font-medium text-sm text-brand-600">${sanitizeHTML(p.name.charAt(0))}</div><div class="truncate"><p class="font-medium text-slate-800 text-sm">${sanitizeHTML(p.name)}</p><p class="text-xs text-slate-500">${sanitizeHTML(p.phone)} • ${sanitizeHTML(p.age)} ${sanitizeHTML(p.ageUnit || 'Yrs')} / ${sanitizeHTML(p.gender.charAt(0))}</p></div></div>`;
                         }).join('');
                     } catch (err) { if (err.name !== 'AbortError') results.classList.add('hidden'); }
                 }, 400);
@@ -933,7 +933,7 @@
         function selectPatient(p) {
             const searchInput = document.getElementById('patient-search-input');
             if (searchInput) searchInput.classList.remove('border-red-500', 'ring-2', 'ring-red-500/20');
-            document.getElementById('patient-search-results').classList.add('hidden'); document.getElementById('patient-search-input').value = ''; currentPatient = p; document.getElementById('sp-id').value = p._id; document.getElementById('sp-name').textContent = p.name; document.getElementById('sp-details').textContent = `${p.phone} • ${p.age}y / ${p.gender}`; document.getElementById('patient-selection-container').classList.add('hidden'); document.getElementById('selected-patient-card').classList.remove('hidden');
+            document.getElementById('patient-search-results').classList.add('hidden'); document.getElementById('patient-search-input').value = ''; currentPatient = p; document.getElementById('sp-id').value = p._id; document.getElementById('sp-name').textContent = p.name; document.getElementById('sp-details').textContent = `${p.phone} • ${p.age} ${p.ageUnit || 'Yrs'} / ${p.gender}`; document.getElementById('patient-selection-container').classList.add('hidden'); document.getElementById('selected-patient-card').classList.remove('hidden');
             document.querySelectorAll('.p-result').forEach(input => checkAbnormal(input));
             saveReportDraft();
         }

@@ -19,6 +19,7 @@ const patientSchema = z.object({
   phone: z.string().optional().or(z.literal('')),
   email: z.string().email('Invalid email').optional().or(z.literal('')),
   age: z.number().or(z.string()).refine(val => val !== '', 'Age is required'),
+  ageUnit: z.string().optional().or(z.literal('')),
   gender: z.string().min(1, 'Gender is required'),
   address: z.string().optional().or(z.literal('')),
   weight: z.number().or(z.string()).optional().or(z.literal('')),

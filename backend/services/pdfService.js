@@ -270,7 +270,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
           ],
           [
             { text: 'Age:', bold: true, color: '#334155' },
-            { text: patient.age || '--' },
+            { text: patient.age ? `${patient.age} ${patient.ageUnit || 'Years'}` : '--' },
             { text: 'Gender:', bold: true, color: '#334155' },
             { text: patient.gender || '--' },
             { text: 'Report Date:', bold: true, color: '#334155' },

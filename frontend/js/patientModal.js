@@ -24,16 +24,28 @@ const PatientModal = {
                                     <label class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center">
                                         Full Name <span class="text-red-500 ml-1">*</span>
                                     </label>
-                                    <input type="text" id="upm-name" required placeholder="John Doe"
-                                        class="w-full px-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                                    <div class="relative">
+                                        <input type="text" id="upm-name" required placeholder="John Doe" autocomplete="off"
+                                            class="w-full px-4 py-2 sm:py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                                        <div id="upm-name-suggestions" class="absolute z-[250] w-full bg-white border border-slate-200 shadow-xl rounded-xl mt-1 hidden max-h-60 overflow-y-auto top-full left-0">
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="col-span-1">
                                     <label class="block text-[12px] sm:text-[13px] font-bold text-slate-700 mb-1 sm:mb-1.5 flex items-center">
                                         Age <span class="text-red-500 ml-1">*</span>
                                     </label>
-                                    <input type="number" id="upm-age" required min="0" placeholder="e.g. 35"
-                                        class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                                    <div class="flex gap-2">
+                                        <input type="number" id="upm-age" required min="0" placeholder="e.g. 35"
+                                            class="flex-1 min-w-0 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm">
+                                        <select id="upm-age-unit" required
+                                            class="w-[85px] shrink-0 px-2 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all font-medium text-slate-800 text-sm cursor-pointer">
+                                            <option value="Years">Yrs</option>
+                                            <option value="Months">Mos</option>
+                                            <option value="Days">Days</option>
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div class="col-span-1">
@@ -106,6 +118,7 @@ const PatientModal = {
                     phone: document.getElementById('upm-phone').value,
                     email: document.getElementById('upm-email').value,
                     age: document.getElementById('upm-age').value,
+                    ageUnit: document.getElementById('upm-age-unit').value,
                     gender: document.getElementById('upm-gender').value,
                     address: document.getElementById('upm-address').value,
                     weight: document.getElementById('upm-weight').value,
@@ -117,7 +130,7 @@ const PatientModal = {
             }
         };
 
-        ['upm-name', 'upm-phone', 'upm-email', 'upm-age', 'upm-gender', 'upm-address', 'upm-weight', 'upm-height'].forEach(id => {
+        ['upm-name', 'upm-phone', 'upm-email', 'upm-age', 'upm-age-unit', 'upm-gender', 'upm-address', 'upm-weight', 'upm-height'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('input', () => {
                 if(typeof DraftManager !== 'undefined' && DraftManager.debounce) {
@@ -131,6 +144,71 @@ const PatientModal = {
                 }
             });
         });
+
+        // Initialize autocomplete logic
+        window.LIS_SEARCH_CACHE = window.LIS_SEARCH_CACHE || {};
+        let searchDebounceTimer = null;
+        const nameInput = document.getElementById('upm-name');
+        const suggestionsBox = document.getElementById('upm-name-suggestions');
+
+        if (nameInput && suggestionsBox) {
+            document.addEventListener('click', (e) => {
+                if (!nameInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                    suggestionsBox.classList.add('hidden');
+                }
+            });
+
+            nameInput.addEventListener('input', (e) => {
+                if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+
+                const query = e.target.value.trim().toLowerCase();
+                if (query.length < 2) {
+                    suggestionsBox.classList.add('hidden');
+                    return;
+                }
+
+                searchDebounceTimer = setTimeout(async () => {
+                    try {
+                        let results = [];
+                        if (window.LIS_SEARCH_CACHE[query]) {
+                            results = window.LIS_SEARCH_CACHE[query];
+                        } else {
+                            suggestionsBox.classList.remove('hidden');
+                            suggestionsBox.innerHTML = `<div class="p-4 text-center text-slate-500 text-sm"><i class="fas fa-circle-notch fa-spin mr-2"></i>Searching...</div>`;
+                            
+                            const res = await api.request(`/patients?search=${encodeURIComponent(query)}&limit=5`);
+                            results = res.data || [];
+                            window.LIS_SEARCH_CACHE[query] = results;
+                        }
+
+                        if (results.length > 0) {
+                            suggestionsBox.innerHTML = results.map(p => `
+                                <div onclick="window.location.href='patient-profile.html?id=${p._id}'" class="p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer flex justify-between items-center transition-colors last:border-0">
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800">${p.name}</p>
+                                        <p class="text-xs text-slate-500 mt-0.5">${p.phone || 'No phone'} • ${p.age} ${p.ageUnit || 'Yrs'} / ${p.gender}</p>
+                                    </div>
+                                    <i class="fas fa-external-link-alt text-brand-500 opacity-50 text-xs"></i>
+                                </div>
+                            `).join('');
+                            suggestionsBox.classList.remove('hidden');
+                        } else {
+                            suggestionsBox.innerHTML = `<div class="p-4 text-center text-slate-500 text-sm">No existing patients found.</div>`;
+                            suggestionsBox.classList.remove('hidden');
+                        }
+                    } catch (err) {
+                        console.error('Search error:', err);
+                        suggestionsBox.classList.add('hidden');
+                    }
+                }, 500);
+            });
+            
+            nameInput.addEventListener('focus', () => {
+                if (nameInput.value.trim().length >= 2 && suggestionsBox.innerHTML.trim() !== '') {
+                    suggestionsBox.classList.remove('hidden');
+                }
+            });
+        }
     },
 
     open: function(options) {
@@ -151,6 +229,7 @@ const PatientModal = {
             const p = this.options.patient || {};
             document.getElementById('upm-name').value = p.name || '';
             document.getElementById('upm-age').value = p.age || '';
+            document.getElementById('upm-age-unit').value = p.ageUnit || 'Years';
             document.getElementById('upm-gender').value = p.gender || 'Male';
             document.getElementById('upm-phone').value = p.phone || '';
             document.getElementById('upm-email').value = p.email || '';
@@ -170,6 +249,7 @@ const PatientModal = {
                     document.getElementById('upm-phone').value = draft.phone || '';
                     document.getElementById('upm-email').value = draft.email || '';
                     document.getElementById('upm-age').value = draft.age || '';
+                    document.getElementById('upm-age-unit').value = draft.ageUnit || 'Years';
                     document.getElementById('upm-gender').value = draft.gender || 'Male';
                     document.getElementById('upm-address').value = draft.address || '';
                     document.getElementById('upm-weight').value = draft.weight || '';
@@ -217,6 +297,7 @@ const PatientModal = {
             phone: document.getElementById('upm-phone').value,
             email: document.getElementById('upm-email').value,
             age: document.getElementById('upm-age').value,
+            ageUnit: document.getElementById('upm-age-unit').value,
             gender: document.getElementById('upm-gender').value,
             address: document.getElementById('upm-address').value,
             weight: document.getElementById('upm-weight').value || undefined,

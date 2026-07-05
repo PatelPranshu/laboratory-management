@@ -24,6 +24,11 @@ const PatientSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  ageUnit: {
+    type: String,
+    enum: ['Years', 'Months', 'Days'],
+    default: 'Years'
+  },
   gender: {
     type: String,
     enum: ['Male', 'Female', 'Other'],

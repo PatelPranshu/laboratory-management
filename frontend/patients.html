@@ -247,7 +247,7 @@
                                         
                                         <!-- Mobile-only Contact & Demographics -->
                                         <div class="mt-2.5 flex flex-wrap items-center gap-2 sm:hidden">
-                                            <span class="px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-600 rounded-md border border-slate-200/50">${p.age} yrs</span>
+                                            <span class="px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-600 rounded-md border border-slate-200/50">${p.age} ${p.ageUnit || 'Yrs'}</span>
                                             <span class="px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-600 rounded-md border border-slate-200/50"><i class="fas fa-${genderIcon} mr-1 opacity-70"></i>${sanitizeHTML(p.gender)}</span>
                                             ${p.phone ? `<span class="text-slate-500 text-[11px] font-semibold bg-slate-50 border border-slate-100 rounded-md px-2 py-0.5 flex items-center"><i class="fas fa-phone-alt text-slate-400 mr-1.5"></i>${sanitizeHTML(p.phone)}</span>` : ''}
                                             ${p.email ? `<span class="text-slate-500 text-[11px] font-semibold bg-slate-50 border border-slate-100 rounded-md px-2 py-0.5 flex items-center"><i class="fas fa-envelope text-slate-400 mr-1.5"></i>${sanitizeHTML(p.email)}</span>` : ''}
@@ -260,7 +260,7 @@
                                 ${p.email ? `<div class="text-xs text-slate-500 font-medium mt-1"><i class="fas fa-envelope text-slate-400 mr-1.5"></i>${sanitizeHTML(p.email)}</div>` : ''}
                             </td>
                             <td class="hidden sm:table-cell px-7 py-4 whitespace-nowrap">
-                                <span class="px-2.5 py-1 text-xs font-bold bg-slate-100 text-slate-600 rounded-lg mr-2">${p.age} years</span>
+                                <span class="px-2.5 py-1 text-xs font-bold bg-slate-100 text-slate-600 rounded-lg mr-2">${p.age} ${p.ageUnit || 'Years'}</span>
                                 <span class="px-2.5 py-1 text-xs font-bold bg-slate-100 text-slate-600 rounded-lg"><i class="fas fa-${genderIcon} mr-1 opacity-70"></i>${sanitizeHTML(p.gender)}</span>
                             </td>
                             <td class="p-0 sm:px-7 sm:py-4 flex sm:table-cell items-center justify-end mt-3.5 sm:mt-0 w-full sm:w-auto border-t border-slate-100 sm:border-0 pt-3 sm:pt-0 shrink-0" onclick="event.stopPropagation()">

@@ -247,7 +247,7 @@
                 document.getElementById('breadcrumb-name').textContent = p.name;
                 document.getElementById('p-name').textContent = p.name;
                 document.getElementById('p-avatar').textContent = p.name.charAt(0).toUpperCase();
-                document.getElementById('p-basic-info').textContent = `${p.age} years • ${p.gender}`;
+                document.getElementById('p-basic-info').textContent = `${p.age} ${p.ageUnit || 'Years'} • ${p.gender}`;
                 document.getElementById('p-phone').textContent = p.phone || 'N/A';
                 document.getElementById('p-email').textContent = p.email || 'No email provided';
                 document.getElementById('p-id').textContent = p._id.slice(-12).toUpperCase();

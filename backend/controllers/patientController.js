@@ -8,7 +8,7 @@ const { updateLabStats } = require('../utils/statsHelper');
 const mongoose = require('mongoose');
 
 // Allowed fields for patient create/update — prevents mass assignment
-const PATIENT_FIELDS = ['name', 'phone', 'email', 'age', 'gender', 'address', 'weight', 'height'];
+const PATIENT_FIELDS = ['name', 'phone', 'email', 'age', 'ageUnit', 'gender', 'address', 'weight', 'height'];
 
 // Resolve the lab admin ID regardless of the caller's role
 const getAdminId = (req) => {
