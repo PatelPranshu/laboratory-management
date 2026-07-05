@@ -248,8 +248,8 @@ function injectFavicon() {
 
 // ---------------- Real-Time Notification System ---------------- //
 function initNotifications() {
-    const token = localStorage.getItem('lis_token');
-    if (!token) return;
+    const exp = localStorage.getItem('lis_exp');
+    if (!exp) return;
 
     // Wait for api.js to be available if not already
     if (typeof api === 'undefined') {
@@ -265,11 +265,11 @@ function initNotifications() {
 
     // 3. Setup Socket
     if (typeof io !== 'undefined') {
-        setupNotificationSocket(token);
+        setupNotificationSocket();
     } else {
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.8.1/socket.io.min.js';
-        script.onload = () => setupNotificationSocket(token);
+        script.onload = () => setupNotificationSocket();
         script.onerror = () => console.warn('[Notifications] Failed to load socket.io script');
         document.head.appendChild(script);
     }
@@ -422,11 +422,11 @@ async function fetchInitialNotifs() {
     }
 }
 
-function setupNotificationSocket(token) {
+function setupNotificationSocket() {
     const socketUrl = (typeof SOCKET_URL !== 'undefined') ? SOCKET_URL : '';
 
     const socket = io(socketUrl, {
-        auth: { token },
+        withCredentials: true,
         transports: ['websocket', 'polling'], 
         reconnectionAttempts: 10,
         reconnectionDelay: 2000,

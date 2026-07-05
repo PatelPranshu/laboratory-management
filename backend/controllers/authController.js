@@ -13,12 +13,15 @@ const generateToken = (user) => {
 // Helper function to send token in HttpOnly cookie
 const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user);
-
+  
+  // Expiration time for the frontend to manage its own redirect synchronously
+  const expTimeMs = Date.now() + 8 * 60 * 60 * 1000;
+  
   const options = {
-    expires: new Date(Date.now() + 8 * 60 * 60 * 1000),
+    expires: new Date(expTimeMs),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    secure: true,
+    sameSite: 'strict'
   };
 
   res
@@ -26,7 +29,7 @@ const sendTokenResponse = (user, statusCode, res) => {
     .cookie('lis_token', token, options)
     .json({
       success: true,
-      token, // Kept for backwards compatibility
+      exp: Math.floor(expTimeMs / 1000), // Return expiration time in seconds for frontend checking
       user: {
         id: user._id,
         email: user.email,
@@ -252,8 +255,8 @@ exports.logout = async (req, res) => {
   res.cookie('lis_token', 'none', {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    secure: true,
+    sameSite: 'strict'
   });
 
   res.status(200).json({

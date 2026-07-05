@@ -160,16 +160,18 @@ exports.completeRegistration = async (req, res) => {
     session.endSession();
 
     const tokenAuth = generateToken(user);
+    const expTimeMs = Date.now() + 8 * 60 * 60 * 1000;
+    
     const options = {
-      expires: new Date(Date.now() + 8 * 60 * 60 * 1000),
+      expires: new Date(expTimeMs),
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+      secure: true,
+      sameSite: 'strict'
     };
 
     res.status(201).cookie('lis_token', tokenAuth, options).json({
       success: true,
-      token: tokenAuth,
+      exp: Math.floor(expTimeMs / 1000),
       user: {
         id: user._id,
         email: user.email,

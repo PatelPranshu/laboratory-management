@@ -197,6 +197,16 @@
                         </div>
                     </div>
 
+                    <!-- T&C Checkbox -->
+                    <div class="mt-2 flex items-start">
+                        <div class="flex items-center h-5">
+                            <input id="reg-terms" type="checkbox" required class="w-4 h-4 border border-slate-300 rounded bg-slate-50 focus:ring-2 focus:ring-brand-500 cursor-pointer transition-all">
+                        </div>
+                        <label for="reg-terms" class="ml-2 text-[13px] font-medium text-slate-600">
+                            I agree to the <a href="terms-condition.html" target="_blank" class="text-brand-600 hover:text-brand-700 hover:underline transition-colors">Terms & Conditions</a> and <a href="privacy-policy.html" target="_blank" class="text-brand-600 hover:text-brand-700 hover:underline transition-colors">Privacy Policy</a>
+                        </label>
+                    </div>
+
                     <button id="btn-register" type="submit" class="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 shadow-lg shadow-emerald-500/30 transition-all duration-200 mt-4">
                         Create Account
                     </button>
@@ -211,11 +221,19 @@
         </div>
     </div>
 
+    <!-- Footer Links -->
+    <div class="fixed bottom-4 w-full text-center text-sm text-slate-500 font-medium z-10 flex justify-center gap-4">
+        <a href="privacy-policy.html" class="hover:text-brand-600 transition-colors">Privacy Policy</a>
+        <span>&bull;</span>
+        <a href="terms-condition.html" class="hover:text-brand-600 transition-colors">Terms of Service</a>
+    </div>
+
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
     <script>
         // Redirect if already logged in
-        if (localStorage.getItem('lis_token')) {
+        const exp = localStorage.getItem('lis_exp');
+        if (exp && parseInt(exp, 10) > Math.floor(Date.now() / 1000)) {
             window.location.href = 'dashboard.html';
         }
 
@@ -262,7 +280,8 @@
                     
                     const res = await api.login(email, password);
                     
-                    localStorage.setItem('lis_token', res.token);
+                    // localStorage.setItem('lis_token', res.token); // Removed for security (HttpOnly cookie)
+                    localStorage.setItem('lis_exp', res.exp);
                     localStorage.setItem('lis_user', JSON.stringify(res.user));
                     
                     UI.showToast('Login Successful! Redirecting...', 'success');
@@ -286,8 +305,8 @@
                     }
                     
                     const res = await api.register({ labName, name, email, password, role });
-                    
-                    localStorage.setItem('lis_token', res.token);
+                    // localStorage.setItem('lis_token', res.token); // Removed for security
+                    localStorage.setItem('lis_exp', res.exp);
                     localStorage.setItem('lis_user', JSON.stringify(res.user));
                     
                     UI.showToast('Account Created! Redirecting...', 'success');

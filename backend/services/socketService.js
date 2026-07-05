@@ -13,7 +13,18 @@ const init = (server) => {
 
   io.use((socket, next) => {
     try {
-      const token = socket.handshake.auth.token;
+      let token = socket.handshake.auth.token;
+      
+      // Fallback to cookie if auth token is not provided (HttpOnly cookie approach)
+      if (!token && socket.request.headers.cookie) {
+        const cookies = socket.request.headers.cookie.split(';').reduce((res, c) => {
+          const [key, val] = c.trim().split('=').map(decodeURIComponent);
+          res[key] = val;
+          return res;
+        }, {});
+        token = cookies['lis_token'];
+      }
+
       if (!token) {
         return next(new Error('Authentication Error'));
       }

@@ -42,7 +42,7 @@ class DraftManager {
 // If another tab logs out (removes lis_token/lis_user), this tab
 // immediately redirects to the login page to prevent stale sessions.
 window.addEventListener('storage', (e) => {
-    if ((e.key === 'lis_token' || e.key === 'lis_user') && e.newValue === null) {
+    if ((e.key === 'lis_exp' || e.key === 'lis_user') && e.newValue === null) {
         // Token/user was removed in another tab — force logout here
         window.location.href = 'index.html';
     }
@@ -455,36 +455,27 @@ function enforceRBACUI(role) {
 
 // Check Authentication logic (run on every protected page)
 function checkAuth() {
-  const token = localStorage.getItem('lis_token');
   const user = localStorage.getItem('lis_user');
+  const exp = localStorage.getItem('lis_exp');
   
-  if (!token || !user) {
+  // Clean up legacy tokens
+  if (localStorage.getItem('lis_token')) {
+    localStorage.removeItem('lis_token');
+  }
+  
+  if (!user || !exp) {
+    // Rely on api.clearLocalData() which handles redirects uniformly
+    localStorage.removeItem('lis_exp');
+    localStorage.removeItem('lis_user');
     window.location.replace('index.html');
     return;
   }
 
-  // Validate token expiration locally to prevent FOUC on expired tokens
-  try {
-    const payloadBase64 = token.split('.')[1];
-    if (payloadBase64) {
-      const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-      
-      const payload = JSON.parse(jsonPayload);
-      const currentTime = Math.floor(Date.now() / 1000);
-      
-      if (payload.exp && payload.exp < currentTime) {
-        localStorage.removeItem('lis_token');
-        localStorage.removeItem('lis_user');
-        window.location.replace('index.html');
-        return;
-      }
-    }
-  } catch (e) {
-    console.warn("Invalid token format, forcing logout.");
-    localStorage.removeItem('lis_token');
+  // Validate session expiration locally to prevent FOUC on expired cookies
+  const currentTime = Math.floor(Date.now() / 1000);
+  if (parseInt(exp, 10) < currentTime) {
+    console.warn("Session expired, forcing logout.");
+    localStorage.removeItem('lis_exp');
     localStorage.removeItem('lis_user');
     window.location.replace('index.html');
     return;
@@ -530,9 +521,13 @@ function checkAuth() {
 }
 
 function handleLogout() {
-  localStorage.removeItem('lis_token');
-  localStorage.removeItem('lis_user');
-  window.location.href = 'index.html';
+  if (typeof api !== 'undefined' && api.logout) {
+    api.logout();
+  } else {
+    localStorage.removeItem('lis_exp');
+    localStorage.removeItem('lis_user');
+    window.location.href = 'index.html';
+  }
 }
 
 // Add logout listener if button exists
@@ -624,7 +619,6 @@ function downloadPdfGlobal(id, event) {
     const close = () => overlay.remove();
 
     const openPdf = async (withHF) => {
-        const token = localStorage.getItem('lis_token');
         let url = `${BASE_URL}/reports/${id}/pdf`;
         if (!withHF) {
             url += '?withHeaderFooter=false';
@@ -640,9 +634,7 @@ function downloadPdfGlobal(id, event) {
 
         try {
             const response = await fetch(url, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                credentials: 'include'
             });
             
             if (!response.ok) {

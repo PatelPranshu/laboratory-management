@@ -1822,7 +1822,6 @@
         async function downloadPdf() {
             const id = document.getElementById('report-id').value;
             if (!id) return;
-            const token = localStorage.getItem('lis_token');
 
             const pdfButtons = document.querySelectorAll('[onclick="downloadPdf()"]');
             pdfButtons.forEach(btn => {
@@ -1844,9 +1843,9 @@
                 }
 
                 if (hasHeaderFooter) {
-                    promptHeaderFooter(id, token, pdfButtons);
+                    promptHeaderFooter(id, pdfButtons);
                 } else {
-                    await executePdfDownload(id, token, true, pdfButtons);
+                    await executePdfDownload(id, true, pdfButtons);
                 }
             } catch (err) {
                 console.error(err);
@@ -1868,7 +1867,7 @@
             });
         }
 
-        function promptHeaderFooter(id, token, pdfButtons) {
+        function promptHeaderFooter(id, pdfButtons) {
             const existing = document.getElementById('hf-modal');
             if (existing) existing.remove();
 
@@ -1906,11 +1905,11 @@
 
             document.getElementById('hf-btn-with').onclick = () => {
                 overlay.remove();
-                executePdfDownload(id, token, true, pdfButtons);
+                executePdfDownload(id, true, pdfButtons);
             };
             document.getElementById('hf-btn-without').onclick = () => {
                 overlay.remove();
-                executePdfDownload(id, token, false, pdfButtons);
+                executePdfDownload(id, false, pdfButtons);
             };
             document.getElementById('hf-btn-cancel').onclick = close;
         }
@@ -2051,7 +2050,7 @@
             }
         }
 
-        async function executePdfDownload(id, token, withHeaderFooter, pdfButtons) {
+        async function executePdfDownload(id, withHeaderFooter, pdfButtons) {
             pdfButtons.forEach(btn => {
                 btn.disabled = true;
                 btn.style.pointerEvents = 'none';
@@ -2062,7 +2061,7 @@
             try {
                 const url = `${BASE_URL}/reports/${id}/pdf${!withHeaderFooter ? '?withHeaderFooter=false' : ''}`;
                 const res = await fetch(url, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    credentials: 'include'
                 });
                 if (!res.ok) {
                     throw new Error('Failed to generate PDF');

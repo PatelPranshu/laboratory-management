@@ -3,15 +3,18 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchStaff();
 });
 
-const token = localStorage.getItem('lis_token');
 const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    'Content-Type': 'application/json'
+};
+
+const fetchConfig = {
+    headers,
+    credentials: 'include'
 };
 
 async function fetchStaff() {
     try {
-        const res = await fetch(`${API_URL}/staff`, { headers });
+        const res = await fetch(`${API_URL}/staff`, fetchConfig);
         const data = await res.json();
         
         const tbody = document.getElementById('staff-table-body');
@@ -73,7 +76,7 @@ window.deleteStaff = async function(id, name) {
     const confirmed = await UI.showConfirm('Remove Team Member', `Are you extremely sure you want to delete ${name}? This action cannot be undone.`, 'Remove', 'danger');
     if(!confirmed) return;
     try {
-        const res = await fetch(`${API_URL}/staff/${id}`, { method: 'DELETE', headers });
+        const res = await fetch(`${API_URL}/staff/${id}`, { method: 'DELETE', ...fetchConfig });
         const data = await res.json();
         if(data.success) {
             UI.showToast(`Removed ${name}`, 'success');
@@ -93,7 +96,7 @@ window.resetStaffPassword = async function(id, name) {
     try {
         const res = await fetch(`${API_URL}/staff/${id}/reset-password`, { 
             method: 'PUT', 
-            headers,
+            ...fetchConfig,
             body: JSON.stringify({ password: newPass })
         });
         const data = await res.json();
@@ -180,7 +183,7 @@ async function handleInvite(e) {
     try {
         const res = await fetch(`${API_URL}/staff/invite`, {
             method: 'POST',
-            headers,
+            ...fetchConfig,
             body: JSON.stringify({ email, role: 'Doctor' })
         });
         const data = await res.json();
@@ -208,7 +211,7 @@ async function handleTechAdd(e) {
     try {
         const res = await fetch(`${API_URL}/staff/create-tech`, {
             method: 'POST',
-            headers,
+            ...fetchConfig,
             body: JSON.stringify({ name, email, password })
         });
         const data = await res.json();

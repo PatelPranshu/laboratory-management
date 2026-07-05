@@ -65,7 +65,8 @@ async function handleRegistration(e) {
 
         if (data && data.success) {
             // Save to localStorage
-            localStorage.setItem('lis_token', data.token);
+            // localStorage.setItem('lis_token', data.token); // Removed for security
+            localStorage.setItem('lis_exp', data.exp);
             localStorage.setItem('lis_user', JSON.stringify(data.user));
             
             UI.showToast('Account created successfully! Redirecting...');

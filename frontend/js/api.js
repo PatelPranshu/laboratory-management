@@ -73,17 +73,14 @@ const sanitizeHTML = (str) => {
 };
 
 const api = {
-  getToken() {
-    return localStorage.getItem('lis_token');
+  getExp() {
+    return localStorage.getItem('lis_exp');
   },
 
   async request(endpoint, method = 'GET', body = null, signal = null) {
     const headers = {};
     
-    const token = this.getToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+    // Authorization header is removed because the token is now sent via HttpOnly cookie
 
     const config = {
       method,
@@ -168,7 +165,8 @@ const api = {
   },
 
   clearLocalData() {
-    localStorage.removeItem('lis_token');
+    localStorage.removeItem('lis_token'); // Kept for backwards compatibility cleanup
+    localStorage.removeItem('lis_exp');
     localStorage.removeItem('lis_user');
     window.location.href = 'index.html';
   },
