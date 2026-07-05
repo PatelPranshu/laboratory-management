@@ -459,44 +459,72 @@ function checkAuth() {
   const user = localStorage.getItem('lis_user');
   
   if (!token || !user) {
-    window.location.href = 'index.html';
-  } else {
-    // Populate user info in nav — use textContent to prevent XSS
-    const userNameEl = document.getElementById('nav-user-name');
-    let u;
-    if (user) {
-      try {
-        u = JSON.parse(user);
-        
-        // Security check for password reset enforcement
-        if (u.mustChangePassword && !window.location.pathname.endsWith('reset-password.html')) {
-          window.location.href = 'reset-password.html';
-          return;
-        }
+    window.location.replace('index.html');
+    return;
+  }
 
-        // ---------- Frontend Route Interceptor (RBAC) ----------
-        const currentPath = window.location.pathname;
-        const currentPage = currentPath.split('/').pop().split('?')[0].split('#')[0];
-        
-        if (PAGE_PERMISSIONS[currentPage]) {
-            const allowedRoles = PAGE_PERMISSIONS[currentPage];
-            if (!allowedRoles.includes(u.role)) {
-                console.warn(`[Security] Unauthorized access to ${currentPage} attempted by role '${u.role}'. Redirecting.`);
-                window.location.replace('dashboard.html'); // replace() prevents going 'back' to unauthorized page
-                return;
-            }
-        }
-
-        // Apply UI Security to strip restricted DOM elements natively
-        enforceRBACUI(u.role);
-
-        if (userNameEl) {
-          const displayName = u.name || (u.email ? u.email.split('@')[0] : 'User');
-          userNameEl.textContent = displayName;
-        }
-      } catch(e) {
-        if (userNameEl) userNameEl.textContent = 'User';
+  // Validate token expiration locally to prevent FOUC on expired tokens
+  try {
+    const payloadBase64 = token.split('.')[1];
+    if (payloadBase64) {
+      const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      
+      const payload = JSON.parse(jsonPayload);
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      if (payload.exp && payload.exp < currentTime) {
+        localStorage.removeItem('lis_token');
+        localStorage.removeItem('lis_user');
+        window.location.replace('index.html');
+        return;
       }
+    }
+  } catch (e) {
+    console.warn("Invalid token format, forcing logout.");
+    localStorage.removeItem('lis_token');
+    localStorage.removeItem('lis_user');
+    window.location.replace('index.html');
+    return;
+  }
+
+  // Populate user info in nav — use textContent to prevent XSS
+  const userNameEl = document.getElementById('nav-user-name');
+  let u;
+  if (user) {
+    try {
+      u = JSON.parse(user);
+      
+      // Security check for password reset enforcement
+      if (u.mustChangePassword && !window.location.pathname.endsWith('reset-password.html')) {
+        window.location.href = 'reset-password.html';
+        return;
+      }
+
+      // ---------- Frontend Route Interceptor (RBAC) ----------
+      const currentPath = window.location.pathname;
+      const currentPage = currentPath.split('/').pop().split('?')[0].split('#')[0];
+      
+      if (PAGE_PERMISSIONS[currentPage]) {
+          const allowedRoles = PAGE_PERMISSIONS[currentPage];
+          if (!allowedRoles.includes(u.role)) {
+              console.warn(`[Security] Unauthorized access to ${currentPage} attempted by role '${u.role}'. Redirecting.`);
+              window.location.replace('dashboard.html'); // replace() prevents going 'back' to unauthorized page
+              return;
+          }
+      }
+
+      // Apply UI Security to strip restricted DOM elements natively
+      enforceRBACUI(u.role);
+
+      if (userNameEl) {
+        const displayName = u.name || (u.email ? u.email.split('@')[0] : 'User');
+        userNameEl.textContent = displayName;
+      }
+    } catch(e) {
+      if (userNameEl) userNameEl.textContent = 'User';
     }
   }
 }
