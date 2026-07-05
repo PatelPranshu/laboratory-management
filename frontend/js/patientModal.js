@@ -193,8 +193,8 @@ const PatientModal = {
                             `).join('');
                             suggestionsBox.classList.remove('hidden');
                         } else {
-                            suggestionsBox.innerHTML = `<div class="p-4 text-center text-slate-500 text-sm">No existing patients found.</div>`;
-                            suggestionsBox.classList.remove('hidden');
+                            suggestionsBox.innerHTML = '';
+                            suggestionsBox.classList.add('hidden');
                         }
                     } catch (err) {
                         console.error('Search error:', err);
