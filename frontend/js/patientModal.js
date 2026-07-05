@@ -173,9 +173,6 @@ const PatientModal = {
                         if (window.LIS_SEARCH_CACHE[query]) {
                             results = window.LIS_SEARCH_CACHE[query];
                         } else {
-                            suggestionsBox.classList.remove('hidden');
-                            suggestionsBox.innerHTML = `<div class="p-4 text-center text-slate-500 text-sm"><i class="fas fa-circle-notch fa-spin mr-2"></i>Searching...</div>`;
-                            
                             const res = await api.request(`/patients?search=${encodeURIComponent(query)}&limit=5`);
                             results = res.data || [];
                             window.LIS_SEARCH_CACHE[query] = results;
