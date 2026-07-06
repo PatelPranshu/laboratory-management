@@ -4,14 +4,14 @@ const {
   addReferral,
   deleteReferral
 } = require('../controllers/referralController');
-const { protect } = require('../middlewares/authMiddleware');
+const { protect, authorize } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
 router.route('/')
   .get(protect, getReferrals)
-  .post(protect, addReferral);
+  .post(protect, authorize('Admin', 'Doctor'), addReferral);
 
-router.delete('/:id', protect, deleteReferral);
+router.delete('/:id', protect, authorize('Admin', 'Doctor'), deleteReferral);
 
 module.exports = router;

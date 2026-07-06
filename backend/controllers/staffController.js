@@ -3,18 +3,11 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Invitation = require('../models/Invitation');
 const PrintSettings = require('../models/PrintSettings');
-const jwt = require('jsonwebtoken');
+const { generateToken } = require('./authController');
 const { sendInvitationEmail } = require('../services/emailService');
 const { sendNotification } = require('../utils/notifier');
 
-// Generate JWT Helper
-const generateToken = (user) => {
-  return jwt.sign(
-    { id: user._id, role: user.role, parentAdminId: user.parentAdminId, name: user.name },
-    process.env.JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-};
+
 
 // @desc    Invite Staff (Doctor/LabTech)
 exports.inviteStaff = async (req, res) => {
@@ -166,7 +159,7 @@ exports.completeRegistration = async (req, res) => {
       expires: new Date(expTimeMs),
       httpOnly: true,
       secure: true,
-      sameSite: 'strict'
+      sameSite: 'lax'
     };
 
     res.status(201).cookie('lis_token', tokenAuth, options).json({

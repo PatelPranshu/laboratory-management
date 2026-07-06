@@ -24,16 +24,18 @@ const UserSchema = new mongoose.Schema({
   role: {
     type: String,
     enum: {
-      values: ['Admin', 'Doctor', 'LabTech'],
+      values: ['SuperAdmin', 'Admin', 'Doctor', 'LabTech'],
       message: '{VALUE} is not a valid role'
     },
     default: 'Doctor'
   },
   labName: {
     type: String,
-    required: [true, 'Lab name is required'],
     trim: true,
-    maxlength: [100, 'Lab name cannot exceed 100 characters']
+    maxlength: [100, 'Lab name cannot exceed 100 characters'],
+    required: function() {
+      return this.role !== 'SuperAdmin';
+    }
   },
   signature: {
     type: String // URL to signature image
@@ -72,6 +74,22 @@ const UserSchema = new mongoose.Schema({
   },
   passwordChangedAt: {
     type: Date
+  },
+  // Soft delete fields
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedAt: {
+    type: Date
+  },
+  holdDeletion: {
+    type: Boolean,
+    default: false
+  },
+  deletionReason: {
+    type: String,
+    default: null
   }
 }, { timestamps: true });
 

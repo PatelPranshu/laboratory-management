@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Setup | Secure Access</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Courier New', 'monospace']
+                    },
+                    colors: {
+                        brand: {
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .cyber-border {
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.2);
+            border: 1px solid rgba(14, 165, 233, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    
+    <!-- Background Elements -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0 opacity-20 pointer-events-none">
+        <div class="absolute w-[500px] h-[500px] bg-brand-500 rounded-full blur-[100px] -top-48 -left-48"></div>
+        <div class="absolute w-[400px] h-[400px] bg-indigo-500 rounded-full blur-[120px] bottom-0 right-0"></div>
+    </div>
+
+    <div class="max-w-md w-full bg-slate-800/80 backdrop-blur-xl rounded-2xl p-8 cyber-border z-10 relative">
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-900 border border-brand-500 text-brand-500 mb-4 shadow-[0_0_20px_rgba(14,165,233,0.3)]">
+                <i class="fas fa-shield-alt text-2xl"></i>
+            </div>
+            <h1 class="text-2xl font-black text-white tracking-tight uppercase">Super Admin Initializer</h1>
+            <p class="text-sm text-slate-400 mt-2 font-mono">SECURE BOOTSTRAP PROTOCOL</p>
+        </div>
+
+        <form id="setup-form" class="space-y-5">
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Authorization Secret</label>
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-brand-500">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <input type="password" id="secretCode" required
+                        class="block w-full pl-11 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:bg-slate-900 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-mono text-white placeholder-slate-600"
+                        placeholder="ENTER_SECRET_KEY">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Administrator Name</label>
+                <input type="text" id="name" required
+                    class="block w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:bg-slate-900 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-white placeholder-slate-600"
+                    placeholder="System Administrator">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Root Email</label>
+                <input type="email" id="email" required
+                    class="block w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:bg-slate-900 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-white placeholder-slate-600"
+                    placeholder="admin@system.local">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Master Password</label>
+                <input type="password" id="password" required
+                    class="block w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:bg-slate-900 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all text-white placeholder-slate-600"
+                    placeholder="••••••••••••">
+                <p class="text-[10px] text-slate-500 mt-2">Must contain uppercase, number, and special character.</p>
+            </div>
+
+            <button type="submit" id="btn-submit"
+                class="w-full mt-6 py-4 bg-brand-600 hover:bg-brand-500 text-white font-black text-sm uppercase tracking-widest rounded-xl transition-all shadow-[0_0_15px_rgba(14,165,233,0.4)] hover:shadow-[0_0_25px_rgba(14,165,233,0.6)] flex justify-center items-center">
+                Initialize System <i class="fas fa-bolt ml-2"></i>
+            </button>
+        </form>
+
+        <div id="error-box" class="mt-4 p-3 bg-red-900/50 border border-red-500 rounded-lg text-red-200 text-sm hidden text-center font-mono">
+            <!-- Error message injected here -->
+        </div>
+    </div>
+
+    <!-- UI Helpers -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        document.getElementById('setup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btn-submit');
+            const errorBox = document.getElementById('error-box');
+            
+            errorBox.classList.add('hidden');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+            btn.disabled = true;
+
+            const payload = {
+                secretCode: document.getElementById('secretCode').value,
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+            };
+
+            try {
+                const res = await api.request('/auth/setup-superadmin', 'POST', payload);
+                
+                // Login immediately
+                localStorage.setItem('lis_exp', res.exp);
+                localStorage.setItem('lis_user', JSON.stringify(res.user));
+                
+                UI.showToast('Super Admin Created! Initializing Dashboard...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'super-admin.html';
+                }, 1500);
+
+            } catch (err) {
+                errorBox.textContent = err.message || 'Initialization Failed';
+                errorBox.classList.remove('hidden');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

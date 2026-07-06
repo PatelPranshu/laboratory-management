@@ -17,22 +17,22 @@ const protect = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // ---------- Zero-Hit Auth (new tokens contain role) ----------
-    if (decoded.role) {
-      req.user = {
-        id: decoded.id,
-        role: decoded.role,
-        parentAdminId: decoded.parentAdminId,
-        name: decoded.name,
-      };
-      return next();
-    }
-
-    // ---------- Fallback for old tokens that only contain { id } ----------
+    // Always verify the user exists and is active in the database,
+    // regardless of whether the token contains role claims (Zero-Hit) or not.
     const user = await User.findById(decoded.id);
 
     if (!user) {
       return res.status(401).json({ success: false, error: 'User no longer exists' });
+    }
+
+    // Block suspended or non-active accounts
+    if (user.accountStatus !== 'Active') {
+      return res.status(401).json({ success: false, error: `Account is ${user.accountStatus}. Please contact your administrator.` });
+    }
+
+    if (user.isDeleted) {
+      const adminEmail = process.env.SUPER_ADMIN_EMAIL || 'pranshuvramani@gmail.com';
+      return res.status(401).json({ success: false, error: `Account is deleted. Please contact super admin with mail id (${adminEmail}) to restore.` });
     }
 
     // Check if user changed password after the token was issued
@@ -43,7 +43,14 @@ const protect = async (req, res, next) => {
       }
     }
 
-    req.user = user;
+    // Attach verified user info from database (not from token claims)
+    req.user = {
+      id: user._id,
+      role: user.role,
+      parentAdminId: user.parentAdminId,
+      name: user.name,
+    };
+
     next();
   } catch (err) {
     // Differentiate expired vs. invalid tokens

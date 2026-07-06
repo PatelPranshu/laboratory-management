@@ -10,6 +10,8 @@ const generateToken = (user) => {
   );
 };
 
+// Exported for shared use by staffController
+
 // Helper function to send token in HttpOnly cookie
 const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user);
@@ -21,7 +23,7 @@ const sendTokenResponse = (user, statusCode, res) => {
     expires: new Date(expTimeMs),
     httpOnly: true,
     secure: true,
-    sameSite: 'strict'
+    sameSite: 'lax'
   };
 
   res
@@ -51,14 +53,8 @@ exports.register = async (req, res) => {
 
   let userRole = role;
 
-  // --- Check if first user ---
-  const totalUsers = await User.countDocuments();
-  if (totalUsers === 0) {
-    userRole = 'Admin';
-  } else {
-    const allowedRoles = ['Admin', 'Doctor', 'LabTech'];
-    userRole = allowedRoles.includes(role) ? role : 'Doctor';
-  }
+  const allowedRoles = ['Admin', 'Doctor', 'LabTech'];
+  userRole = allowedRoles.includes(role) ? role : 'Doctor';
 
   // --- Registration Restrictions ---
   if (userRole !== 'Admin') {
@@ -129,6 +125,13 @@ exports.login = async (req, res) => {
     throw err;
   }
   
+  if (user.isDeleted) {
+    const adminEmail = process.env.SUPER_ADMIN_EMAIL || 'pranshuvramani@gmail.com';
+    const err = new Error(`Account is deleted. Please contact super admin with mail id (${adminEmail}) to restore.`);
+    err.statusCode = 403;
+    throw err;
+  }
+
   if (user.accountStatus !== 'Active') {
     const err = new Error(`Account is ${user.accountStatus}`);
     err.statusCode = 403;
@@ -163,7 +166,7 @@ exports.updateProfile = async (req, res) => {
     throw err;
   }
 
-  const { email, labName, name, password } = req.body;
+  const { email, labName, name, password, currentPassword } = req.body;
 
   // Update email if provided
   if (email && email !== user.email) {
@@ -197,6 +200,18 @@ exports.updateProfile = async (req, res) => {
 
   // Update password if provided (only if non-empty)
   if (password && password.trim() !== '') {
+    // Require current password verification to prevent session-hijack account takeover
+    if (!currentPassword) {
+      const err = new Error('Current password is required to set a new password');
+      err.statusCode = 400;
+      throw err;
+    }
+    const isMatch = await user.matchPassword(currentPassword);
+    if (!isMatch) {
+      const err = new Error('Current password is incorrect');
+      err.statusCode = 401;
+      throw err;
+    }
     user.password = password;
   }
 
@@ -256,11 +271,84 @@ exports.logout = async (req, res) => {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
     secure: true,
-    sameSite: 'strict'
+    sameSite: 'lax'
   });
 
   res.status(200).json({
     success: true,
     data: {}
   });
+};
+
+// Export shared helpers for staffController
+module.exports.generateToken = generateToken;
+module.exports.sendTokenResponse = sendTokenResponse;
+
+// @desc    Setup initial Super Admin
+// @route   POST /api/auth/setup-superadmin
+// @access  Public
+exports.setupSuperAdmin = async (req, res) => {
+  const { email, password, name, secretCode } = req.body;
+
+  if (secretCode !== process.env.SUPER_ADMIN_SECRET) {
+    return res.status(401).json({ success: false, error: 'Invalid secret code' });
+  }
+
+  const superAdminExists = await User.findOne({ role: 'SuperAdmin' });
+  if (superAdminExists) {
+    return res.status(400).json({ success: false, error: 'Super Admin is already registered' });
+  }
+
+  const userExists = await User.findOne({ email: email.toLowerCase().trim() });
+  if (userExists) {
+    return res.status(400).json({ success: false, error: 'Email already exists' });
+  }
+
+  const user = await User.create({
+    email: email.toLowerCase().trim(),
+    name: name.trim(),
+    password,
+    role: 'SuperAdmin',
+    accountStatus: 'Active'
+  });
+
+  sendTokenResponse(user, 201, res);
+};
+
+// @desc    Soft Delete Lab (Wait 30 Days)
+// @route   DELETE /api/auth/delete-lab
+// @access  Private (Admin only)
+exports.deleteLab = async (req, res) => {
+  try {
+    const adminId = req.user._id;
+    const { reason } = req.body;
+
+    const admin = await User.findById(adminId);
+    if (!admin || admin.role !== 'Admin') {
+      return res.status(404).json({ success: false, error: 'Admin not found' });
+    }
+
+    // Soft delete admin
+    admin.isDeleted = true;
+    admin.deletedAt = new Date();
+    admin.deletionReason = reason || 'No reason provided';
+    await admin.save();
+
+    // Cascade soft delete to all staff accounts
+    await User.updateMany(
+      { parentAdminId: adminId },
+      { $set: { isDeleted: true, deletedAt: new Date() } }
+    );
+
+    res.cookie('lis_token', 'none', {
+      expires: new Date(Date.now() + 10 * 1000),
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax'
+    });
+
+    res.status(200).json({ success: true, message: 'Lab scheduled for permanent deletion in 30 days.' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 };

@@ -286,7 +286,13 @@
                     
                     UI.showToast('Login Successful! Redirecting...', 'success');
                     setTimeout(() => {
-                        window.location.href = res.user.mustChangePassword ? 'reset-password.html' : 'dashboard.html';
+                        if (res.user.mustChangePassword) {
+                            window.location.href = 'reset-password.html';
+                        } else if (res.user.role === 'SuperAdmin') {
+                            window.location.href = 'super-admin.html';
+                        } else {
+                            window.location.href = 'dashboard.html';
+                        }
                     }, 1000);
                     
                 } else if (type === 'register') {

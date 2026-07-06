@@ -25,13 +25,13 @@ const router = express.Router();
 
 router.route('/')
   .get(protect, getReports)
-  .post(protect, createReport);
+  .post(protect, authorize('Admin', 'Doctor', 'LabTech'), createReport);
 
 router.get('/pending', protect, getPendingReports);
 
 router.route('/:id')
   .get(protect, validateObjectId, getReport)
-  .put(protect, validateObjectId, updateReport)
+  .put(protect, validateObjectId, authorize('Admin', 'Doctor', 'LabTech'), updateReport)
   .delete(protect, validateObjectId, authorize('Admin'), deleteReport);
 
 router.get('/:id/pdf', protect, validateObjectId, pdfLimiter, authorize('Admin', 'Doctor', 'LabTech'), generatePdf);

@@ -1,4 +1,5 @@
 const express = require('express');
+const { z } = require('zod');
 const {
   inviteStaff,
   verifyInvite,
@@ -9,6 +10,7 @@ const {
   resetPassword
 } = require('../controllers/staffController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
+const { validateSchema, passwordSchema } = require('../middlewares/validate');
 
 const router = express.Router();
 
@@ -20,6 +22,13 @@ router.put('/:id/reset-password', protect, authorize('Admin'), resetPassword);
 
 // Public routes for onboarding
 router.get('/verify-invite/:token', verifyInvite);
-router.post('/complete-registration', completeRegistration);
+
+const completeRegistrationSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+  password: passwordSchema,
+  name: z.string().min(1, 'Name is required'),
+  signatureUrl: z.string().optional()
+});
+router.post('/complete-registration', validateSchema(completeRegistrationSchema), completeRegistration);
 
 module.exports = router;

@@ -1,7 +1,7 @@
 const express = require('express');
 const { z } = require('zod');
-const { register, login, getMe, updateProfile, resetPassword, logout } = require('../controllers/authController');
-const { protect } = require('../middlewares/authMiddleware');
+const { register, login, getMe, updateProfile, resetPassword, logout, setupSuperAdmin, deleteLab } = require('../controllers/authController');
+const { protect, authorize } = require('../middlewares/authMiddleware');
 const { validateSchema, passwordSchema } = require('../middlewares/validate');
 
 const router = express.Router();
@@ -26,7 +26,8 @@ const profileSchema = z.object({
   name: z.string().optional(),
   password: z.string().optional().refine(val => !val || passwordSchema.safeParse(val).success, {
     message: 'Password must be at least 8 characters with at least 1 uppercase letter, 1 number, and 1 special character'
-  })
+  }),
+  currentPassword: z.string().optional()
 });
 
 const resetPasswordSchema = z.object({
@@ -39,4 +40,7 @@ router.get('/me', protect, getMe);
 router.put('/profile', protect, validateSchema(profileSchema), updateProfile);
 router.post('/reset-password', protect, validateSchema(resetPasswordSchema), resetPassword);
 router.post('/logout', protect, logout);
+router.post('/setup-superadmin', setupSuperAdmin);
+router.delete('/delete-lab', protect, authorize('Admin'), deleteLab);
+
 module.exports = router;

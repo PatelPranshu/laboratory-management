@@ -68,3 +68,6 @@ temp/
 *.tmp
 *.bak
 
+# Agents and Skills
+.agents/
+skills-lock.json

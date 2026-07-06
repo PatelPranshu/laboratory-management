@@ -195,6 +195,15 @@
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="md:col-span-2">
+                                        <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2.5 ml-1">Current Password</label>
+                                        <div class="relative group">
+                                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand-500 transition-colors">
+                                                <i class="fas fa-lock"></i>
+                                            </div>
+                                            <input type="password" id="current-password" placeholder="Enter your current password" class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-700" required>
+                                        </div>
+                                    </div>
                                     <div>
                                         <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2.5 ml-1">New Password</label>
                                         <div class="relative group">
@@ -219,7 +228,32 @@
                                         <i class="fas fa-sync-alt mr-2"></i> Update Password
                                     </button>
                                 </div>
+                                </div>
                             </form>
+                        </div>
+
+                        <!-- Danger Zone -->
+                        <div id="danger-zone" class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-red-100 p-6 sm:p-10 mt-8 relative overflow-hidden hidden">
+                             <div class="absolute top-0 right-0 p-8 opacity-5">
+                                <i class="fas fa-exclamation-triangle text-6xl text-red-500"></i>
+                            </div>
+
+                            <h3 class="text-xl font-bold text-red-600 mb-6 flex items-center">
+                                <span class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mr-4">
+                                    <i class="fas fa-trash-alt text-sm"></i>
+                                </span>
+                                Danger Zone
+                            </h3>
+
+                            <div class="bg-red-50 border border-red-100 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between">
+                                <div>
+                                    <h4 class="font-bold text-red-800 text-sm mb-1">Delete Laboratory</h4>
+                                    <p class="text-xs text-red-600/80 max-w-md">This will suspend all staff accounts and delete your lab after 30 days. Contact the Super Admin to restore access.</p>
+                                </div>
+                                <button onclick="deleteLab()" class="mt-4 md:mt-0 px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-colors shadow-lg shadow-red-600/20 whitespace-nowrap">
+                                    Delete Lab
+                                </button>
+                            </div>
                         </div>
 
                     </div>

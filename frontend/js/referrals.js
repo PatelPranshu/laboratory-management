@@ -74,9 +74,10 @@ async function addReferral(event) {
     }
 }
 
-async function deleteReferral(id) {
-    if (!confirm('Are you sure you want to remove this referral source?')) return;
-    
+window.deleteReferral = async (id) => {
+    const confirmed = await UI.showConfirm('Remove Referral', 'Are you sure you want to remove this referral source?', 'Remove', 'danger');
+    if (!confirmed) return;
+
     try {
         await api.request(`/referrals/${id}`, 'DELETE');
         UI.showToast('Referral source removed.', 'success');

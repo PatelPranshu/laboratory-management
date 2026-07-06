@@ -4,10 +4,30 @@ const jwt = require('jsonwebtoken');
 let io;
 
 const init = (server) => {
+  // Use same ALLOWED_ORIGINS whitelist as Express CORS config
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+    : [];
+
   io = new Server(server, {
     cors: {
-      origin: "*", // Will be restricted in production config later
-      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+      origin: function (origin, callback) {
+        // Allow requests with no origin only in dev (e.g., mobile apps, curl)
+        if (!origin && process.env.NODE_ENV !== 'production') return callback(null, true);
+
+        if (allowedOrigins.indexOf(origin) !== -1) {
+          return callback(null, true);
+        }
+
+        // In development, allow if no origins defined
+        if (process.env.NODE_ENV !== 'production' && allowedOrigins.length === 0) {
+          return callback(null, true);
+        }
+
+        return callback(new Error('CORS not allowed'), false);
+      },
+      methods: ["GET", "POST"],
+      credentials: true
     }
   });
 
