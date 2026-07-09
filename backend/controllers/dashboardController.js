@@ -22,16 +22,20 @@ exports.getSummary = async (req, res) => {
     let patientQuery = { doctorId: adminId };
     let reportQuery = { doctorId: adminId };
 
-    // Last 5 patients added (Minimal scan - limit 5)
-    const recentPatients = await Patient.find(patientQuery)
-      .sort({ createdAt: -1 })
-      .limit(5);
-
-    // Last 5 reports generated (Minimal scan - limit 5)
-    const recentReports = await ReportInstance.find(reportQuery)
-      .populate('patientId', 'name')
-      .sort({ createdAt: -1 })
-      .limit(5);
+    // Last 5 patients + last 5 reports in parallel (minimal field projection)
+    const [recentPatients, recentReports] = await Promise.all([
+      Patient.find(patientQuery)
+        .select('name phone age gender createdAt')
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .lean(),
+      ReportInstance.find(reportQuery)
+        .select('patientId date status createdAt')
+        .populate('patientId', 'name')
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .lean()
+    ]);
 
     res.status(200).json({
       success: true,

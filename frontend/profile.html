@@ -30,8 +30,8 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
-<body class="bg-slate-50 font-sans antialiased text-slate-900">
-    <div class="flex h-screen overflow-hidden">
+<body class="bg-slate-50 font-sans antialiased text-slate-900 selection:bg-brand-500 selection:text-white">
+    <div class="flex h-screen overflow-hidden bg-slate-100">
         <!-- Sidebar injected by layout.js -->
 
         <main class="flex-1 overflow-y-auto bg-slate-50 custom-scrollbar relative">
@@ -50,39 +50,28 @@
                     </div>
                 </div>
 
-                <!-- Mobile-only Placeholder -->
-                <div class="lg:hidden flex-1 w-full max-w-2xl flex relative opacity-0"></div>
+                <!-- Mobile Header Title (visible on small screens) -->
+                <div class="lg:hidden flex items-center flex-1">
+                    <h1 class="text-lg font-bold text-slate-900">Settings</h1>
+                </div>
 
                 <!-- Notification Bell Container & Status -->
-                <div class="ml-auto lg:ml-0 flex items-center space-x-4 shrink-0" id="header-actions">
+                <div class="ml-auto flex items-center space-x-4 shrink-0" id="header-actions">
                     <div id="last-sync" class="hidden sm:block text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
                         Profile Verified
                     </div>
                 </div>
             </header>
 
-            <div class="px-4 py-6 sm:px-8 sm:py-8 max-w-5xl mx-auto">
-                
-                <!-- Mobile-only Breadcrumbs (hidden on desktop) -->
-                <nav class="flex lg:hidden mb-6" aria-label="Breadcrumb">
-                    <ol class="inline-flex items-center space-x-1 md:space-x-2 text-xs font-semibold text-slate-500">
-                        <li class="inline-flex items-center hover:text-brand-600 transition-colors">
-                            <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-1.5 text-[10px]"></i>Dashboard</a>
-                        </li>
-                        <li>
-                            <div class="flex items-center text-slate-400">
-                                <i class="fas fa-chevron-right text-[9px] mx-1"></i>
-                                <span class="text-slate-700 font-bold">Settings</span>
-                            </div>
-                        </li>
-                    </ol>
-                </nav>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="px-4 py-6 sm:px-8 sm:py-8 max-w-6xl mx-auto">
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
                     
                     <!-- Left Column: Overview -->
-                    <div class="lg:col-span-1 space-y-6">
-                        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="xl:col-span-1 space-y-6">
+                        <!-- Profile Card -->
+                        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden glass-card">
                             <div class="h-32 bg-gradient-to-br from-brand-600 to-indigo-700 relative">
+                                <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none overflow-hidden"></div>
                                 <div class="absolute -bottom-12 left-1/2 -translate-x-1/2">
                                     <div class="w-24 h-24 rounded-3xl bg-white p-1 shadow-xl border border-white/20">
                                         <div class="w-full h-full rounded-2xl bg-slate-100 flex items-center justify-center text-4xl font-black text-brand-600 uppercase" id="profile-initials">
@@ -98,46 +87,50 @@
                                     <span class="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase rounded-full border border-emerald-100 italic">Active Account</span>
                                 </div>
                             </div>
-                            <div class="border-t border-slate-100 px-6 py-4 space-y-3">
-                                <div class="flex items-center text-sm">
-                                    <i class="fas fa-id-badge w-6 text-slate-400"></i>
-                                    <span id="display-id" class="text-slate-600 truncate">ID: ...</span>
+                            <div class="border-t border-slate-100 px-6 py-4 space-y-3 bg-slate-50/50">
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-slate-500 font-medium flex items-center"><i class="fas fa-id-badge w-6 text-slate-400"></i> Account ID</span>
+                                    <span id="display-id" class="text-slate-700 font-bold font-mono">...</span>
                                 </div>
-                                <div class="flex items-center text-sm">
-                                    <i class="fas fa-calendar-alt w-6 text-slate-400"></i>
-                                    <span id="display-joined" class="text-slate-600">Member since ...</span>
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-slate-500 font-medium flex items-center"><i class="fas fa-calendar-alt w-6 text-slate-400"></i> Joined</span>
+                                    <span id="display-joined" class="text-slate-700 font-bold">...</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="bg-indigo-900 rounded-3xl p-6 text-white shadow-xl shadow-indigo-900/20 relative overflow-hidden">
-                            <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                            <h3 class="text-lg font-bold mb-2 relative z-10">Laboratory Info</h3>
-                            <p class="text-indigo-200/80 text-sm mb-4 relative z-10 leading-relaxed">This name appears on all laboratory reports and communications.</p>
-                            <div class="bg-white/10 rounded-2xl p-4 border border-white/10 backdrop-blur-md relative z-10">
+                        <!-- Lab Context -->
+                        <div class="bg-indigo-900 rounded-3xl p-6 text-white shadow-xl shadow-indigo-900/20 relative overflow-hidden group">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 transition-all group-hover:bg-white/20"></div>
+                            <div class="absolute bottom-0 left-0 w-24 h-24 bg-brand-500/20 rounded-full blur-2xl -ml-12 -mb-12"></div>
+                            
+                            <h3 class="text-lg font-bold mb-2 relative z-10 flex items-center"><i class="fas fa-microscope text-indigo-300 mr-2"></i> Laboratory Info</h3>
+                            <p class="text-indigo-200/80 text-xs mb-5 relative z-10 leading-relaxed">This name appears on all laboratory reports and communications.</p>
+                            
+                            <div class="bg-white/10 rounded-2xl p-4 border border-white/10 backdrop-blur-md relative z-10 hover:bg-white/15 transition-colors">
                                 <p class="text-[10px] font-bold text-indigo-300 uppercase tracking-widest mb-1">Standard Brand</p>
-                                <p class="font-bold text-lg" id="display-labName">MyPathoLabs</p>
+                                <p class="font-bold text-lg tracking-tight" id="display-labName">MyPathoLabs</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Right Column: Forms -->
-                    <div class="lg:col-span-2 space-y-8">
+                    <div class="xl:col-span-2 space-y-8">
                         
                         <!-- Account Details Card -->
-                        <div class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-slate-200 p-6 sm:p-10 relative overflow-hidden">
+                        <div class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-slate-200 p-6 sm:p-10 relative overflow-hidden glass-card">
                             <div class="absolute top-0 right-0 p-8 opacity-5">
-                                <i class="fas fa-user-edit text-6xl"></i>
+                                <i class="fas fa-user-edit text-8xl"></i>
                             </div>
                             
-                            <h3 class="text-xl font-bold text-slate-800 mb-8 flex items-center">
-                                <span class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mr-4">
+                            <h3 class="text-xl font-bold text-slate-800 mb-8 flex items-center relative z-10">
+                                <span class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mr-4 border border-brand-100 shadow-sm">
                                     <i class="fas fa-address-card"></i>
                                 </span>
                                 Personal Information
                             </h3>
 
-                            <form id="profile-form" class="space-y-6">
+                            <form id="profile-form" class="space-y-6 relative z-10">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2.5 ml-1">Full Name</label>
@@ -145,7 +138,7 @@
                                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand-500 transition-colors">
                                                 <i class="fas fa-user"></i>
                                             </div>
-                                            <input type="text" id="edit-name" required class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-700">
+                                            <input type="text" id="edit-name" required class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-bold text-slate-700 shadow-sm">
                                         </div>
                                     </div>
                                     <div>
@@ -154,21 +147,21 @@
                                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand-500 transition-colors">
                                                 <i class="fas fa-envelope"></i>
                                             </div>
-                                            <input type="email" id="edit-email" required class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-700">
+                                            <input type="email" id="edit-email" required class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-bold text-slate-700 shadow-sm">
                                         </div>
                                     </div>
-                                    <div>
+                                    <div class="md:col-span-2">
                                         <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2.5 ml-1">Laboratory Name</label>
                                         <div class="relative group">
                                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand-500 transition-colors">
                                                 <i class="fas fa-hospital"></i>
                                             </div>
-                                            <input type="text" id="edit-labName" required class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-700">
+                                            <input type="text" id="edit-labName" required class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-bold text-slate-700 shadow-sm">
                                         </div>
                                     </div>
                                 </div>
-                                <div class="pt-4">
-                                    <button type="submit" id="btn-save-profile" class="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-brand-500/20">
+                                <div class="pt-6 flex flex-col sm:flex-row sm:justify-end">
+                                    <button type="submit" id="btn-save-profile" class="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3.5 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-brand-500/30 active:scale-95">
                                         <i class="fas fa-save mr-2"></i> Save Changes
                                     </button>
                                 </div>
@@ -176,22 +169,22 @@
                         </div>
 
                         <!-- Security Card -->
-                        <div class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-slate-200 p-6 sm:p-10 relative overflow-hidden">
+                        <div class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-slate-200 p-6 sm:p-10 relative overflow-hidden glass-card">
                              <div class="absolute top-0 right-0 p-8 opacity-5">
-                                <i class="fas fa-shield-alt text-6xl"></i>
+                                <i class="fas fa-shield-alt text-8xl"></i>
                             </div>
 
-                            <h3 class="text-xl font-bold text-slate-800 mb-8 flex items-center">
-                                <span class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mr-4">
+                            <h3 class="text-xl font-bold text-slate-800 mb-8 flex items-center relative z-10">
+                                <span class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mr-4 border border-orange-100 shadow-sm">
                                     <i class="fas fa-lock text-sm"></i>
                                 </span>
                                 Security & Password
                             </h3>
 
-                            <form id="password-form" class="space-y-6">
-                                <div class="bg-orange-50/50 border border-orange-100 rounded-2xl p-4 flex items-start mb-6">
-                                    <i class="fas fa-info-circle text-orange-400 mt-1 mr-3"></i>
-                                    <p class="text-xs text-orange-700 font-medium leading-relaxed">To change your password, enter a new strong password below. It must be at least 8 characters long, contain an uppercase letter, and a number.</p>
+                            <form id="password-form" class="space-y-6 relative z-10">
+                                <div class="bg-orange-50 border border-orange-100 rounded-2xl p-5 flex items-start mb-6 shadow-sm">
+                                    <i class="fas fa-info-circle text-orange-500 mt-0.5 mr-3 text-lg"></i>
+                                    <p class="text-xs text-orange-800 font-semibold leading-relaxed">To change your password, enter a new strong password below. It must be at least 8 characters long, contain an uppercase letter, and a number.</p>
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -201,7 +194,7 @@
                                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand-500 transition-colors">
                                                 <i class="fas fa-lock"></i>
                                             </div>
-                                            <input type="password" id="current-password" placeholder="Enter your current password" class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-700" required>
+                                            <input type="password" id="current-password" placeholder="Enter your current password" class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-bold text-slate-700 shadow-sm" required>
                                         </div>
                                     </div>
                                     <div>
@@ -210,7 +203,7 @@
                                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand-500 transition-colors">
                                                 <i class="fas fa-key"></i>
                                             </div>
-                                            <input type="password" id="new-password" placeholder="••••••••" class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-700">
+                                            <input type="password" id="new-password" placeholder="••••••••" class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-bold text-slate-700 shadow-sm">
                                         </div>
                                     </div>
                                     <div>
@@ -219,38 +212,37 @@
                                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand-500 transition-colors">
                                                 <i class="fas fa-shield-check"></i>
                                             </div>
-                                            <input type="password" id="confirm-password" placeholder="••••••••" class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-700">
+                                            <input type="password" id="confirm-password" placeholder="••••••••" class="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-bold text-slate-700 shadow-sm">
                                         </div>
                                     </div>
                                 </div>
-                                <div class="pt-4">
-                                    <button type="submit" id="btn-save-password" class="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-slate-900/10">
+                                <div class="pt-6 flex flex-col sm:flex-row sm:justify-end">
+                                    <button type="submit" id="btn-save-password" class="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl transition-all shadow-lg shadow-slate-900/20 active:scale-95">
                                         <i class="fas fa-sync-alt mr-2"></i> Update Password
                                     </button>
-                                </div>
                                 </div>
                             </form>
                         </div>
 
                         <!-- Danger Zone -->
-                        <div id="danger-zone" class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-red-100 p-6 sm:p-10 mt-8 relative overflow-hidden hidden">
+                        <div id="danger-zone" class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-red-100 p-6 sm:p-10 relative overflow-hidden hidden glass-card">
                              <div class="absolute top-0 right-0 p-8 opacity-5">
-                                <i class="fas fa-exclamation-triangle text-6xl text-red-500"></i>
+                                <i class="fas fa-exclamation-triangle text-8xl text-red-500"></i>
                             </div>
 
-                            <h3 class="text-xl font-bold text-red-600 mb-6 flex items-center">
-                                <span class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mr-4">
+                            <h3 class="text-xl font-bold text-red-600 mb-6 flex items-center relative z-10">
+                                <span class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mr-4 border border-red-100 shadow-sm">
                                     <i class="fas fa-trash-alt text-sm"></i>
                                 </span>
                                 Danger Zone
                             </h3>
 
-                            <div class="bg-red-50 border border-red-100 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between">
-                                <div>
+                            <div class="bg-red-50 border border-red-200 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm relative z-10">
+                                <div class="flex-1">
                                     <h4 class="font-bold text-red-800 text-sm mb-1">Delete Laboratory</h4>
-                                    <p class="text-xs text-red-600/80 max-w-md">This will suspend all staff accounts and delete your lab after 30 days. Contact the Super Admin to restore access.</p>
+                                    <p class="text-xs text-red-700/80 max-w-lg font-medium leading-relaxed">This will suspend all staff accounts immediately and permanently delete your lab after 30 days. Contact the Super Admin to restore access.</p>
                                 </div>
-                                <button onclick="deleteLab()" class="mt-4 md:mt-0 px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-colors shadow-lg shadow-red-600/20 whitespace-nowrap">
+                                <button onclick="deleteLab()" class="shrink-0 w-full md:w-auto px-6 py-3 bg-red-600 hover:bg-red-700 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-red-600/30 active:scale-95 whitespace-nowrap flex items-center justify-center">
                                     Delete Lab
                                 </button>
                             </div>
@@ -261,9 +253,9 @@
             </div>
 
             <!-- Footer Links -->
-            <div class="mt-8 mb-4 text-center text-sm text-slate-500 font-medium flex justify-center gap-4">
+            <div class="mt-4 mb-8 text-center text-sm text-slate-400 font-bold flex justify-center gap-4">
                 <a href="privacy-policy.html" class="hover:text-brand-600 transition-colors">Privacy Policy</a>
-                <span>&bull;</span>
+                <span class="opacity-50">&bull;</span>
                 <a href="terms-condition.html" class="hover:text-brand-600 transition-colors">Terms of Service</a>
             </div>
 

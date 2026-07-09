@@ -13,4 +13,6 @@ const ReferralSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+ReferralSchema.index({ parentAdminId: 1, name: 1 });
+
 module.exports = mongoose.model('Referral', ReferralSchema);

@@ -1,25 +1,23 @@
 const User = require('../models/User');
 const ReportInstance = require('../models/ReportInstance');
+const { invalidateAuthCache } = require('../middlewares/authMiddleware');
 
 // @desc    Get Platform Stats
 // @route   GET /api/superadmin/stats
 // @access  Private (SuperAdmin only)
 exports.getPlatformStats = async (req, res) => {
-  const totalLabs = await User.countDocuments({ role: 'Admin', accountStatus: 'Active', isDeleted: false });
-  const suspendedLabs = await User.countDocuments({ role: 'Admin', accountStatus: 'Suspended', isDeleted: false });
-  const deletedLabs = await User.countDocuments({ role: 'Admin', isDeleted: true });
-  const totalUsers = await User.countDocuments({ role: { $in: ['Doctor', 'LabTech'] }, isDeleted: false });
-  const totalReports = await ReportInstance.countDocuments();
+  // Run all 5 counts in parallel instead of sequential
+  const [totalLabs, suspendedLabs, deletedLabs, totalUsers, totalReports] = await Promise.all([
+    User.countDocuments({ role: 'Admin', accountStatus: 'Active', isDeleted: false }),
+    User.countDocuments({ role: 'Admin', accountStatus: 'Suspended', isDeleted: false }),
+    User.countDocuments({ role: 'Admin', isDeleted: true }),
+    User.countDocuments({ role: { $in: ['Doctor', 'LabTech'] }, isDeleted: false }),
+    ReportInstance.countDocuments()
+  ]);
 
   res.status(200).json({
     success: true,
-    data: {
-      totalLabs,
-      suspendedLabs,
-      deletedLabs,
-      totalUsers,
-      totalReports
-    }
+    data: { totalLabs, suspendedLabs, deletedLabs, totalUsers, totalReports }
   });
 };
 
@@ -27,10 +25,24 @@ exports.getPlatformStats = async (req, res) => {
 // @route   GET /api/superadmin/labs
 // @access  Private (SuperAdmin only)
 exports.getAllLabs = async (req, res) => {
-  const labs = await User.find({ role: 'Admin' }).select('-password -__v').sort({ createdAt: -1 });
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
+  const startIndex = (page - 1) * limit;
+
+  const [labs, total] = await Promise.all([
+    User.find({ role: 'Admin' })
+      .select('-password -__v -stats')
+      .sort({ createdAt: -1 })
+      .skip(startIndex)
+      .limit(limit)
+      .lean(),
+    User.countDocuments({ role: 'Admin' })
+  ]);
+
   res.status(200).json({
     success: true,
     count: labs.length,
+    pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     data: labs
   });
 };
@@ -53,10 +65,15 @@ exports.updateLabStatus = async (req, res) => {
   await lab.save();
 
   // Cascade status to staff
+  const staffUsers = await User.find({ parentAdminId: lab._id }).select('_id');
   await User.updateMany(
     { parentAdminId: lab._id },
     { $set: { accountStatus: status } }
   );
+
+  // Invalidate auth cache for lab + all staff
+  invalidateAuthCache(lab._id);
+  staffUsers.forEach(s => invalidateAuthCache(s._id));
 
   res.status(200).json({ success: true, data: lab });
 };
@@ -72,14 +89,22 @@ exports.restoreLab = async (req, res) => {
 
   lab.isDeleted = false;
   lab.deletedAt = undefined;
+  lab.deletionReason = undefined;
   lab.holdDeletion = false;
   await lab.save();
 
   // Cascade restore to staff
+  const staffUsers = await User.find({ parentAdminId: lab._id }).select('_id');
   await User.updateMany(
     { parentAdminId: lab._id },
-    { $set: { isDeleted: false, deletedAt: undefined, holdDeletion: false } }
+    { 
+      $set: { isDeleted: false, holdDeletion: false },
+      $unset: { deletedAt: 1, deletionReason: 1 }
+    }
   );
+
+  invalidateAuthCache(lab._id);
+  staffUsers.forEach(s => invalidateAuthCache(s._id));
 
   res.status(200).json({ success: true, data: lab });
 };
@@ -111,15 +136,15 @@ exports.getLabDetails = async (req, res) => {
     return res.status(404).json({ success: false, error: 'Lab Admin not found' });
   }
 
-  // Get Stats
-  const totalReports = await ReportInstance.countDocuments({ doctorId: adminId });
-  const pendingReports = await ReportInstance.countDocuments({ doctorId: adminId, status: 'Pending' });
-  const totalPatients = await Patient.countDocuments({ doctorId: adminId });
-
-  // Get all users under this admin (including the admin itself)
-  const staff = await User.find({
-    $or: [{ _id: adminId }, { parentAdminId: adminId }]
-  }).select('-password -__v').sort({ role: 1 });
+  // Run all 3 counts + staff query in parallel
+  const [totalReports, pendingReports, totalPatients, staff] = await Promise.all([
+    ReportInstance.countDocuments({ doctorId: adminId }),
+    ReportInstance.countDocuments({ doctorId: adminId, status: 'draft' }),
+    Patient.countDocuments({ doctorId: adminId }),
+    User.find({
+      $or: [{ _id: adminId }, { parentAdminId: adminId }]
+    }).select('-password -__v -stats').sort({ role: 1 }).lean()
+  ]);
 
   res.status(200).json({
     success: true,

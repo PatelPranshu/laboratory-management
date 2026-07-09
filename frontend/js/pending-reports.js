@@ -4,19 +4,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Auto-refresh pending reports when user switches back to this tab (10s throttle)
     if (typeof TabFocusRefresh !== 'undefined') {
-        TabFocusRefresh.register(fetchPendingReports);
+        TabFocusRefresh.register(() => fetchPendingReports());
     }
 });
 
 const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
+let currentPendingPage = 1;
+const PENDING_LIMIT = 20;
 
-async function fetchPendingReports() {
+async function fetchPendingReports(page = 1) {
+    currentPendingPage = page;
     try {
-        const res = await api.request('/reports/pending');
+        const res = await api.request(`/reports/pending?page=${page}&limit=${PENDING_LIMIT}`);
         const tbody = document.getElementById('pending-table-body');
         
         if (!res.data || res.data.length === 0) {
             tbody.innerHTML = `<tr><td colspan="6" class="px-8 py-20 text-center block sm:table-cell"><div class="max-w-xs mx-auto"><i class="fas fa-check-circle text-5xl text-emerald-100 mb-4 block"></i><span class="text-sm font-bold text-slate-800 uppercase tracking-widest">Queue Clear</span><p class="text-xs font-semibold text-slate-400 mt-2 leading-relaxed">All diagnostic reports have been verified and signed. No pending drafts found.</p></div></td></tr>`;
+            renderPendingPagination(null);
             return;
         }
 
@@ -73,8 +77,43 @@ async function fetchPendingReports() {
             </tr>
         `).join('');
 
+        renderPendingPagination(res.pagination);
+
     } catch (err) {
         document.getElementById('pending-table-body').innerHTML = `<tr><td colspan="6" class="px-8 py-10 text-center text-red-500 font-bold block sm:table-cell">Failed to sync with verification queue.</td></tr>`;
         console.error("Pending reports error:", err);
     }
+}
+
+function renderPendingPagination(pagination) {
+    let container = document.getElementById('pending-pagination');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'pending-pagination';
+        container.className = 'flex items-center justify-center gap-2 py-6';
+        const tableParent = document.getElementById('pending-table-body')?.closest('table')?.parentElement;
+        if (tableParent) tableParent.appendChild(container);
+    }
+
+    if (!pagination || pagination.pages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const { page, pages } = pagination;
+    let html = '';
+    
+    html += `<button onclick="fetchPendingReports(${page - 1})" ${page <= 1 ? 'disabled' : ''} class="px-3 py-2 rounded-lg text-sm font-bold ${page <= 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-100'}"><i class="fas fa-chevron-left"></i></button>`;
+    
+    for (let i = 1; i <= pages; i++) {
+        if (i === 1 || i === pages || (i >= page - 1 && i <= page + 1)) {
+            html += `<button onclick="fetchPendingReports(${i})" class="px-3.5 py-2 rounded-lg text-sm font-bold ${i === page ? 'bg-brand-600 text-white' : 'text-slate-600 hover:bg-slate-100'}">${i}</button>`;
+        } else if (i === page - 2 || i === page + 2) {
+            html += `<span class="text-slate-300 px-1">...</span>`;
+        }
+    }
+    
+    html += `<button onclick="fetchPendingReports(${page + 1})" ${page >= pages ? 'disabled' : ''} class="px-3 py-2 rounded-lg text-sm font-bold ${page >= pages ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:bg-slate-100'}"><i class="fas fa-chevron-right"></i></button>`;
+    
+    container.innerHTML = html;
 }

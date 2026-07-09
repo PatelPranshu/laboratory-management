@@ -133,17 +133,19 @@ exports.getReports = async (req, res) => {
     }
   }
 
-  const reports = await ReportInstance.find(query)
-    .select('-sections') // Optimization: Don't fetch large section data for list view
-    .populate('patientId', 'name phone age gender')
-    .populate('templateIds', 'templateName')
-    .populate('performedByLabTechId', 'fullName doctorName signatureUrl')
-    .skip(startIndex)
-    .limit(limit)
-    .sort({ createdAt: -1 })
-    .lean(); // Optimization: Return plain JS objects instead of Mongoose documents
-
-  const total = await ReportInstance.countDocuments(query);
+  // Run find + count in parallel to halve response time
+  const [reports, total] = await Promise.all([
+    ReportInstance.find(query)
+      .select('-sections -auditLogs -amendmentHistory')
+      .populate('patientId', 'name phone age gender')
+      .populate('templateIds', 'templateName')
+      .populate('performedByLabTechId', 'fullName doctorName signatureUrl')
+      .skip(startIndex)
+      .limit(limit)
+      .sort({ createdAt: -1 })
+      .lean(),
+    ReportInstance.countDocuments(query)
+  ]);
 
   res.status(200).json({
     success: true,
@@ -475,7 +477,8 @@ exports.generatePdf = async (req, res) => {
   const report = await ReportInstance.findOne(query)
     .populate('patientId')
     .populate('templateIds', 'templateName')
-    .populate('performedByLabTechId', 'fullName doctorName signatureUrl');
+    .populate('performedByLabTechId', 'fullName doctorName signatureUrl')
+    .lean();
 
   if (!report) {
     const err = new Error('Report not found');
@@ -517,15 +520,16 @@ exports.generatePdf = async (req, res) => {
     }
   }
 
-  // Convert Mongoose docs to plain objects to avoid serialization issues in pdfmake
-  const reportObj = report.toObject();
-  const patientObj = report.patientId.toObject ? report.patientId.toObject() : report.patientId;
+  // Already lean — plain objects ready for pdfmake
+  const reportObj = report;
+  const patientObj = report.patientId;
   
   const pdfBuffer = await pdfService.generateReportPdf(reportObj, patientObj, finalSettings);
 
-  // Add audit log for download
-  report.auditLogs.push({ action: 'Downloaded PDF', userId: req.user.id });
-  await report.save();
+  // Add audit log for download (use direct update since doc is lean)
+  await ReportInstance.findByIdAndUpdate(req.params.id, {
+    $push: { auditLogs: { action: 'Downloaded PDF', userId: req.user.id } }
+  });
 
   // Sanitize and construct filename using patient name and template names
   const patientName = (report.patientId.name || 'Patient')
@@ -573,8 +577,7 @@ exports.sendReport = async (req, res) => {
 
   const adminId = getAdminId(req);
   const report = await ReportInstance.findOne({ _id: req.params.id, doctorId: adminId })
-    .populate('patientId')
-    .populate('performedByLabTechId', 'fullName doctorName signatureUrl');
+    .select('status patientId doctorId auditLogs');
   if (!report) {
     const err = new Error('Report not found');
     err.statusCode = 404;
@@ -610,6 +613,9 @@ exports.sendReport = async (req, res) => {
 // @access  Private
 exports.getPendingReports = async (req, res) => {
   const adminId = getAdminId(req);
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
+  const startIndex = (page - 1) * limit;
   
   let query = {
     doctorId: adminId,
@@ -620,15 +626,27 @@ exports.getPendingReports = async (req, res) => {
     query.verifierId = req.user.id;
   }
 
-  const reports = await ReportInstance.find(query)
-    .populate('patientId', 'name phone age gender')
-    .populate('creatorId', 'name role email')
-    .populate('verifierId', 'name role email')
-    .populate('performedByLabTechId', 'fullName doctorName signatureUrl')
-    .populate('templateIds', 'templateName')
-    .sort('-createdAt');
+  const [reports, total] = await Promise.all([
+    ReportInstance.find(query)
+      .select('-sections -auditLogs -amendmentHistory')
+      .populate('patientId', 'name phone age gender')
+      .populate('creatorId', 'name role')
+      .populate('verifierId', 'name role')
+      .populate('performedByLabTechId', 'fullName doctorName signatureUrl')
+      .populate('templateIds', 'templateName')
+      .sort('-createdAt')
+      .skip(startIndex)
+      .limit(limit)
+      .lean(),
+    ReportInstance.countDocuments(query)
+  ]);
 
-  res.status(200).json({ success: true, count: reports.length, data: reports });
+  res.status(200).json({
+    success: true,
+    count: reports.length,
+    pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    data: reports
+  });
 };
 
 // @desc    Delete report
@@ -656,6 +674,15 @@ exports.deleteReport = async (req, res) => {
       statsUpdate['stats.sentReports'] = -1;
     }
     await updateLabStats(adminId, statsUpdate, session);
+
+    // Decrement usageCount on associated templates
+    if (report.templateIds && report.templateIds.length > 0) {
+      await ReportTemplate.updateMany(
+        { _id: { $in: report.templateIds } },
+        { $inc: { usageCount: -1 } },
+        { session }
+      );
+    }
 
     await report.deleteOne({ session });
 

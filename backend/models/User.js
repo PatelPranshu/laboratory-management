@@ -111,4 +111,8 @@ UserSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
+// Performance indexes for production query patterns
+UserSchema.index({ parentAdminId: 1, createdAt: -1 });
+UserSchema.index({ role: 1, isDeleted: 1, accountStatus: 1 });
+
 module.exports = mongoose.model('User', UserSchema);

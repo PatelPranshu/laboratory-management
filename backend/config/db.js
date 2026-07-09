@@ -8,7 +8,10 @@ const connectDB = async () => {
   const connect = async () => {
     try {
       const conn = await mongoose.connect(process.env.MONGO_URI, {
-        maxPoolSize: 50,
+        // Tuned for 512MB Render free tier — each idle connection uses ~1MB RAM
+        maxPoolSize: 5,
+        minPoolSize: 2,
+        maxIdleTimeMS: 30000,
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
       });

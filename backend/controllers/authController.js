@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const { invalidateAuthCache } = require('../middlewares/authMiddleware');
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -145,7 +146,9 @@ exports.login = async (req, res) => {
 // @route   GET /api/auth/me
 // @access  Private
 exports.getMe = async (req, res) => {
-  const user = await User.findById(req.user.id);
+  const user = await User.findById(req.user.id)
+    .select('email name role labName parentAdminId accountStatus mustChangePassword signatureUrl createdAt')
+    .lean();
   if (!user) {
     const err = new Error('User not found');
     err.statusCode = 404;
@@ -217,6 +220,9 @@ exports.updateProfile = async (req, res) => {
 
   await user.save();
 
+  // Invalidate auth cache after profile/password change
+  invalidateAuthCache(req.user.id);
+
   res.status(200).json({
     success: true,
     user: {
@@ -260,6 +266,8 @@ exports.resetPassword = async (req, res) => {
   user.mustChangePassword = false;
   await user.save();
 
+  invalidateAuthCache(req.user.id);
+
   sendTokenResponse(user, 200, res);
 };
 
@@ -267,6 +275,8 @@ exports.resetPassword = async (req, res) => {
 // @route   POST /api/auth/logout
 // @access  Private
 exports.logout = async (req, res) => {
+  invalidateAuthCache(req.user.id);
+
   res.cookie('lis_token', 'none', {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
@@ -320,7 +330,7 @@ exports.setupSuperAdmin = async (req, res) => {
 // @access  Private (Admin only)
 exports.deleteLab = async (req, res) => {
   try {
-    const adminId = req.user._id;
+    const adminId = req.user.id;
     const { reason } = req.body;
 
     const admin = await User.findById(adminId);
@@ -335,10 +345,15 @@ exports.deleteLab = async (req, res) => {
     await admin.save();
 
     // Cascade soft delete to all staff accounts
+    const staffUsers = await User.find({ parentAdminId: adminId }).select('_id');
     await User.updateMany(
       { parentAdminId: adminId },
       { $set: { isDeleted: true, deletedAt: new Date() } }
     );
+
+    // Invalidate auth cache for admin + all staff
+    invalidateAuthCache(adminId);
+    staffUsers.forEach(s => invalidateAuthCache(s._id));
 
     res.cookie('lis_token', 'none', {
       expires: new Date(Date.now() + 10 * 1000),

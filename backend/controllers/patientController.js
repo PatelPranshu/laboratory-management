@@ -32,13 +32,15 @@ exports.getPatients = async (req, res) => {
   if (req.query.search) {
     const searchStr = String(req.query.search).trim();
     if (searchStr.length >= 2) {
-      const searchRegex = new RegExp('^' + searchStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-      query.$or = [
-        { name: { $regex: searchRegex } },
-        { phone: { $regex: searchRegex } }
-      ];
-      if (searchStr.length <= 24) {
-        query.$or.push({ $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: searchStr, options: "i" } } });
+      // If it looks like an ObjectId, do direct _id match (index-backed)
+      if (mongoose.Types.ObjectId.isValid(searchStr) && searchStr.length === 24) {
+        query._id = searchStr;
+      } else {
+        const searchRegex = new RegExp('^' + searchStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        query.$or = [
+          { name: { $regex: searchRegex } },
+          { phone: { $regex: searchRegex } }
+        ];
       }
     }
   }

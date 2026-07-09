@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.deleteLab = async function() {
     let reasons = ['Other'];
     try {
-        const res = await api.request('/superadmin/settings/deletion-reasons');
+        const res = await api.request('/auth/deletion-reasons');
         if (res.data && Array.isArray(res.data)) {
             reasons = res.data;
             if (!reasons.includes('Other')) {

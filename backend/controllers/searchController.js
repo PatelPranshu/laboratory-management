@@ -1,5 +1,6 @@
 const Patient = require('../models/Patient');
 const ReportInstance = require('../models/ReportInstance');
+const mongoose = require('mongoose');
 
 // @desc    Global multi-collection live search (Text + Date)
 // @route   GET /api/search
@@ -29,15 +30,18 @@ exports.globalSearch = async (req, res) => {
     let sanitizedQuery = '';
     if (query && typeof query === 'string' && query.trim().length >= 2) {
         sanitizedQuery = query.trim().substring(0, 50);
-        const searchRegex = new RegExp('^' + sanitizedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-        textFilter = {
-            $or: [
-                { name: { $regex: searchRegex } },
-                { phone: { $regex: searchRegex } }
-            ]
-        };
-        if (sanitizedQuery.length <= 24) {
-            textFilter.$or.push({ $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: sanitizedQuery, options: "i" } } });
+
+        // If it looks like an ObjectId, do direct _id match (index-backed)
+        if (mongoose.Types.ObjectId.isValid(sanitizedQuery) && sanitizedQuery.length === 24) {
+            textFilter = { _id: sanitizedQuery };
+        } else {
+            const searchRegex = new RegExp('^' + sanitizedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+            textFilter = {
+                $or: [
+                    { name: { $regex: searchRegex } },
+                    { phone: { $regex: searchRegex } }
+                ]
+            };
         }
         isSearchQuery = true;
     } else if (!fromDate && !toDate) {
@@ -58,12 +62,15 @@ exports.globalSearch = async (req, res) => {
     // Search Reports
     let reportMatch = { ...baseMatch, ...dateFilter };
     if (isSearchQuery) {
-        const matchedPatientIds = await Patient.find({ ...baseMatch, ...textFilter }).distinct('_id');
-        reportMatch.$or = [
-            { patientId: { $in: matchedPatientIds } }
-        ];
-        if (sanitizedQuery.length <= 24) {
-            reportMatch.$or.push({ $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: sanitizedQuery, options: "i" } } });
+        // If search is a valid ObjectId, match report _id or patientId directly
+        if (mongoose.Types.ObjectId.isValid(sanitizedQuery) && sanitizedQuery.length === 24) {
+            reportMatch.$or = [
+                { _id: sanitizedQuery },
+                { patientId: sanitizedQuery }
+            ];
+        } else {
+            const matchedPatientIds = await Patient.find({ ...baseMatch, ...textFilter }).distinct('_id');
+            reportMatch.patientId = { $in: matchedPatientIds };
         }
     }
 

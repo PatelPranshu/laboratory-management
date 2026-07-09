@@ -19,7 +19,7 @@ const updateLabStats = async (adminId, increments, session = null) => {
         { parentAdminId: adminId }
       ],
       accountStatus: 'Active'
-    }).select('_id');
+    }).select('_id').lean();
 
     recipients.forEach(user => {
       io.to(`user_${user._id}`).emit('stats_updated');

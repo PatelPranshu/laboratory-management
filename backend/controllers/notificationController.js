@@ -6,11 +6,13 @@ const Notification = require('../models/Notification');
 exports.getNotifications = async (req, res) => {
     const limit = parseInt(req.query.limit, 10) || 50;
     
-    const notifications = await Notification.find({ recipientId: req.user.id })
-      .sort({ createdAt: -1 })
-      .limit(limit);
-      
-    const unreadCount = await Notification.countDocuments({ recipientId: req.user.id, isRead: false });
+    const [notifications, unreadCount] = await Promise.all([
+      Notification.find({ recipientId: req.user.id })
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .lean(),
+      Notification.countDocuments({ recipientId: req.user.id, isRead: false })
+    ]);
 
     res.status(200).json({ success: true, count: notifications.length, unreadCount, data: notifications });
   };

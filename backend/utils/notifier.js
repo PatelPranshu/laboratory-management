@@ -27,7 +27,7 @@ const sendNotification = async (senderId, adminId, { type, title, message, refer
       ],
       _id: { $ne: senderId },
       accountStatus: 'Active'
-    }).select('_id');
+    }).select('_id').lean();
 
     if (recipients.length === 0) return;
 

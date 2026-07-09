@@ -37,6 +37,7 @@ app.use(morgan('combined', { stream: logger.stream }));
 
 // Trust the reverse proxy (e.g., Render) so rate limiters use the correct client IP
 app.set('trust proxy', 1);
+app.set('etag', 'strong');
 // ---------- Security Middleware ----------
 
 // CORS — whitelist origins from environment variable
@@ -97,7 +98,7 @@ app.use(generalLimiter);
 // Strict rate limiting for auth routes — 20 requests per 15 minutes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 20,
   skip: (req) => req.method === 'OPTIONS',
   message: { success: false, error: 'Too many authentication attempts, please try again later' }
 });
@@ -172,7 +173,8 @@ app.get('/', (req, res) => {
 
 // ---------- Soft Delete Cleanup Job ----------
 // Runs every 24 hours to permanently delete labs deleted > 30 days ago and not held
-setInterval(async () => {
+// Delayed first run by 5 minutes to avoid heavy work during cold start
+const runCleanupJob = async () => {
   try {
     const User = require('./models/User');
     const ReportInstance = require('./models/ReportInstance');
@@ -220,7 +222,13 @@ setInterval(async () => {
   } catch (error) {
     console.error('Error running cleanup job:', error);
   }
-}, 24 * 60 * 60 * 1000);
+};
+
+// Start cleanup: initial delay + recurring interval
+setTimeout(() => {
+  runCleanupJob();
+  setInterval(runCleanupJob, 24 * 60 * 60 * 1000);
+}, 5 * 60 * 1000);
 
 // ---------- Error Handling ----------
 app.use(notFound);

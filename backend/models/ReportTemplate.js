@@ -89,4 +89,8 @@ const ReportTemplateSchema = new mongoose.Schema({
   sections: [SectionSchema]
 }, { timestamps: true });
 
+// Performance indexes for production query patterns
+ReportTemplateSchema.index({ doctorId: 1, usageCount: -1, templateName: 1 });
+ReportTemplateSchema.index({ doctorId: 1, createdAt: -1 });
+
 module.exports = mongoose.model('ReportTemplate', ReportTemplateSchema);

@@ -20,4 +20,7 @@ const SignatureSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+SignatureSchema.index({ parentAdminId: 1 });
+SignatureSchema.index({ userId: 1 });
+
 module.exports = mongoose.model('Signature', SignatureSchema);

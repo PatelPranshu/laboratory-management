@@ -33,4 +33,8 @@ const NotificationSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Performance indexes — notifications queried on every page load
+NotificationSchema.index({ recipientId: 1, createdAt: -1 });
+NotificationSchema.index({ recipientId: 1, isRead: 1 });
+
 module.exports = mongoose.model('Notification', NotificationSchema);

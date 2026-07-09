@@ -139,21 +139,25 @@ class UI {
         overlay.className = 'fixed inset-0 bg-slate-900/50 z-[200] flex items-center justify-center opacity-0 transition-opacity duration-200 backdrop-blur-sm';
         
         const modal = document.createElement('div');
-        modal.className = 'bg-white rounded-3xl shadow-xl max-w-sm w-full mx-4 overflow-hidden transform scale-95 transition-transform duration-200 border border-slate-200/60';
+        modal.className = 'bg-white rounded-3xl shadow-xl max-w-sm w-full mx-4 transform scale-95 transition-transform duration-200 border border-slate-200/60';
         
-        const iconColor = type === 'error' ? 'text-red-500 bg-red-50' : 'text-brand-500 bg-brand-50';
+        const iconStyles = type === 'error' ? 'text-red-500 bg-red-50' : 'text-brand-500 bg-brand-50';
         const icon = type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle';
         
         modal.innerHTML = `
-            <div class="p-8">
-                <div class="w-16 h-16 rounded-2xl ${iconColor} flex items-center justify-center mx-auto mb-6">
-                    <i class="fas ${icon} text-3xl"></i>
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full ${iconStyles} flex items-center justify-center shrink-0">
+                    <i class="fas ${icon} text-lg"></i>
                 </div>
-                <h3 class="text-xl font-bold text-center text-slate-900 mb-2 tracking-tight">${sanitizeHTML(title)}</h3>
-                <p class="text-center text-slate-500 mb-8 text-sm font-medium leading-relaxed">${sanitizeHTML(message)}</p>
-                <button id="ui-alert-ok" class="w-full py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-black transition-all shadow-sm">Got it</button>
+                <h3 class="text-lg font-bold text-slate-900 tracking-tight">${sanitizeHTML(title)}</h3>
             </div>
-        `;
+            <p class="text-slate-600 mb-6 text-sm leading-relaxed">${sanitizeHTML(message)}</p>
+            <div class="flex justify-end">
+                <button id="ui-alert-ok" class="px-5 py-2 bg-slate-900 text-white font-semibold rounded-xl hover:bg-black transition-all shadow-sm text-sm">Got it</button>
+            </div>
+        </div>
+      `;
         
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
@@ -177,22 +181,24 @@ class UI {
       overlay.className = 'fixed inset-0 bg-slate-900/50 z-[200] flex items-center justify-center opacity-0 transition-opacity duration-200 backdrop-blur-sm';
       
       const modal = document.createElement('div');
-      modal.className = 'bg-white rounded-3xl shadow-xl max-w-sm w-full mx-4 overflow-hidden transform scale-95 transition-transform duration-200 border border-slate-200/60';
+      modal.className = 'bg-white rounded-3xl shadow-xl max-w-sm w-full mx-4 transform scale-95 transition-transform duration-200 border border-slate-200/60';
       
       const iconStyles = type === 'danger' ? 'text-red-500 bg-red-50' : 'text-brand-500 bg-brand-50';
       const icon = type === 'danger' ? 'fa-exclamation-triangle' : 'fa-question-circle';
       const confirmBtnClass = type === 'danger' ? 'bg-red-500 text-white' : 'bg-brand-600 text-white';
       
       modal.innerHTML = `
-        <div class="p-8">
-            <div class="w-16 h-16 rounded-2xl ${iconStyles} flex items-center justify-center mx-auto mb-6">
-                <i class="fas ${icon} text-3xl"></i>
+        <div class="p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-full ${iconStyles} flex items-center justify-center shrink-0">
+                    <i class="fas ${icon} text-lg"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 tracking-tight">${sanitizeHTML(title)}</h3>
             </div>
-            <h3 class="text-xl font-bold text-center text-slate-900 mb-2 tracking-tight">${sanitizeHTML(title)}</h3>
-            <p class="text-center text-slate-500 mb-8 text-sm font-medium leading-relaxed">${sanitizeHTML(message)}</p>
-            <div class="flex gap-3">
-                <button id="ui-btn-cancel" class="flex-1 py-4 bg-slate-50 text-slate-500 font-bold rounded-2xl hover:bg-slate-100 transition-all">Cancel</button>
-                <button id="ui-btn-confirm" class="flex-1 py-4 ${confirmBtnClass} font-bold rounded-2xl shadow-sm transition-all">${sanitizeHTML(confirmText)}</button>
+            <p class="text-slate-600 mb-6 text-sm leading-relaxed">${sanitizeHTML(message)}</p>
+            <div class="flex justify-end gap-3 mt-2">
+                <button id="ui-btn-cancel" class="px-5 py-2 bg-white border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition-all text-sm">Cancel</button>
+                <button id="ui-btn-confirm" class="px-5 py-2 ${confirmBtnClass} font-semibold rounded-xl shadow-sm hover:opacity-90 transition-opacity text-sm">${sanitizeHTML(confirmText)}</button>
             </div>
         </div>
       `;
@@ -222,23 +228,25 @@ class UI {
           overlay.className = 'fixed inset-0 bg-slate-900/50 z-[200] flex items-center justify-center opacity-0 transition-opacity duration-200 backdrop-blur-sm';
           
           const modal = document.createElement('div');
-          modal.className = 'bg-white rounded-3xl shadow-xl max-w-sm w-full mx-4 overflow-hidden transform scale-95 transition-transform duration-200 border border-slate-200/60';
+          modal.className = 'bg-white rounded-3xl shadow-xl max-w-sm w-full mx-4 transform scale-95 transition-transform duration-200 border border-slate-200/60';
           
           const iconStyles = 'text-brand-500 bg-brand-50';
           
           modal.innerHTML = `
-              <div class="p-8">
-                  <div class="w-16 h-16 rounded-2xl ${iconStyles} flex items-center justify-center mx-auto mb-6">
-                      <i class="fas fa-edit text-3xl"></i>
+              <div class="p-6">
+                  <div class="flex items-center gap-3 mb-4">
+                      <div class="w-10 h-10 rounded-full ${iconStyles} flex items-center justify-center shrink-0">
+                          <i class="fas fa-edit text-lg"></i>
+                      </div>
+                      <h3 class="text-lg font-bold text-slate-900 tracking-tight">${sanitizeHTML(title)}</h3>
                   </div>
-                  <h3 class="text-xl font-bold text-center text-slate-900 mb-2 tracking-tight">${sanitizeHTML(title)}</h3>
-                  <p class="text-center text-slate-500 mb-6 text-sm font-medium leading-relaxed">${sanitizeHTML(message)}</p>
+                  <p class="text-slate-600 mb-4 text-sm leading-relaxed">${sanitizeHTML(message)}</p>
                   
-                  <input type="text" id="ui-prompt-input" placeholder="${sanitizeHTML(placeholder)}" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500/10 text-base font-bold text-slate-800 outline-none mb-6 transition-all">
+                  <input type="text" id="ui-prompt-input" placeholder="${sanitizeHTML(placeholder)}" class="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm font-medium text-slate-800 outline-none mb-6 transition-all shadow-sm">
 
-                  <div class="flex gap-3">
-                      <button id="ui-prompt-cancel" class="flex-1 py-4 bg-slate-50 text-slate-500 font-bold rounded-2xl hover:bg-slate-100 transition-all">Cancel</button>
-                      <button id="ui-prompt-confirm" class="flex-1 py-4 bg-slate-900 text-white font-bold rounded-2xl shadow-sm hover:bg-black transition-all">Submit</button>
+                  <div class="flex justify-end gap-3 mt-2">
+                      <button id="ui-prompt-cancel" class="px-5 py-2 bg-white border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition-all text-sm">Cancel</button>
+                      <button id="ui-prompt-confirm" class="px-5 py-2 bg-brand-600 text-white font-semibold rounded-xl shadow-sm hover:bg-brand-700 transition-all text-sm">Submit</button>
                   </div>
               </div>
           `;
@@ -272,27 +280,29 @@ class UI {
           overlay.className = 'fixed inset-0 bg-slate-900/50 z-[200] flex items-center justify-center opacity-0 transition-opacity duration-200 backdrop-blur-sm';
           
           const modal = document.createElement('div');
-          modal.className = 'bg-white rounded-3xl shadow-xl max-w-sm w-full mx-4 overflow-hidden transform scale-95 transition-transform duration-200 border border-slate-200/60';
+          modal.className = 'bg-white rounded-3xl shadow-xl max-w-sm w-full mx-4 transform scale-95 transition-transform duration-200 border border-slate-200/60';
           
           const iconStyles = 'text-brand-500 bg-brand-50';
           
           let optionsHtml = options.map(opt => `<option value="${sanitizeHTML(opt.value)}" ${opt.value === defaultValue ? 'selected' : ''}>${sanitizeHTML(opt.label)}</option>`).join('');
 
           modal.innerHTML = `
-              <div class="p-8">
-                  <div class="w-16 h-16 rounded-2xl ${iconStyles} flex items-center justify-center mx-auto mb-6">
-                      <i class="fas fa-list text-3xl"></i>
+              <div class="p-6">
+                  <div class="flex items-center gap-3 mb-4">
+                      <div class="w-10 h-10 rounded-full ${iconStyles} flex items-center justify-center shrink-0">
+                          <i class="fas fa-list text-lg"></i>
+                      </div>
+                      <h3 class="text-lg font-bold text-slate-900 tracking-tight">${sanitizeHTML(title)}</h3>
                   </div>
-                  <h3 class="text-xl font-bold text-center text-slate-900 mb-2 tracking-tight">${sanitizeHTML(title)}</h3>
-                  <p class="text-center text-slate-500 mb-6 text-sm font-medium leading-relaxed">${sanitizeHTML(message)}</p>
+                  <p class="text-slate-600 mb-4 text-sm leading-relaxed">${sanitizeHTML(message)}</p>
                   
-                  <select id="ui-prompt-select" class="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-brand-500/10 text-base font-bold text-slate-800 outline-none mb-6 transition-all appearance-none cursor-pointer custom-select-ignore">
+                  <select id="ui-prompt-select" class="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm font-medium text-slate-800 outline-none mb-6 transition-all shadow-sm cursor-pointer">
                       ${optionsHtml}
                   </select>
 
-                  <div class="flex gap-3">
-                      <button id="ui-prompt-cancel" class="flex-1 py-4 bg-slate-50 text-slate-500 font-bold rounded-2xl hover:bg-slate-100 transition-all">Cancel</button>
-                      <button id="ui-prompt-confirm" class="flex-1 py-4 bg-slate-900 text-white font-bold rounded-2xl shadow-sm hover:bg-black transition-all">Select</button>
+                  <div class="flex justify-end gap-3 mt-2">
+                      <button id="ui-prompt-cancel" class="px-5 py-2 bg-white border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 transition-all text-sm">Cancel</button>
+                      <button id="ui-prompt-confirm" class="px-5 py-2 bg-brand-600 text-white font-semibold rounded-xl shadow-sm hover:bg-brand-700 transition-all text-sm">Select</button>
                   </div>
               </div>
           `;

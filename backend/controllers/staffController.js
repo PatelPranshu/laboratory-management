@@ -6,6 +6,7 @@ const PrintSettings = require('../models/PrintSettings');
 const { generateToken } = require('./authController');
 const { sendInvitationEmail } = require('../services/emailService');
 const { sendNotification } = require('../utils/notifier');
+const { invalidateAuthCache } = require('../middlewares/authMiddleware');
 
 
 
@@ -111,7 +112,7 @@ exports.completeRegistration = async (req, res) => {
   }
 
   // Get Admin's labName
-  const admin = await User.findById(invitation.parentAdminId);
+  const admin = await User.findById(invitation.parentAdminId).select('labName role');
   if (!admin || admin.role !== 'Admin') {
      const err = new Error('Invalid lab environment');
      err.statusCode = 400;
@@ -201,7 +202,7 @@ exports.createTech = async (req, res) => {
     throw err;
   }
 
-  const admin = await User.findById(req.user.id);
+  const admin = await User.findById(req.user.id).select('labName role');
   
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -251,7 +252,8 @@ exports.createTech = async (req, res) => {
 exports.getStaff = async (req, res) => {
   const staff = await User.find({ parentAdminId: req.user.id })
     .select('-password')
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 })
+    .lean();
 
   res.status(200).json({
     success: true,
@@ -282,6 +284,7 @@ exports.removeStaff = async (req, res) => {
   }
 
   await staffMember.deleteOne();
+  invalidateAuthCache(staffMember._id);
   res.status(200).json({ success: true, data: {} });
 };
 
@@ -310,6 +313,8 @@ exports.resetPassword = async (req, res) => {
   staffMember.password = password;
   staffMember.mustChangePassword = true; 
   await staffMember.save();
+
+  invalidateAuthCache(staffMember._id);
 
   res.status(200).json({ success: true, message: 'Password reset successfully' });
 };

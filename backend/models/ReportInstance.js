@@ -153,5 +153,8 @@ const ReportInstanceSchema = new mongoose.Schema({
 ReportInstanceSchema.index({ 'sections.text': 'text', 'sections.values': 'text' });
 // Index for optimal querying and filtering by doctor and creation date
 ReportInstanceSchema.index({ doctorId: 1, createdAt: -1 });
+// Performance indexes for production query patterns
+ReportInstanceSchema.index({ doctorId: 1, status: 1, createdAt: -1 });
+ReportInstanceSchema.index({ patientId: 1 });
 
 module.exports = mongoose.model('ReportInstance', ReportInstanceSchema);

@@ -1,6 +1,7 @@
 const express = require('express');
 const { z } = require('zod');
 const { register, login, getMe, updateProfile, resetPassword, logout, setupSuperAdmin, deleteLab } = require('../controllers/authController');
+const { getDeletionReasons } = require('../controllers/superadminController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 const { validateSchema, passwordSchema } = require('../middlewares/validate');
 
@@ -41,6 +42,7 @@ router.put('/profile', protect, validateSchema(profileSchema), updateProfile);
 router.post('/reset-password', protect, validateSchema(resetPasswordSchema), resetPassword);
 router.post('/logout', protect, logout);
 router.post('/setup-superadmin', setupSuperAdmin);
+router.get('/deletion-reasons', protect, getDeletionReasons);
 router.delete('/delete-lab', protect, authorize('Admin'), deleteLab);
 
 module.exports = router;
