@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Super Admin Dashboard | MyPathoLabs</title>
+    <meta name="description" content="Enterprise administration panel for MyPathoLabs platform management">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
@@ -20,6 +21,7 @@
                             100: '#e0f2fe',
                             500: '#0ea5e9',
                             600: '#0284c7',
+                            700: '#0369a1',
                             900: '#0c4a6e',
                         }
                     }
@@ -28,6 +30,14 @@
         }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        .tab-btn.active { color: #0284c7; border-bottom-color: #0284c7; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .stat-card { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+        .audit-action { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.7rem; }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans antialiased min-h-screen">
 
@@ -50,114 +60,294 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        <!-- KPI Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider">Active Labs</h3>
-                    <div class="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600">
-                        <i class="fas fa-hospital text-lg"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-slate-800" id="stat-labs">0</p>
-            </div>
-            
-            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider">Total Users</h3>
-                    <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                        <i class="fas fa-users text-lg"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-slate-800" id="stat-users">0</p>
-            </div>
-
-            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider">Total Reports</h3>
-                    <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                        <i class="fas fa-file-medical text-lg"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-slate-800" id="stat-reports">0</p>
-            </div>
-
-            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider">Deleted Labs</h3>
-                    <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
-                        <i class="fas fa-trash-alt text-lg"></i>
-                    </div>
-                </div>
-                <p class="text-3xl font-black text-slate-800" id="stat-deleted">0</p>
-            </div>
-        </div>
-
-        <!-- Labs Table (Active/Suspended) -->
-        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-8">
-            <div class="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-                <h2 class="text-lg font-bold text-slate-800">Laboratory Tenants (Active / Suspended)</h2>
-                <button onclick="loadDashboard()" class="text-brand-600 hover:text-brand-700 text-sm font-bold">
-                    <i class="fas fa-sync-alt mr-1"></i> Refresh
+    <!-- Tab Navigation -->
+    <div class="bg-white border-b border-slate-200 sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex gap-0 overflow-x-auto scrollbar-hide -mb-px">
+                <button class="tab-btn active px-4 sm:px-5 py-3.5 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-brand-600 transition-colors whitespace-nowrap" data-tab="dashboard">
+                    <i class="fas fa-chart-pie mr-1.5"></i> Dashboard
+                </button>
+                <button class="tab-btn px-4 sm:px-5 py-3.5 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-brand-600 transition-colors whitespace-nowrap" data-tab="labs">
+                    <i class="fas fa-hospital mr-1.5"></i> Lab Management
+                </button>
+                <button class="tab-btn px-4 sm:px-5 py-3.5 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-brand-600 transition-colors whitespace-nowrap" data-tab="audit">
+                    <i class="fas fa-shield-alt mr-1.5"></i> Audit Logs
+                </button>
+                <button class="tab-btn px-4 sm:px-5 py-3.5 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-brand-600 transition-colors whitespace-nowrap" data-tab="announcements">
+                    <i class="fas fa-bullhorn mr-1.5"></i> Announcements
+                </button>
+                <button class="tab-btn px-4 sm:px-5 py-3.5 text-sm font-bold border-b-2 border-transparent text-slate-500 hover:text-brand-600 transition-colors whitespace-nowrap" data-tab="settings">
+                    <i class="fas fa-cog mr-1.5"></i> Settings
                 </button>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-bold">
-                            <th class="p-4 pl-6">Lab Details</th>
-                            <th class="p-4">Owner</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="labs-tbody" class="divide-y divide-slate-100 text-sm">
-                        <!-- Rendered via JS -->
-                        <tr><td colspan="4" class="p-8 text-center text-slate-400">Loading...</td></tr>
-                    </tbody>
-                </table>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+        <!-- ==================== DASHBOARD TAB ==================== -->
+        <div id="tab-dashboard" class="tab-content active">
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+                <div class="stat-card bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
+                        <h3 class="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider">Active Labs</h3>
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600">
+                            <i class="fas fa-hospital text-base sm:text-lg"></i>
+                        </div>
+                    </div>
+                    <p class="text-2xl sm:text-3xl font-black text-slate-800" id="stat-labs">0</p>
+                </div>
+                
+                <div class="stat-card bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
+                        <h3 class="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider">Total Users</h3>
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                            <i class="fas fa-users text-base sm:text-lg"></i>
+                        </div>
+                    </div>
+                    <p class="text-2xl sm:text-3xl font-black text-slate-800" id="stat-users">0</p>
+                    <p class="text-xs text-slate-400 mt-1" id="stat-users-breakdown"></p>
+                </div>
+
+                <div class="stat-card bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
+                        <h3 class="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider">Total Reports</h3>
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                            <i class="fas fa-file-medical text-base sm:text-lg"></i>
+                        </div>
+                    </div>
+                    <p class="text-2xl sm:text-3xl font-black text-slate-800" id="stat-reports">0</p>
+                </div>
+
+                <div class="stat-card bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
+                        <h3 class="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider">New This Week</h3>
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600">
+                            <i class="fas fa-chart-line text-base sm:text-lg"></i>
+                        </div>
+                    </div>
+                    <p class="text-2xl sm:text-3xl font-black text-slate-800" id="stat-new-week">0</p>
+                </div>
+            </div>
+
+            <!-- Secondary Stats Row -->
+            <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+                <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-amber-100 flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 shrink-0">
+                        <i class="fas fa-pause-circle text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Suspended</p>
+                        <p class="text-xl font-black text-slate-800" id="stat-suspended">0</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-red-100 flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600 shrink-0">
+                        <i class="fas fa-trash-alt text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Deleted</p>
+                        <p class="text-xl font-black text-slate-800" id="stat-deleted">0</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 flex items-center gap-4 col-span-2 lg:col-span-1">
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
+                        <i class="fas fa-hourglass-half text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Pending Activation</p>
+                        <p class="text-xl font-black text-slate-800" id="stat-pending">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
+                <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4">Quick Actions</h3>
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="switchTab('labs')" class="px-4 py-2.5 bg-brand-50 text-brand-600 hover:bg-brand-100 rounded-xl text-sm font-bold transition-colors">
+                        <i class="fas fa-hospital mr-1.5"></i> Manage Labs
+                    </button>
+                    <button onclick="switchTab('audit')" class="px-4 py-2.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-xl text-sm font-bold transition-colors">
+                        <i class="fas fa-shield-alt mr-1.5"></i> View Audit Logs
+                    </button>
+                    <button onclick="exportLabsCsv()" class="px-4 py-2.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl text-sm font-bold transition-colors">
+                        <i class="fas fa-file-csv mr-1.5"></i> Export Labs CSV
+                    </button>
+                    <button onclick="switchTab('announcements')" class="px-4 py-2.5 bg-violet-50 text-violet-600 hover:bg-violet-100 rounded-xl text-sm font-bold transition-colors">
+                        <i class="fas fa-bullhorn mr-1.5"></i> Send Announcement
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Deleted Labs (Recycle Bin) -->
-        <div class="bg-white rounded-3xl shadow-sm border border-red-100 overflow-hidden">
-            <div class="p-6 border-b border-red-100 flex justify-between items-center bg-red-50/50">
-                <h2 class="text-lg font-bold text-red-700"><i class="fas fa-trash-alt mr-2"></i> Recycle Bin (Deleted Labs)</h2>
+        <!-- ==================== LAB MANAGEMENT TAB ==================== -->
+        <div id="tab-labs" class="tab-content">
+            <!-- Search & Filter Bar -->
+            <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 mb-6">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="flex-1 relative">
+                        <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" id="lab-search-input" placeholder="Search by lab name, owner, or email..." 
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-500/10 text-sm font-medium text-slate-800 outline-none transition-all">
+                    </div>
+                    <select id="lab-status-filter" class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none cursor-pointer">
+                        <option value="">All Statuses</option>
+                        <option value="Active">Active</option>
+                        <option value="Suspended">Suspended</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Deleted">Deleted</option>
+                    </select>
+                    <button onclick="loadLabs()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl transition-all shadow-sm whitespace-nowrap">
+                        <i class="fas fa-search mr-1.5"></i> Search
+                    </button>
+                </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-bold">
-                            <th class="p-4 pl-6">Lab Details</th>
-                            <th class="p-4">Owner</th>
-                            <th class="p-4">Deletion Date & Reason</th>
-                            <th class="p-4 text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="deleted-labs-tbody" class="divide-y divide-slate-100 text-sm">
-                        <!-- Rendered via JS -->
-                        <tr><td colspan="4" class="p-8 text-center text-slate-400">Loading...</td></tr>
-                    </tbody>
-                </table>
+
+            <!-- Labs Table -->
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-5 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/50">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">Laboratory Tenants</h2>
+                        <p class="text-xs text-slate-500 mt-0.5" id="labs-count-label">Loading...</p>
+                    </div>
+                    <button onclick="loadLabs()" class="text-brand-600 hover:text-brand-700 text-sm font-bold">
+                        <i class="fas fa-sync-alt mr-1"></i> Refresh
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-bold">
+                                <th class="p-4 pl-6">Lab Details</th>
+                                <th class="p-4">Owner</th>
+                                <th class="p-4">Status</th>
+                                <th class="p-4">Joined</th>
+                                <th class="p-4 text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="labs-tbody" class="divide-y divide-slate-100 text-sm">
+                            <tr><td colspan="5" class="p-8 text-center text-slate-400">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination -->
+                <div class="p-4 border-t border-slate-200 flex justify-between items-center" id="labs-pagination-container">
+                </div>
             </div>
         </div>
 
-        <!-- Settings Section -->
-        <div class="mt-8 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-8">
-            <div class="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-                <h2 class="text-lg font-bold text-slate-800"><i class="fas fa-cog mr-2 text-slate-500"></i> Global Settings</h2>
+        <!-- ==================== AUDIT LOGS TAB ==================== -->
+        <div id="tab-audit" class="tab-content">
+            <!-- Filters -->
+            <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 mb-6">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <select id="audit-action-filter" class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none cursor-pointer">
+                        <option value="">All Actions</option>
+                        <option value="LAB_SUSPENDED">Lab Suspended</option>
+                        <option value="LAB_ACTIVATED">Lab Activated</option>
+                        <option value="LAB_RESTORED">Lab Restored</option>
+                        <option value="LAB_HOLD_TOGGLED">Hold Toggled</option>
+                        <option value="LAB_PERMANENTLY_DELETED">Permanent Delete</option>
+                        <option value="STAFF_ROLE_CHANGED">Staff Role Changed</option>
+                        <option value="STAFF_REMOVED">Staff Removed</option>
+                        <option value="STAFF_HARD_DELETED">Staff Hard Deleted</option>
+                        <option value="PASSWORD_RESET_FORCED">Password Reset Forced</option>
+                        <option value="ANNOUNCEMENT_CREATED">Announcement Created</option>
+                        <option value="DATA_EXPORTED">Data Exported</option>
+                    </select>
+                    <input type="date" id="audit-start-date" class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none">
+                    <input type="date" id="audit-end-date" class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none">
+                    <button onclick="loadAuditLogs(1)" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl transition-all shadow-sm whitespace-nowrap">
+                        <i class="fas fa-filter mr-1.5"></i> Filter
+                    </button>
+                </div>
             </div>
-            <div class="p-6">
-                <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4">Lab Deletion Reasons (Survey Options)</h3>
+
+            <!-- Audit Table -->
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-5 sm:p-6 border-b border-slate-200 bg-slate-50/50">
+                    <h2 class="text-lg font-bold text-slate-800"><i class="fas fa-shield-alt mr-2 text-indigo-500"></i>Audit Trail</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">HIPAA-compliant activity log of all administrative actions</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 font-bold">
+                                <th class="p-4 pl-6">Timestamp</th>
+                                <th class="p-4">Action</th>
+                                <th class="p-4">Performed By</th>
+                                <th class="p-4">Details</th>
+                                <th class="p-4">IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-tbody" class="divide-y divide-slate-100 text-sm">
+                            <tr><td colspan="5" class="p-8 text-center text-slate-400">Select filters and click "Filter" to load audit logs</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-4 border-t border-slate-200 flex justify-between items-center" id="audit-pagination-container">
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ANNOUNCEMENTS TAB ==================== -->
+        <div id="tab-announcements" class="tab-content">
+            <!-- Create Form -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 mb-6">
+                <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4">Create System Announcement</h3>
+                <div class="space-y-4 max-w-2xl">
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <input type="text" id="announcement-title" placeholder="Announcement title..." maxlength="100"
+                            class="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-500/10 text-sm font-medium text-slate-800 outline-none transition-all">
+                        <select id="announcement-type" class="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none cursor-pointer w-full sm:w-auto">
+                            <option value="info">Info</option>
+                            <option value="warning">Warning</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+                    <textarea id="announcement-message" placeholder="Write your announcement message..." maxlength="500" rows="3"
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-500/10 text-sm font-medium text-slate-800 outline-none transition-all resize-none"></textarea>
+                    <button id="send-announcement-btn" onclick="createAnnouncement()" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl transition-all shadow-sm">
+                        <i class="fas fa-paper-plane mr-1.5"></i> Send Announcement
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Announcements -->
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-5 sm:p-6 border-b border-slate-200 bg-slate-50/50">
+                    <h2 class="text-lg font-bold text-slate-800"><i class="fas fa-bullhorn mr-2 text-violet-500"></i>Active Announcements</h2>
+                </div>
+                <div id="announcements-list" class="divide-y divide-slate-100 p-0">
+                    <div class="p-8 text-center text-slate-400">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SETTINGS TAB ==================== -->
+        <div id="tab-settings" class="tab-content">
+            <!-- Data Export -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 mb-6">
+                <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4"><i class="fas fa-download mr-2 text-emerald-500"></i>Data Export (GDPR Compliance)</h3>
+                <p class="text-sm text-slate-500 mb-4">Export platform data for compliance audits and reporting.</p>
+                <button onclick="exportLabsCsv()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl transition-all shadow-sm">
+                    <i class="fas fa-file-csv mr-1.5"></i> Export All Labs (CSV)
+                </button>
+            </div>
+
+            <!-- Deletion Reasons -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200">
+                <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4"><i class="fas fa-list mr-2 text-slate-500"></i>Lab Deletion Reasons (Survey Options)</h3>
                 <div class="max-w-xl">
                     <div id="deletion-reasons-list" class="space-y-2 mb-4">
                         <div class="text-sm text-slate-500">Loading reasons...</div>
                     </div>
                     <div class="flex gap-2">
-                        <input type="text" id="new-reason-input" placeholder="Add a new reason..." class="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-500/10 text-sm font-medium text-slate-800 outline-none transition-all">
+                        <input type="text" id="new-reason-input" placeholder="Add a new reason..." maxlength="50"
+                            class="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-500/10 text-sm font-medium text-slate-800 outline-none transition-all">
                         <button id="add-reason-btn" onclick="addDeletionReason()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl transition-all shadow-sm whitespace-nowrap">
                             <i class="fas fa-plus mr-1"></i> Add Option
                         </button>

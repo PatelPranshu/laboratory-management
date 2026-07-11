@@ -81,8 +81,8 @@ exports.deleteSignature = async (req, res) => {
     // Authorization Logic:
     // 1. Admins can delete any signature in their lab
     // 2. Staff can only delete their own signature
-    const isAdminOfLab = req.user.role === 'Admin' && signature.parentAdminId.toString() === req.user.id;
-    const isRecordOwner = (signature.userId || signature.doctorId)?.toString() === req.user.id;
+    const isAdminOfLab = req.user.role === 'Admin' && signature.parentAdminId.toString() === req.user.id.toString();
+    const isRecordOwner = (signature.userId || signature.doctorId)?.toString() === req.user.id.toString();
 
     if (!isAdminOfLab && !isRecordOwner) {
        return res.status(403).json({ success: false, error: 'Not authorized to delete this signature. You can only delete your own identity.' });

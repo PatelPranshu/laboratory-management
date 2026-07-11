@@ -453,6 +453,14 @@ function setupNotificationSocket() {
         }
     });
 
+    socket.on('system_announcement', (announcement) => {
+        if (typeof UI !== 'undefined' && UI.showAlert) {
+            UI.showAlert(announcement.title, announcement.message, announcement.type === 'critical' ? 'error' : 'brand');
+        } else {
+            alert(`[${announcement.title}]\n${announcement.message}`);
+        }
+    });
+
     socket.on('stats_updated', () => {
         if (typeof loadSummary === 'function') {
             loadSummary();

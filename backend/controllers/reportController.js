@@ -276,7 +276,7 @@ exports.createReport = async (req, res) => {
 
     // Update Stats Cache
     const statsUpdate = { 'stats.totalReports': 1 };
-    if (report.status === 'draft') {
+    if (report.status === 'draft' || report.status === 'DRAFT') {
       statsUpdate['stats.pendingReports'] = 1;
     } else if (report.status === 'sent') {
       statsUpdate['stats.sentReports'] = 1;
@@ -419,16 +419,14 @@ exports.updateReport = async (req, res) => {
     if (oldStatus !== newStatus) {
       const statsUpdate = {};
       
-      // Categorize old and new statuses
-      const isOldPending = (oldStatus === 'draft');
-      const isNewPending = (newStatus === 'draft');
-      const isOldSent = (oldStatus === 'sent');
-      const isNewSent = (newStatus === 'sent');
+      // Normalize: 'draft'/'DRAFT' = pending, 'sent' = sent, everything else = neither
+      const isPending = (s) => s === 'draft' || s === 'DRAFT';
+      const isSent = (s) => s === 'sent';
 
-      if (isOldPending && !isNewPending) statsUpdate['stats.pendingReports'] = -1;
-      if (!isOldPending && isNewPending) statsUpdate['stats.pendingReports'] = 1;
-      if (isOldSent && !isNewSent) statsUpdate['stats.sentReports'] = -1;
-      if (!isOldSent && isNewSent) statsUpdate['stats.sentReports'] = 1;
+      if (isPending(oldStatus) && !isPending(newStatus)) statsUpdate['stats.pendingReports'] = -1;
+      if (!isPending(oldStatus) && isPending(newStatus)) statsUpdate['stats.pendingReports'] = 1;
+      if (isSent(oldStatus) && !isSent(newStatus)) statsUpdate['stats.sentReports'] = -1;
+      if (!isSent(oldStatus) && isSent(newStatus)) statsUpdate['stats.sentReports'] = 1;
 
       if (Object.keys(statsUpdate).length > 0) {
         await updateLabStats(adminId, statsUpdate, session);
@@ -600,12 +598,34 @@ exports.sendReport = async (req, res) => {
     throw err;
   }
 
-  // Update status and audit log
-  report.status = 'saved';
-  report.auditLogs.push({ action: 'Sent', userId: req.user.id });
-  await report.save();
+  // Update status and audit log within a transaction for stats consistency
+  const oldStatus = report.status;
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  res.status(200).json({ success: true, message: `Report successfully sent via ${method}` });
+  try {
+    report.status = 'sent';
+    report.auditLogs.push({ action: 'Sent', userId: req.user.id });
+    await report.save({ session });
+
+    // Update stats: decrement old status counter, increment sentReports
+    const statsUpdate = { 'stats.sentReports': 1 };
+    const isPending = (s) => s === 'draft' || s === 'DRAFT';
+    if (isPending(oldStatus)) {
+      statsUpdate['stats.pendingReports'] = -1;
+    }
+
+    await updateLabStats(adminId, statsUpdate, session);
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({ success: true, message: `Report successfully sent via ${method}` });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
 };
 
 // @desc    Get pending reports
@@ -668,7 +688,7 @@ exports.deleteReport = async (req, res) => {
   try {
     // Update Stats Cache before deletion
     const statsUpdate = { 'stats.totalReports': -1 };
-    if (report.status === 'draft') {
+    if (report.status === 'draft' || report.status === 'DRAFT') {
       statsUpdate['stats.pendingReports'] = -1;
     } else if (report.status === 'sent') {
       statsUpdate['stats.sentReports'] = -1;

@@ -271,13 +271,13 @@ exports.removeStaff = async (req, res) => {
     throw err;
   }
 
-  if (staffMember.parentAdminId.toString() !== req.user.id) {
+  if (staffMember.parentAdminId.toString() !== req.user.id.toString()) {
     const err = new Error('Not authorized to delete this staff member');
     err.statusCode = 403;
     throw err;
   }
 
-  if (staffMember._id.toString() === req.user.id) {
+  if (staffMember._id.toString() === req.user.id.toString()) {
     const err = new Error('Cannot delete your own admin account');
     err.statusCode = 400;
     throw err;
@@ -304,7 +304,7 @@ exports.resetPassword = async (req, res) => {
     throw err;
   }
 
-  if (staffMember.parentAdminId.toString() !== req.user.id) {
+  if (staffMember.parentAdminId.toString() !== req.user.id.toString()) {
     const err = new Error('Not authorized to reset password for this staff member');
     err.statusCode = 403;
     throw err;

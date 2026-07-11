@@ -12,15 +12,12 @@ const init = (server) => {
   io = new Server(server, {
     cors: {
       origin: function (origin, callback) {
-        // Allow requests with no origin only in dev (e.g., mobile apps, curl)
-        if (!origin && process.env.NODE_ENV !== 'production') return callback(null, true);
-
-        if (allowedOrigins.indexOf(origin) !== -1) {
+        // In development, allow all origins to make local network testing easy
+        if (process.env.NODE_ENV !== 'production') {
           return callback(null, true);
         }
 
-        // In development, allow if no origins defined
-        if (process.env.NODE_ENV !== 'production' && allowedOrigins.length === 0) {
+        if (allowedOrigins.indexOf(origin) !== -1) {
           return callback(null, true);
         }
 

@@ -47,20 +47,17 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, Postman) ONLY in dev
-    if (!origin && process.env.NODE_ENV !== 'production') return callback(null, true);
-    
-    // Check if origin is in whitelist or if wildcard is present
-    if (allowedOrigins.indexOf(origin) !== -1 || (allowedOrigins.includes('*') && process.env.NODE_ENV !== 'production')) {
+    // In development, allow all origins to make local network testing easy
+    if (process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
     
-    // In development, allow if no origins defined
-    if (process.env.NODE_ENV !== 'production' && allowedOrigins.length === 0) {
+    // Check if origin is in whitelist
+    if (allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     }
 
-    return callback(null, false);
+    return callback(new Error('CORS not allowed'), false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],

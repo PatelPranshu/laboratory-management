@@ -181,10 +181,10 @@ exports.deletePatient = async (req, res) => {
       { $group: { 
           _id: null, 
           total: { $sum: 1 },
-          pending: { $sum: { $cond: [{ $eq: ['$status', 'draft'] }, 1, 0] } },
+          pending: { $sum: { $cond: [{ $in: ['$status', ['draft', 'DRAFT']] }, 1, 0] } },
           sent: { $sum: { $cond: [{ $eq: ['$status', 'sent'] }, 1, 0] } }
       }}
-    ]);
+    ]).session(session);
 
     if (reportCounts.length > 0) {
       const stats = reportCounts[0];

@@ -23,7 +23,7 @@ const sendTokenResponse = (user, statusCode, res) => {
   const options = {
     expires: new Date(expTimeMs),
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production', // Only require HTTPS in production
     sameSite: 'lax'
   };
 
@@ -280,7 +280,7 @@ exports.logout = async (req, res) => {
   res.cookie('lis_token', 'none', {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax'
   });
 
@@ -358,7 +358,7 @@ exports.deleteLab = async (req, res) => {
     res.cookie('lis_token', 'none', {
       expires: new Date(Date.now() + 10 * 1000),
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax'
     });
 
