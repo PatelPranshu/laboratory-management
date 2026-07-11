@@ -45,3 +45,47 @@ exports.markAllAsRead = async (req, res) => {
 
     res.status(200).json({ success: true, message: 'All notifications marked as read' });
   };
+
+// @desc    Get unread active announcements
+// @route   GET /api/notifications/announcements/unread
+// @access  Private
+exports.getUnreadAnnouncements = async (req, res) => {
+  try {
+    const SystemSettings = require('../models/SystemSettings');
+    const User = require('../models/User');
+
+    // Get active announcements
+    let settings = await SystemSettings.findOne({ key: 'announcements' });
+    let announcements = settings ? settings.value : [];
+
+    // Get user's seen announcements
+    const user = await User.findById(req.user.id).select('seenAnnouncements');
+    const seenSet = new Set(user.seenAnnouncements || []);
+
+    // Filter out seen ones
+    const unread = announcements.filter(a => !seenSet.has(a.id));
+
+    res.status(200).json({ success: true, data: unread });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Dismiss an announcement
+// @route   POST /api/notifications/announcements/:id/dismiss
+// @access  Private
+exports.dismissAnnouncement = async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const { id } = req.params;
+
+    // Add to seen array using $addToSet to prevent duplicates
+    await User.findByIdAndUpdate(req.user.id, {
+      $addToSet: { seenAnnouncements: id }
+    });
+
+    res.status(200).json({ success: true, message: 'Announcement dismissed' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};

@@ -90,6 +90,10 @@ const UserSchema = new mongoose.Schema({
   deletionReason: {
     type: String,
     default: null
+  },
+  seenAnnouncements: {
+    type: [String],
+    default: []
   }
 }, { timestamps: true });
 

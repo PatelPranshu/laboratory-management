@@ -262,6 +262,9 @@ function initNotifications() {
 
     // 2. Fetch initial notifications
     fetchInitialNotifs();
+    
+    // 3. Fetch any persistent system announcements missed while offline
+    fetchMissedAnnouncements();
 
     // 3. Setup Socket
     if (typeof io !== 'undefined') {
@@ -422,6 +425,27 @@ async function fetchInitialNotifs() {
     }
 }
 
+async function fetchMissedAnnouncements() {
+    try {
+        const res = await api.request('/notifications/announcements/unread');
+        const unread = res.data || [];
+        
+        for (const ann of unread) {
+            // Display alert. Wait for user to click "Got it" before continuing to next
+            if (typeof UI !== 'undefined' && UI.showAlert) {
+                await UI.showAlert(ann.title, ann.message, ann.type === 'critical' ? 'error' : 'brand');
+            } else {
+                alert(`[${ann.title}]\n${ann.message}`);
+            }
+            
+            // Mark as dismissed on the backend so it doesn't show again
+            await api.request(`/notifications/announcements/${ann.id}/dismiss`, 'POST');
+        }
+    } catch (e) {
+        console.warn('[Announcements] Failed to fetch missed announcements', e);
+    }
+}
+
 function setupNotificationSocket() {
     const socketUrl = (typeof SOCKET_URL !== 'undefined') ? SOCKET_URL : '';
 
@@ -453,11 +477,18 @@ function setupNotificationSocket() {
         }
     });
 
-    socket.on('system_announcement', (announcement) => {
+    socket.on('system_announcement', async (announcement) => {
         if (typeof UI !== 'undefined' && UI.showAlert) {
-            UI.showAlert(announcement.title, announcement.message, announcement.type === 'critical' ? 'error' : 'brand');
+            await UI.showAlert(announcement.title, announcement.message, announcement.type === 'critical' ? 'error' : 'brand');
         } else {
             alert(`[${announcement.title}]\n${announcement.message}`);
+        }
+        
+        // Mark as dismissed so it doesn't pop up again if the user refreshes
+        try {
+            await api.request(`/notifications/announcements/${announcement.id}/dismiss`, 'POST');
+        } catch (e) {
+            console.warn('[Announcements] Failed to dismiss live announcement', e);
         }
     });
 
