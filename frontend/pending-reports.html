@@ -25,34 +25,7 @@
             }
         }
     </script>
-    <script>
-      (function(h,o,u,n,d) {
-        h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
-        d=o.createElement(u);d.async=1;d.src=n
-        n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
-      })(window,document,'script','https://www.datadoghq-browser-agent.com/us1/v5/datadog-rum.js','DD_RUM')
-      window.DD_RUM.onReady(function() {
-        window.DD_RUM.init({
-          applicationId: 'e3ea571f-ece6-46d3-bdf9-874e28c03fcb', 
-          clientToken: 'pub97cd5b8f1cf4bca9ff76ffd64db502c7',
-          site: 'us5.datadoghq.com',
-          service: 'mypatholabs-client',
-          env: 'production',
-          version: '1.0.0', 
-          sessionSampleRate: 100,
-          sessionReplaySampleRate: 20,
-          trackUserInteractions: true,
-          trackResources: true,
-          trackLongTasks: true,
-          defaultPrivacyLevel: 'mask-user-input',
-          allowedTracingUrls: [
-            { match: "https://api.mypatholabs.tech", propagatorTypes: ["datadog", "tracecontext"] },
-            { match: "https://mylaboratory.onrender.com", propagatorTypes: ["datadog", "tracecontext"] },
-            { match: /localhost/, propagatorTypes: ["datadog", "tracecontext"] }
-          ]
-        });
-      })
-    </script>
+    <script src="js/datadog-init.js"></script>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 antialiased h-full overflow-hidden">
     
