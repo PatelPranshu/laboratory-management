@@ -7,9 +7,9 @@
   "type": "commonjs",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon server.js",
+    "dev": "nodemon --require ./tracing.js server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node --require ./tracing.js server.js"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.1",

@@ -20,6 +20,7 @@ const sdk = new NodeSDK({
   resource: resourceFromAttributes({
     [SemanticResourceAttributes.SERVICE_NAME]: 'mypatholabs-server',
     [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV || 'production',
+    [SemanticResourceAttributes.SERVICE_VERSION]: '1.0.0',
   }),
   traceExporter,
   instrumentations: [getNodeAutoInstrumentations()]
