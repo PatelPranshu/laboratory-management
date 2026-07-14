@@ -32,6 +32,24 @@ if (missingVars.length > 0) {
 // Connect to database
 connectDB();
 
+// Lightweight Render Free Tier Metrics Logger (Sent to Datadog Logs)
+let lastCpuTime = process.cpuUsage();
+setInterval(() => {
+  const memUsage = process.memoryUsage();
+  const cpuUsage = process.cpuUsage(lastCpuTime);
+  lastCpuTime = process.cpuUsage();
+  
+  // CPU usage is in microseconds. Calculate percentage over the 60s interval
+  const cpuPercent = (((cpuUsage.user + cpuUsage.system) / 1000000) / 60) * 100; 
+  const ramMB = memUsage.rss / 1024 / 1024;
+  
+  logger.info("Server hardware metrics", {
+    type: "server_metrics",
+    ram_mb: Math.round(ramMB * 100) / 100,
+    cpu_percent: Math.round(cpuPercent * 100) / 100
+  });
+}, 60000); // Every 60 seconds
+
 const app = express();
 
 // HTTP Request Logging with Morgan

@@ -1,0 +1,59 @@
+DATADOG DASHBOARD SETUP GUIDE (STUDENT PACK / ENTERPRISE POTENTIAL)
+===================================================================
+
+Based on your current codebase, your application is configured to send RUM (Real User Monitoring), Session Replays, Logs, and OpenTelemetry APM traces to Datadog's `us5.datadoghq.com` region. 
+
+Follow these exact steps in the Datadog Web Dashboard to activate everything.
+
+STEP 1: VERIFY REGION & LOGIN
+-------------------------------------------------------------------
+1. Go to https://us5.datadoghq.com/ (Ensure you are on the US5 region, as hardcoded in your `datadog-init.js`).
+2. Log in with your GitHub Student Pack Datadog account.
+
+STEP 2: GENERATE BACKEND API KEY (FOR RENDER)
+-------------------------------------------------------------------
+Your backend needs an API key to send OpenTelemetry traces and Winston logs.
+1. On Datadog, go to "Organization Settings" (bottom left menu).
+2. Click "API Keys".
+3. Click "New Key", name it `render-backend-key`.
+4. Copy the generated key.
+5. Go to your Render Web Service dashboard -> Environment Variables.
+6. Add:
+   - Key: `DD_API_KEY` | Value: <YOUR_COPIED_KEY>
+   - Key: `DD_SITE` | Value: `us5.datadoghq.com`
+
+STEP 3: VERIFY FRONTEND RUM & SESSION REPLAY
+-------------------------------------------------------------------
+Your code already has an Application ID (`e3ea571f...`).
+1. In Datadog, look at the left sidebar. Go to "Digital Experience" -> "Real User Monitoring" (or "RUM Applications").
+2. Check if "mypatholabs-client" exists in the list.
+   - IF NO: Click "New Application" -> select "JS" (Browser), name it `mypatholabs-client`. 
+   - Datadog will give you a new `applicationId` and `clientToken`. You MUST update `frontend/js/datadog-init.js` with these new values.
+3. Go to "Digital Experience" -> "Session Replay". Ensure it is toggled ON for your application. (Your code is already recording at 100%).
+
+STEP 4: ENABLE LOGS PIPELINE (BACKEND & FRONTEND)
+-------------------------------------------------------------------
+1. Go to "Logs" -> "Configuration" -> "Pipelines".
+2. Your backend is sending logs as JSON with `ddsource=nodejs`.
+3. Ensure the "Node.js" integration pipeline is active so Datadog correctly parses error stacks and timestamps.
+4. Your frontend sends logs directly. You can view all errors in "Logs" -> "Live Tail".
+
+STEP 5: OPEN-TELEMETRY APM (TRACING)
+-------------------------------------------------------------------
+Since you bypass the Datadog Agent and use OTLP HTTP directly from Render:
+1. Go to "APM" -> "Traces" or "Services".
+2. Wait a few minutes after deploying to Render and making an API request.
+3. You should see `mypatholabs-server` appear in the Services list.
+4. Click on it to see the traces. 
+5. Under a trace, you will see a "Logs" tab. Because your `logger.js` injects `dd.trace_id`, you will see backend logs perfectly matched with API traces!
+
+STEP 6: DASHBOARDS (BRING IT ALL TOGETHER)
+-------------------------------------------------------------------
+To use the "Enterprise Potential":
+1. Go to "Dashboards" -> "New Dashboard".
+2. You will see a screen titled "Build a Dashboard with Bits".
+3. Under "Or start from:", click on the "Blank Dashboard (Responsive layout)" button.
+4. Once the blank dashboard opens, click "Add Widget" and choose "Timeseries".
+5. In the metric query, type `trace.express.request.hits` (or `trace.http.request.hits` depending on OTel output) to see backend traffic.
+6. Add another Widget -> "Top List". Select RUM metrics (e.g., `rum.view.time_spent` or `rum.error.count`) to see Frontend performance.
+7. Save the dashboard as "MyPathoLabs Enterprise View".
