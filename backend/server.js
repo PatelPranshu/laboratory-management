@@ -48,7 +48,7 @@ setInterval(() => {
     ram_mb: Math.round(ramMB * 100) / 100,
     cpu_percent: Math.round(cpuPercent * 100) / 100
   });
-}, 60000); // Every 60 seconds
+}, 5000); // Every 5 seconds
 
 const app = express();
 
