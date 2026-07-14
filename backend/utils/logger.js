@@ -1,4 +1,15 @@
 const winston = require('winston');
+const { trace, context } = require('@opentelemetry/api');
+
+const otelFormat = winston.format((info) => {
+  const span = trace.getSpan(context.active());
+  if (span) {
+    const { traceId, spanId } = span.spanContext();
+    info['dd.trace_id'] = traceId;
+    info['dd.span_id'] = spanId;
+  }
+  return info;
+});
 
 const { combine, timestamp, printf, colorize, errors, json } = winston.format;
 
@@ -29,6 +40,7 @@ const logger = winston.createLogger({
   format: combine(
     errors({ stack: true }),
     timestamp(),
+    otelFormat(),
     json()
   ),
   transports

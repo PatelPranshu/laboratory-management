@@ -58,7 +58,11 @@
           trackResources: true,
           trackLongTasks: true,
           defaultPrivacyLevel: 'mask-user-input',
-          allowedTracingUrls: ["https://api.mypatholabs.tech", "https://mylaboratory.onrender.com", /localhost/]
+          allowedTracingUrls: [
+            { match: "https://api.mypatholabs.tech", propagatorTypes: ["datadog", "tracecontext"] },
+            { match: "https://mylaboratory.onrender.com", propagatorTypes: ["datadog", "tracecontext"] },
+            { match: /localhost/, propagatorTypes: ["datadog", "tracecontext"] }
+          ]
         });
       })
     </script>

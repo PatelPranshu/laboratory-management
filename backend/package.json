@@ -12,13 +12,16 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/auto-instrumentations-node": "^0.78.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.220.0",
+    "@opentelemetry/sdk-node": "^0.220.0",
     "bcryptjs": "^2.4.3",
     "bwip-js": "^4.11.1",
     "cloudinary": "^2.4.0",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "dd-trace": "^6.2.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-mongo-sanitize": "^2.2.0",
