@@ -62,7 +62,7 @@ app.use(cors({
     return callback(new Error('CORS not allowed'), false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-datadog-origin', 'x-datadog-parent-id', 'x-datadog-trace-id', 'x-datadog-sampling-priority', 'traceparent', 'tracestate'],
   exposedHeaders: ['Content-Disposition'],
   credentials: true,
   optionsSuccessStatus: 200
