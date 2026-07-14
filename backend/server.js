@@ -54,8 +54,8 @@ app.use(cors({
       return callback(null, true);
     }
     
-    // Check if origin is in whitelist
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Check if origin is in whitelist or undefined (server-to-server / health checks)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     }
 
@@ -168,6 +168,11 @@ app.use('/api/referrals', referrals);
 
 app.get('/', (req, res) => {
   res.json({ success: true, message: 'LIS API is running' });
+});
+
+// Render Health Check Route
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'mypatholabs-server' });
 });
 
 // ---------- Soft Delete Cleanup Job ----------
