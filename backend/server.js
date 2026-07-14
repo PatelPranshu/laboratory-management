@@ -1,3 +1,10 @@
+const tracer = require('dd-trace').init({
+  logInjection: true,
+  service: 'mypatholabs-server',
+  env: process.env.NODE_ENV || 'production',
+  version: process.env.npm_package_version || require('./package.json').version || '1.0.0'
+});
+
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
