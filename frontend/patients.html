@@ -7,7 +7,56 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/datadog-init.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Inter', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+      (function(h,o,u,n,d) {
+        h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+        d=o.createElement(u);d.async=1;d.src=n
+        n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+      })(window,document,'script','https://www.datadoghq-browser-agent.com/us1/v5/datadog-rum.js','DD_RUM')
+      window.DD_RUM.onReady(function() {
+        window.DD_RUM.init({
+          applicationId: 'e3ea571f-ece6-46d3-bdf9-874e28c03fcb', 
+          clientToken: 'pub97cd5b8f1cf4bca9ff76ffd64db502c7',
+          site: 'us5.datadoghq.com',
+          service: 'mypatholabs-client',
+          env: 'production',
+          version: '1.0.0', 
+          sessionSampleRate: 100,
+          sessionReplaySampleRate: 20,
+          trackUserInteractions: true,
+          trackResources: true,
+          trackLongTasks: true,
+          defaultPrivacyLevel: 'mask-user-input',
+          allowedTracingUrls: [
+            { match: "https://api.mypatholabs.tech", propagatorTypes: ["datadog", "tracecontext"] },
+            { match: "https://mylaboratory.onrender.com", propagatorTypes: ["datadog", "tracecontext"] },
+            { match: /localhost/, propagatorTypes: ["datadog", "tracecontext"] }
+          ]
+        });
+      })
+    </script>
 </head>
 <body class="bg-slate-50 antialiased text-slate-800 selection:bg-brand-500 selection:text-white">
 
