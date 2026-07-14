@@ -40,7 +40,7 @@ setInterval(() => {
   lastCpuTime = process.cpuUsage();
   
   // CPU usage is in microseconds. Calculate percentage over the 60s interval
-  const cpuPercent = (((cpuUsage.user + cpuUsage.system) / 1000000) / 60) * 100; 
+  const cpuPercent = (((cpuUsage.user + cpuUsage.system) / 1000000) / 5) * 100; 
   const ramMB = memUsage.rss / 1024 / 1024;
   
   logger.info("Server hardware metrics", {
