@@ -161,6 +161,10 @@ app.use('/api', (req, res, next) => {
     '/auth/login',
     '/auth/register',
     '/auth/setup-superadmin',
+    '/auth/forgot-password',
+    '/auth/reset-password-with-token',
+    '/auth/verify-email',
+    '/auth/resend-verification',
     '/staff/complete-registration'
   ];
 
