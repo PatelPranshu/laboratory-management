@@ -1,7 +1,7 @@
 const { Resend } = require('resend');
 
-// Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend with fallback to prevent constructor crash on startup
+const resend = new Resend(process.env.RESEND_API_KEY || 'missing_key');
 
 /**
  * Sends an invitation email to onboarding staff

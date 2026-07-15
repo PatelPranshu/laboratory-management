@@ -22,7 +22,7 @@ const logger = require('./utils/logger');
 dotenv.config();
 
 // Assert critical environment variables
-const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET', 'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'];
+const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET', 'CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET', 'RESEND_API_KEY'];
 const missingVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 if (missingVars.length > 0) {
   logger.error(`[FATAL] Missing required environment variables: ${missingVars.join(', ')}`);
@@ -73,7 +73,8 @@ app.use(cors({
     }
     
     // Strict origin check for production frontend (Cross-Origin Same-Site)
-    if (origin === 'https://mypatholabs.tech' || origin === 'https://www.mypatholabs.tech') {
+    // Allow !origin for Render internal health checks to pass without timing out
+    if (!origin || origin === 'https://mypatholabs.tech' || origin === 'https://www.mypatholabs.tech') {
       return callback(null, true);
     }
 
