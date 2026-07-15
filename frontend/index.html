@@ -119,15 +119,17 @@
                             </div>
                         </div>
                     </div>
+
+
                     
-                    <button id="btn-login" type="submit" class="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 shadow-lg shadow-brand-500/30 transition-all duration-200">
+                    <button id="btn-login" type="submit" class="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 shadow-lg shadow-brand-500/30 transition-all duration-200 mt-4">
                         Sign In <i class="fas fa-arrow-right ml-2 mt-0.5 text-xs"></i>
                     </button>
                 </form>
 
                 <p class="mt-8 text-center text-sm font-medium text-slate-500">
                     New to MyPathoLabs? 
-                    <button onclick="toggleForm()" class="text-brand-600 hover:text-brand-800 font-bold ml-1 focus:outline-none transition-colors border-b-2 border-transparent hover:border-brand-600">Create Laboratory Account</button>
+                    <button onclick="toggleForm(true)" class="text-brand-600 hover:text-brand-800 font-bold ml-1 focus:outline-none transition-colors border-b-2 border-transparent hover:border-brand-600">Create Laboratory Account</button>
                 </p>
             </div>
 
@@ -224,14 +226,24 @@
                         </div>
                     </div>
 
-                    <!-- T&C Checkbox -->
-                    <div class="mt-2 flex items-start">
-                        <div class="flex items-center h-5">
-                            <input id="reg-terms" type="checkbox" required class="w-4 h-4 border border-slate-300 rounded bg-slate-50 focus:ring-2 focus:ring-brand-500 cursor-pointer transition-all">
+                    <!-- T&C and Privacy Checkboxes -->
+                    <div class="mt-4 space-y-3">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="reg-terms" type="checkbox" required class="w-4 h-4 border border-slate-300 rounded bg-slate-50 focus:ring-2 focus:ring-brand-500 cursor-pointer transition-all">
+                            </div>
+                            <label for="reg-terms" class="ml-2 text-[13px] font-medium text-slate-600">
+                                I agree to the <a href="terms-condition.html" target="_blank" class="text-brand-600 hover:text-brand-700 hover:underline transition-colors">Terms & Conditions</a>
+                            </label>
                         </div>
-                        <label for="reg-terms" class="ml-2 text-[13px] font-medium text-slate-600">
-                            I agree to the <a href="terms-condition.html" target="_blank" class="text-brand-600 hover:text-brand-700 hover:underline transition-colors">Terms & Conditions</a> and <a href="privacy-policy.html" target="_blank" class="text-brand-600 hover:text-brand-700 hover:underline transition-colors">Privacy Policy</a>
-                        </label>
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="reg-privacy" type="checkbox" required class="w-4 h-4 border border-slate-300 rounded bg-slate-50 focus:ring-2 focus:ring-brand-500 cursor-pointer transition-all">
+                            </div>
+                            <label for="reg-privacy" class="ml-2 text-[13px] font-medium text-slate-600">
+                                I have read and agree to the <a href="privacy-policy.html" target="_blank" class="text-brand-600 hover:text-brand-700 hover:underline transition-colors">Privacy Policy</a>
+                            </label>
+                        </div>
                     </div>
 
                     <button id="btn-register" type="submit" class="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 shadow-lg shadow-emerald-500/30 transition-all duration-200 mt-4">
@@ -241,7 +253,7 @@
 
                 <p class="mt-6 text-center text-sm font-medium text-slate-500">
                     Already have an account? 
-                    <button onclick="toggleForm()" class="text-brand-600 hover:text-brand-800 font-bold ml-1 focus:outline-none transition-colors border-b-2 border-transparent hover:border-brand-600">Sign in instead</button>
+                    <button onclick="toggleForm(false)" class="text-brand-600 hover:text-brand-800 font-bold ml-1 focus:outline-none transition-colors border-b-2 border-transparent hover:border-brand-600">Sign in instead</button>
                 </p>
             </div>
 
@@ -255,8 +267,8 @@
         <a href="terms-condition.html" class="hover:text-brand-600 transition-colors">Terms of Service</a>
     </div>
 
-    <script src="js/api.js"></script>
-    <script src="js/app.js"></script>
+    <script src="js/api.js?v=5.0"></script>
+    <script src="js/app.js?v=5.0"></script>
     <script>
         // Redirect if already logged in
         const exp = localStorage.getItem('lis_exp');
@@ -264,10 +276,16 @@
             window.location.href = 'dashboard.html';
         }
 
-                function toggleForm() {
-            document.getElementById('login-form').classList.add('hidden');
-            document.getElementById('register-form').classList.remove('hidden');
-            document.getElementById('forgot-form').classList.add('hidden');
+        function toggleForm(showRegister = true) {
+            if (showRegister) {
+                document.getElementById('login-form').classList.add('hidden');
+                document.getElementById('register-form').classList.remove('hidden');
+                document.getElementById('forgot-form').classList.add('hidden');
+            } else {
+                document.getElementById('login-form').classList.remove('hidden');
+                document.getElementById('register-form').classList.add('hidden');
+                document.getElementById('forgot-form').classList.add('hidden');
+            }
         }
 
         function toggleForgotForm() {
@@ -331,14 +349,21 @@
                     const password = document.getElementById('reg-password').value;
                     const confirmPassword = document.getElementById('reg-confirm-password').value;
                     const role = 'Admin'; // Only Admins can register publicly
+                    const termsAccepted = document.getElementById('reg-terms').checked;
+                    const privacyAccepted = document.getElementById('reg-privacy').checked;
 
                     if (password !== confirmPassword) {
                         UI.showToast('Passwords do not match', 'error');
                         UI.toggleLoader('btn-register', false, 'Create Account');
                         return;
                     }
+                    if (!termsAccepted || !privacyAccepted) {
+                        UI.showToast('You must accept both the Terms & Conditions and Privacy Policy', 'error');
+                        UI.toggleLoader('btn-register', false, 'Create Account');
+                        return;
+                    }
                     
-                    const res = await api.register({ labName, name, email, password, role });
+                    const res = await api.register({ labName, name, email, password, role, termsAccepted, privacyAccepted });
                     UI.showToast('Account Created! Please check your email to verify your account.', 'success');
                     setTimeout(() => {
                         window.location.reload();

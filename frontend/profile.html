@@ -225,6 +225,42 @@
                             </form>
                         </div>
 
+                        <!-- Data Portability (GDPR) -->
+                        <div id="data-portability-zone" class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-slate-100 p-6 sm:p-10 relative overflow-hidden hidden glass-card mb-8">
+                            <a id="data-export"></a>
+                            <div class="absolute top-0 right-0 p-8 opacity-5">
+                                <i class="fas fa-file-export text-8xl text-brand-500"></i>
+                            </div>
+
+                            <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center relative z-10">
+                                <span class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mr-4 border border-brand-100 shadow-sm">
+                                    <i class="fas fa-download text-sm"></i>
+                                </span>
+                                Data Portability (Export)
+                            </h3>
+
+                            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col items-start justify-between gap-6 shadow-sm relative z-10">
+                                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 w-full mb-2">
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-slate-800 text-sm mb-1">Request Full Data Export</h4>
+                                        <p class="text-xs text-slate-500 max-w-lg font-medium leading-relaxed">Request a complete export of all your Patients and Reports in Excel format. Generating this export takes time, so you will receive an email when it is ready. Exports automatically expire after 7 days.</p>
+                                    </div>
+                                    <button onclick="requestDataExport()" class="shrink-0 w-full md:w-auto px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-brand-600/30 active:scale-95 whitespace-nowrap flex items-center justify-center" id="request-export-btn">
+                                        Request Export
+                                    </button>
+                                </div>
+
+                                <div class="w-full border-t border-slate-200 pt-4">
+                                    <h4 class="font-bold text-slate-700 text-sm mb-3">Recent Exports</h4>
+                                    <div id="exports-list" class="space-y-3">
+                                        <div class="text-xs text-slate-500 italic flex items-center gap-2">
+                                            <i class="fas fa-spinner fa-spin text-brand-500"></i> Loading...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Danger Zone -->
                         <div id="danger-zone" class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-red-100 p-6 sm:p-10 relative overflow-hidden hidden glass-card">
                              <div class="absolute top-0 right-0 p-8 opacity-5">

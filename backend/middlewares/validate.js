@@ -56,11 +56,16 @@ const passwordSchema = z.string().min(8, 'Password must be at least 8 characters
   .regex(/[0-9]/, 'Password must contain at least one number')
   .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/, 'Password must contain at least one special character');
 
+const complianceFlagSchema = z.union([z.boolean(), z.string(), z.number()])
+  .refine(val => [true, 'true', 'on', '1', 1].includes(val), {
+    message: 'You must accept the Terms & Conditions and Privacy Policy'
+  });
 
 module.exports = {
   validateObjectId,
   pickFields,
   validateSchema,
   objectIdSchema,
-  passwordSchema
+  passwordSchema,
+  complianceFlagSchema
 };

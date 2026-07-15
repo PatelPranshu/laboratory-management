@@ -18,10 +18,10 @@ const generateToken = (user) => {
 // Helper function to send token in HttpOnly cookie
 const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user);
-  
+
   // Expiration time for the frontend to manage its own redirect synchronously
   const expTimeMs = Date.now() + 8 * 60 * 60 * 1000;
-  
+
   const options = {
     expires: new Date(expTimeMs),
     httpOnly: true,
@@ -44,7 +44,7 @@ const sendTokenResponse = (user, statusCode, res) => {
         parentAdminId: user.parentAdminId,
         accountStatus: user.accountStatus,
         isVerified: user.isVerified,
-        
+
       }
     });
 };
@@ -53,7 +53,7 @@ const sendTokenResponse = (user, statusCode, res) => {
 // @route   POST /api/auth/register
 // @access  Public (first Doctor only) / Private (LabTech requires parent Doctor token)
 exports.register = async (req, res) => {
-  const { email, password, role, labName, name, parentAdminId } = req.body;
+  const { email, password, role, labName, name, parentAdminId, termsAccepted, privacyAccepted } = req.body;
 
   if (typeof email !== 'string' || typeof password !== 'string' || typeof name !== 'string' || typeof labName !== 'string') {
     return res.status(400).json({ success: false, error: 'Invalid input format' });
@@ -91,7 +91,7 @@ exports.register = async (req, res) => {
 
     const users = await User.create([userFields], { session });
     const user = users[0];
-    
+
     const PrintSettings = require('../models/PrintSettings');
     await PrintSettings.create([{ doctorId: user._id }], { session });
 
@@ -100,7 +100,7 @@ exports.register = async (req, res) => {
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
     const verifyUrl = `${frontendUrl}/verify-email.html?token=${verificationToken}`;
-    
+
     await sendVerificationEmail(user.email, verifyUrl);
 
     await session.commitTransaction();
@@ -121,7 +121,7 @@ exports.register = async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, termsAccepted, privacyAccepted } = req.body;
 
   if (typeof email !== 'string' || typeof password !== 'string') {
     return res.status(400).json({ success: false, error: 'Invalid input format' });
@@ -144,7 +144,7 @@ exports.login = async (req, res) => {
     err.statusCode = 401;
     throw err;
   }
-  
+
   if (user.isDeleted) {
     const adminEmail = process.env.SUPER_ADMIN_EMAIL || 'pranshuvramani@gmail.com';
     const err = new Error(`Account is deleted. Please contact super admin with mail id (${adminEmail}) to restore.`);
@@ -197,10 +197,10 @@ exports.updateProfile = async (req, res) => {
   const { email, labName, name, password, currentPassword } = req.body;
 
   if (
-    (email && typeof email !== 'string') || 
-    (labName && typeof labName !== 'string') || 
-    (name && typeof name !== 'string') || 
-    (password && typeof password !== 'string') || 
+    (email && typeof email !== 'string') ||
+    (labName && typeof labName !== 'string') ||
+    (name && typeof name !== 'string') ||
+    (password && typeof password !== 'string') ||
     (currentPassword && typeof currentPassword !== 'string')
   ) {
     return res.status(400).json({ success: false, error: 'Invalid input format' });
@@ -222,7 +222,7 @@ exports.updateProfile = async (req, res) => {
     if (user.role === 'Admin') {
       const newLabName = labName.trim();
       user.labName = newLabName;
-      
+
       // Propagate the labName change to all staff users belonging to this Admin
       await User.updateMany(
         { parentAdminId: user._id },
@@ -283,7 +283,7 @@ exports.forgotPassword = async (req, res) => {
   }
 
   const user = await User.findOne({ email: email.toLowerCase().trim() });
-  
+
   if (!user) {
     return res.status(404).json({ success: false, error: 'No account found with that email address.' });
   }
@@ -296,9 +296,9 @@ exports.forgotPassword = async (req, res) => {
 
   try {
     await sendPasswordResetEmail(user.email, resetUrl);
-    return res.status(200).json({ 
-      success: true, 
-      message: 'Password reset link has been sent to your email.' 
+    return res.status(200).json({
+      success: true,
+      message: 'Password reset link has been sent to your email.'
     });
   } catch (err) {
     user.resetPasswordToken = undefined;
@@ -334,14 +334,14 @@ exports.resetPasswordWithToken = async (req, res) => {
   user.password = newPassword;
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
-  
+
   // Implicitly verify the email since they successfully clicked a secure link sent to it
   user.isVerified = true;
   user.verificationToken = undefined;
   user.verificationExpire = undefined;
-  
+
   // passwordChangedAt is automatically updated in the pre('save') hook
-  await user.save(); 
+  await user.save();
 
   invalidateAuthCache(user._id);
 
@@ -397,18 +397,18 @@ exports.resendVerification = async (req, res) => {
   }
 
   const user = await User.findOne({ email: email.toLowerCase().trim() });
-  
+
   if (user) {
     if (user.isVerified) {
       return res.status(200).json({ success: true, message: 'Account is already verified.' });
     }
-    
+
     const verificationToken = user.getVerificationToken();
     await user.save({ validateBeforeSave: false });
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
     const verifyUrl = `${frontendUrl}/verify-email.html?token=${verificationToken}`;
-    
+
     try {
       await sendVerificationEmail(user.email, verifyUrl);
     } catch (err) {
@@ -416,9 +416,9 @@ exports.resendVerification = async (req, res) => {
     }
   }
 
-  res.status(200).json({ 
-    success: true, 
-    message: 'If an account exists, a verification email has been sent.' 
+  res.status(200).json({
+    success: true,
+    message: 'If an account exists, a verification email has been sent.'
   });
 };
 

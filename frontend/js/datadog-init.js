@@ -22,38 +22,67 @@ const datadogConfig = {
   version: '1.0.0', 
 };
 
-// Initialize RUM
-window.DD_RUM.onReady(function() {
-  window.DD_RUM.init({
-    ...datadogConfig,
-    sessionSampleRate: 100,
-    sessionReplaySampleRate: 100, // Full potential
-    trackUserInteractions: true,
-    trackResources: true,
-    trackLongTasks: true,
-    defaultPrivacyLevel: 'mask-user-input',
-    allowedTracingUrls: [
-      { match: "https://api.mypatholabs.tech", propagatorTypes: ["datadog", "tracecontext"] },
-      { match: "https://mylaboratory.onrender.com", propagatorTypes: ["datadog", "tracecontext"] },
-      { match: /localhost/, propagatorTypes: ["datadog", "tracecontext"] }
-    ]
-  });
-  
-  // Start Session Replay Recording
-  window.DD_RUM.startSessionReplayRecording();
-});
+function initDatadog(consentStatus) {
+  const isDeclined = consentStatus === 'declined';
+  const sessionReplaySampleRate = isDeclined ? 0 : 100;
+  const defaultPrivacyLevel = isDeclined ? 'mask' : 'mask-user-input';
 
-// Initialize Logs
-window.DD_LOGS.onReady(function() {
-  window.DD_LOGS.init({
-    ...datadogConfig,
-    forwardErrorsToLogs: true,
-    sessionSampleRate: 100,
+  // Initialize RUM
+  window.DD_RUM.onReady(function() {
+    window.DD_RUM.init({
+      ...datadogConfig,
+      sessionSampleRate: 100,
+      sessionReplaySampleRate: sessionReplaySampleRate,
+      trackUserInteractions: true,
+      trackResources: true,
+      trackLongTasks: true,
+      defaultPrivacyLevel: defaultPrivacyLevel,
+      allowedTracingUrls: [
+        { match: "https://api.mypatholabs.tech", propagatorTypes: ["datadog", "tracecontext"] },
+        { match: "https://mylaboratory.onrender.com", propagatorTypes: ["datadog", "tracecontext"] },
+        { match: /localhost/, propagatorTypes: ["datadog", "tracecontext"] }
+      ]
+    });
+    
+    if (!isDeclined) {
+      window.DD_RUM.startSessionReplayRecording();
+    }
   });
-});
+
+  // Initialize Logs
+  window.DD_LOGS.onReady(function() {
+    window.DD_LOGS.init({
+      ...datadogConfig,
+      forwardErrorsToLogs: true,
+      sessionSampleRate: 100,
+    });
+  });
+}
+
+// Check initial consent status
+const currentConsent = localStorage.getItem('lis_cookie_consent');
+let ddInitialized = false;
+if (currentConsent) {
+  initDatadog(currentConsent);
+  ddInitialized = true;
+}
+
+// Expose a function to initialize after user clicks accept/decline in banner
+window.applyCookieConsent = function(consentStatus) {
+  localStorage.setItem('lis_cookie_consent', consentStatus);
+  if (!ddInitialized) { // Prevent double-init
+    initDatadog(consentStatus);
+    ddInitialized = true;
+  }
+};
 
 // Function to attach user identity. Call this upon login or session restore.
 window.setDatadogUser = function(user) {
+  const consentStatus = localStorage.getItem('lis_cookie_consent');
+  if (consentStatus === 'declined') {
+    return; // Anonymized Mode: Do not attach PII
+  }
+
   if (user && user.id) {
     window.DD_RUM.onReady(function() {
       window.DD_RUM.setUser({

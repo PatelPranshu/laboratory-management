@@ -56,8 +56,8 @@ exports.inviteStaff = async (req, res) => {
     res.status(200).json({ success: true, message: 'Invitation email successfully sent!' });
   } catch (emailError) {
     console.error(`[STAFF] Email delivery failed for invitation to ${email}. Invitation is still valid in DB.`);
-    res.status(200).json({ 
-      success: true, 
+    res.status(200).json({
+      success: true,
       message: 'Invitation generated successfully, but the automatic email failed to send. You may share the link manually.',
       warning: 'Email delivery failed'
     });
@@ -86,7 +86,7 @@ exports.verifyInvite = async (req, res) => {
 
 // @desc    Complete Registration via Invitation
 exports.completeRegistration = async (req, res) => {
-  const { token, password, name, signatureUrl } = req.body;
+  const { token, password, name, signatureUrl, termsAccepted, privacyAccepted } = req.body;
 
   if (!token || !password || !name) {
     const err = new Error('Name, password, and token are required');
@@ -96,7 +96,7 @@ exports.completeRegistration = async (req, res) => {
 
   const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
   const invitation = await Invitation.findOne({ token: hashedToken });
-  
+
   if (!invitation) {
     const err = new Error('Invitation is invalid or has expired');
     err.statusCode = 404;
@@ -114,9 +114,9 @@ exports.completeRegistration = async (req, res) => {
   // Get Admin's labName
   const admin = await User.findById(invitation.parentAdminId).select('labName role');
   if (!admin || admin.role !== 'Admin') {
-     const err = new Error('Invalid lab environment');
-     err.statusCode = 400;
-     throw err;
+    const err = new Error('Invalid lab environment');
+    err.statusCode = 400;
+    throw err;
   }
 
   const userFields = {
@@ -127,7 +127,7 @@ exports.completeRegistration = async (req, res) => {
     labName: admin.labName,
     parentAdminId: admin._id,
     accountStatus: 'Active',
-    };
+  };
 
   if (invitation.role === 'Doctor' && signatureUrl) {
     userFields.signatureUrl = signatureUrl;
@@ -154,7 +154,7 @@ exports.completeRegistration = async (req, res) => {
 
     const tokenAuth = generateToken(user);
     const expTimeMs = Date.now() + 8 * 60 * 60 * 1000;
-    
+
     const options = {
       expires: new Date(expTimeMs),
       httpOnly: true,
@@ -173,7 +173,7 @@ exports.completeRegistration = async (req, res) => {
         labName: user.labName,
         parentAdminId: user.parentAdminId,
         accountStatus: user.accountStatus,
-        }
+      }
     });
 
   } catch (error) {

@@ -8,7 +8,7 @@ const {
 } = require('../controllers/authController');
 const { getDeletionReasons } = require('../controllers/superadminController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
-const { validateSchema, passwordSchema } = require('../middlewares/validate');
+const { validateSchema, passwordSchema, complianceFlagSchema } = require('../middlewares/validate');
 const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
@@ -26,7 +26,9 @@ const registerSchema = z.object({
   role: z.string().optional(),
   labName: z.string().min(1, 'Lab name is required'),
   name: z.string().min(1, 'Name is required'),
-  parentAdminId: z.string().optional()
+  parentAdminId: z.string().optional(),
+  termsAccepted: complianceFlagSchema,
+  privacyAccepted: complianceFlagSchema
 });
 
 const loginSchema = z.object({

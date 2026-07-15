@@ -71,3 +71,6 @@ temp/
 # Agents and Skills
 .agents/
 skills-lock.json
+# Generated Exports (PII)
+backend/exports/*
+!backend/exports/.gitkeep

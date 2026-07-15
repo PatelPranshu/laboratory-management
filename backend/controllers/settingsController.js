@@ -1,4 +1,7 @@
 const PrintSettings = require('../models/PrintSettings');
+const ExportJob = require('../models/ExportJob');
+const path = require('path');
+const fs = require('fs');
 const { cloudinary, deleteFromCloudinary } = require('../utils/cloudinary');
 const streamifier = require('streamifier');
 const { pickFields } = require('../middlewares/validate');
@@ -148,3 +151,80 @@ exports.deleteImage = async (req, res) => {
 
     res.status(200).json({ success: true, message: 'Image deleted from Cloudinary' });
   };
+
+// @desc    Request a full data export
+// @route   POST /api/settings/request-export
+// @access  Private (Admin only)
+exports.requestDataExport = async (req, res) => {
+  try {
+    const adminId = getAdminId(req);
+    
+    // Rate limit: Check if there's a PENDING or PROCESSING job already
+    const existingJob = await ExportJob.findOne({
+      labId: adminId,
+      status: { $in: ['PENDING', 'PROCESSING'] }
+    });
+    
+    if (existingJob) {
+      return res.status(400).json({ success: false, error: 'An export is already in progress. Please wait for it to complete.' });
+    }
+    
+    // Rate limit: 1 export per week
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    
+    const recentJob = await ExportJob.findOne({
+      labId: adminId,
+      status: 'COMPLETED',
+      createdAt: { $gt: lastWeek }
+    });
+    
+    if (recentJob) {
+      return res.status(429).json({ success: false, error: 'You can only request one full data export per week.' });
+    }
+    
+    const job = await ExportJob.create({ labId: adminId });
+    
+    res.status(201).json({ success: true, data: job });
+  } catch (error) {
+    console.error('Export request error:', error);
+    res.status(500).json({ success: false, error: 'Failed to request data export' });
+  }
+};
+
+// @desc    Get all export jobs for the lab
+// @route   GET /api/settings/exports
+// @access  Private (Admin only)
+exports.getExportJobs = async (req, res) => {
+  try {
+    const adminId = getAdminId(req);
+    const jobs = await ExportJob.find({ labId: adminId }).sort('-createdAt');
+    res.status(200).json({ success: true, data: jobs });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to fetch export jobs' });
+  }
+};
+
+// @desc    Download an exported file
+// @route   GET /api/settings/exports/download/:jobId/:fileIndex
+// @access  Private (Admin only)
+exports.downloadExportFile = async (req, res) => {
+  try {
+    const adminId = getAdminId(req);
+    const { jobId, fileIndex } = req.params;
+    
+    const job = await ExportJob.findOne({ _id: jobId, labId: adminId, status: 'COMPLETED' });
+    if (!job) {
+      return res.status(404).json({ success: false, error: 'Export not found or not completed' });
+    }
+    
+    const filePath = job.filePaths[parseInt(fileIndex, 10)];
+    if (!filePath || !fs.existsSync(filePath)) {
+      return res.status(404).json({ success: false, error: 'File not found on server. It may have expired.' });
+    }
+    
+    res.download(filePath);
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to download file' });
+  }
+};

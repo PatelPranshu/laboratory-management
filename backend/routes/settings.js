@@ -5,7 +5,10 @@ const {
   getPrintSettings,
   updatePrintSettings,
   uploadImage,
-  deleteImage
+  deleteImage,
+  requestDataExport,
+  getExportJobs,
+  downloadExportFile
 } = require('../controllers/settingsController');
 
 const { protect, authorize } = require('../middlewares/authMiddleware');
@@ -39,5 +42,10 @@ router.route('/print')
 
 router.post('/upload', protect, authorize('Admin', 'Doctor', 'LabTech'), upload.single('image'), uploadImage);
 router.post('/delete-image', protect, authorize('Admin', 'Doctor', 'LabTech'), deleteImage);
+
+// Data Export Routes
+router.post('/request-export', protect, authorize('Admin'), requestDataExport);
+router.get('/exports', protect, authorize('Admin'), getExportJobs);
+router.get('/exports/download/:jobId/:fileIndex', protect, authorize('Admin'), downloadExportFile);
 
 module.exports = router;

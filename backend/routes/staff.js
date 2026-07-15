@@ -8,7 +8,7 @@ const {
   removeStaff
 } = require('../controllers/staffController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
-const { validateSchema, passwordSchema } = require('../middlewares/validate');
+const { validateSchema, passwordSchema, complianceFlagSchema } = require('../middlewares/validate');
 
 const router = express.Router();
 
@@ -23,7 +23,9 @@ const completeRegistrationSchema = z.object({
   token: z.string().min(1, 'Token is required'),
   password: passwordSchema,
   name: z.string().min(1, 'Name is required'),
-  signatureUrl: z.string().optional()
+  signatureUrl: z.string().optional(),
+  termsAccepted: complianceFlagSchema,
+  privacyAccepted: complianceFlagSchema
 });
 router.post('/complete-registration', validateSchema(completeRegistrationSchema), completeRegistration);
 

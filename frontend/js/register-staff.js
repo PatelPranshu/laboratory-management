@@ -54,10 +54,18 @@ async function handleRegistration(e) {
         return;
     }
 
+    const termsAccepted = document.getElementById('staff-terms').checked;
+    const privacyAccepted = document.getElementById('staff-privacy').checked;
+
+    if (!termsAccepted || !privacyAccepted) {
+        UI.showToast('You must accept both the Terms & Conditions and Privacy Policy', 'error');
+        return;
+    }
+
     UI.toggleLoader('btn-submit', true);
 
     try {
-        const payload = { token, name, password };
+        const payload = { token, name, password, termsAccepted, privacyAccepted };
         if (signatureUrl) payload.signatureUrl = signatureUrl;
 
         // Use the centralized api.request which handles BASE_URL natively

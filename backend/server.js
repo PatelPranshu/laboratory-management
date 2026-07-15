@@ -12,6 +12,7 @@ const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 const http = require('http');
 const socketService = require('./services/socketService');
+const initCronJobs = require('./utils/cronJobs');
 
 const morgan = require('morgan');
 const logger = require('./utils/logger');
@@ -198,64 +199,8 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', service: 'mypatholabs-server' });
 });
 
-// ---------- Soft Delete Cleanup Job ----------
-// Runs every 24 hours to permanently delete labs deleted > 30 days ago and not held
-// Delayed first run by 5 minutes to avoid heavy work during cold start
-const runCleanupJob = async () => {
-  try {
-    const User = require('./models/User');
-    const ReportInstance = require('./models/ReportInstance');
-    const ReportTemplate = require('./models/ReportTemplate');
-    const Patient = require('./models/Patient');
-    const PrintSettings = require('./models/PrintSettings');
-    const Referral = require('./models/Referral');
-    const Invitation = require('./models/Invitation');
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    // Find admins to delete permanently
-    const labsToDelete = await User.find({
-      role: 'Admin',
-      isDeleted: true,
-      deletedAt: { $lte: thirtyDaysAgo },
-      holdDeletion: false
-    });
-
-    if (labsToDelete.length > 0) {
-      const adminIds = labsToDelete.map(lab => lab._id);
-      
-      
-      // Get all staff IDs to delete notifications or records owned by them
-      const staffUsers = await User.find({ parentAdminId: { $in: adminIds } });
-      const staffIds = staffUsers.map(u => u._id);
-      const allUserIds = [...adminIds, ...staffIds];
-
-      // Delete orphaned data associated with these Admin IDs (tenant owner)
-      await ReportInstance.deleteMany({ doctorId: { $in: adminIds } });
-      await ReportTemplate.deleteMany({ doctorId: { $in: adminIds } });
-      await Patient.deleteMany({ doctorId: { $in: adminIds } });
-      await PrintSettings.deleteMany({ doctorId: { $in: adminIds } });
-      await Referral.deleteMany({ doctorId: { $in: adminIds } });
-      await Invitation.deleteMany({ doctorId: { $in: adminIds } });
-
-      // Delete all staff under these admins
-      await User.deleteMany({ parentAdminId: { $in: adminIds } });
-      
-      // Delete the admins themselves
-      await User.deleteMany({ _id: { $in: adminIds } });
-      
-      console.log(`Permanently deleted ${labsToDelete.length} labs.`);
-    }
-  } catch (error) {
-    console.error('Error running cleanup job:', error);
-  }
-};
-
-// Start cleanup: initial delay + recurring interval
-setTimeout(() => {
-  runCleanupJob();
-  setInterval(runCleanupJob, 24 * 60 * 60 * 1000);
-}, 5 * 60 * 1000);
+// ---------- Cron Jobs ----------
+initCronJobs();
 
 // ---------- Error Handling ----------
 app.use(notFound);
@@ -297,3 +242,5 @@ process.on('unhandledRejection', (err) => {
   logger.error(`Unhandled Rejection: ${err.message}`, err);
   gracefulShutdown('Unhandled Rejection');
 });
+
+// Trigger restart for key rotation

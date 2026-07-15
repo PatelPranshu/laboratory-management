@@ -623,6 +623,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
+
+    // Initialize Cookie Consent Banner
+    initCookieBanner();
+    
+    // Initialize Session Inactivity Timeout for authenticated pages
+    SessionTimeoutTracker.init();
 });
 
 function togglePasswordVisibility(inputId, button) {
@@ -720,4 +726,88 @@ function downloadPdfGlobal(id, event) {
     document.getElementById('hf-btn-with').onclick = () => openPdf(true);
     document.getElementById('hf-btn-without').onclick = () => openPdf(false);
     document.getElementById('hf-btn-cancel').onclick = close;
+}
+
+// ---------- Legal Compliance Features ----------
+
+function initCookieBanner() {
+    if (localStorage.getItem('lis_cookie_consent')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'cookie-consent-banner';
+    banner.className = 'fixed bottom-0 left-0 right-0 bg-slate-900 text-white p-4 sm:p-6 z-[9999] shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-700 transform transition-all duration-300';
+    banner.innerHTML = `
+        <div class="text-sm text-slate-300">
+            <h4 class="text-base font-bold text-white mb-1">We value your privacy</h4>
+            <p>We use cookies to enhance your browsing experience and monitor application health. By clicking "Accept All", you consent to our use of cookies. <a href="privacy-policy.html" target="_blank" class="text-brand-400 hover:underline">Read more</a>.</p>
+        </div>
+        <div class="flex gap-3 shrink-0">
+            <button id="cookie-decline" class="px-5 py-2.5 text-sm font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors border border-slate-700">Decline Essential Only</button>
+            <button id="cookie-accept" class="px-5 py-2.5 text-sm font-semibold rounded-xl bg-brand-600 hover:bg-brand-500 text-white transition-colors">Accept All</button>
+        </div>
+    `;
+    document.body.appendChild(banner);
+
+    const applyConsent = (status) => {
+        if (typeof window.applyCookieConsent === 'function') {
+            window.applyCookieConsent(status);
+        } else {
+            localStorage.setItem('lis_cookie_consent', status);
+        }
+        banner.style.opacity = '0';
+        banner.style.transform = 'translateY(100%)';
+        setTimeout(() => banner.remove(), 300);
+    };
+
+    document.getElementById('cookie-accept').onclick = () => applyConsent('accepted');
+    document.getElementById('cookie-decline').onclick = () => applyConsent('declined');
+}
+
+class SessionTimeoutTracker {
+    static init() {
+        // Only run on authenticated pages, skip public ones
+        const path = window.location.pathname;
+        if (path.endsWith('index.html') || path.endsWith('/') || path.endsWith('register-staff.html') || path.endsWith('privacy-policy.html') || path.endsWith('terms-condition.html')) return;
+        
+        const TIMEOUT_MS = 15 * 60 * 1000; // 15 mins
+        const WARNING_MS = 14 * 60 * 1000; // 14 mins
+        let timeoutId;
+        let warningId;
+        let warningModalOpen = false;
+
+        const resetTimer = DraftManager.debounce(() => {
+            if (warningModalOpen) return;
+            clearTimeout(timeoutId);
+            clearTimeout(warningId);
+
+            warningId = setTimeout(showWarning, WARNING_MS);
+            timeoutId = setTimeout(enforceLogout, TIMEOUT_MS);
+        }, 2000); // Throttle heavily to max once every 2 seconds
+
+        const showWarning = async () => {
+            warningModalOpen = true;
+            const res = await UI.showConfirm('Session Expiring', 'You will be logged out in 60 seconds due to inactivity. Click to stay logged in.', 'Stay Logged In', 'brand');
+            warningModalOpen = false;
+            if (res) {
+                // User clicked stay logged in
+                resetTimer();
+            } else {
+                // User clicked cancel
+                enforceLogout();
+            }
+        };
+
+        const enforceLogout = () => {
+            console.warn('[HIPAA] Automatically logging out due to 15m inactivity.');
+            handleLogout();
+        };
+
+        // Attach throttled listeners
+        ['mousemove', 'keypress', 'scroll', 'click', 'touchstart'].forEach(evt => {
+            document.addEventListener(evt, resetTimer, { passive: true });
+        });
+
+        // Initial start
+        resetTimer();
+    }
 }
