@@ -284,27 +284,29 @@ exports.forgotPassword = async (req, res) => {
 
   const user = await User.findOne({ email: email.toLowerCase().trim() });
   
-  if (user) {
-    const resetToken = user.getResetPasswordToken();
-    await user.save({ validateBeforeSave: false });
-
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
-    const resetUrl = `${frontendUrl}/reset-password.html?token=${resetToken}`;
-
-    try {
-      await sendPasswordResetEmail(user.email, resetUrl);
-    } catch (err) {
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpire = undefined;
-      await user.save({ validateBeforeSave: false });
-      console.error('Email failed to send in forgotPassword', err);
-    }
+  if (!user) {
+    return res.status(404).json({ success: false, error: 'No account found with that email address.' });
   }
 
-  res.status(200).json({ 
-    success: true, 
-    message: 'If an account with that email exists, a password reset link has been sent.' 
-  });
+  const resetToken = user.getResetPasswordToken();
+  await user.save({ validateBeforeSave: false });
+
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
+  const resetUrl = `${frontendUrl}/reset-password.html?token=${resetToken}`;
+
+  try {
+    await sendPasswordResetEmail(user.email, resetUrl);
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Password reset link has been sent to your email.' 
+    });
+  } catch (err) {
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save({ validateBeforeSave: false });
+    console.error('Email failed to send in forgotPassword', err);
+    return res.status(500).json({ success: false, error: 'Email could not be sent. Please try again later.' });
+  }
 };
 
 // @desc    Reset password with token
