@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const UserSchema = new mongoose.Schema({
   email: {
@@ -54,10 +55,14 @@ const UserSchema = new mongoose.Schema({
     enum: ['Pending', 'Active', 'Suspended'],
     default: 'Pending'
   },
-  mustChangePassword: {
+  isVerified: {
     type: Boolean,
     default: false
   },
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
+  verificationToken: String,
+  verificationTokenExpire: Date,
   signatureUrl: {
     type: String
   },
@@ -113,6 +118,22 @@ UserSchema.pre('save', async function () {
 // Match user entered password to hashed password in database
 UserSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Generate and hash password reset token
+UserSchema.methods.getResetPasswordToken = function () {
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  this.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+  return resetToken;
+};
+
+// Generate and hash email verification token
+UserSchema.methods.getVerificationToken = function () {
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  this.verificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+  this.verificationTokenExpire = Date.now() + 24 * 60 * 60 * 1000;
+  return verificationToken;
 };
 
 // Performance indexes for production query patterns

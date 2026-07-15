@@ -72,8 +72,8 @@ app.use(cors({
       return callback(null, true);
     }
     
-    // Check if origin is in whitelist or undefined (server-to-server / health checks)
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    // Strict origin check for production frontend (Cross-Origin Same-Site)
+    if (origin === 'https://mypatholabs.tech' || origin === 'https://www.mypatholabs.tech') {
       return callback(null, true);
     }
 
@@ -290,5 +290,5 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
   logger.error(`Unhandled Rejection: ${err.message}`, err);
-  server.close(() => process.exit(1));
+  gracefulShutdown('Unhandled Rejection');
 });

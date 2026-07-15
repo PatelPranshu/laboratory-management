@@ -105,7 +105,7 @@
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label class="block text-sm font-bold text-slate-700">Password</label>
-                            <a href="#" class="text-sm font-semibold text-brand-600 hover:text-brand-500 transition-colors">Forgot password?</a>
+                            <a href="#" onclick="toggleForgotForm()" class="text-sm font-semibold text-brand-600 hover:text-brand-500 transition-colors">Forgot password?</a>
                         </div>
                         <div class="relative group">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -128,6 +128,32 @@
                 <p class="mt-8 text-center text-sm font-medium text-slate-500">
                     New to MyPathoLabs? 
                     <button onclick="toggleForm()" class="text-brand-600 hover:text-brand-800 font-bold ml-1 focus:outline-none transition-colors border-b-2 border-transparent hover:border-brand-600">Create Laboratory Account</button>
+                </p>
+            </div>
+
+                        <!-- Forgot Password Form -->
+            <div id="forgot-form" class="hidden w-full max-w-md mx-auto form-transition">
+                <div class="mb-10 text-center lg:text-left">
+                    <h2 class="text-3xl font-bold text-slate-800 tracking-tight mb-2">Reset Password</h2>
+                    <p class="text-slate-500 font-medium">Enter your email and we'll send you a reset link.</p>
+                </div>
+                <form onsubmit="handleAuth(event, 'forgot')" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Email Address</label>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fas fa-envelope text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
+                            </div>
+                            <input type="email" id="forgot-email" required placeholder="Enter your email" class="block w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-800 shadow-sm">
+                        </div>
+                    </div>
+                    <button id="btn-forgot" type="submit" class="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 shadow-lg shadow-brand-500/30 transition-all duration-200">
+                        Send Reset Link <i class="fas fa-paper-plane ml-2 mt-0.5 text-xs"></i>
+                    </button>
+                </form>
+                <p class="mt-8 text-center text-sm font-medium text-slate-500">
+                    Remember your password? 
+                    <button onclick="toggleForgotForm()" class="text-brand-600 hover:text-brand-800 font-bold ml-1 focus:outline-none transition-colors border-b-2 border-transparent hover:border-brand-600">Back to Login</button>
                 </p>
             </div>
 
@@ -238,37 +264,24 @@
             window.location.href = 'dashboard.html';
         }
 
-        function toggleForm() {
-            const loginSection = document.getElementById('login-form');
-            const registerSection = document.getElementById('register-form');
-            
-            if (loginSection.classList.contains('hidden')) {
-                // Show Login
-                registerSection.classList.add('hidden');
-                registerSection.classList.remove('fade-enter-active');
-                
-                loginSection.classList.remove('hidden');
-                loginSection.classList.add('fade-enter');
-                setTimeout(() => {
-                    loginSection.classList.remove('fade-enter');
-                    loginSection.classList.add('fade-enter-active');
-                }, 10);
-                
-            } else {
-                // Show Register
-                loginSection.classList.add('hidden');
-                loginSection.classList.remove('fade-enter-active');
-                
-                registerSection.classList.remove('hidden');
-                registerSection.classList.add('fade-enter');
-                setTimeout(() => {
-                    registerSection.classList.remove('fade-enter');
-                    registerSection.classList.add('fade-enter-active');
-                }, 10);
-            }
+                function toggleForm() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
+            document.getElementById('forgot-form').classList.add('hidden');
         }
 
-
+        function toggleForgotForm() {
+            const loginForm = document.getElementById('login-form');
+            const forgotForm = document.getElementById('forgot-form');
+            if (loginForm.classList.contains('hidden')) {
+                loginForm.classList.remove('hidden');
+                forgotForm.classList.add('hidden');
+                document.getElementById('register-form').classList.add('hidden');
+            } else {
+                loginForm.classList.add('hidden');
+                forgotForm.classList.remove('hidden');
+            }
+        }
 
         async function handleAuth(e, type) {
             e.preventDefault();
@@ -288,15 +301,28 @@
                     
                     UI.showToast('Login Successful! Redirecting...', 'success');
                     setTimeout(() => {
-                        if (res.user.mustChangePassword) {
-                            window.location.href = 'reset-password.html';
-                        } else if (res.user.role === 'SuperAdmin') {
+                        if (res.user.role === 'SuperAdmin') {
                             window.location.href = 'super-admin.html';
                         } else {
                             window.location.href = 'dashboard.html';
                         }
                     }, 1000);
                     
+                } else if (type === 'forgot') {
+                    UI.toggleLoader('btn-forgot', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Sending...');
+                    const email = document.getElementById('forgot-email').value;
+                    
+                    const res = await fetch(`${API_URL}/auth/forgot-password`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+                    const data = await res.json();
+                    
+                    if (!res.ok) throw new Error(data.error || 'Failed to send reset link');
+                    
+                    UI.showToast('Password reset link sent to your email', 'success');
+                    setTimeout(() => toggleForgotForm(), 2000);
                 } else if (type === 'register') {
                     UI.toggleLoader('btn-register', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Creating Account...');
                     const labName = document.getElementById('reg-labName').value;
@@ -313,18 +339,19 @@
                     }
                     
                     const res = await api.register({ labName, name, email, password, role });
-                    // localStorage.setItem('lis_token', res.token); // Removed for security
-                    localStorage.setItem('lis_exp', res.exp);
-                    localStorage.setItem('lis_user', JSON.stringify(res.user));
-                    if (window.setDatadogUser) window.setDatadogUser(res.user);
-                    
-                    UI.showToast('Account Created! Redirecting...', 'success');
-                    setTimeout(() => window.location.href = 'dashboard.html', 1000);
+                    UI.showToast('Account Created! Please check your email to verify your account.', 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
                 }
             } catch (err) {
                 UI.showToast(err.message || 'Authentication failed', 'error');
-                const btnId = type === 'login' ? 'btn-login' : 'btn-register';
-                const originalText = type === 'login' ? 'Sign In <i class="fas fa-arrow-right ml-2 mt-0.5 text-xs"></i>' : 'Create Account';
+                let btnId = 'btn-register';
+                if (type === 'login') btnId = 'btn-login';
+                if (type === 'forgot') btnId = 'btn-forgot';
+                let originalText = 'Create Account';
+                if (type === 'login') originalText = 'Sign In <i class="fas fa-arrow-right ml-2 mt-0.5 text-xs"></i>';
+                if (type === 'forgot') originalText = 'Send Reset Link <i class="fas fa-paper-plane ml-2 mt-0.5 text-xs"></i>';
                 UI.toggleLoader(btnId, false, originalText);
             }
         }

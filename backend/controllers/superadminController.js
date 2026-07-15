@@ -356,13 +356,13 @@ exports.forcePasswordReset = async (req, res) => {
     return res.status(404).json({ success: false, error: 'Lab Admin not found' });
   }
 
-  // Set mustChangePassword for admin and all staff
+  // Set passwordChangedAt to Date.now() for admin and all staff to instantly invalidate their sessions
   const staffUsers = await User.find({ parentAdminId: lab._id }).select('_id');
   const allUserIds = [lab._id, ...staffUsers.map(s => s._id)];
 
   await User.updateMany(
     { _id: { $in: allUserIds } },
-    { $set: { mustChangePassword: true } }
+    { $set: { passwordChangedAt: new Date() } }
   );
 
   // Invalidate auth cache so they get forced on next request

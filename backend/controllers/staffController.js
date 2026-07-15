@@ -127,8 +127,7 @@ exports.completeRegistration = async (req, res) => {
     labName: admin.labName,
     parentAdminId: admin._id,
     accountStatus: 'Active',
-    mustChangePassword: false
-  };
+    };
 
   if (invitation.role === 'Doctor' && signatureUrl) {
     userFields.signatureUrl = signatureUrl;
@@ -174,8 +173,7 @@ exports.completeRegistration = async (req, res) => {
         labName: user.labName,
         parentAdminId: user.parentAdminId,
         accountStatus: user.accountStatus,
-        mustChangePassword: user.mustChangePassword
-      }
+        }
     });
 
   } catch (error) {
@@ -185,68 +183,7 @@ exports.completeRegistration = async (req, res) => {
   }
 };
 
-// @desc    Directly Create Lab Technician
-exports.createTech = async (req, res) => {
-  const { name, email, password } = req.body;
 
-  if (!name || !email || !password) {
-    const err = new Error('Name, email, and password are required');
-    err.statusCode = 400;
-    throw err;
-  }
-
-  const userExists = await User.findOne({ email: email.toLowerCase().trim() });
-  if (userExists) {
-    const err = new Error('User already exists');
-    err.statusCode = 400;
-    throw err;
-  }
-
-  const admin = await User.findById(req.user.id).select('labName role');
-  
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const users = await User.create([{
-      email: email.toLowerCase().trim(),
-      name: name.trim(),
-      password: password, // They must change this later
-      role: 'LabTech',
-      labName: admin.labName,
-      parentAdminId: admin._id,
-      accountStatus: 'Active',
-      mustChangePassword: true // Emphasize this directly!
-    }], { session });
-
-    const user = users[0];
-
-    // Notify lab team about new tech
-    await sendNotification(req.user.id, admin._id, {
-      type: 'NEW_STAFF',
-      title: 'New Technician Added',
-      message: `${user.name} was added as a Lab Technician.`,
-      referenceId: user._id
-    }, session);
-
-    await session.commitTransaction();
-    session.endSession();
-
-    res.status(201).json({
-      success: true,
-      data: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw error;
-  }
-};
 
 // @desc    Get all staff for this admin
 exports.getStaff = async (req, res) => {
@@ -288,33 +225,4 @@ exports.removeStaff = async (req, res) => {
   res.status(200).json({ success: true, data: {} });
 };
 
-// @desc    Reset Staff Password
-exports.resetPassword = async (req, res) => {
-  const { password } = req.body;
-  if (!password) {
-    const err = new Error('Please provide a new password');
-    err.statusCode = 400;
-    throw err;
-  }
 
-  const staffMember = await User.findById(req.params.id);
-  if (!staffMember) {
-    const err = new Error('Staff member not found');
-    err.statusCode = 404;
-    throw err;
-  }
-
-  if (staffMember.parentAdminId.toString() !== req.user.id.toString()) {
-    const err = new Error('Not authorized to reset password for this staff member');
-    err.statusCode = 403;
-    throw err;
-  }
-
-  staffMember.password = password;
-  staffMember.mustChangePassword = true; 
-  await staffMember.save();
-
-  invalidateAuthCache(staffMember._id);
-
-  res.status(200).json({ success: true, message: 'Password reset successfully' });
-};

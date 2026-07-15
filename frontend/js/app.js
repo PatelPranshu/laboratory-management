@@ -551,12 +551,6 @@ function checkAuth() {
     try {
       u = JSON.parse(user);
       
-      // Security check for password reset enforcement
-      if (u.mustChangePassword && !window.location.pathname.endsWith('reset-password.html')) {
-        window.location.href = 'reset-password.html';
-        return;
-      }
-
       // ---------- Frontend Route Interceptor (RBAC) ----------
       const currentPath = window.location.pathname;
       const currentPage = currentPath.split('/').pop().split('?')[0].split('#')[0];

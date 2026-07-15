@@ -2,6 +2,8 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const { invalidateAuthCache } = require('../middlewares/authMiddleware');
+const crypto = require('crypto');
+const { sendPasswordResetEmail, sendVerificationEmail } = require('../services/emailService');
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -41,7 +43,8 @@ const sendTokenResponse = (user, statusCode, res) => {
         labName: user.labName,
         parentAdminId: user.parentAdminId,
         accountStatus: user.accountStatus,
-        mustChangePassword: user.mustChangePassword
+        isVerified: user.isVerified,
+        
       }
     });
 };
@@ -52,19 +55,20 @@ const sendTokenResponse = (user, statusCode, res) => {
 exports.register = async (req, res) => {
   const { email, password, role, labName, name, parentAdminId } = req.body;
 
-  let userRole = role;
+  if (typeof email !== 'string' || typeof password !== 'string' || typeof name !== 'string' || typeof labName !== 'string') {
+    return res.status(400).json({ success: false, error: 'Invalid input format' });
+  }
 
+  let userRole = role;
   const allowedRoles = ['Admin', 'Doctor', 'LabTech'];
   userRole = allowedRoles.includes(role) ? role : 'Doctor';
 
-  // --- Registration Restrictions ---
   if (userRole !== 'Admin') {
     const err = new Error('Only Lab Admins can register publicly. Staff must be invited.');
     err.statusCode = 403;
     throw err;
   }
 
-  // --- Check existing user ---
   const userExists = await User.findOne({ email: email.toLowerCase().trim() });
   if (userExists) {
     const err = new Error('An account with this email already exists');
@@ -81,20 +85,31 @@ exports.register = async (req, res) => {
       password,
       role: userRole,
       labName: labName.trim(),
-      accountStatus: 'Active' // Admins are active immediately
+      accountStatus: 'Active',
+      isVerified: false
     };
 
     const users = await User.create([userFields], { session });
     const user = users[0];
     
-    // Auto-create blank PrintSettings for the new Lab Admin
     const PrintSettings = require('../models/PrintSettings');
     await PrintSettings.create([{ doctorId: user._id }], { session });
+
+    const verificationToken = user.getVerificationToken();
+    await user.save({ session, validateBeforeSave: false });
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
+    const verifyUrl = `${frontendUrl}/verify-email.html?token=${verificationToken}`;
+    
+    await sendVerificationEmail(user.email, verifyUrl);
 
     await session.commitTransaction();
     session.endSession();
 
-    sendTokenResponse(user, 201, res);
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful! Please check your email to verify your account.'
+    });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -107,6 +122,10 @@ exports.register = async (req, res) => {
 // @access  Public
 exports.login = async (req, res) => {
   const { email, password } = req.body;
+
+  if (typeof email !== 'string' || typeof password !== 'string') {
+    return res.status(400).json({ success: false, error: 'Invalid input format' });
+  }
 
   // Check for user (case-insensitive email)
   const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
@@ -139,6 +158,12 @@ exports.login = async (req, res) => {
     throw err;
   }
 
+  if (user.isVerified === false) {
+    const err = new Error('Email not verified. Please check your inbox to activate your account.');
+    err.statusCode = 403;
+    throw err;
+  }
+
   sendTokenResponse(user, 200, res);
 };
 
@@ -147,7 +172,7 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
   const user = await User.findById(req.user.id)
-    .select('email name role labName parentAdminId accountStatus mustChangePassword signatureUrl createdAt')
+    .select('email name role labName parentAdminId accountStatus isVerified signatureUrl createdAt')
     .lean();
   if (!user) {
     const err = new Error('User not found');
@@ -170,6 +195,16 @@ exports.updateProfile = async (req, res) => {
   }
 
   const { email, labName, name, password, currentPassword } = req.body;
+
+  if (
+    (email && typeof email !== 'string') || 
+    (labName && typeof labName !== 'string') || 
+    (name && typeof name !== 'string') || 
+    (password && typeof password !== 'string') || 
+    (currentPassword && typeof currentPassword !== 'string')
+  ) {
+    return res.status(400).json({ success: false, error: 'Invalid input format' });
+  }
 
   // Update email if provided
   if (email && email !== user.email) {
@@ -238,37 +273,146 @@ exports.updateProfile = async (req, res) => {
 // @desc    Reset password (force change)
 // @route   POST /api/auth/reset-password
 // @access  Private
-exports.resetPassword = async (req, res) => {
-  const { newPassword } = req.body;
+// @desc    Forgot password
+// @route   POST /api/auth/forgot-password
+// @access  Public
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ success: false, error: 'Please provide an email' });
+  }
 
-  const user = await User.findById(req.user.id).select('+password');
+  const user = await User.findOne({ email: email.toLowerCase().trim() });
+  
+  if (user) {
+    const resetToken = user.getResetPasswordToken();
+    await user.save({ validateBeforeSave: false });
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
+    const resetUrl = `${frontendUrl}/reset-password.html?token=${resetToken}`;
+
+    try {
+      await sendPasswordResetEmail(user.email, resetUrl);
+    } catch (err) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save({ validateBeforeSave: false });
+      console.error('Email failed to send in forgotPassword', err);
+    }
+  }
+
+  res.status(200).json({ 
+    success: true, 
+    message: 'If an account with that email exists, a password reset link has been sent.' 
+  });
+};
+
+// @desc    Reset password with token
+// @route   POST /api/auth/reset-password-with-token
+// @access  Public
+exports.resetPasswordWithToken = async (req, res) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) {
+    return res.status(400).json({ success: false, error: 'Token and new password are required' });
+  }
+
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  const user = await User.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpire: { $gt: Date.now() }
+  });
+
   if (!user) {
-    const err = new Error('User not found');
-    err.statusCode = 404;
-    throw err;
-  }
-
-  if (!user.mustChangePassword) {
-    const err = new Error('Password reset is not required for this account.');
-    err.statusCode = 403;
-    throw err;
-  }
-
-  // Check if new password is same as old password
-  const isSamePassword = await user.matchPassword(newPassword);
-  if (isSamePassword) {
-    const err = new Error('New password must be different from the temporary one.');
+    const err = new Error('Invalid or expired password reset token');
     err.statusCode = 400;
     throw err;
   }
 
   user.password = newPassword;
-  user.mustChangePassword = false;
-  await user.save();
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpire = undefined;
+  
+  // passwordChangedAt is automatically updated in the pre('save') hook
+  await user.save(); 
 
-  invalidateAuthCache(req.user.id);
+  invalidateAuthCache(user._id);
+
+  res.status(200).json({
+    success: true,
+    message: 'Password successfully updated. You can now log in.'
+  });
+};
+
+// @desc    Verify Email
+// @route   POST /api/auth/verify-email
+// @access  Public
+exports.verifyEmail = async (req, res) => {
+  const { token } = req.body;
+  if (!token) {
+    return res.status(400).json({ success: false, error: 'Token is required' });
+  }
+
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  const user = await User.findOne({
+    verificationToken: hashedToken,
+    verificationTokenExpire: { $gt: Date.now() }
+  });
+
+  if (!user) {
+    const err = new Error('Invalid or expired verification token');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  if (user.isVerified) {
+    // Idempotent success
+    return sendTokenResponse(user, 200, res);
+  }
+
+  user.isVerified = true;
+  // We clear the token to prevent any reuse after successful activation
+  user.verificationToken = undefined;
+  user.verificationTokenExpire = undefined;
+  await user.save({ validateBeforeSave: false });
 
   sendTokenResponse(user, 200, res);
+};
+
+// @desc    Resend Email Verification
+// @route   POST /api/auth/resend-verification
+// @access  Public
+exports.resendVerification = async (req, res) => {
+  const { email } = req.body;
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ success: false, error: 'Please provide a valid email' });
+  }
+
+  const user = await User.findOne({ email: email.toLowerCase().trim() });
+  
+  if (user) {
+    if (user.isVerified) {
+      return res.status(200).json({ success: true, message: 'Account is already verified.' });
+    }
+    
+    const verificationToken = user.getVerificationToken();
+    await user.save({ validateBeforeSave: false });
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
+    const verifyUrl = `${frontendUrl}/verify-email.html?token=${verificationToken}`;
+    
+    try {
+      await sendVerificationEmail(user.email, verifyUrl);
+    } catch (err) {
+      console.error('Email failed to send', err);
+    }
+  }
+
+  res.status(200).json({ 
+    success: true, 
+    message: 'If an account exists, a verification email has been sent.' 
+  });
 };
 
 // @desc    Log user out / clear cookie
@@ -299,6 +443,10 @@ module.exports.sendTokenResponse = sendTokenResponse;
 // @access  Public
 exports.setupSuperAdmin = async (req, res) => {
   const { email, password, name, secretCode } = req.body;
+
+  if (typeof email !== 'string' || typeof password !== 'string' || typeof name !== 'string' || typeof secretCode !== 'string') {
+    return res.status(400).json({ success: false, error: 'Invalid input format' });
+  }
 
   if (secretCode !== process.env.SUPER_ADMIN_SECRET) {
     return res.status(401).json({ success: false, error: 'Invalid secret code' });

@@ -59,7 +59,7 @@ async function fetchStaff() {
                 </td>
                 <td class="px-0 sm:px-6 pt-3 sm:pt-4 pb-2 sm:pb-4 whitespace-nowrap text-right text-sm font-medium block sm:table-cell border-t border-slate-100 sm:border-0 mt-2 sm:mt-0">
                     <div class="flex items-center justify-end gap-2 w-full sm:w-auto">
-                        <button onclick="resetStaffPassword('${user._id}', '${sanitizeHTML(user.name)}')" class="flex-1 sm:flex-none px-3 py-2 sm:p-0 bg-slate-100 hover:bg-slate-200 sm:bg-transparent text-indigo-600 sm:hover:text-indigo-900 rounded-lg sm:rounded-none transition-colors sm:mr-3 flex items-center justify-center" title="Reset Password"><i class="fas fa-key sm:mr-0 mr-2"></i><span class="sm:hidden">Reset Pass</span></button>
+                        
                         ${user.role !== 'Admin' ? `<button onclick="deleteStaff('${user._id}', '${sanitizeHTML(user.name)}')" class="flex-1 sm:flex-none px-3 py-2 sm:p-0 bg-red-50 hover:bg-red-100 sm:bg-transparent text-red-500 sm:hover:text-red-700 rounded-lg sm:rounded-none transition-colors flex items-center justify-center" title="Remove User"><i class="fas fa-trash sm:mr-0 mr-2"></i><span class="sm:hidden">Remove</span></button>` : `<span class="flex-1 sm:flex-none px-3 py-2 sm:p-0 bg-slate-50 sm:bg-transparent text-slate-300 pointer-events-none rounded-lg sm:rounded-none text-center flex items-center justify-center" title="Cannot delete root admin"><i class="fas fa-trash sm:mr-0 mr-2"></i><span class="sm:hidden">Admin</span></span>`}
                     </div>
                 </td>
@@ -89,26 +89,6 @@ window.deleteStaff = async function(id, name) {
     }
 };
 
-window.resetStaffPassword = async function(id, name) {
-    const newPass = await UI.showPrompt('Reset Password', `Enter a new temporary password for ${name}.\n(Requirement: 8+ chars, Uppercase, Number)`, 'Enter new password');
-    if(!newPass) return;
-    
-    try {
-        const res = await fetch(`${API_URL}/staff/${id}/reset-password`, { 
-            method: 'PUT', 
-            ...fetchConfig,
-            body: JSON.stringify({ password: newPass })
-        });
-        const data = await res.json();
-        if(data.success) {
-            UI.showToast(`Password updated. The user must change it on their next login.`, 'success');
-        } else {
-            UI.showToast(data.error || 'Validation Failed', 'error');
-        }
-    } catch(err) {
-        UI.showToast('Network Error', 'error');
-    }
-};
 
 // Modals
 function openInviteModal() {
@@ -132,44 +112,8 @@ function closeInviteModal() {
     }, 300);
 }
 
-function openTechModal() {
-    const modal = document.getElementById('tech-modal');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    requestAnimationFrame(() => {
-        modal.classList.remove('opacity-0');
-        modal.firstElementChild.classList.remove('scale-95');
-    });
-    generateTempPassword();
-}
 
-function closeTechModal() {
-    const modal = document.getElementById('tech-modal');
-    modal.classList.add('opacity-0');
-    modal.firstElementChild.classList.add('scale-95');
-    setTimeout(() => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        document.getElementById('tech-form').reset();
-    }, 300);
-}
 
-function generateTempPassword() {
-    const chars = "abcdefghijklmnopqrstuvwxyz";
-    const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    const nums = "0123456789";
-    const special = "!@#$%*";
-    
-    // Ensure at least 1 uppercase, 1 special, 2 numbers
-    let pwd = upper[Math.floor(Math.random() * upper.length)] + 
-              special[Math.floor(Math.random() * special.length)] + 
-              nums[Math.floor(Math.random() * nums.length)] + 
-              nums[Math.floor(Math.random() * nums.length)];
-              
-    // Fill the rest with random lowercase letters up to 10 chars total
-    while (pwd.length < 10) {
-        pwd += chars[Math.floor(Math.random() * chars.length)];
-    }
     
     document.getElementById('tech-password').value = pwd;
 }
@@ -184,7 +128,7 @@ async function handleInvite(e) {
         const res = await fetch(`${API_URL}/staff/invite`, {
             method: 'POST',
             ...fetchConfig,
-            body: JSON.stringify({ email, role: 'Doctor' })
+            body: JSON.stringify({ email, role: document.getElementById('invite-role').value })
         });
         const data = await res.json();
         
@@ -201,28 +145,6 @@ async function handleInvite(e) {
     }
 }
 
-async function handleTechAdd(e) {
-    e.preventDefault();
-    const name = document.getElementById('tech-name').value;
-    const email = document.getElementById('tech-email').value;
-    const password = document.getElementById('tech-password').value;
-    UI.toggleLoader('btn-tech', true);
-
-    try {
-        const res = await fetch(`${API_URL}/staff/create-tech`, {
-            method: 'POST',
-            ...fetchConfig,
-            body: JSON.stringify({ name, email, password })
-        });
-        const data = await res.json();
-        
-        if (data.success) {
-            UI.showToast('Technician created! Tell them to login and reset their password.');
-            closeTechModal();
-            fetchStaff();
-        } else {
-            UI.showToast(data.error || 'Failed to create technician', 'error');
-        }
     } catch (err) {
         UI.showToast('Network error', 'error');
     } finally {

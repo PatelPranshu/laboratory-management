@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email - MyPathoLabs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-50 antialiased text-slate-800">
+    <div class="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        
+        <div class="absolute inset-0 bg-brand-500/5 -z-10"></div>
+
+        <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-[2rem] shadow-xl border border-brand-100/50 relative z-10 text-center">
+            
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-brand-50 to-brand-100 shadow-sm border border-brand-200/50 mb-2">
+                <i class="fas fa-envelope-open-text text-4xl text-brand-500"></i>
+            </div>
+            
+            <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">Verify Your Email</h2>
+            <p class="text-sm text-slate-500 mb-8 max-w-xs mx-auto font-medium">Please confirm your email address to activate your MyPathoLabs account.</p>
+
+            <button id="btn-verify" onclick="verifyEmail()" class="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 shadow-lg shadow-brand-500/30 transition-all">
+                Click here to confirm
+                <i class="fas fa-check-circle ml-2 mt-0.5 transition-transform group-hover:scale-110"></i>
+            </button>
+
+            <div id="error-message" class="hidden mt-4 text-sm text-red-500 font-semibold bg-red-50 p-3 rounded-xl border border-red-100">
+                Invalid or expired verification token.
+            </div>
+            <div id="success-message" class="hidden mt-4 text-sm text-emerald-600 font-semibold bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                Email verified! Redirecting...
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        async function verifyEmail() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            if (!token) {
+                document.getElementById('error-message').innerText = 'Verification token is missing from the URL.';
+                document.getElementById('error-message').classList.remove('hidden');
+                return;
+            }
+
+            UI.toggleLoader('btn-verify', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Verifying...');
+
+            try {
+                const res = await fetch(`${API_URL}/auth/verify-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ token })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    if (data.user && data.exp) {
+                        localStorage.setItem('lis_exp', data.exp);
+                        localStorage.setItem('lis_user', JSON.stringify(data.user));
+                    }
+                    
+                    document.getElementById('btn-verify').classList.add('hidden');
+                    document.getElementById('error-message').classList.add('hidden');
+                    document.getElementById('success-message').classList.remove('hidden');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1500);
+                } else {
+                    document.getElementById('error-message').innerText = data.error || 'Verification failed.';
+                    document.getElementById('error-message').classList.remove('hidden');
+                    UI.toggleLoader('btn-verify', false, 'Click here to confirm <i class="fas fa-check-circle ml-2 mt-0.5 transition-transform group-hover:scale-110"></i>');
+                }
+            } catch (err) {
+                document.getElementById('error-message').innerText = 'Network error while verifying email.';
+                document.getElementById('error-message').classList.remove('hidden');
+                UI.toggleLoader('btn-verify', false, 'Click here to confirm <i class="fas fa-check-circle ml-2 mt-0.5 transition-transform group-hover:scale-110"></i>');
+            }
+        }
+    </script>
+</body>
+</html>
