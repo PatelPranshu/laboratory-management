@@ -333,6 +333,11 @@ exports.resetPasswordWithToken = async (req, res) => {
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
   
+  // Implicitly verify the email since they successfully clicked a secure link sent to it
+  user.isVerified = true;
+  user.verificationToken = undefined;
+  user.verificationExpire = undefined;
+  
   // passwordChangedAt is automatically updated in the pre('save') hook
   await user.save(); 
 
