@@ -114,10 +114,6 @@ function closeInviteModal() {
 
 
 
-    
-    document.getElementById('tech-password').value = pwd;
-}
-
 // Handlers
 async function handleInvite(e) {
     e.preventDefault();
@@ -145,9 +141,3 @@ async function handleInvite(e) {
     }
 }
 
-    } catch (err) {
-        UI.showToast('Network error', 'error');
-    } finally {
-        UI.toggleLoader('btn-tech', false, 'Create Technician');
-    }
-}
