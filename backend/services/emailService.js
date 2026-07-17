@@ -213,7 +213,7 @@ const sendDataExportReadyEmail = async (email, settingsUrl) => {
     console.log(`[EMAIL SERVICE] Attempting to send data export notification to ${email}...`);
     
     const data = await resend.emails.send({
-      from: 'MyPathoLabs Compliance <no-reply@mypatholabs.tech>',
+      from: 'MyPathoLabs Compliance <onboarding@resend.dev>',
       to: [email],
       subject: `Your Data Export is Ready - MyPathoLabs`,
       html: htmlContent,
