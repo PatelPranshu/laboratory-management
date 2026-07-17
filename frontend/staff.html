@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="js/auth-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Team Management - MyPathoLabs</title>
@@ -168,12 +169,10 @@
     
     <script>
         checkAuth();
-        // Access control: only Admin
-        const user = JSON.parse(localStorage.getItem('lis_user') || '{}');
-        if (user.role !== 'Admin') {
-            window.location.href = 'dashboard.html';
-        }
     </script>
     <script src="js/staff.js"></script>
 </body>
 </html>
+
+
+

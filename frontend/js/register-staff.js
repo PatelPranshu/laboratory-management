@@ -91,3 +91,5 @@ async function handleRegistration(e) {
         UI.toggleLoader('btn-submit', false, 'Create Account <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>');
     }
 }
+
+

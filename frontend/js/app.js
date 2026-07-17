@@ -481,7 +481,9 @@ const PAGE_PERMISSIONS = {
     'staff.html': ['Admin'],
     'register-staff.html': ['Admin'],
     'design.html': ['Admin'],
-    'templates.html': ['Admin', 'Doctor']
+    'templates.html': ['Admin', 'Doctor'],
+    'super-admin.html': ['SuperAdmin'],
+    'lab-details.html': ['SuperAdmin']
 };
 
 /**
@@ -517,53 +519,16 @@ function enforceRBACUI(role) {
 }
 
 // Check Authentication logic (run on every protected page)
+// Note: Actual redirection is now handled by auth-guard.js in the head. This function only initializes the UI.
 function checkAuth() {
   const user = localStorage.getItem('lis_user');
-  const exp = localStorage.getItem('lis_exp');
   
-  // Clean up legacy tokens
-  if (localStorage.getItem('lis_token')) {
-    localStorage.removeItem('lis_token');
-  }
-  
-  if (!user || !exp) {
-    // Rely on api.clearLocalData() which handles redirects uniformly
-    localStorage.removeItem('lis_exp');
-    localStorage.removeItem('lis_user');
-    window.location.replace('index.html');
-    return;
-  }
-
-  // Validate session expiration locally to prevent FOUC on expired cookies
-  const currentTime = Math.floor(Date.now() / 1000);
-  if (parseInt(exp, 10) < currentTime) {
-    console.warn("Session expired, forcing logout.");
-    localStorage.removeItem('lis_exp');
-    localStorage.removeItem('lis_user');
-    window.location.replace('index.html');
-    return;
-  }
-
   // Populate user info in nav — use textContent to prevent XSS
   const userNameEl = document.getElementById('nav-user-name');
-  let u;
   if (user) {
     try {
-      u = JSON.parse(user);
+      const u = JSON.parse(user);
       
-      // ---------- Frontend Route Interceptor (RBAC) ----------
-      const currentPath = window.location.pathname;
-      const currentPage = currentPath.split('/').pop().split('?')[0].split('#')[0];
-      
-      if (PAGE_PERMISSIONS[currentPage]) {
-          const allowedRoles = PAGE_PERMISSIONS[currentPage];
-          if (!allowedRoles.includes(u.role)) {
-              console.warn(`[Security] Unauthorized access to ${currentPage} attempted by role '${u.role}'. Redirecting.`);
-              window.location.replace('dashboard.html'); // replace() prevents going 'back' to unauthorized page
-              return;
-          }
-      }
-
       // Apply UI Security to strip restricted DOM elements natively
       enforceRBACUI(u.role);
 
@@ -767,7 +732,7 @@ class SessionTimeoutTracker {
     static init() {
         // Only run on authenticated pages, skip public ones
         const path = window.location.pathname;
-        if (path.endsWith('index.html') || path.endsWith('/') || path.endsWith('register-staff.html') || path.endsWith('privacy-policy.html') || path.endsWith('terms-condition.html')) return;
+        if (path.endsWith('/') || path.endsWith('/') || path.endsWith('register-staff') || path.endsWith('privacy-policy') || path.endsWith('terms-condition')) return;
         
         const TIMEOUT_MS = 15 * 60 * 1000; // 15 mins
         const WARNING_MS = 14 * 60 * 1000; // 14 mins
@@ -811,3 +776,5 @@ class SessionTimeoutTracker {
         resetTimer();
     }
 }
+
+

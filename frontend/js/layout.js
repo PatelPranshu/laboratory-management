@@ -368,9 +368,9 @@ function renderNotificationUI() {
             }
         } catch(e) {}
         
-        if (type === 'NEW_PATIENT') window.location.href = `patient-profile.html?id=${refId}`;
-        if (type === 'NEW_REPORT' || type === 'REPORT_AMENDED') window.location.href = `report-create.html?edit=${refId}`;
-        if (type === 'NEW_STAFF') window.location.href = `staff.html`;
+        if (type === 'NEW_PATIENT') window.location.href = `patient-profile?id=${refId}`;
+        if (type === 'NEW_REPORT' || type === 'REPORT_AMENDED') window.location.href = `report-create?edit=${refId}`;
+        if (type === 'NEW_STAFF') window.location.href = `staff`;
     };
 }
 
@@ -530,3 +530,5 @@ function closeMobileSidebar() {
         document.body.style.overflow = '';
     }, 300);
 }
+
+

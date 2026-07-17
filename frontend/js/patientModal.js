@@ -180,7 +180,7 @@ const PatientModal = {
 
                         if (results.length > 0) {
                             suggestionsBox.innerHTML = results.map(p => `
-                                <div onclick="window.location.href='patient-profile.html?id=${p._id}'" class="p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer flex justify-between items-center transition-colors last:border-0">
+                                <div onclick="window.location.href='patient-profile?id=${p._id}'" class="p-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer flex justify-between items-center transition-colors last:border-0">
                                     <div>
                                         <p class="text-sm font-bold text-slate-800">${p.name}</p>
                                         <p class="text-xs text-slate-500 mt-0.5">${p.phone || 'No phone'} • ${p.age} ${p.ageUnit || 'Yrs'} / ${p.gender}</p>
@@ -336,3 +336,4 @@ const PatientModal = {
 document.addEventListener('DOMContentLoaded', () => {
     PatientModal.init();
 });
+

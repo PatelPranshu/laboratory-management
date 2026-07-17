@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
+    <script src="js/auth-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Profile - MyPathoLabs</title>
@@ -233,7 +234,7 @@
             }
 
             // Bind create report navigation
-            const createHandler = () => window.location.href = `report-create.html?patient=${currentPatientId}`;
+            const createHandler = () => window.location.href = `report-create?patient=${currentPatientId}`;
             document.getElementById('header-create-report').onclick = createHandler;
 
             await loadPatientProfile();
@@ -312,7 +313,7 @@
                         <div class="sm:col-span-3 text-xs sm:text-sm text-slate-500 font-medium truncate sm:pr-4"><i class="fas fa-user-md sm:hidden mr-1.5 opacity-50"></i>${sanitizeHTML(r.performedBy || 'Self')}</div>
                         <div class="sm:col-span-2">${statusBadge}</div>
                         <div class="sm:col-span-1 flex justify-end gap-3 w-full sm:w-auto mt-2 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-0 border-slate-100">
-                            <a href="report-create.html?edit=${r._id}" class="flex-1 sm:flex-none flex items-center justify-center p-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-800 rounded-lg transition-colors shadow-sm" title="Edit/View Report">
+                            <a href="report-create?edit=${r._id}" class="flex-1 sm:flex-none flex items-center justify-center p-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-800 rounded-lg transition-colors shadow-sm" title="Edit/View Report">
                                 <i class="fas fa-edit text-base"></i>
                                 <span class="sm:hidden ml-2 text-xs font-bold uppercase tracking-wider">Edit</span>
                             </a>
@@ -431,3 +432,6 @@
     </script>
 </body>
 </html>
+
+
+

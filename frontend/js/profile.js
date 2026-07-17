@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    // Enforce authentication
+    if (typeof checkAuth === 'function') {
+        checkAuth();
+    }
+
     // Load common layout
     if (typeof loadCommonLayout === 'function') {
         loadCommonLayout();
@@ -311,3 +316,5 @@ window.deleteLab = async function() {
             UI.showToast(err.message || 'Failed to download file', 'error');
         }
     };
+
+

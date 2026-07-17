@@ -123,7 +123,7 @@ const api = {
       
       // If unauthorized, redirect to login unless already on index
       if (!response.ok && response.status === 401) {
-        if (!window.location.pathname.endsWith('index.html') && !window.location.pathname.endsWith('/')) {
+        if (!window.location.pathname.endsWith('/') && !window.location.pathname.endsWith('/')) {
           this.clearLocalData();
           return;
         }
@@ -180,3 +180,5 @@ const api = {
     this.clearLocalData();
   }
 };
+
+

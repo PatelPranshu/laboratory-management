@@ -1,14 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const userStr = localStorage.getItem('lis_user');
-    if (!userStr) {
-        window.location.href = 'index.html';
-        return;
-    }
-    const user = JSON.parse(userStr);
-    if (user.role !== 'SuperAdmin') {
-        window.location.href = 'dashboard.html';
-        return;
-    }
+    const user = JSON.parse(userStr || '{}');
 
     const urlParams = new URLSearchParams(window.location.search);
     const labId = urlParams.get('id');
@@ -162,3 +154,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadLabDetails();
 });
+
+

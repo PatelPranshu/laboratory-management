@@ -67,7 +67,7 @@ async function fetchPendingReports(page = 1) {
                 </td>
                 <td class="px-0 sm:px-8 py-0 sm:py-6 flex sm:table-cell items-center justify-end sm:justify-end min-w-0 w-full sm:w-auto whitespace-nowrap sm:text-right mt-2 sm:mt-0">
                     ${(user.role === 'Admin' || (user.role === 'Doctor' && report.verifierId && report.verifierId._id === user.id) || user.role === 'LabTech') ? `
-                    <a href="report-create.html?edit=${report._id}" class="inline-flex items-center justify-center w-full sm:w-auto px-6 py-2.5 bg-brand-600 text-white font-bold rounded-xl shadow-sm transition-all text-sm">
+                    <a href="report-create?edit=${report._id}" class="inline-flex items-center justify-center w-full sm:w-auto px-6 py-2.5 bg-brand-600 text-white font-bold rounded-xl shadow-sm transition-all text-sm">
                         <i class="fas fa-file-signature mr-2"></i> Open for Review
                     </a>
                     ` : `
@@ -117,3 +117,4 @@ function renderPendingPagination(pagination) {
     
     container.innerHTML = html;
 }
+

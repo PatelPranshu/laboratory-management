@@ -1,9 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Auth guard
     const userStr = localStorage.getItem('lis_user');
-    if (!userStr) { window.location.href = 'index.html'; return; }
-    const user = JSON.parse(userStr);
-    if (user.role !== 'SuperAdmin') { window.location.href = 'dashboard.html'; return; }
+    const user = JSON.parse(userStr || '{}');
 
     document.getElementById('admin-name').textContent = user.name || user.email;
 
@@ -119,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Build action buttons based on state
-            let actions = `<button onclick="window.location.href='lab-details.html?id=${lab._id}'" class="px-2.5 py-1.5 bg-brand-50 text-brand-600 hover:bg-brand-100 rounded-lg text-xs font-bold transition-colors" title="View Details"><i class="fas fa-eye"></i></button>`;
+            let actions = `<button onclick="window.location.href='lab-details?id=${lab._id}'" class="px-2.5 py-1.5 bg-brand-50 text-brand-600 hover:bg-brand-100 rounded-lg text-xs font-bold transition-colors" title="View Details"><i class="fas fa-eye"></i></button>`;
 
             if (isDeleted) {
                 actions += ` <button onclick="restoreLab('${lab._id}')" class="px-2.5 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-bold transition-colors" title="Restore"><i class="fas fa-undo"></i></button>`;
@@ -492,3 +489,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==================== Initial Load ====================
     loadDashboard();
 });
+

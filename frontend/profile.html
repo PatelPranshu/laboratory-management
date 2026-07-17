@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="js/auth-guard.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Account Settings - MyPathoLabs</title>
@@ -35,9 +36,9 @@
     <div class="flex h-screen overflow-hidden bg-slate-100">
         <!-- Sidebar injected by layout.js -->
 
-        <main class="flex-1 overflow-y-auto bg-slate-50 custom-scrollbar relative">
+        <main class="flex-1 relative overflow-y-auto focus:outline-none custom-scrollbar pb-12 bg-slate-50">
             <!-- Top Header -->
-            <header class="bg-white/80 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 py-4 sm:py-5 sticky top-0 z-30 gap-4">
+            <header class="bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 py-4 sm:py-5 sticky top-0 z-10 gap-4 shrink-0">
                 <!-- Desktop-only Header Content -->
                 <div class="hidden lg:flex items-center flex-1">
                     <div class="flex flex-col">
@@ -51,31 +52,56 @@
                     </div>
                 </div>
 
-                <!-- Mobile Header Title (visible on small screens) -->
-                <div class="lg:hidden flex items-center flex-1">
-                    <h1 class="text-lg font-bold text-slate-900">Settings</h1>
+                <!-- Mobile-only Placeholder (keeps layout on mobile, hidden on desktop) -->
+                <div class="lg:hidden flex-1 w-full max-w-2xl flex relative opacity-0">
+                    <!-- Placeholder to keep layout even if not using global search here -->
                 </div>
 
                 <!-- Notification Bell Container & Status -->
-                <div class="ml-auto flex items-center space-x-4 shrink-0" id="header-actions">
+                <div class="ml-auto lg:ml-0 flex items-center space-x-4 shrink-0" id="header-actions">
                     <div id="last-sync" class="hidden sm:block text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
                         Profile Verified
                     </div>
                 </div>
             </header>
 
-            <div class="px-4 py-6 sm:px-8 sm:py-8 max-w-6xl mx-auto">
+            <div class="px-4 py-6 sm:px-8 sm:py-8 max-w-[1600px] mx-auto">
+                
+                <!-- Mobile-only Page Header -->
+                <div class="lg:hidden mb-6 flex flex-col gap-4">
+                    <div>
+                        <nav class="flex mb-2" aria-label="Breadcrumb">
+                          <ol class="inline-flex items-center space-x-1 md:space-x-2 text-xs font-semibold text-slate-500">
+                            <li class="inline-flex items-center hover:text-brand-600 transition-colors">
+                              <a href="dashboard.html" class="inline-flex items-center"><i class="fas fa-home mr-1.5 text-[10px]"></i>Dashboard</a>
+                            </li>
+                            <li>
+                              <div class="flex items-center text-slate-400">
+                                <i class="fas fa-chevron-right text-[9px] mx-1"></i>
+                                <span class="text-slate-700 font-bold">Settings</span>
+                              </div>
+                            </li>
+                          </ol>
+                        </nav>
+                        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center group">
+                            <i class="fas fa-cog text-brand-500 mr-2 transition-transform"></i>
+                            Account Settings
+                        </h1>
+                        <p class="text-slate-500 mt-1 text-xs sm:text-sm max-w-xl leading-relaxed">Manage your personal information and security preferences.</p>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
                     
                     <!-- Left Column: Overview -->
                     <div class="xl:col-span-1 space-y-6">
                         <!-- Profile Card -->
-                        <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden glass-card">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden glass-card">
                             <div class="h-32 bg-gradient-to-br from-brand-600 to-indigo-700 relative">
                                 <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none overflow-hidden"></div>
                                 <div class="absolute -bottom-12 left-1/2 -translate-x-1/2">
-                                    <div class="w-24 h-24 rounded-3xl bg-white p-1 shadow-xl border border-white/20">
-                                        <div class="w-full h-full rounded-2xl bg-slate-100 flex items-center justify-center text-4xl font-black text-brand-600 uppercase" id="profile-initials">
+                                    <div class="w-24 h-24 rounded-2xl bg-white p-1 shadow-xl border border-white/20">
+                                        <div class="w-full h-full rounded-xl bg-slate-100 flex items-center justify-center text-4xl font-black text-brand-600 uppercase" id="profile-initials">
                                             ??
                                         </div>
                                     </div>
@@ -101,7 +127,7 @@
                         </div>
 
                         <!-- Lab Context -->
-                        <div class="bg-indigo-900 rounded-3xl p-6 text-white shadow-xl shadow-indigo-900/20 relative overflow-hidden group">
+                        <div class="bg-indigo-900 rounded-2xl p-6 text-white shadow-md shadow-indigo-900/10 relative overflow-hidden group">
                             <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 transition-all group-hover:bg-white/20"></div>
                             <div class="absolute bottom-0 left-0 w-24 h-24 bg-brand-500/20 rounded-full blur-2xl -ml-12 -mb-12"></div>
                             
@@ -119,7 +145,7 @@
                     <div class="xl:col-span-2 space-y-8">
                         
                         <!-- Account Details Card -->
-                        <div class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-slate-200 p-6 sm:p-10 relative overflow-hidden glass-card">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 relative overflow-hidden glass-card">
                             <div class="absolute top-0 right-0 p-8 opacity-5">
                                 <i class="fas fa-user-edit text-8xl"></i>
                             </div>
@@ -170,7 +196,7 @@
                         </div>
 
                         <!-- Security Card -->
-                        <div class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-slate-200 p-6 sm:p-10 relative overflow-hidden glass-card">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 relative overflow-hidden glass-card">
                              <div class="absolute top-0 right-0 p-8 opacity-5">
                                 <i class="fas fa-shield-alt text-8xl"></i>
                             </div>
@@ -226,7 +252,7 @@
                         </div>
 
                         <!-- Data Portability (GDPR) -->
-                        <div id="data-portability-zone" class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-slate-100 p-6 sm:p-10 relative overflow-hidden hidden glass-card mb-8">
+                        <div id="data-portability-zone" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 relative overflow-hidden hidden glass-card mb-8">
                             <a id="data-export"></a>
                             <div class="absolute top-0 right-0 p-8 opacity-5">
                                 <i class="fas fa-file-export text-8xl text-brand-500"></i>
@@ -262,7 +288,7 @@
                         </div>
 
                         <!-- Danger Zone -->
-                        <div id="danger-zone" class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-red-100 p-6 sm:p-10 relative overflow-hidden hidden glass-card">
+                        <div id="danger-zone" class="bg-white rounded-2xl shadow-sm border border-red-200 p-6 sm:p-8 relative overflow-hidden hidden glass-card">
                              <div class="absolute top-0 right-0 p-8 opacity-5">
                                 <i class="fas fa-exclamation-triangle text-8xl text-red-500"></i>
                             </div>
@@ -308,3 +334,6 @@
     <script src="js/profile.js"></script>
 </body>
 </html>
+
+
+
