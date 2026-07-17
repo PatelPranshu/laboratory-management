@@ -573,7 +573,7 @@
             el.dataset.autoHeight = heightStr;
         }
 
-        let templatesData = []; let currentPatient = null; let signaturesData = [];
+        let templatesData = []; let currentPatient = null; let signaturesData = []; let referralsData = [];
         let isRestoringDraft = false;
         /** Returns the active draft key based on URL context */
         function getActiveDraftKey() {
@@ -801,6 +801,7 @@
                 const res = await api.request('/referrals');
                 const lists = document.querySelectorAll('.referral-list-container');
                 if (lists.length === 0 || !res.data) return;
+                referralsData = res.data;
 
                 if (res.data.length === 0) {
                     lists.forEach(l => l.innerHTML = '<li class="px-4 py-3 text-center text-slate-400 text-sm italic">No referral sources found</li>');
@@ -1618,24 +1619,42 @@
             if (!isDraft) {
                 let hasError = false;
                 let firstErrorEl = null;
+                let missingSetupItems = [];
+                
                 if (!performedByLabTechId || !performedBy) {
-                    if (doctorToggle) {
-                        doctorToggle.classList.add('border-red-500', 'ring-2', 'ring-red-500/20');
-                        if (!firstErrorEl) firstErrorEl = doctorToggle;
+                    if (signaturesData.length === 0) {
+                        missingSetupItems.push('signature');
+                    } else {
+                        if (doctorToggle) {
+                            doctorToggle.classList.add('border-red-500', 'ring-2', 'ring-red-500/20');
+                            if (!firstErrorEl) firstErrorEl = doctorToggle;
+                        }
+                        UI.showToast('Performer selection is mandatory for signing.', 'error');
+                        hasError = true;
                     }
-                    UI.showToast('Performer selection is mandatory for signing.', 'error');
-                    hasError = true;
                 }
                 if (!referredBy) {
-                    const isMobile = window.innerWidth < 1024;
-                    const rToggle = (isMobile && referralToggleM) ? referralToggleM : referralToggle;
-                    if (rToggle) {
-                        rToggle.classList.add('border-red-500', 'ring-2', 'ring-red-500/20');
-                        if (!firstErrorEl) firstErrorEl = rToggle;
+                    if (referralsData.length === 0) {
+                        missingSetupItems.push('referral');
+                    } else {
+                        const isMobile = window.innerWidth < 1024;
+                        const rToggle = (isMobile && referralToggleM) ? referralToggleM : referralToggle;
+                        if (rToggle) {
+                            rToggle.classList.add('border-red-500', 'ring-2', 'ring-red-500/20');
+                            if (!firstErrorEl) firstErrorEl = rToggle;
+                        }
+                        UI.showToast('Please select a referring source.', 'error');
+                        hasError = true;
                     }
-                    UI.showToast('Please select a referring source.', 'error');
-                    hasError = true;
                 }
+
+                if (missingSetupItems.length > 0) {
+                    if (typeof UI !== 'undefined' && UI.showSetupGuide) {
+                        UI.showSetupGuide(missingSetupItems);
+                    }
+                    return;
+                }
+
                 if (hasError) {
                     if (firstErrorEl) {
                         safeScrollTo(firstErrorEl);
@@ -2243,10 +2262,6 @@
                 text.textContent = 'Collapse';
             }
         }
-
     </script>
 </body>
-
 </html>
-
-

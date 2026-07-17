@@ -118,7 +118,8 @@ exports.getAllLabs = async (req, res) => {
     query.accountStatus = 'Pending';
     query.isDeleted = false;
   } else {
-    query.isDeleted = { $ne: true };
+    // Show all labs including deleted when no specific filter is applied
+    // query.isDeleted = { $ne: true };
   }
 
   // Search by lab name or email

@@ -295,7 +295,14 @@
             window.tabSwitcherInitialized = true;
             loadCommonLayout();
             checkAuth();
-            switchTab('signatures');
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            if (tabParam === 'referrals' || tabParam === 'signatures') {
+                switchTab(tabParam);
+            } else {
+                switchTab('signatures');
+            }
         });
     </script>
 </body>

@@ -119,6 +119,89 @@ class UI {
     }, 3500);
   }
 
+  static showSetupGuide(missingItems) {
+    if (document.getElementById('ui-setup-modal')) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'ui-setup-modal';
+    modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0 opacity-0 transition-opacity duration-300';
+    
+    let listHTML = '';
+    
+    if (missingItems.includes('signature')) {
+        listHTML += `
+            <div class="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl hover:border-brand-300 transition-colors shadow-sm group">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center group-hover:bg-rose-100 transition-colors">
+                        <i class="fas fa-file-signature text-sm"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-sm font-bold text-slate-800">Add Performed By Sign</p>
+                        <p class="text-xs text-slate-500 font-medium">Required for signing reports</p>
+                    </div>
+                </div>
+                <button onclick="window.location.href='add-sign.html?tab=signatures'" class="px-4 py-2 bg-brand-50 border border-brand-100 text-brand-700 text-xs font-bold rounded-lg hover:bg-brand-600 hover:text-white transition-all shadow-sm">Add</button>
+            </div>
+        `;
+    }
+    
+    if (missingItems.includes('referral')) {
+        listHTML += `
+            <div class="flex items-center justify-between p-3.5 bg-white border border-slate-200 rounded-xl hover:border-brand-300 transition-colors shadow-sm group mt-3">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+                        <i class="fas fa-hospital-user text-sm"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-sm font-bold text-slate-800">Add Referred By</p>
+                        <p class="text-xs text-slate-500 font-medium">Required for generating reports</p>
+                    </div>
+                </div>
+                <button onclick="window.location.href='add-sign.html?tab=referrals'" class="px-4 py-2 bg-brand-50 border border-brand-100 text-brand-700 text-xs font-bold rounded-lg hover:bg-brand-600 hover:text-white transition-all shadow-sm">Add</button>
+            </div>
+        `;
+    }
+
+    modal.innerHTML = `
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm modal-backdrop transition-opacity"></div>
+        <div class="relative bg-slate-50 rounded-2xl text-left overflow-hidden shadow-2xl transform scale-95 transition-all duration-300 sm:max-w-md w-full border border-slate-200/60 flex flex-col modal-content">
+            <div class="px-6 py-6 border-b border-slate-100 bg-white">
+                <div class="flex items-center gap-3 mb-1.5">
+                    <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center">
+                        <i class="fas fa-rocket text-sm"></i>
+                    </div>
+                    <h3 class="text-xl font-extrabold text-slate-800 tracking-tight">Initial Setup Required</h3>
+                </div>
+                <p class="text-slate-500 text-sm font-medium mt-2 leading-relaxed">Please complete the following requirements to proceed.</p>
+            </div>
+            
+            <div class="p-6 bg-slate-50/50">
+                ${listHTML}
+            </div>
+            
+            <div class="px-6 py-4 bg-white border-t border-slate-100 flex justify-end">
+                <button id="ui-setup-cancel" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-slate-200">I'll do this later</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    requestAnimationFrame(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('.modal-content').classList.remove('scale-95');
+    });
+
+    const close = () => {
+        modal.classList.add('opacity-0');
+        modal.querySelector('.modal-content').classList.add('scale-95');
+        setTimeout(() => modal.remove(), 300);
+    };
+
+    modal.querySelector('#ui-setup-cancel').onclick = close;
+    modal.querySelector('.modal-backdrop').onclick = close;
+  }
+
   static toggleLoader(btnId, isLoading, originalText = 'Submit') {
     const btn = document.getElementById(btnId);
     if (!btn) return;

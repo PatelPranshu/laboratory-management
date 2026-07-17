@@ -181,7 +181,37 @@
             if (typeof TabFocusRefresh !== 'undefined') {
                 TabFocusRefresh.register(loadSummary);
             }
+            
+            // Check initial setup for new users
+            setTimeout(checkInitialSetup, 500);
         });
+
+        async function checkInitialSetup() {
+            try {
+                if (sessionStorage.getItem('setup_guide_shown')) return;
+                
+                const [sigRes, refRes] = await Promise.all([
+                    api.request('/signatures'),
+                    api.request('/referrals')
+                ]);
+                
+                let missingSignatures = (!sigRes.data || sigRes.data.length === 0);
+                let missingReferrals = (!refRes.data || refRes.data.length === 0);
+                
+                if (missingSignatures || missingReferrals) {
+                    const missingItems = [];
+                    if (missingSignatures) missingItems.push('signature');
+                    if (missingReferrals) missingItems.push('referral');
+                    
+                    if (typeof UI !== 'undefined' && UI.showSetupGuide) {
+                        UI.showSetupGuide(missingItems);
+                    }
+                    sessionStorage.setItem('setup_guide_shown', 'true');
+                }
+            } catch (err) {
+                console.error('Error checking setup:', err);
+            }
+        }
 
         async function syncStats() {
             const btn = document.getElementById('refresh-stats-btn');
