@@ -121,11 +121,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isDeleted) {
                 actions += ` <button onclick="restoreLab('${lab._id}')" class="px-2.5 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-bold transition-colors" title="Restore"><i class="fas fa-undo"></i></button>`;
                 actions += ` <button onclick="toggleHold('${lab._id}')" class="px-2.5 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg text-xs font-bold transition-colors" title="${lab.holdDeletion ? 'Release Hold' : 'Hold Deletion'}"><i class="fas fa-hand-paper"></i></button>`;
-                actions += ` <button onclick="permanentDeleteLab('${lab._id}', '${escapeHtml(lab.email)}')" class="px-2.5 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-bold transition-colors" title="Permanent Delete"><i class="fas fa-skull-crossbones"></i></button>`;
             } else {
                 actions += ` <button onclick="toggleStatus('${lab._id}', '${isSuspended ? 'Active' : 'Suspended'}')" class="px-2.5 py-1.5 ${isSuspended ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'} rounded-lg text-xs font-bold transition-colors" title="${isSuspended ? 'Activate' : 'Suspend'}"><i class="fas ${isSuspended ? 'fa-play' : 'fa-pause'}"></i></button>`;
                 actions += ` <button onclick="forcePasswordReset('${lab._id}', '${escapeHtml(lab.labName || lab.email)}')" class="px-2.5 py-1.5 bg-violet-50 text-violet-600 hover:bg-violet-100 rounded-lg text-xs font-bold transition-colors" title="Force Password Reset"><i class="fas fa-key"></i></button>`;
             }
+            actions += ` <button onclick="permanentDeleteLab('${lab._id}', '${escapeHtml(lab.email)}')" class="px-2.5 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-bold transition-colors" title="Permanent Delete"><i class="fas fa-skull-crossbones"></i></button>`;
 
             return `
                 <tr class="hover:bg-slate-50/50 transition-colors">

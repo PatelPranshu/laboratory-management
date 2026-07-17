@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Invitation = require('../models/Invitation');
 const PrintSettings = require('../models/PrintSettings');
+const Signature = require('../models/Signature');
+const { deleteFromCloudinary } = require('../utils/cloudinary');
 const { generateToken } = require('./authController');
 const { sendInvitationEmail } = require('../services/emailService');
 const { sendNotification } = require('../utils/notifier');
@@ -218,6 +220,16 @@ exports.removeStaff = async (req, res) => {
     const err = new Error('Cannot delete your own admin account');
     err.statusCode = 400;
     throw err;
+  }
+
+  if (staffMember.signatureUrl) await deleteFromCloudinary(staffMember.signatureUrl);
+  if (staffMember.signature) await deleteFromCloudinary(staffMember.signature);
+  
+  // Also delete any Signature records for this staff
+  const sigs = await Signature.find({ userId: staffMember._id });
+  for (const sig of sigs) {
+     if (sig.signatureUrl) await deleteFromCloudinary(sig.signatureUrl);
+     await sig.deleteOne();
   }
 
   await staffMember.deleteOne();

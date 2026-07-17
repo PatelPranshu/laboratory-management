@@ -3,6 +3,9 @@ const ReportInstance = require('../models/ReportInstance');
 const Patient = require('../models/Patient');
 const AuditLog = require('../models/AuditLog');
 const SystemSettings = require('../models/SystemSettings');
+const PrintSettings = require('../models/PrintSettings');
+const Signature = require('../models/Signature');
+const { deleteFromCloudinary } = require('../utils/cloudinary');
 const { invalidateAuthCache } = require('../middlewares/authMiddleware');
 const mongoose = require('mongoose');
 
@@ -329,6 +332,16 @@ exports.removeLabStaff = async (req, res) => {
   const staffEmail = staff.email;
 
   if (hardDelete) {
+    if (staff.signatureUrl) await deleteFromCloudinary(staff.signatureUrl);
+    if (staff.signature) await deleteFromCloudinary(staff.signature);
+    
+    // Also delete any Signature records for this staff
+    const sigs = await Signature.find({ userId: staffId });
+    for (const sig of sigs) {
+       if (sig.signatureUrl) await deleteFromCloudinary(sig.signatureUrl);
+       await sig.deleteOne();
+    }
+
     await User.findByIdAndDelete(staffId);
     logAudit('STAFF_HARD_DELETED', req.user.id, new mongoose.Types.ObjectId(staffId), 'Staff',
       `Staff "${staffName}" (${staffEmail}) permanently deleted from lab ${adminId}`,
@@ -417,6 +430,32 @@ exports.permanentDeleteLab = async (req, res) => {
       Patient.countDocuments({ doctorId: labId }),
       ReportInstance.countDocuments({ doctorId: labId })
     ]);
+
+    // 1.5 Delete Cloudinary Assets
+    // PrintSettings images
+    const printSettings = await PrintSettings.find({ doctorId: labId }, { session });
+    for (const ps of printSettings) {
+      if (ps.headerImageURL) await deleteFromCloudinary(ps.headerImageURL);
+      if (ps.footerImageURL) await deleteFromCloudinary(ps.footerImageURL);
+    }
+    await PrintSettings.deleteMany({ doctorId: labId }, { session });
+
+    // Signatures
+    const signatures = await Signature.find({ parentAdminId: labId }, { session });
+    for (const sig of signatures) {
+      if (sig.signatureUrl) await deleteFromCloudinary(sig.signatureUrl);
+    }
+    await Signature.deleteMany({ parentAdminId: labId }, { session });
+
+    // User signatures (admin and staff)
+    const usersWithSigs = await User.find({ 
+      $or: [{ _id: labId }, { parentAdminId: labId }],
+      $or: [{ signatureUrl: { $exists: true, $ne: '' } }, { signature: { $exists: true, $ne: '' } }]
+    }, { session });
+    for (const u of usersWithSigs) {
+      if (u.signatureUrl) await deleteFromCloudinary(u.signatureUrl);
+      if (u.signature) await deleteFromCloudinary(u.signature);
+    }
 
     // 2. Delete all reports for this lab
     await ReportInstance.deleteMany({ doctorId: labId }, { session });
