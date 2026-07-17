@@ -164,6 +164,12 @@ exports.login = async (req, res) => {
     throw err;
   }
 
+  if (user.requiresPasswordReset) {
+    const err = new Error('Your administrator has forced a password reset. Please check your email or use the "Forgot Password" link to set a new password before logging in.');
+    err.statusCode = 403;
+    throw err;
+  }
+
   sendTokenResponse(user, 200, res);
 };
 
@@ -339,6 +345,7 @@ exports.resetPasswordWithToken = async (req, res) => {
   user.isVerified = true;
   user.verificationToken = undefined;
   user.verificationExpire = undefined;
+  user.requiresPasswordReset = false;
 
   // passwordChangedAt is automatically updated in the pre('save') hook
   await user.save();

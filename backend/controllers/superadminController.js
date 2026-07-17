@@ -6,6 +6,7 @@ const SystemSettings = require('../models/SystemSettings');
 const PrintSettings = require('../models/PrintSettings');
 const Signature = require('../models/Signature');
 const { deleteFromCloudinary } = require('../utils/cloudinary');
+const { sendPasswordResetEmail } = require('../services/emailService');
 const { invalidateAuthCache } = require('../middlewares/authMiddleware');
 const mongoose = require('mongoose');
 
@@ -360,12 +361,12 @@ exports.removeLabStaff = async (req, res) => {
   }
 };
 
-// --------------- Force Password Reset ---------------
+// --------------- Force Logout All ---------------
 
-// @desc    Force password reset for a lab admin and all their staff
-// @route   POST /api/superadmin/labs/:id/force-password-reset
+// @desc    Force logout for a lab admin and all their staff
+// @route   POST /api/superadmin/labs/:id/force-logout
 // @access  Private (SuperAdmin only)
-exports.forcePasswordReset = async (req, res) => {
+exports.forceLogoutAll = async (req, res) => {
   const lab = await User.findById(req.params.id);
   if (!lab || lab.role !== 'Admin') {
     return res.status(404).json({ success: false, error: 'Lab Admin not found' });
@@ -384,14 +385,64 @@ exports.forcePasswordReset = async (req, res) => {
   allUserIds.forEach(id => invalidateAuthCache(id));
 
   // Audit log
-  logAudit('PASSWORD_RESET_FORCED', req.user.id, lab._id, 'Lab',
-    `Forced password reset for lab "${lab.labName}" (${lab.email}) and ${staffUsers.length} staff members`,
+  logAudit('LOGOUT_FORCED', req.user.id, lab._id, 'Lab',
+    `Forced logout for lab "${lab.labName}" (${lab.email}) and ${staffUsers.length} staff members`,
     getClientIp(req)
   );
 
   res.status(200).json({
     success: true,
-    message: `Password reset forced for ${allUserIds.length} users (admin + ${staffUsers.length} staff)`
+    message: `Logout forced for ${allUserIds.length} users (admin + ${staffUsers.length} staff)`
+  });
+};
+
+// --------------- Force Password Reset ---------------
+
+// @desc    Force true password reset for a lab admin and all their staff
+// @route   POST /api/superadmin/labs/:id/force-password-reset
+// @access  Private (SuperAdmin only)
+exports.forcePasswordReset = async (req, res) => {
+  const lab = await User.findById(req.params.id);
+  if (!lab || lab.role !== 'Admin') {
+    return res.status(404).json({ success: false, error: 'Lab Admin not found' });
+  }
+
+  const staffUsers = await User.find({ parentAdminId: lab._id });
+  const allUsers = [lab, ...staffUsers];
+
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
+
+  let emailsSent = 0;
+  for (const user of allUsers) {
+    user.requiresPasswordReset = true;
+    user.passwordChangedAt = new Date();
+    
+    const resetToken = user.getResetPasswordToken();
+    await user.save({ validateBeforeSave: false });
+
+    const resetUrl = `${frontendUrl}/reset-password.html?token=${resetToken}`;
+    
+    try {
+      await sendPasswordResetEmail(user.email, resetUrl);
+      emailsSent++;
+    } catch (err) {
+      console.error(`Failed to send password reset email to ${user.email}`, err);
+      // We still block their login even if email fails, they can use forgot password manually
+    }
+  }
+
+  // Invalidate auth cache so they get forced on next request
+  allUsers.forEach(u => invalidateAuthCache(u._id));
+
+  // Audit log
+  logAudit('PASSWORD_RESET_FORCED', req.user.id, lab._id, 'Lab',
+    `Forced password reset for lab "${lab.labName}" (${lab.email}) and ${staffUsers.length} staff members. ${emailsSent} emails sent.`,
+    getClientIp(req)
+  );
+
+  res.status(200).json({
+    success: true,
+    message: `Password reset forced. ${emailsSent} reset emails sent to admin and staff.`
   });
 };
 
@@ -433,7 +484,7 @@ exports.permanentDeleteLab = async (req, res) => {
 
     // 1.5 Delete Cloudinary Assets
     // PrintSettings images
-    const printSettings = await PrintSettings.find({ doctorId: labId }, { session });
+    const printSettings = await PrintSettings.find({ doctorId: labId }).session(session);
     for (const ps of printSettings) {
       if (ps.headerImageURL) await deleteFromCloudinary(ps.headerImageURL);
       if (ps.footerImageURL) await deleteFromCloudinary(ps.footerImageURL);
@@ -441,7 +492,7 @@ exports.permanentDeleteLab = async (req, res) => {
     await PrintSettings.deleteMany({ doctorId: labId }, { session });
 
     // Signatures
-    const signatures = await Signature.find({ parentAdminId: labId }, { session });
+    const signatures = await Signature.find({ parentAdminId: labId }).session(session);
     for (const sig of signatures) {
       if (sig.signatureUrl) await deleteFromCloudinary(sig.signatureUrl);
     }
@@ -451,7 +502,7 @@ exports.permanentDeleteLab = async (req, res) => {
     const usersWithSigs = await User.find({ 
       $or: [{ _id: labId }, { parentAdminId: labId }],
       $or: [{ signatureUrl: { $exists: true, $ne: '' } }, { signature: { $exists: true, $ne: '' } }]
-    }, { session });
+    }).session(session);
     for (const u of usersWithSigs) {
       if (u.signatureUrl) await deleteFromCloudinary(u.signatureUrl);
       if (u.signature) await deleteFromCloudinary(u.signature);

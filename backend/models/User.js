@@ -80,6 +80,10 @@ const UserSchema = new mongoose.Schema({
   passwordChangedAt: {
     type: Date
   },
+  requiresPasswordReset: {
+    type: Boolean,
+    default: false
+  },
   // Soft delete fields
   isDeleted: {
     type: Boolean,

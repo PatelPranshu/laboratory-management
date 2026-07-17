@@ -1350,7 +1350,7 @@
                 resultEl.style.backgroundColor = '#fef9c3';
                 resultEl.style.borderColor = '#fbbf24';
                 resultEl.placeholder = '⚡ Auto-calculated';
-                resultEl.title = 'This value is calculated automatically live as you type other results.';
+                resultEl.title = `Formula: ${paramData.formula || 'N/A'}`;
 
                 // Add a small visual badge next to the name
                 const badge = document.createElement('span');
@@ -2111,7 +2111,7 @@
         /** Restores draft data into UI */
         async function applyDraftData(draft, restorePatient = false) {
             if (!draft) {
-                addReportSection(false);
+                // addReportSection(false);
                 return;
             }
 
@@ -2155,7 +2155,7 @@
                     if (sec.parameters) sec.parameters.forEach(p => addParamLine(block.querySelector('button'), p, sec.templateId ? true : false));
                 });
             } else {
-                addReportSection(false);
+                // addReportSection(false);
             }
             
             setTimeout(liveCalculateParams, 100);

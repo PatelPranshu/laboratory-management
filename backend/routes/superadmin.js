@@ -15,6 +15,7 @@ const {
   createAnnouncement,
   getAnnouncements,
   deleteAnnouncement,
+  forceLogoutAll,
   forcePasswordReset,
   permanentDeleteLab
 } = require('../controllers/superadminController');
@@ -34,6 +35,7 @@ router.get('/labs/:id/details', getLabDetails);
 router.put('/labs/:id/status', updateLabStatus);
 router.put('/labs/:id/restore', restoreLab);
 router.put('/labs/:id/hold', toggleHoldDeletion);
+router.post('/labs/:id/force-logout', forceLogoutAll);
 router.post('/labs/:id/force-password-reset', forcePasswordReset);
 router.delete('/labs/:id/permanent', permanentDeleteLab);
 

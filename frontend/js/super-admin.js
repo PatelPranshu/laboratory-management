@@ -123,7 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 actions += ` <button onclick="toggleHold('${lab._id}')" class="px-2.5 py-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg text-xs font-bold transition-colors" title="${lab.holdDeletion ? 'Release Hold' : 'Hold Deletion'}"><i class="fas fa-hand-paper"></i></button>`;
             } else {
                 actions += ` <button onclick="toggleStatus('${lab._id}', '${isSuspended ? 'Active' : 'Suspended'}')" class="px-2.5 py-1.5 ${isSuspended ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-amber-50 text-amber-600 hover:bg-amber-100'} rounded-lg text-xs font-bold transition-colors" title="${isSuspended ? 'Activate' : 'Suspend'}"><i class="fas ${isSuspended ? 'fa-play' : 'fa-pause'}"></i></button>`;
-                actions += ` <button onclick="forcePasswordReset('${lab._id}', '${escapeHtml(lab.labName || lab.email)}')" class="px-2.5 py-1.5 bg-violet-50 text-violet-600 hover:bg-violet-100 rounded-lg text-xs font-bold transition-colors" title="Force Password Reset"><i class="fas fa-key"></i></button>`;
+                actions += ` <button onclick="forceLogoutAll('${lab._id}', '${escapeHtml(lab.labName || lab.email)}')" class="px-2.5 py-1.5 bg-violet-50 text-violet-600 hover:bg-violet-100 rounded-lg text-xs font-bold transition-colors" title="Force Logout All Users"><i class="fas fa-sign-out-alt"></i></button>`;
+                actions += ` <button onclick="forcePasswordReset('${lab._id}', '${escapeHtml(lab.labName || lab.email)}')" class="px-2.5 py-1.5 bg-fuchsia-50 text-fuchsia-600 hover:bg-fuchsia-100 rounded-lg text-xs font-bold transition-colors" title="Force Password Reset"><i class="fas fa-key"></i></button>`;
             }
             actions += ` <button onclick="permanentDeleteLab('${lab._id}', '${escapeHtml(lab.email)}')" class="px-2.5 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-xs font-bold transition-colors" title="Permanent Delete"><i class="fas fa-skull-crossbones"></i></button>`;
 
@@ -180,10 +181,23 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) { UI.showToast(err.message, 'error'); }
     };
 
+    window.forceLogoutAll = async (id, labName) => {
+        const confirmed = await UI.showConfirm(
+            'Force Logout All',
+            `This will immediately log out ALL users in "${labName}" (admin + staff). Continue?`,
+            'Force Logout', 'danger'
+        );
+        if (!confirmed) return;
+        try {
+            const res = await api.request(`/superadmin/labs/${id}/force-logout`, 'POST');
+            UI.showToast(res.message, 'success');
+        } catch (err) { UI.showToast(err.message, 'error'); }
+    };
+
     window.forcePasswordReset = async (id, labName) => {
         const confirmed = await UI.showConfirm(
-            'Force Password Reset',
-            `This will force ALL users in "${labName}" (admin + staff) to change their password on next login. Continue?`,
+            'Force True Password Reset',
+            `This will lock ALL users in "${labName}" out of their accounts until they reset their password via email. Reset emails will be sent immediately. Continue?`,
             'Force Reset', 'danger'
         );
         if (!confirmed) return;
@@ -256,7 +270,8 @@ document.addEventListener('DOMContentLoaded', () => {
             'STAFF_ROLE_CHANGED': 'bg-indigo-100 text-indigo-700',
             'STAFF_REMOVED': 'bg-orange-100 text-orange-700',
             'STAFF_HARD_DELETED': 'bg-red-100 text-red-700',
-            'PASSWORD_RESET_FORCED': 'bg-violet-100 text-violet-700',
+            'PASSWORD_RESET_FORCED': 'bg-fuchsia-100 text-fuchsia-700',
+            'LOGOUT_FORCED': 'bg-violet-100 text-violet-700',
             'ANNOUNCEMENT_CREATED': 'bg-purple-100 text-purple-700',
             'ANNOUNCEMENT_DELETED': 'bg-pink-100 text-pink-700',
             'DELETION_REASONS_UPDATED': 'bg-slate-100 text-slate-700',
