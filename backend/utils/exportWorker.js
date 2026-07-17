@@ -7,6 +7,7 @@ const User = require('../models/User');
 const Patient = require('../models/Patient');
 const ReportInstance = require('../models/ReportInstance');
 const { sendDataExportReadyEmail } = require('../services/emailService');
+const { evaluatePatientResult } = require('./resultEvaluator');
 
 const EXPORTS_DIR = path.join(__dirname, '..', 'exports');
 
@@ -150,151 +151,95 @@ const processExports = async () => {
 
     // Generate Reports Excel
     const reportWorkbook = new ExcelJS.stream.xlsx.WorkbookWriter({ filename: reportFilePath });
+    
     const reportSheet = reportWorkbook.addWorksheet('Reports');
+    reportSheet.addRow(['Report ID', 'Patient Name', 'Age', 'Gender', 'Phone', 'Report Date', 'Referred By', 'Performed By', 'Template Name', 'Methodology', 'Sample Type', 'Notes']).commit();
+    
+    const sectionSheet = reportWorkbook.addWorksheet('Sections');
+    sectionSheet.addRow(['Section ID', 'Report ID', 'Section Order', 'Section Name', 'Notes']).commit();
+    
+    const paramSheet = reportWorkbook.addWorksheet('Parameters');
+    paramSheet.addRow(['Parameter ID', 'Report ID', 'Section ID', 'Parameter Order', 'Parameter Name', 'Result', 'Unit', 'Normal Range']).commit();
 
     const ReportTemplate = require('../models/ReportTemplate');
     const templates = await ReportTemplate.find({ doctorId: admin._id }).lean();
+    const templateMap = {};
+    for (const t of templates) templateMap[t._id.toString()] = t.templateName;
 
+    const reportsCursor = ReportInstance.find({ doctorId: admin._id })
+      .populate('patientId', 'name title age ageUnit gender phone')
+      .cursor();
+
+    let sectionIdCounter = 1;
+    let paramIdCounter = 1;
     rowCount = 0;
-    const exportedReportIds = new Set();
 
-    for (const template of templates) {
-      // Find all parameter names dynamically
-      const paramNames = [];
-      if (template.sections) {
-        for (const sec of template.sections) {
-          if (sec.parameters) {
-            for (const p of sec.parameters) {
-              if (p.name) paramNames.push(p.name);
-            }
-          }
-        }
+    for await (const doc of reportsCursor) {
+      const rId = doc._id.toString();
+      const patient = doc.patientId || {};
+      const pName = `${patient.title || ''} ${patient.name || ''}`.trim() || 'Unknown';
+      const pAge = patient.age ? `${patient.age} ${patient.ageUnit || ''}`.trim() : '';
+      const pGender = patient.gender || '';
+      const pPhone = patient.phone || '';
+      const rDate = doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : '';
+      const rRef = doc.referredBy || '';
+      const pPerf = doc.performedBy || '';
+      
+      let tName = '';
+      if (doc.templateIds && doc.templateIds.length > 0) {
+          tName = templateMap[doc.templateIds[0].toString()] || 'Unknown';
+      } else {
+          tName = 'Miscellaneous / Ad-Hoc';
       }
 
-      // Query reports for this specific template
-      const reportsCursor = ReportInstance.find({ 
-        doctorId: admin._id, 
-        templateIds: template._id 
-      }).populate('patientId', 'name title').cursor();
+      let meth = '';
+      let samp = '';
+      let rNotes = '';
+      if (doc.sections && doc.sections.length > 0) {
+           meth = doc.sections.map(s => s.methodology).filter(Boolean).join(', ');
+           samp = doc.sections.map(s => s.sampleType).filter(Boolean).join(', ');
+           rNotes = doc.sections.map(s => s.text).filter(Boolean).join('\n');
+      }
 
-      let hasReports = false;
+      reportSheet.addRow([
+          rId, pName, pAge, pGender, pPhone, rDate, rRef, pPerf, tName, meth, samp, rNotes
+      ]).commit();
 
-      for await (const doc of reportsCursor) {
-        if (!hasReports) {
-          // Write Header for this Template Section
-          const titleRow = reportSheet.addRow([template.name]);
-          titleRow.font = { bold: true, size: 14 };
-          titleRow.commit();
-          
-          const headersRow = reportSheet.addRow(['Report ID', 'Patient Name', 'Date', 'Status', ...paramNames, 'Notes']);
-          headersRow.font = { bold: true };
-          headersRow.commit();
-          hasReports = true;
-        }
-
-        exportedReportIds.add(doc._id.toString());
-        
-        const patientName = doc.patientId ? `${doc.patientId.title || ''} ${doc.patientId.name}`.trim() : 'Unknown';
-        
-        // Build map of results
-        const resultsMap = {};
-        let allNotes = '';
-        if (doc.sections) {
+      if (doc.sections) {
+          let sOrder = 1;
           for (const sec of doc.sections) {
-            if (sec.text) allNotes += sec.text + '\n';
-            if (sec.parameters) {
-              for (const p of sec.parameters) {
-                if (!p.name) continue;
-                let val = p.result || p.valueText || '';
-                if (p.valueNumeric !== undefined && p.valueNumeric !== null) val = p.valueNumeric.toString();
-                else if (p.valueBoolean !== undefined && p.valueBoolean !== null) val = p.valueBoolean ? 'Positive' : 'Negative';
-                resultsMap[p.name] = val;
+              const sId = sectionIdCounter++;
+              sectionSheet.addRow([
+                  sId, rId, sOrder, sec.sectionName || '', sec.text || ''
+              ]).commit();
+
+              if (sec.parameters) {
+                  let pOrder = 1;
+                  for (const p of sec.parameters) {
+                      let val = p.result || p.valueText || '';
+                      if (p.valueNumeric !== undefined && p.valueNumeric !== null) val = p.valueNumeric.toString();
+                      else if (p.valueBoolean !== undefined && p.valueBoolean !== null) val = p.valueBoolean ? 'Positive' : 'Negative';
+
+                      const evaluation = evaluatePatientResult(val, p, pGender);
+                      let nRangeStr = evaluation.rangeDisplay;
+
+                      paramSheet.addRow([
+                          paramIdCounter++, rId, sId, pOrder, p.name || '', val, p.units || '', nRangeStr
+                      ]).commit();
+                      pOrder++;
+                  }
               }
-            }
+              sOrder++;
           }
-        }
+      }
 
-        const row = [
-          doc._id.toString(),
-          patientName,
-          doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : '',
-          doc.status
-        ];
-
-        for (const pName of paramNames) {
-          row.push(resultsMap[pName] || '');
-        }
-        row.push(allNotes.trim());
-
-        reportSheet.addRow(row).commit();
-        
-        rowCount++;
-        if (rowCount % BATCH_SIZE === 0) {
+      rowCount++;
+      if (rowCount % BATCH_SIZE === 0) {
           await yieldToEventLoop();
           await applyThrottle();
-        }
-      }
-
-      if (hasReports) {
-        reportSheet.addRow([]).commit(); // Spacing between templates
-        reportSheet.addRow([]).commit();
       }
     }
 
-    // Now process any reports that did not belong to any templates (e.g. ad-hoc/legacy)
-    const miscCursor = ReportInstance.find({ 
-      doctorId: admin._id,
-      $or: [
-        { templateIds: { $exists: false } },
-        { templateIds: { $size: 0 } }
-      ]
-    }).populate('patientId', 'name title').cursor();
-
-    let hasMisc = false;
-    for await (const doc of miscCursor) {
-      if (!exportedReportIds.has(doc._id.toString())) {
-        if (!hasMisc) {
-          const titleRow = reportSheet.addRow(['Miscellaneous / Ad-Hoc Reports']);
-          titleRow.font = { bold: true, size: 14 };
-          titleRow.commit();
-          const headersRow = reportSheet.addRow(['Report ID', 'Patient Name', 'Date', 'Status', 'Notes']);
-          headersRow.font = { bold: true };
-          headersRow.commit();
-          hasMisc = true;
-        }
-
-        const patientName = doc.patientId ? `${doc.patientId.title || ''} ${doc.patientId.name}`.trim() : 'Unknown';
-        
-        let allNotes = '';
-        if (doc.sections) {
-          for (const sec of doc.sections) {
-            if (sec.sectionName) allNotes += sec.sectionName + ':\n';
-            if (sec.text) allNotes += sec.text + '\n';
-            if (sec.parameters) {
-              for (const p of sec.parameters) {
-                let val = p.result || p.valueText || p.valueNumeric || '';
-                allNotes += `${p.name}: ${val}\n`;
-              }
-            }
-          }
-        }
-
-        reportSheet.addRow([
-          doc._id.toString(),
-          patientName,
-          doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : '',
-          doc.status,
-          allNotes.trim()
-        ]).commit();
-        
-        rowCount++;
-        if (rowCount % BATCH_SIZE === 0) {
-          await yieldToEventLoop();
-          await applyThrottle();
-        }
-      }
-    }
-    
     await reportWorkbook.commit();
 
     // Mark Job Completed
