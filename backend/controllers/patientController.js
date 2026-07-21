@@ -213,3 +213,98 @@ exports.deletePatient = async (req, res) => {
     throw error;
   }
 };
+
+// @desc    Lookup patient — cross-lab aware
+// @route   GET /api/patients/:id/lookup
+// @access  Private
+exports.lookupPatient = async (req, res) => {
+  const adminId = getAdminId(req);
+
+  // First check own lab
+  const ownPatient = await Patient.findOne({ _id: req.params.id, doctorId: adminId }).lean();
+  if (ownPatient) {
+    return res.status(200).json({ success: true, belongsToCurrentLab: true, data: ownPatient });
+  }
+
+  // Check if patient exists in any other lab
+  const foreignPatient = await Patient.findById(req.params.id).select('name _id doctorId').lean();
+  if (!foreignPatient) {
+    const err = new Error('Patient not found');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // Return limited info only — no sensitive data
+  res.status(200).json({
+    success: true,
+    belongsToCurrentLab: false,
+    data: { _id: foreignPatient._id, name: foreignPatient.name }
+  });
+};
+
+// @desc    Import patient profile from another lab (profile only, no reports)
+// @route   POST /api/patients/:id/import
+// @access  Private
+exports.importPatient = async (req, res) => {
+  const adminId = getAdminId(req);
+
+  // Verify patient is NOT already in this lab
+  const existingInLab = await Patient.findOne({ _id: req.params.id, doctorId: adminId }).lean();
+  if (existingInLab) {
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Patient already exists in your lab',
+      data: existingInLab 
+    });
+  }
+
+  // Fetch source patient
+  const sourcePatient = await Patient.findById(req.params.id).lean();
+  if (!sourcePatient) {
+    const err = new Error('Patient not found');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // Copy profile fields only — no reports, no source lab linkage
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const importedData = {
+      name: sourcePatient.name,
+      phone: sourcePatient.phone || '',
+      email: sourcePatient.email || '',
+      age: sourcePatient.age,
+      ageUnit: sourcePatient.ageUnit || 'Years',
+      gender: sourcePatient.gender,
+      weight: sourcePatient.weight,
+      height: sourcePatient.height,
+      address: sourcePatient.address || '',
+      doctorId: adminId,
+      createdBy: req.user.id
+    };
+
+    const patients = await Patient.create([importedData], { session });
+    const newPatient = patients[0];
+
+    // Update Stats Cache
+    await updateLabStats(adminId, { 'stats.totalPatients': 1 }, session);
+
+    await sendNotification(req.user.id, adminId, {
+      type: 'NEW_PATIENT',
+      title: 'Patient Imported',
+      message: `${newPatient.name} has been imported by ${req.user.name}.`,
+      referenceId: newPatient._id
+    }, session);
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(201).json({ success: true, data: newPatient });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
+};

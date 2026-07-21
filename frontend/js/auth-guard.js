@@ -8,7 +8,15 @@
     if (!user || !exp || parseInt(exp, 10) < currentTime) {
         localStorage.removeItem('lis_user');
         localStorage.removeItem('lis_exp');
-        window.location.replace('index.html');
+        // Preserve current page as returnUrl so user returns here after login
+        var currentPage = window.location.pathname.split('/').pop();
+        var currentSearch = window.location.search;
+        var returnPath = currentPage + currentSearch;
+        if (returnPath && returnPath !== 'index.html' && returnPath !== 'index.html?') {
+            window.location.replace('index.html?returnUrl=' + encodeURIComponent(returnPath));
+        } else {
+            window.location.replace('index.html');
+        }
         return;
     }
     

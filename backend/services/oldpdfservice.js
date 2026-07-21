@@ -1,7 +1,6 @@
 const pdfmake = require('pdfmake');
 const https = require('https');
 const http = require('http');
-const QRCode = require('qrcode');
 const { evaluatePatientResult } = require('../utils/resultEvaluator');
 
 const path = require('path');
@@ -221,21 +220,22 @@ exports.generateReportPdf = async (report, patient, settings) => {
   }
 
   const reportDate = report.date ? new Date(report.date).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
+  const reportId = report._id ? report._id.toString().slice(-12).toUpperCase() : '--';
 
-  // Generate QR code linking to patient profile page
-  let qrCodeBase64 = null;
-  if (patient._id) {
+  let reportIdBarcodeBase64 = null;
+  if (reportId !== '--') {
     try {
-      const frontendQrUrl = process.env.FRONTEND_URL_QR || process.env.FRONTEND_URL || 'http://localhost:5500';
-      const patientProfileUrl = `${frontendQrUrl}/patient-profile.html?id=${patient._id}`;
-      qrCodeBase64 = await QRCode.toDataURL(patientProfileUrl, {
-        errorCorrectionLevel: 'M',
-        margin: 1,
-        width: 140,
-        color: { dark: '#1e293b', light: '#ffffff' }
+      const bwipjs = require('bwip-js');
+      const buffer = await bwipjs.toBuffer({
+        bcid: 'code128',
+        text: reportId,
+        scale: 3,
+        height: 10,
+        includetext: false,
       });
+      reportIdBarcodeBase64 = 'data:image/png;base64,' + buffer.toString('base64');
     } catch (err) {
-      console.warn('Failed to generate QR code:', err);
+      console.warn("Failed to generate barcode:", err);
     }
   }
 
@@ -253,57 +253,36 @@ exports.generateReportPdf = async (report, patient, settings) => {
 
 
 
-    const qrCell = qrCodeBase64
-      ? { image: qrCodeBase64, width: 60, height: 60, alignment: 'center' }
-      : { text: '' };
-
     const patientInfoTable = {
       fontSize: patientInfoFontSize,
       table: {
-        widths: ['*', 75],
+        widths: ['10%', '10%', '15%', '15%', '20%', '30%'],
         body: [
           [
-            {
-              margin: [0, 0, 0, 0],
-              table: {
-                widths: ['20%', '40%', '18%', '22%'],
-                body: [
-                  [
-                    { text: 'Patient Name:', bold: true, color: '#334155' },
-                    { text: (patient.name || '--').toUpperCase(), colSpan: 3, bold: true },
-                    {},
-                    {}
-                  ],
-                  [
-                    { text: 'Age / Gender:', bold: true, color: '#334155' },
-                    { text: patient.age ? `${patient.age} ${patient.ageUnit || 'Years'}. / ${patient.gender || '--'}` : `-- / ${patient.gender || '--'}` },
-                    { text: 'Report Date:', bold: true, color: '#334155' },
-                    { text: reportDate }
-                  ],
-                  [
-                    { text: 'Referred By:', bold: true, color: '#334155' },
-                    { text: (report.referredBy || 'Self').toUpperCase(), colSpan: 3, bold: true },
-                    {},
-                    {}
-                  ]
-                ]
-              },
-              layout: {
-                hLineWidth: (i, node) => (i === 0 || i === node.table.body.length) ? 0 : 0.5,
-                vLineWidth: (i, node) => (i === 0 || i === node.table.widths.length) ? 0 : 0.5,
-                hLineColor: () => '#cbd5e1',
-                vLineColor: () => '#cbd5e1',
-                paddingLeft: () => 5,
-                paddingRight: () => 5,
-                paddingTop: () => 2,
-                paddingBottom: () => 2
-              }
-            },
-            {
-              stack: [qrCell],
-              margin: [0, 2, 0, 2],
-              alignment: 'center'
-            }
+            { text: 'Patient Name:', colSpan: 2, bold: true, color: '#334155' },
+            {},
+            { text: (patient.name || '--').toUpperCase(), colSpan: 3, bold: true },
+            {},
+            {},
+            reportIdBarcodeBase64 
+              ? { image: reportIdBarcodeBase64, width: 120, height: 14, alignment: 'center' } 
+              : { text: reportId, alignment: 'center' }
+          ],
+          [
+            { text: 'Age:', bold: true, color: '#334155' },
+            { text: patient.age ? `${patient.age} ${patient.ageUnit || 'Years'}` : '--' },
+            { text: 'Gender:', bold: true, color: '#334155' },
+            { text: patient.gender || '--' },
+            { text: 'Report Date:', bold: true, color: '#334155' },
+            { text: reportDate }
+          ],
+          [
+            { text: 'Phone:', colSpan: 2, bold: true, color: '#334155' },
+            {},
+            { text: patient.phone || '--', colSpan: 2 },
+            {},
+            { text: 'Referred By:', bold: true, color: '#334155' },
+            { text: (report.referredBy || 'Self').toUpperCase(), bold: true }
           ]
         ]
       },
@@ -312,10 +291,10 @@ exports.generateReportPdf = async (report, patient, settings) => {
         vLineWidth: () => 0.5,
         hLineColor: () => '#cbd5e1',
         vLineColor: () => '#cbd5e1',
-        paddingLeft: () => 0,
-        paddingRight: () => 0,
-        paddingTop: () => 0,
-        paddingBottom: () => 0
+        paddingLeft: () => 5,
+        paddingRight: () => 5,
+        paddingTop: () => 2,
+        paddingBottom: () => 2
       },
       margin: [0, 0, 0, (lp.spacePatientTemplate !== undefined ? lp.spacePatientTemplate : 2)]
     };

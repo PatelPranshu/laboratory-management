@@ -322,7 +322,14 @@
                         if (res.user.role === 'SuperAdmin') {
                             window.location.href = 'super-admin.html';
                         } else {
-                            window.location.href = 'dashboard.html';
+                            // Check for returnUrl from QR code scan or auth-guard redirect
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const returnUrl = urlParams.get('returnUrl');
+                            if (returnUrl && !returnUrl.includes('index.html')) {
+                                window.location.href = decodeURIComponent(returnUrl);
+                            } else {
+                                window.location.href = 'dashboard.html';
+                            }
                         }
                     }, 1000);
                     

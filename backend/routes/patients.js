@@ -6,7 +6,9 @@ const {
   getPatient,
   createPatient,
   updatePatient,
-  deletePatient
+  deletePatient,
+  lookupPatient,
+  importPatient
 } = require('../controllers/patientController');
 
 const { protect, authorize } = require('../middlewares/authMiddleware');
@@ -42,5 +44,18 @@ router.route('/:id')
   .get(protect, validateObjectId, getPatient)
   .put(protect, validateObjectId, validateSchema(patientSchema.partial()), updatePatient)
   .delete(protect, validateObjectId, authorize('Admin'), deletePatient);
+
+// Cross-lab patient lookup (read-only, no rate limit needed)
+router.get('/:id/lookup', protect, validateObjectId, lookupPatient);
+
+// Cross-lab patient import — enterprise-grade rate limiting
+const importPatientLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // strict: 5 imports per 15 minutes per IP
+  message: { success: false, error: 'Too many import requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+router.post('/:id/import', protect, validateObjectId, importPatientLimiter, importPatient);
 
 module.exports = router;
