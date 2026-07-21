@@ -257,7 +257,7 @@ exports.generateReportPdf = async (report, patient, settings) => {
 
 
     const qrCell = qrCodeBase64
-      ? { image: qrCodeBase64, width: 60, height: 60, alignment: 'center' }
+      ? { image: qrCodeBase64, width: 50, height: 50, alignment: 'center' }
       : { text: '' };
 
     const patientInfoTable = {
