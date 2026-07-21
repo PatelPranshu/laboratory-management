@@ -1,6 +1,7 @@
 const pdfmake = require('pdfmake');
 const https = require('https');
 const http = require('http');
+const crypto = require('crypto');
 const QRCode = require('qrcode');
 const { evaluatePatientResult } = require('../utils/resultEvaluator');
 
@@ -227,7 +228,9 @@ exports.generateReportPdf = async (report, patient, settings) => {
   if (patient._id) {
     try {
       const frontendQrUrl = process.env.FRONTEND_URL_QR || process.env.FRONTEND_URL || 'http://localhost:5500';
-      const patientProfileUrl = `${frontendQrUrl}/patient-profile.html?id=${patient._id}`;
+      const secret = process.env.JWT_SECRET || 'fallback_secret';
+      const hash = crypto.createHmac('sha256', secret).update(patient._id.toString()).digest('hex').substring(0, 16);
+      const patientProfileUrl = `${frontendQrUrl}/patient-profile?id=${patient._id}&hash=${hash}`;
       qrCodeBase64 = await QRCode.toDataURL(patientProfileUrl, {
         errorCorrectionLevel: 'M',
         margin: 1,

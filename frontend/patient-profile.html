@@ -264,7 +264,11 @@
 
         async function loadPatientProfile() {
             try {
-                const res = await api.request(`/patients/${currentPatientId}/lookup`);
+                const urlParams = new URLSearchParams(window.location.search);
+                const hash = urlParams.get('hash');
+                const queryHash = hash ? `?hash=${encodeURIComponent(hash)}` : '';
+                
+                const res = await api.request(`/patients/${currentPatientId}/lookup${queryHash}`);
                 
                 // Cross-lab check
                 if (res.belongsToCurrentLab === false) {
@@ -302,11 +306,14 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i>Importing...';
             try {
-                const res = await api.request(`/patients/${currentPatientId}/import`, 'POST');
+                const urlParams = new URLSearchParams(window.location.search);
+                const hash = urlParams.get('hash');
+                
+                const res = await api.request(`/patients/${currentPatientId}/import`, 'POST', hash ? { hash } : undefined);
                 UI.showToast('Patient added to your lab!', 'success');
                 // Redirect to the newly created patient in this lab
                 setTimeout(() => {
-                    window.location.href = `patient-profile.html?id=${res.data._id}`;
+                    window.location.href = `patient-profile?id=${res.data._id}`;
                 }, 1000);
             } catch (err) {
                 UI.showToast(err.message || 'Failed to import patient', 'error');

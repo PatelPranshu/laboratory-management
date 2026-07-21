@@ -753,9 +753,22 @@ function downloadPdfGlobal(id, event) {
                 throw new Error(errData.error || 'Failed to generate PDF');
             }
             
+            let filename = `Diagnostic_Report_${id.slice(-12)}.pdf`;
+            const disposition = response.headers.get('content-disposition');
+            if (disposition) {
+                const match = disposition.match(/filename="?([^";\n]+)"?/);
+                if (match && match[1]) {
+                    filename = match[1];
+                }
+            }
+            
             const blob = await response.blob();
             const blobUrl = window.URL.createObjectURL(blob);
-            window.open(blobUrl, '_blank');
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(blobUrl);
             close();
         } catch (err) {
             console.error(err);

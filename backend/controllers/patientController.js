@@ -6,6 +6,7 @@ const { sendNotification } = require('../utils/notifier');
 const { pickFields } = require('../middlewares/validate');
 const { updateLabStats } = require('../utils/statsHelper');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 // Allowed fields for patient create/update — prevents mass assignment
 const PATIENT_FIELDS = ['name', 'phone', 'email', 'age', 'ageUnit', 'gender', 'address', 'weight', 'height'];
@@ -226,6 +227,15 @@ exports.lookupPatient = async (req, res) => {
     return res.status(200).json({ success: true, belongsToCurrentLab: true, data: ownPatient });
   }
 
+  // Cross-lab access requires a valid hash signature (from QR code)
+  const secret = process.env.JWT_SECRET || 'fallback_secret';
+  const expectedHash = crypto.createHmac('sha256', secret).update(req.params.id).digest('hex').substring(0, 16);
+  if (req.query.hash !== expectedHash) {
+    const err = new Error('Invalid or missing security token for cross-lab access');
+    err.statusCode = 403;
+    throw err;
+  }
+
   // Check if patient exists in any other lab
   const foreignPatient = await Patient.findById(req.params.id).select('name _id doctorId').lean();
   if (!foreignPatient) {
@@ -256,6 +266,17 @@ exports.importPatient = async (req, res) => {
       message: 'Patient already exists in your lab',
       data: existingInLab 
     });
+  }
+
+  // Cross-lab import requires a valid hash signature (from QR code)
+  const secret = process.env.JWT_SECRET || 'fallback_secret';
+  const expectedHash = crypto.createHmac('sha256', secret).update(req.params.id).digest('hex').substring(0, 16);
+  // Hash can be sent in body or query
+  const providedHash = req.body.hash || req.query.hash;
+  if (providedHash !== expectedHash) {
+    const err = new Error('Invalid or missing security token for cross-lab import');
+    err.statusCode = 403;
+    throw err;
   }
 
   // Fetch source patient
