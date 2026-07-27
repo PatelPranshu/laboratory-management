@@ -33,7 +33,7 @@ const registerSchema = z.object({
 
 const loginSchema = z.object({
   email: z.string().email('Please provide a valid email'),
-  password: z.string().min(1, 'Please provide a password')
+  password: z.string().min(1, 'Please provide a password').max(72, 'Password cannot exceed 72 characters')
 });
 
 const profileSchema = z.object({

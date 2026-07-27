@@ -228,7 +228,7 @@ exports.lookupPatient = async (req, res) => {
   }
 
   // Cross-lab access requires a valid hash signature (from QR code)
-  const secret = process.env.JWT_SECRET || 'fallback_secret';
+  const secret = process.env.JWT_SECRET;
   const expectedHash = crypto.createHmac('sha256', secret).update(req.params.id).digest('hex').substring(0, 16);
   if (req.query.hash !== expectedHash) {
     const err = new Error('Invalid or missing security token for cross-lab access');
@@ -269,7 +269,7 @@ exports.importPatient = async (req, res) => {
   }
 
   // Cross-lab import requires a valid hash signature (from QR code)
-  const secret = process.env.JWT_SECRET || 'fallback_secret';
+  const secret = process.env.JWT_SECRET;
   const expectedHash = crypto.createHmac('sha256', secret).update(req.params.id).digest('hex').substring(0, 16);
   // Hash can be sent in body or query
   const providedHash = req.body.hash || req.query.hash;

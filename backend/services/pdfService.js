@@ -227,8 +227,8 @@ exports.generateReportPdf = async (report, patient, settings) => {
   let qrCodeBase64 = null;
   if (patient._id) {
     try {
-      const frontendQrUrl = process.env.FRONTEND_URL_QR || process.env.FRONTEND_URL || 'http://localhost:5500';
-      const secret = process.env.JWT_SECRET || 'fallback_secret';
+      const frontendQrUrl = process.env.FRONTEND_URL_QR || process.env.FRONTEND_URL;
+      const secret = process.env.JWT_SECRET;
       const hash = crypto.createHmac('sha256', secret).update(patient._id.toString()).digest('hex').substring(0, 16);
       const patientProfileUrl = `${frontendQrUrl}/patient-profile?id=${patient._id}&hash=${hash}`;
       qrCodeBase64 = await QRCode.toDataURL(patientProfileUrl, {

@@ -56,6 +56,8 @@ const app = express();
 // HTTP Request Logging with Morgan
 app.use(morgan('combined', { stream: logger.stream }));
 
+app.disable('x-powered-by');
+
 // Trust the reverse proxy (e.g., Render) so rate limiters use the correct client IP
 app.set('trust proxy', 1);
 app.set('etag', 'strong');

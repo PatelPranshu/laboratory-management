@@ -29,8 +29,8 @@ const errorHandler = (err, req, res, next) => {
   // Mongoose duplicate key
   if (err.code === 11000) {
     statusCode = 400;
-    const field = Object.keys(err.keyValue).join(', ');
-    message = `Duplicate value for field: ${field}`;
+    const field = err.keyValue ? Object.keys(err.keyValue).join(', ') : 'field';
+    message = process.env.NODE_ENV === 'production' ? 'Duplicate entry provided' : `Duplicate value for field: ${field}`;
   }
 
   // Mongoose validation error
@@ -63,7 +63,7 @@ const errorHandler = (err, req, res, next) => {
 
   res.status(statusCode).json({
     success: false,
-    error: isProduction && statusCode === 500 ? 'Internal Server Error' : message
+    error: isProduction && statusCode >= 500 ? 'Internal Server Error' : message
   });
 };
 
