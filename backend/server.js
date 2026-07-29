@@ -77,7 +77,7 @@ app.use(cors({
     
     // Strict origin check for production frontend (Cross-Origin Same-Site)
     // Allow !origin for Render internal health checks to pass without timing out
-    if (!origin || origin === 'https://mypatholabs.tech' || origin === 'https://www.mypatholabs.tech') {
+    if (!origin || origin === 'https://mypatholabs.tech' || origin === 'https://www.mypatholabs.tech' || origin === 'https://mylaboratory.onrender.com' || origin === 'https://mypatholabs2.onrender.com' || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
@@ -98,7 +98,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'"], // Allow UI scripts but block external malicious scripts
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
       imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com"],
-      connectSrc: ["'self'", "https://api.mypatholabs.tech", "https://mylaboratory.onrender.com"]
+      connectSrc: ["'self'", "https://api.mypatholabs.tech", "https://mylaboratory.onrender.com", "https://mypatholabs2.onrender.com"]
     }
   } : false,
   crossOriginResourcePolicy: { policy: 'cross-origin' }

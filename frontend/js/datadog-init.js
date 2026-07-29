@@ -40,6 +40,7 @@ function initDatadog(consentStatus) {
       allowedTracingUrls: [
         { match: "https://api.mypatholabs.tech", propagatorTypes: ["datadog", "tracecontext"] },
         { match: "https://mylaboratory.onrender.com", propagatorTypes: ["datadog", "tracecontext"] },
+        { match: "https://mypatholabs2.onrender.com", propagatorTypes: ["datadog", "tracecontext"] },
         { match: /localhost/, propagatorTypes: ["datadog", "tracecontext"] }
       ]
     });

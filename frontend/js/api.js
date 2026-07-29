@@ -1,21 +1,33 @@
+// Server URLs
+const PRIMARY_SERVER = 'https://mylaboratory.onrender.com';
+const SECONDARY_SERVER = 'https://mypatholabs2.onrender.com';
+
 // Auto-detect API base URL: use same origin in production, localhost in development
 const BASE_URL = (() => {
   const hostname = window.location.hostname;
-  
+
   // Production URL mapping
   if (hostname === 'www.mypatholabs.tech' || hostname === 'mypatholabs.tech') {
     return 'https://api.mypatholabs.tech/api';
   }
 
   if (hostname === 'laboratory-management-six.vercel.app') {
+    return `${PRIMARY_SERVER}/api`;
+  }
+
+  if (hostname === 'mypatholabs2.onrender.com') {
+    return 'https://mypatholabs2.onrender.com/api';
+  }
+
+  if (hostname === 'mylaboratory.onrender.com') {
     return 'https://mylaboratory.onrender.com/api';
   }
 
-  const isLocal = hostname === 'localhost' || 
-                  hostname === '127.0.0.1' || 
-                  hostname.startsWith('192.168.') || 
-                  hostname.startsWith('10.') || 
-                  hostname.startsWith('172.');
+  const isLocal = hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.startsWith('192.168.') ||
+    hostname.startsWith('10.') ||
+    hostname.startsWith('172.');
 
   if (window.location.protocol !== 'file:' && !isLocal) {
     return `${window.location.origin}/api`;
@@ -37,15 +49,23 @@ const SOCKET_URL = (() => {
 
   // Staging / Vercel preview → Render backend
   if (hostname === 'laboratory-management-six.vercel.app') {
+    return PRIMARY_SERVER;
+  }
+
+  if (hostname === 'mypatholabs2.onrender.com') {
+    return 'https://mypatholabs2.onrender.com';
+  }
+
+  if (hostname === 'mylaboratory.onrender.com') {
     return 'https://mylaboratory.onrender.com';
   }
 
   // Local development
   const isLocal = hostname === 'localhost' ||
-                  hostname === '127.0.0.1' ||
-                  hostname.startsWith('192.168.') ||
-                  hostname.startsWith('10.') ||
-                  hostname.startsWith('172.');
+    hostname === '127.0.0.1' ||
+    hostname.startsWith('192.168.') ||
+    hostname.startsWith('10.') ||
+    hostname.startsWith('172.');
 
   if (isLocal || window.location.protocol === 'file:') {
     const host = hostname || '127.0.0.1';
@@ -79,7 +99,7 @@ const api = {
 
   async request(endpoint, method = 'GET', body = null, signal = null) {
     const headers = {};
-    
+
     // Authorization header is removed because the token is now sent via HttpOnly cookie
 
     const config = {
@@ -99,7 +119,7 @@ const api = {
 
     try {
       const response = await fetch(`${BASE_URL}${endpoint}`, config);
-      
+
       // Handle non-JSON responses (e.g., PDF blobs, network errors)
       let data;
       const contentType = response.headers.get('content-type');
@@ -120,7 +140,7 @@ const api = {
           data = { success: false, error: `Request failed with status ${response.status}` };
         }
       }
-      
+
       // If unauthorized, redirect to login unless already on index
       if (!response.ok && response.status === 401) {
         if (!window.location.pathname.endsWith('/') && !window.location.pathname.endsWith('/')) {
@@ -132,18 +152,18 @@ const api = {
       if (!response.ok) {
         throw new Error((data && data.error) || 'API Request Failed');
       }
-      
+
       return data;
     } catch (error) {
-       // Don't log token in errors
-       console.error(`API Error on ${endpoint}:`, error.message || error);
-       
-       let friendlyMessage = error.message || 'An unexpected error occurred';
-       if (friendlyMessage === 'Failed to fetch' || friendlyMessage.includes('NetworkError')) {
-           friendlyMessage = 'Network Error: Cannot connect to server. Please check your internet connection.';
-       }
-       
-       throw new Error(friendlyMessage);
+      // Don't log token in errors
+      console.error(`API Error on ${endpoint}:`, error.message || error);
+
+      let friendlyMessage = error.message || 'An unexpected error occurred';
+      if (friendlyMessage === 'Failed to fetch' || friendlyMessage.includes('NetworkError')) {
+        friendlyMessage = 'Network Error: Cannot connect to server. Please check your internet connection.';
+      }
+
+      throw new Error(friendlyMessage);
     }
   },
 
