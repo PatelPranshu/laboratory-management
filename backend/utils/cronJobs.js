@@ -77,39 +77,25 @@ function initCronJobs() {
 
     console.log('[CRON] Scheduled daily deletion sweep for 3:00 AM.');
 
+const { cleanupExportFiles } = require('./exportCleanup');
+
     // Run export processor every 1 minute
     cron.schedule('* * * * *', async () => {
         await processExports();
     });
     console.log('[CRON] Scheduled export worker every 1 minute.');
 
-    // Run export cleanup every day at 4:00 AM (to delete expired Excel files that Mongoose TTL index doesn't delete from disk)
-    cron.schedule('0 4 * * *', async () => {
-        console.log('[CRON] Starting expired export file cleanup...');
-        try {
-            // Find all jobs that have expired (Mongoose TTL might have deleted the document, so we can't just query ExportJob)
-            // Actually, if we query before Mongoose deletes them, we can get the paths. Or we just scan the directory.
-            // Scanning the directory is safer.
-            const EXPORTS_DIR = require('path').join(__dirname, '..', 'exports');
-            if (fs.existsSync(EXPORTS_DIR)) {
-                const files = fs.readdirSync(EXPORTS_DIR);
-                const now = Date.now();
-                const sevenDays = 7 * 24 * 60 * 60 * 1000;
-                let deletedCount = 0;
-                
-                files.forEach(file => {
-                    const filePath = require('path').join(EXPORTS_DIR, file);
-                    const stats = fs.statSync(filePath);
-                    if (now - stats.mtimeMs > sevenDays) {
-                        fs.unlinkSync(filePath);
-                        deletedCount++;
-                    }
-                });
-                console.log(`[CRON] Cleaned up ${deletedCount} expired export files.`);
-            }
-        } catch (error) {
-            console.error('[CRON] Error during export file cleanup:', error);
-        }
+    // Run export cleanup every 1 hour (48-hour age check & 90% disk storage threshold check)
+    cron.schedule('0 * * * *', () => {
+        console.log('[CRON] Running hourly export file cleanup & storage check...');
+        cleanupExportFiles();
+    });
+    console.log('[CRON] Scheduled hourly export file & storage cleanup.');
+
+    // Run daily export cleanup at 4:00 AM
+    cron.schedule('0 4 * * *', () => {
+        console.log('[CRON] Starting daily automated export file cleanup...');
+        cleanupExportFiles();
     });
 }
 

@@ -10,9 +10,18 @@ const {
 const { protect, authorize } = require('../middlewares/authMiddleware');
 const { validateSchema, passwordSchema, complianceFlagSchema } = require('../middlewares/validate');
 
+const rateLimit = require('express-rate-limit');
+
 const router = express.Router();
 
-router.post('/invite', protect, authorize('Admin'), inviteStaff);
+// Strict rate limiting for staff invitations (10 requests per hour per IP)
+const inviteLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: { success: false, error: 'Too many staff invitations sent, please try again after an hour' }
+});
+
+router.post('/invite', protect, authorize('Admin'), inviteLimiter, inviteStaff);
 router.get('/', protect, authorize('Admin'), getStaff);
 router.delete('/:id', protect, authorize('Admin'), removeStaff);
 

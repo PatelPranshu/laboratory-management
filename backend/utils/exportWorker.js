@@ -8,6 +8,7 @@ const Patient = require('../models/Patient');
 const ReportInstance = require('../models/ReportInstance');
 const { sendDataExportReadyEmail } = require('../services/emailService');
 const { evaluatePatientResult } = require('./resultEvaluator');
+const { cleanupExportFiles } = require('./exportCleanup');
 
 const EXPORTS_DIR = path.join(__dirname, '..', 'exports');
 
@@ -20,9 +21,9 @@ if (!fs.existsSync(EXPORTS_DIR)) {
 // Advanced Resource Throttling Logic (Phase 2 Enterprise Portability)
 // ---------------------------------------------------------------------
 const MAX_CPU_THRESHOLD = 70; // Stop process if CPU > 70%
-const MAX_MEM_THRESHOLD = 95; // Stop process if RAM > 95% (OS caches can take up to 90%)
+const MAX_MEM_THRESHOLD = 90; // Stop process if RAM > 95% (OS caches can take up to 90%)
 const RESUME_CPU_THRESHOLD = 20; // Resume process if CPU drops to 20%
-const RESUME_MEM_THRESHOLD = 90; // Resume process if RAM drops to 90%
+const RESUME_MEM_THRESHOLD = 70; // Resume process if RAM drops to 70%
 const BATCH_SIZE = 100; // Yield to event loop every 100 rows to ensure lowest priority
 
 // Cross-platform function to measure CPU usage asynchronously
@@ -81,6 +82,9 @@ async function applyThrottle() {
 
 const processExports = async () => {
   try {
+    // Run pre-flight storage check & 48h file cleanup before picking up job
+    cleanupExportFiles();
+
     // Initial check before picking up job
     let initialCpu = await getCPUUsage();
     let initialMem = getMemoryUsage();
@@ -93,7 +97,7 @@ const processExports = async () => {
     const job = await ExportJob.findOneAndUpdate(
       { status: 'PENDING' },
       { $set: { status: 'PROCESSING' } },
-      { new: true, sort: { createdAt: 1 } }
+      { returnDocument: 'after', sort: { createdAt: 1 } }
     );
 
     if (!job) return; // No jobs to process
@@ -242,11 +246,13 @@ const processExports = async () => {
 
     await reportWorkbook.commit();
 
-    // Mark Job Completed
+    // Mark Job Completed with 48h expiration timestamp
+    const fortyEightHoursFromNow = new Date(Date.now() + 48 * 60 * 60 * 1000);
     await ExportJob.findByIdAndUpdate(job._id, {
       status: 'COMPLETED',
       filePaths,
-      completedAt: new Date()
+      completedAt: new Date(),
+      expiresAt: fortyEightHoursFromNow
     });
 
     console.log(`[EXPORT WORKER] Job ${job._id} completed successfully.`);

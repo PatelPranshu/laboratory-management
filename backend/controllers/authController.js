@@ -78,6 +78,9 @@ exports.register = async (req, res) => {
 
   const session = await mongoose.startSession();
   session.startTransaction();
+  let user;
+  let verificationToken;
+
   try {
     const userFields = {
       email: email.toLowerCase().trim(),
@@ -90,31 +93,37 @@ exports.register = async (req, res) => {
     };
 
     const users = await User.create([userFields], { session });
-    const user = users[0];
+    user = users[0];
 
     const PrintSettings = require('../models/PrintSettings');
     await PrintSettings.create([{ doctorId: user._id }], { session });
 
-    const verificationToken = user.getVerificationToken();
+    verificationToken = user.getVerificationToken();
     await user.save({ session, validateBeforeSave: false });
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
-    const verifyUrl = `${frontendUrl}/verify-email.html?token=${verificationToken}`;
-
-    await sendVerificationEmail(user.email, verifyUrl);
-
+    // Commit database transaction immediately before making external API call
     await session.commitTransaction();
     session.endSession();
-
-    res.status(201).json({
-      success: true,
-      message: 'Registration successful! Please check your email to verify your account.'
-    });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     throw error;
   }
+
+  // Outbound email dispatch is performed outside database transaction for RAM/CPU efficiency
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
+  const verifyUrl = `${frontendUrl}/verify-email.html?token=${verificationToken}`;
+
+  try {
+    await sendVerificationEmail(user.email, verifyUrl);
+  } catch (emailError) {
+    console.error(`[AUTH] Failed to send verification email to ${user.email}:`, emailError.message);
+  }
+
+  res.status(201).json({
+    success: true,
+    message: 'Registration successful! Please check your email to verify your account.'
+  });
 };
 
 // @desc    Login user
@@ -285,34 +294,33 @@ exports.updateProfile = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
   if (!email || typeof email !== 'string') {
-    return res.status(400).json({ success: false, error: 'Please provide an email' });
+    return res.status(400).json({ success: false, error: 'Please provide a valid email address' });
   }
 
   const user = await User.findOne({ email: email.toLowerCase().trim() });
 
-  if (!user) {
-    return res.status(404).json({ success: false, error: 'No account found with that email address.' });
+  if (user) {
+    try {
+      const resetToken = user.getResetPasswordToken();
+      await user.save({ validateBeforeSave: false });
+
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
+      const resetUrl = `${frontendUrl}/reset-password.html?token=${resetToken}`;
+
+      await sendPasswordResetEmail(user.email, resetUrl);
+    } catch (err) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save({ validateBeforeSave: false });
+      console.error('[AUTH] Email failed to send in forgotPassword:', err.message);
+    }
   }
 
-  const resetToken = user.getResetPasswordToken();
-  await user.save({ validateBeforeSave: false });
-
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
-  const resetUrl = `${frontendUrl}/reset-password.html?token=${resetToken}`;
-
-  try {
-    await sendPasswordResetEmail(user.email, resetUrl);
-    return res.status(200).json({
-      success: true,
-      message: 'Password reset link has been sent to your email.'
-    });
-  } catch (err) {
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpire = undefined;
-    await user.save({ validateBeforeSave: false });
-    console.error('Email failed to send in forgotPassword', err);
-    return res.status(500).json({ success: false, error: 'Email could not be sent. Please try again later.' });
-  }
+  // Uniform OWASP-compliant response to prevent User Enumeration attacks
+  return res.status(200).json({
+    success: true,
+    message: 'If an account exists with that email address, a password reset link has been sent.'
+  });
 };
 
 // @desc    Reset password with token

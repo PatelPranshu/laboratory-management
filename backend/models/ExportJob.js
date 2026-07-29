@@ -21,7 +21,7 @@ const exportJobSchema = new mongoose.Schema({
   },
   expiresAt: {
     type: Date,
-    index: { expires: '7d' } // Automatically delete document after 7 days
+    index: { expires: '48h' } // Automatically delete MongoDB document after 48 hours
   }
 }, { timestamps: true });
 
