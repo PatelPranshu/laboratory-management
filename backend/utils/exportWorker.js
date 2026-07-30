@@ -259,7 +259,7 @@ const processExports = async () => {
 
     // Send Email to Admin
     try {
-      const profileUrl = `${process.env.CLIENT_URL || 'http://localhost:5500'}/profile`;
+      const profileUrl = `${process.env.FRONTEND_URL || 'http://localhost:5500'}/profile`;
       await sendDataExportReadyEmail(admin.email, profileUrl);
     } catch (emailErr) {
       console.error(`[EXPORT WORKER] Failed to send email for job ${job._id}:`, emailErr.message);
