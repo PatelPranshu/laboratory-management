@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const { invalidateAuthCache } = require('../middlewares/authMiddleware');
 const crypto = require('crypto');
 const { sendPasswordResetEmail, sendVerificationEmail } = require('../services/emailService');
+const { logAudit, getClientIp } = require('../middlewares/auditMiddleware');
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -82,6 +83,9 @@ exports.register = async (req, res) => {
   let verificationToken;
 
   try {
+    const clientIp = getClientIp(req);
+    const userAgent = (req.headers['user-agent'] || '').slice(0, 200);
+
     const userFields = {
       email: email.toLowerCase().trim(),
       name: name.trim(),
@@ -89,7 +93,11 @@ exports.register = async (req, res) => {
       role: userRole,
       labName: labName.trim(),
       accountStatus: 'Active',
-      isVerified: false
+      isVerified: false,
+      consentLog: [
+        { type: 'terms', version: '2.4.0', acceptedAt: new Date(), ipAddress: clientIp, userAgent },
+        { type: 'privacy', version: '3.0.0', acceptedAt: new Date(), ipAddress: clientIp, userAgent }
+      ]
     };
 
     const users = await User.create([userFields], { session });
@@ -140,6 +148,7 @@ exports.login = async (req, res) => {
   const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
 
   if (!user) {
+    logAudit('LOGIN_FAILED', null, null, 'Auth', `Failed login attempt for email: ${email.toLowerCase().trim()}`, getClientIp(req));
     const err = new Error('Invalid credentials');
     err.statusCode = 401;
     throw err;
@@ -149,6 +158,7 @@ exports.login = async (req, res) => {
   const isMatch = await user.matchPassword(password);
 
   if (!isMatch) {
+    logAudit('LOGIN_FAILED', user._id, user._id, 'Auth', `Failed login password mismatch for email: ${user.email}`, getClientIp(req));
     const err = new Error('Invalid credentials');
     err.statusCode = 401;
     throw err;
@@ -178,6 +188,8 @@ exports.login = async (req, res) => {
     err.statusCode = 403;
     throw err;
   }
+
+  logAudit('LOGIN_SUCCESS', user._id, user._id, 'Auth', `User "${user.name}" (${user.email}) logged in successfully`, getClientIp(req));
 
   sendTokenResponse(user, 200, res);
 };
@@ -266,6 +278,7 @@ exports.updateProfile = async (req, res) => {
       throw err;
     }
     user.password = password;
+    logAudit('PASSWORD_CHANGED', req.user.id, req.user.id, 'Auth', `User password changed`, getClientIp(req));
   }
 
   await user.save();
@@ -360,6 +373,8 @@ exports.resetPasswordWithToken = async (req, res) => {
 
   invalidateAuthCache(user._id);
 
+  logAudit('PASSWORD_RESET', user._id, user._id, 'Auth', `Password reset via token for ${user.email}`, getClientIp(req));
+
   res.status(200).json({
     success: true,
     message: 'Password successfully updated. You can now log in.'
@@ -442,6 +457,7 @@ exports.resendVerification = async (req, res) => {
 // @access  Private
 exports.logout = async (req, res) => {
   invalidateAuthCache(req.user.id);
+  logAudit('LOGOUT', req.user.id, req.user.id, 'Auth', `User logged out`, getClientIp(req));
 
   res.cookie('lis_token', 'none', {
     expires: new Date(Date.now() + 10 * 1000),

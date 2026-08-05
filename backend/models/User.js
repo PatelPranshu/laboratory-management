@@ -103,7 +103,14 @@ const UserSchema = new mongoose.Schema({
   seenAnnouncements: {
     type: [String],
     default: []
-  }
+  },
+  consentLog: [{
+    type: { type: String, enum: ['terms', 'privacy'], required: true },
+    version: { type: String, required: true },
+    acceptedAt: { type: Date, default: Date.now },
+    ipAddress: { type: String },
+    userAgent: { type: String }
+  }]
 }, { timestamps: true });
 
 // Encrypt password using bcrypt

@@ -9,6 +9,7 @@ const { pickFields } = require('../middlewares/validate');
 const { updateLabStats } = require('../utils/statsHelper');
 const { calculateDerivedResult } = require('../utils/mathHelper');
 const ReportTemplate = require('../models/ReportTemplate');
+const { logAudit, getClientIp } = require('../middlewares/auditMiddleware');
 
 /**
  * Resolves all CALCULATED parameters across report sections.
@@ -294,6 +295,8 @@ exports.createReport = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
+    logAudit('REPORT_CREATED', req.user.id, report._id, 'Report', `Report created for patient ${report.patientId}`, getClientIp(req));
+
     res.status(201).json({ success: true, data: report });
   } catch (error) {
     await session.abortTransaction();
@@ -453,6 +456,8 @@ exports.updateReport = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
+    logAudit('REPORT_UPDATED', req.user.id, report._id, 'Report', `Report updated (status: ${report.status})`, getClientIp(req));
+
     res.status(200).json({ success: true, data: report });
   } catch (error) {
     await session.abortTransaction();
@@ -528,6 +533,7 @@ exports.generatePdf = async (req, res) => {
   await ReportInstance.findByIdAndUpdate(req.params.id, {
     $push: { auditLogs: { action: 'Downloaded PDF', userId: req.user.id } }
   });
+  logAudit('REPORT_DOWNLOADED', req.user.id, report._id, 'Report', `PDF downloaded for report`, getClientIp(req));
 
   // Sanitize and construct filename using patient name and template names
   const patientName = (report.patientId.name || 'Patient')
@@ -620,6 +626,8 @@ exports.sendReport = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
+    logAudit('REPORT_SENT', req.user.id, report._id, 'Report', `Report sent via ${method}`, getClientIp(req));
+
     res.status(200).json({ success: true, message: `Report successfully sent via ${method}` });
   } catch (error) {
     await session.abortTransaction();
@@ -708,6 +716,8 @@ exports.deleteReport = async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    logAudit('REPORT_DELETED', req.user.id, report._id, 'Report', `Report deleted`, getClientIp(req));
 
     res.status(200).json({ success: true, data: {} });
   } catch (error) {

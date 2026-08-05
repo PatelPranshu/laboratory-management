@@ -10,39 +10,7 @@ const { sendPasswordResetEmail } = require('../services/emailService');
 const { invalidateAuthCache } = require('../middlewares/authMiddleware');
 const mongoose = require('mongoose');
 
-// --------------- Helpers ---------------
-
-/**
- * Extracts client IP from request, handling proxies.
- * @param {object} req - Express request object
- * @returns {string} Client IP address
- */
-const getClientIp = (req) => {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) {
-    return forwarded.split(',')[0].trim();
-  }
-  return req.connection?.remoteAddress || req.socket?.remoteAddress || 'unknown';
-};
-
-/**
- * Creates an audit log entry. Fire-and-forget — never blocks the response.
- */
-const logAudit = async (action, performedBy, targetId, targetType, details, ipAddress, metadata = null) => {
-  try {
-    await AuditLog.create({
-      action,
-      performedBy,
-      targetId,
-      targetType,
-      details: String(details).slice(0, 500),
-      ipAddress,
-      metadata
-    });
-  } catch (err) {
-    console.error('[AuditLog] Failed to write audit log:', err.message);
-  }
-};
+const { logAudit, getClientIp } = require('../middlewares/auditMiddleware');
 
 // --------------- Platform Stats ---------------
 

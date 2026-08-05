@@ -17,7 +17,21 @@ const AuditLogSchema = new mongoose.Schema({
       'ANNOUNCEMENT_CREATED',
       'ANNOUNCEMENT_DELETED',
       'DELETION_REASONS_UPDATED',
-      'DATA_EXPORTED'
+      'DATA_EXPORTED',
+      'LOGOUT_FORCED',
+      'LOGIN_SUCCESS',
+      'LOGIN_FAILED',
+      'LOGOUT',
+      'PASSWORD_CHANGED',
+      'PASSWORD_RESET',
+      'PATIENT_CREATED',
+      'PATIENT_UPDATED',
+      'PATIENT_DELETED',
+      'REPORT_CREATED',
+      'REPORT_UPDATED',
+      'REPORT_SENT',
+      'REPORT_DOWNLOADED',
+      'REPORT_DELETED'
     ],
     index: true
   },
@@ -33,7 +47,7 @@ const AuditLogSchema = new mongoose.Schema({
   },
   targetType: {
     type: String,
-    enum: ['Lab', 'Staff', 'System'],
+    enum: ['Lab', 'Staff', 'System', 'Auth', 'Patient', 'Report'],
     default: 'Lab'
   },
   details: {

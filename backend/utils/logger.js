@@ -30,6 +30,23 @@ if (process.env.DD_API_KEY) {
   }));
 }
 
+const SENSITIVE_KEYS = /password|token|secret|apikey|authorization|cookie|phone|email|ssn|creditcard/i;
+
+const piiRedactFormat = winston.format((info) => {
+  const scrub = (obj) => {
+    if (!obj || typeof obj !== 'object') return obj;
+    for (const key of Object.keys(obj)) {
+      if (SENSITIVE_KEYS.test(key)) {
+        obj[key] = '[REDACTED]';
+      } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+        scrub(obj[key]);
+      }
+    }
+    return obj;
+  };
+  return scrub(info);
+});
+
 const logger = winston.createLogger({
   level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
   defaultMeta: {
@@ -41,6 +58,7 @@ const logger = winston.createLogger({
     errors({ stack: true }),
     timestamp(),
     otelFormat(),
+    piiRedactFormat(),
     json()
   ),
   transports

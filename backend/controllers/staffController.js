@@ -9,6 +9,7 @@ const { generateToken } = require('./authController');
 const { sendInvitationEmail } = require('../services/emailService');
 const { sendNotification } = require('../utils/notifier');
 const { invalidateAuthCache } = require('../middlewares/authMiddleware');
+const { logAudit, getClientIp } = require('../middlewares/auditMiddleware');
 
 
 
@@ -124,6 +125,9 @@ exports.completeRegistration = async (req, res) => {
     throw err;
   }
 
+  const clientIp = getClientIp(req);
+  const userAgent = (req.headers['user-agent'] || '').slice(0, 200);
+
   const userFields = {
     email: invitation.email,
     name: name.trim(),
@@ -132,6 +136,10 @@ exports.completeRegistration = async (req, res) => {
     labName: admin.labName,
     parentAdminId: admin._id,
     accountStatus: 'Active',
+    consentLog: [
+      { type: 'terms', version: '2.4.0', acceptedAt: new Date(), ipAddress: clientIp, userAgent },
+      { type: 'privacy', version: '3.0.0', acceptedAt: new Date(), ipAddress: clientIp, userAgent }
+    ]
   };
 
   if (invitation.role === 'Doctor' && signatureUrl) {

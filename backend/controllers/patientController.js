@@ -5,6 +5,7 @@ const socketService = require('../services/socketService');
 const { sendNotification } = require('../utils/notifier');
 const { pickFields } = require('../middlewares/validate');
 const { updateLabStats } = require('../utils/statsHelper');
+const { logAudit, getClientIp } = require('../middlewares/auditMiddleware');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 
@@ -128,6 +129,8 @@ exports.createPatient = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
+    logAudit('PATIENT_CREATED', req.user.id, patient._id, 'Patient', `Patient "${patient.name}" created`, getClientIp(req));
+
     res.status(201).json({ success: true, data: patient });
   } catch (error) {
     await session.abortTransaction();
@@ -156,6 +159,8 @@ exports.updatePatient = async (req, res) => {
     returnDocument: 'after',
     runValidators: true
   });
+
+  logAudit('PATIENT_UPDATED', req.user.id, patient._id, 'Patient', `Patient "${patient.name}" updated`, getClientIp(req));
 
   res.status(200).json({ success: true, data: patient });
 };
@@ -206,6 +211,8 @@ exports.deletePatient = async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    logAudit('PATIENT_DELETED', req.user.id, patient._id, 'Patient', `Patient "${patient.name}" deleted`, getClientIp(req));
 
     res.status(200).json({ success: true, data: {} });
   } catch (error) {
