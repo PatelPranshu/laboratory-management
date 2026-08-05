@@ -31,7 +31,14 @@ const AuditLogSchema = new mongoose.Schema({
       'REPORT_UPDATED',
       'REPORT_SENT',
       'REPORT_DOWNLOADED',
-      'REPORT_DELETED'
+      'REPORT_DELETED',
+      'MFA_SETUP_INITIATED',
+      'MFA_ENABLED',
+      'MFA_DISABLED',
+      'LOGIN_MFA_SUCCESS',
+      'LOGIN_MFA_FAILED',
+      'MFA_BACKUP_USED',
+      'LAB_MFA_TOGGLED'
     ],
     index: true
   },

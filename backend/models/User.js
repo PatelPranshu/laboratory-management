@@ -110,7 +110,19 @@ const UserSchema = new mongoose.Schema({
     acceptedAt: { type: Date, default: Date.now },
     ipAddress: { type: String },
     userAgent: { type: String }
-  }]
+  }],
+  mfa: {
+    enabled: { type: Boolean, default: false },
+    secret: { type: String, select: false },
+    backupCodes: [{
+      codeHash: { type: String },
+      used: { type: Boolean, default: false },
+      usedAt: { type: Date }
+    }],
+    enabledAt: { type: Date },
+    lastUsedAt: { type: Date }
+  },
+  mfaEnforced: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Encrypt password using bcrypt

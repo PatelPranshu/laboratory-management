@@ -215,6 +215,39 @@ exports.toggleHoldDeletion = async (req, res) => {
   res.status(200).json({ success: true, data: lab });
 };
 
+// @desc    Toggle Lab MFA Enforcement
+// @route   PUT /api/superadmin/labs/:id/mfa-enforcement
+// @access  Private (SuperAdmin only)
+exports.toggleLabMfaEnforcement = async (req, res) => {
+  const lab = await User.findById(req.params.id);
+  if (!lab || lab.role !== 'Admin') {
+    return res.status(404).json({ success: false, error: 'Lab Admin not found' });
+  }
+
+  const newStatus = !lab.mfaEnforced;
+  lab.mfaEnforced = newStatus;
+  await lab.save();
+
+  // Cascade MFA enforcement to all staff of this lab
+  await User.updateMany(
+    { parentAdminId: lab._id },
+    { $set: { mfaEnforced: newStatus } }
+  );
+
+  // Invalidate auth cache for lab + all staff
+  const staffUsers = await User.find({ parentAdminId: lab._id }).select('_id');
+  invalidateAuthCache(lab._id);
+  staffUsers.forEach(s => invalidateAuthCache(s._id));
+
+  // Audit log
+  logAudit('LAB_MFA_TOGGLED', req.user.id, lab._id, 'Lab',
+    `Lab "${lab.labName}" MFA enforcement ${newStatus ? 'enabled' : 'disabled'}`,
+    getClientIp(req)
+  );
+
+  res.status(200).json({ success: true, data: { mfaEnforced: newStatus } });
+};
+
 // @desc    Get Lab Profile Details
 // @route   GET /api/superadmin/labs/:id/details
 // @access  Private (SuperAdmin only)

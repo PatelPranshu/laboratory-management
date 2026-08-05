@@ -1,20 +1,14 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    // Enforce authentication
-    if (typeof checkAuth === 'function') {
-        checkAuth();
-    }
+/**
+ * ProfileController Module — Enterprise UI State Management
+ */
+const ProfileController = (() => {
+    let currentUser = null;
 
-    // Load common layout
-    if (typeof loadCommonLayout === 'function') {
-        loadCommonLayout();
-    }
-
-    const forms = {
-        profile: document.getElementById('profile-form'),
-        password: document.getElementById('password-form')
-    };
-
-    const elements = {
+    const getElements = () => ({
+        forms: {
+            profile: document.getElementById('profile-form'),
+            password: document.getElementById('password-form')
+        },
         name: document.getElementById('profile-name'),
         role: document.getElementById('profile-role'),
         initials: document.getElementById('profile-initials'),
@@ -26,134 +20,214 @@ document.addEventListener('DOMContentLoaded', async () => {
         editLabName: document.getElementById('edit-labName'),
         newPassword: document.getElementById('new-password'),
         confirmPassword: document.getElementById('confirm-password'),
-        currentPassword: document.getElementById('current-password')
-    };
+        currentPassword: document.getElementById('current-password'),
+        mfaBadge: document.getElementById('mfa-status-badge'),
+        mfaEnableBtn: document.getElementById('btn-mfa-enable'),
+        mfaDisableBtn: document.getElementById('btn-mfa-disable')
+    });
 
-    // Initialize Page Data
-    async function init() {
+    function updateMfaUI(mfa) {
+        const { mfaBadge, mfaEnableBtn, mfaDisableBtn } = getElements();
+        if (mfa && mfa.enabled) {
+            mfaBadge.textContent = 'Enabled';
+            mfaBadge.className = 'px-2.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase rounded-full';
+            mfaEnableBtn.classList.add('hidden');
+            mfaDisableBtn.classList.remove('hidden');
+        } else {
+            mfaBadge.textContent = 'Disabled';
+            mfaBadge.className = 'px-2.5 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-bold uppercase rounded-full';
+            mfaEnableBtn.classList.remove('hidden');
+            mfaDisableBtn.classList.add('hidden');
+        }
+    }
+
+    async function loadData() {
         try {
             const res = await api.getMe();
-            const user = res.data;
+            currentUser = res.data;
+            const els = getElements();
 
-            // Update Header & Sidebar display
-            const displayName = user.name || user.email.split('@')[0];
-            elements.name.textContent = user.name || user.email;
-            elements.role.textContent = user.role === 'Admin' ? 'System Administrator' : (user.role === 'Doctor' ? 'Medical Director / Lab Owner' : 'Laboratory Technician');
-            elements.initials.textContent = displayName.substring(0, 2).toUpperCase();
-            
-            // Side details
-            elements.labNameDisplay.textContent = user.labName;
-            elements.idDisplay.textContent = `ID: ${user._id}`;
-            const joinedDate = new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            elements.joinedDisplay.textContent = `Member since ${joinedDate}`;
+            const displayName = currentUser.name || currentUser.email.split('@')[0];
+            els.name.textContent = currentUser.name || currentUser.email;
+            els.role.textContent = currentUser.role === 'Admin' ? 'System Administrator' : (currentUser.role === 'Doctor' ? 'Medical Director / Lab Owner' : 'Laboratory Technician');
+            els.initials.textContent = displayName.substring(0, 2).toUpperCase();
 
-            // Form inputs
-            elements.editName.value = user.name || '';
-            elements.editEmail.value = user.email;
-            elements.editLabName.value = user.labName;
+            els.labNameDisplay.textContent = currentUser.labName;
+            els.idDisplay.textContent = `ID: ${currentUser._id}`;
+            const joinedDate = new Date(currentUser.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            els.joinedDisplay.textContent = `Member since ${joinedDate}`;
 
-            if (user.role !== 'Admin') {
-                elements.editLabName.readOnly = true;
-                elements.editLabName.classList.add('bg-slate-100', 'cursor-not-allowed', 'opacity-70');
-                elements.editLabName.title = "Only Administrators can change the Laboratory Name";
+            updateMfaUI(currentUser.mfa);
+
+            els.editName.value = currentUser.name || '';
+            els.editEmail.value = currentUser.email;
+            els.editLabName.value = currentUser.labName;
+
+            if (currentUser.role !== 'Admin') {
+                els.editLabName.readOnly = true;
+                els.editLabName.classList.add('bg-slate-100', 'cursor-not-allowed', 'opacity-70');
+                els.editLabName.title = "Only Administrators can change the Laboratory Name";
             }
 
-            // Sync with local storage user object
             localStorage.setItem('lis_user', JSON.stringify({
-                id: user._id,
-                email: user.email,
-                name: user.name,
-                role: user.role,
-                labName: user.labName,
-                parentAdminId: user.parentAdminId
+                id: currentUser._id,
+                email: currentUser.email,
+                name: currentUser.name,
+                role: currentUser.role,
+                labName: currentUser.labName,
+                parentAdminId: currentUser.parentAdminId
             }));
 
-            // Show danger zone and data portability only for Admins
-            if (user.role === 'Admin') {
-                document.getElementById('danger-zone').classList.remove('hidden');
-                document.getElementById('data-portability-zone').classList.remove('hidden');
-                loadExports();
+            if (currentUser.role === 'Admin') {
+                document.getElementById('danger-zone')?.classList.remove('hidden');
+                document.getElementById('data-portability-zone')?.classList.remove('hidden');
+                if (typeof loadExports === 'function') loadExports();
             }
-
         } catch (err) {
             UI.showToast('Failed to load profile data', 'error');
         }
     }
 
-    // Profile Form Handler
-    forms.profile.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('btn-save-profile');
-        const originalHtml = btn.innerHTML;
+    return {
+        loadData,
+        openMfaSetup: async () => {
+            try {
+                UI.showToast('Generating 2FA Setup Key...', 'info');
+                const res = await api.mfaSetup();
+                const { qrCode, secret, backupCodes } = res.data;
 
-        try {
-            UI.toggleLoader('btn-save-profile', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Saving...');
-            
-            const data = {
-                name: elements.editName.value.trim(),
-                email: elements.editEmail.value.trim(),
-                labName: elements.editLabName.value.trim()
-            };
+                document.getElementById('mfa-qr-container').innerHTML = `<img src="${qrCode}" alt="2FA QR Code" class="w-40 h-40 rounded-xl shadow-inner border border-slate-100">`;
+                document.getElementById('mfa-secret-key').textContent = secret.match(/.{1,4}/g).join(' ');
 
-            const res = await api.updateProfile(data);
-            
-            UI.showToast('Profile updated successfully!', 'success');
-            
-            // Refresh UI data
-            await init();
+                const grid = document.getElementById('mfa-backup-codes-grid');
+                grid.innerHTML = backupCodes.map(c => `<span class="bg-slate-50 p-1.5 rounded border border-slate-200 select-all">${c}</span>`).join('');
 
-            // Specifically trigger sidebar refresh
-            const navUserName = document.getElementById('nav-user-name');
-            if (navUserName) {
-                navUserName.textContent = `Dr. ${data.name || data.email.split('@')[0]}`;
+                document.getElementById('mfa-setup-code-input').value = '';
+                document.getElementById('mfa-setup-modal').classList.remove('hidden');
+                setTimeout(() => document.getElementById('mfa-setup-code-input').focus(), 100);
+            } catch (err) {
+                UI.showToast(err.message || 'Failed to initiate 2FA setup', 'error');
             }
+        },
+        closeMfaSetup: () => {
+            document.getElementById('mfa-setup-modal').classList.add('hidden');
+        },
+        verifyMfaSetup: async (e) => {
+            e.preventDefault();
+            const code = document.getElementById('mfa-setup-code-input').value.trim();
+            if (!code) return;
 
-        } catch (err) {
-            UI.showToast(err.message || 'Failed to update profile', 'error');
-        } finally {
-            UI.toggleLoader('btn-save-profile', false, originalHtml);
+            try {
+                UI.toggleLoader('btn-mfa-setup-submit', true, 'Verifying...');
+                await api.mfaVerifySetup(code);
+                UI.showToast('Two-Factor Authentication enabled successfully!', 'success');
+                ProfileController.closeMfaSetup();
+                await ProfileController.loadData();
+            } catch (err) {
+                UI.showToast(err.message || 'Failed to enable 2FA', 'error');
+            } finally {
+                UI.toggleLoader('btn-mfa-setup-submit', false, 'Verify & Enable 2FA');
+            }
+        },
+        openMfaDisable: () => {
+            document.getElementById('mfa-disable-password').value = '';
+            document.getElementById('mfa-disable-code').value = '';
+            document.getElementById('mfa-disable-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('mfa-disable-password').focus(), 100);
+        },
+        closeMfaDisable: () => {
+            document.getElementById('mfa-disable-modal').classList.add('hidden');
+        },
+        disableMfa: async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('mfa-disable-password').value;
+            const code = document.getElementById('mfa-disable-code').value.trim();
+            if (!password || !code) return;
+
+            try {
+                UI.toggleLoader('btn-mfa-disable-submit', true, 'Disabling...');
+                await api.mfaDisable(password, code);
+                UI.showToast('Two-Factor Authentication has been disabled', 'success');
+                ProfileController.closeMfaDisable();
+                await ProfileController.loadData();
+            } catch (err) {
+                UI.showToast(err.message || 'Failed to disable 2FA', 'error');
+            } finally {
+                UI.toggleLoader('btn-mfa-disable-submit', false, 'Disable Two-Factor Authentication');
+            }
         }
-    });
+    };
+})();
 
-    // Password Form Handler
-    forms.password.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const currentPwd = elements.currentPassword.value;
-        const pwd = elements.newPassword.value;
-        const confirm = elements.confirmPassword.value;
+// Legacy global aliases for backward compatibility with inline HTML event triggers
+window.openMfaSetupModal = () => ProfileController.openMfaSetup();
+window.closeMfaSetupModal = () => ProfileController.closeMfaSetup();
+window.handleMfaSetupVerify = (e) => ProfileController.verifyMfaSetup(e);
+window.openMfaDisableModal = () => ProfileController.openMfaDisable();
+window.closeMfaDisableModal = () => ProfileController.closeMfaDisable();
+window.handleMfaDisableSubmit = (e) => ProfileController.disableMfa(e);
+window.refreshProfilePage = () => ProfileController.loadData();
 
-        if (!currentPwd || currentPwd.trim() === '') {
-            return UI.showToast('Please enter your current password', 'error');
-        }
+document.addEventListener('DOMContentLoaded', async () => {
+    if (typeof checkAuth === 'function') checkAuth();
+    if (typeof loadCommonLayout === 'function') loadCommonLayout();
 
-        if (!pwd || pwd.trim() === '') {
-            return UI.showToast('Please enter a new password', 'error');
-        }
+    const profileForm = document.getElementById('profile-form');
+    const passwordForm = document.getElementById('password-form');
 
-        if (pwd !== confirm) {
-            return UI.showToast('Passwords do not match', 'error');
-        }
+    if (profileForm) {
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save-profile');
+            const originalHtml = btn.innerHTML;
+            try {
+                UI.toggleLoader('btn-save-profile', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Saving...');
+                const data = {
+                    name: document.getElementById('edit-name').value.trim(),
+                    email: document.getElementById('edit-email').value.trim(),
+                    labName: document.getElementById('edit-labName').value.trim()
+                };
+                const res = await api.updateProfile(data);
+                UI.showToast('Profile updated successfully', 'success');
+                if (res.user) {
+                    document.getElementById('profile-name').textContent = res.user.name;
+                    document.getElementById('display-labName').textContent = res.user.labName;
+                }
+            } catch (err) {
+                UI.showToast(err.message || 'Failed to update profile', 'error');
+            } finally {
+                UI.toggleLoader('btn-save-profile', false, originalHtml);
+            }
+        });
+    }
 
-        const btn = document.getElementById('btn-save-password');
-        const originalHtml = btn.innerHTML;
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pwd = document.getElementById('new-password').value;
+            const confirmPwd = document.getElementById('confirm-password').value;
+            const currentPwd = document.getElementById('current-password').value;
 
-        try {
-            UI.toggleLoader('btn-save-password', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Updating...');
-            
-            await api.updateProfile({ password: pwd, currentPassword: currentPwd });
-            
-            UI.showToast('Password updated successfuly', 'success');
-            forms.password.reset();
+            if (pwd !== confirmPwd) {
+                UI.showToast('New passwords do not match', 'error');
+                return;
+            }
+            const btn = document.getElementById('btn-save-password');
+            const originalHtml = btn.innerHTML;
+            try {
+                UI.toggleLoader('btn-save-password', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Updating...');
+                await api.updateProfile({ password: pwd, currentPassword: currentPwd });
+                UI.showToast('Password updated successfully', 'success');
+                passwordForm.reset();
+            } catch (err) {
+                UI.showToast(err.message || 'Failed to update password', 'error');
+            } finally {
+                UI.toggleLoader('btn-save-password', false, originalHtml);
+            }
+        });
+    }
 
-        } catch (err) {
-            UI.showToast(err.message || 'Failed to update password', 'error');
-        } finally {
-            UI.toggleLoader('btn-save-password', false, originalHtml);
-        }
-    });
-
-    init();
+    ProfileController.loadData();
 });
 
 // Global deleteLab function for the danger zone button
@@ -316,5 +390,3 @@ window.deleteLab = async function() {
             UI.showToast(err.message || 'Failed to download file', 'error');
         }
     };
-
-

@@ -5,19 +5,20 @@ const {
   updateLabStatus,
   restoreLab,
   toggleHoldDeletion,
+  toggleLabMfaEnforcement,
   getLabDetails,
   updateLabStaff,
   removeLabStaff,
-  getDeletionReasons,
-  updateDeletionReasons,
+  forceLogoutAll,
+  forcePasswordReset,
+  permanentDeleteLab,
   getAuditLogs,
   exportLabsCsv,
   createAnnouncement,
   getAnnouncements,
   deleteAnnouncement,
-  forceLogoutAll,
-  forcePasswordReset,
-  permanentDeleteLab
+  getDeletionReasons,
+  updateDeletionReasons
 } = require('../controllers/superadminController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
 
@@ -35,6 +36,7 @@ router.get('/labs/:id/details', getLabDetails);
 router.put('/labs/:id/status', updateLabStatus);
 router.put('/labs/:id/restore', restoreLab);
 router.put('/labs/:id/hold', toggleHoldDeletion);
+router.put('/labs/:id/mfa-enforcement', toggleLabMfaEnforcement);
 router.post('/labs/:id/force-logout', forceLogoutAll);
 router.post('/labs/:id/force-password-reset', forcePasswordReset);
 router.delete('/labs/:id/permanent', permanentDeleteLab);

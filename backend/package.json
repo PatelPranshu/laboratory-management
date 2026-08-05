@@ -37,6 +37,7 @@
     "morgan": "^1.11.0",
     "multer": "^2.1.1",
     "node-cron": "^4.6.0",
+    "otpauth": "^9.5.1",
     "pdfmake": "^0.3.7",
     "qrcode": "^1.5.4",
     "resend": "^6.10.0",

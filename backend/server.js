@@ -154,6 +154,7 @@ const search = require('./routes/search');
 const signatures = require('./routes/signatures');
 const notifications = require('./routes/notifications');
 const referrals = require('./routes/referralRoutes');
+const mfa = require('./routes/mfa');
 
 const { protect } = require('./middlewares/authMiddleware');
 
@@ -168,7 +169,8 @@ app.use('/api', (req, res, next) => {
     '/auth/reset-password-with-token',
     '/auth/verify-email',
     '/auth/resend-verification',
-    '/staff/complete-registration'
+    '/staff/complete-registration',
+    '/mfa/verify-login'
   ];
 
   if (publicRoutes.includes(req.path) || req.path.startsWith('/staff/verify-invite/')) {
@@ -191,6 +193,7 @@ app.use('/api/search', search);
 app.use('/api/signatures', signatures);
 app.use('/api/notifications', notifications);
 app.use('/api/referrals', referrals);
+app.use('/api/mfa', mfa);
 
 app.get('/', (req, res) => {
   res.json({ success: true, message: 'LIS API is running' });

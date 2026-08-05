@@ -262,46 +262,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const actionColors = {
-            'LAB_SUSPENDED': 'bg-amber-100 text-amber-700',
-            'LAB_ACTIVATED': 'bg-emerald-100 text-emerald-700',
-            'LAB_RESTORED': 'bg-blue-100 text-blue-700',
-            'LAB_HOLD_TOGGLED': 'bg-slate-100 text-slate-700',
-            'LAB_PERMANENTLY_DELETED': 'bg-red-100 text-red-700',
-            'STAFF_ROLE_CHANGED': 'bg-indigo-100 text-indigo-700',
-            'STAFF_REMOVED': 'bg-orange-100 text-orange-700',
-            'STAFF_HARD_DELETED': 'bg-red-100 text-red-700',
-            'PASSWORD_RESET_FORCED': 'bg-fuchsia-100 text-fuchsia-700',
-            'LOGOUT_FORCED': 'bg-violet-100 text-violet-700',
-            'ANNOUNCEMENT_CREATED': 'bg-purple-100 text-purple-700',
-            'ANNOUNCEMENT_DELETED': 'bg-pink-100 text-pink-700',
-            'DELETION_REASONS_UPDATED': 'bg-slate-100 text-slate-700',
-            'DATA_EXPORTED': 'bg-emerald-100 text-emerald-700'
+            'LAB_SUSPENDED': 'bg-amber-100 text-amber-800 border border-amber-200',
+            'LAB_ACTIVATED': 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+            'LAB_RESTORED': 'bg-blue-100 text-blue-800 border border-blue-200',
+            'LAB_HOLD_TOGGLED': 'bg-slate-100 text-slate-800 border border-slate-200',
+            'LAB_PERMANENTLY_DELETED': 'bg-red-100 text-red-800 border border-red-200',
+            'STAFF_ROLE_CHANGED': 'bg-indigo-100 text-indigo-800 border border-indigo-200',
+            'STAFF_REMOVED': 'bg-orange-100 text-orange-800 border border-orange-200',
+            'STAFF_HARD_DELETED': 'bg-red-100 text-red-800 border border-red-200',
+            'PASSWORD_RESET_FORCED': 'bg-fuchsia-100 text-fuchsia-800 border border-fuchsia-200',
+            'LOGOUT_FORCED': 'bg-violet-100 text-violet-800 border border-violet-200',
+            'ANNOUNCEMENT_CREATED': 'bg-purple-100 text-purple-800 border border-purple-200',
+            'ANNOUNCEMENT_DELETED': 'bg-pink-100 text-pink-800 border border-pink-200',
+            'DELETION_REASONS_UPDATED': 'bg-slate-100 text-slate-800 border border-slate-200',
+            'DATA_EXPORTED': 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+            'LOGIN_SUCCESS': 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+            'LOGIN_FAILED': 'bg-red-50 text-red-700 border border-red-200',
+            'PATIENT_CREATED': 'bg-sky-50 text-sky-700 border border-sky-200',
+            'PATIENT_UPDATED': 'bg-blue-50 text-blue-700 border border-blue-200',
+            'PATIENT_DELETED': 'bg-rose-50 text-rose-700 border border-rose-200',
+            'REPORT_CREATED': 'bg-indigo-50 text-indigo-700 border border-indigo-200',
+            'REPORT_UPDATED': 'bg-violet-50 text-violet-700 border border-violet-200',
+            'REPORT_SENT': 'bg-teal-50 text-teal-700 border border-teal-200',
+            'REPORT_DOWNLOADED': 'bg-cyan-50 text-cyan-700 border border-cyan-200',
+            'REPORT_DELETED': 'bg-red-50 text-red-700 border border-red-200'
         };
 
         tbody.innerHTML = logs.map(log => {
-            const colorClass = actionColors[log.action] || 'bg-slate-100 text-slate-700';
+            const colorClass = actionColors[log.action] || 'bg-slate-100 text-slate-700 border border-slate-200';
             const performer = log.performedBy ? (log.performedBy.name || log.performedBy.email || 'Unknown') : 'System';
             const timestamp = new Date(log.createdAt);
             const dateStr = timestamp.toLocaleDateString();
             const timeStr = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
             return `
-                <tr class="hover:bg-slate-50/50 transition-colors">
-                    <td class="p-4 pl-6">
-                        <div class="text-sm font-bold text-slate-700">${dateStr}</div>
-                        <div class="text-xs text-slate-400">${timeStr}</div>
+                <tr class="hover:bg-slate-50/70 transition-colors border-b border-slate-100">
+                    <td class="p-4 pl-6 align-top whitespace-nowrap">
+                        <div class="text-sm font-bold text-slate-800">${dateStr}</div>
+                        <div class="text-xs font-semibold text-slate-400 mt-0.5">${timeStr}</div>
                     </td>
-                    <td class="p-4">
-                        <span class="audit-action px-2 py-1 ${colorClass} rounded-md font-bold uppercase tracking-wider">${log.action.replace(/_/g, ' ')}</span>
+                    <td class="p-4 align-top whitespace-nowrap">
+                        <span class="audit-action inline-block px-2.5 py-1 ${colorClass} rounded-md font-bold uppercase tracking-wider text-[11px]">${escapeHtml(log.action.replace(/_/g, ' '))}</span>
                     </td>
-                    <td class="p-4">
-                        <div class="text-sm font-medium text-slate-700">${escapeHtml(performer)}</div>
+                    <td class="p-4 align-top whitespace-nowrap">
+                        <div class="text-sm font-bold text-slate-700">${escapeHtml(performer)}</div>
                     </td>
-                    <td class="p-4">
-                        <div class="text-sm text-slate-600 max-w-xs truncate" title="${escapeHtml(log.details)}">${escapeHtml(log.details)}</div>
+                    <td class="p-4 align-top">
+                        <div class="text-sm font-medium text-slate-700 leading-relaxed whitespace-normal break-words max-w-xl">${escapeHtml(log.details)}</div>
                     </td>
-                    <td class="p-4">
-                        <span class="text-xs font-mono text-slate-400">${escapeHtml(log.ipAddress || 'N/A')}</span>
+                    <td class="p-4 align-top whitespace-nowrap">
+                        <span class="text-xs font-mono font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded border border-slate-200">${escapeHtml(log.ipAddress || 'N/A')}</span>
                     </td>
                 </tr>
             `;

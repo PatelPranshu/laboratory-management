@@ -189,6 +189,35 @@ exports.login = async (req, res) => {
     throw err;
   }
 
+  // Check MFA status: If user has MFA enabled or lab has MFA enforced
+  const isMfaEnabled = user.mfa && user.mfa.enabled;
+  const isMfaEnforced = user.mfaEnforced;
+
+  if (isMfaEnabled || isMfaEnforced) {
+    // Generate temporary 5-minute MFA step token
+    const mfaToken = jwt.sign(
+      { id: user._id, type: 'mfa_step' },
+      process.env.JWT_SECRET,
+      { expiresIn: '5m' }
+    );
+
+    if (isMfaEnabled) {
+      return res.status(200).json({
+        success: true,
+        mfaRequired: true,
+        mfaToken,
+        message: 'MFA verification required'
+      });
+    } else if (isMfaEnforced && !isMfaEnabled) {
+      return res.status(200).json({
+        success: true,
+        mfaSetupRequired: true,
+        mfaToken,
+        message: 'Your administrator requires Multi-Factor Authentication setup for your account.'
+      });
+    }
+  }
+
   logAudit('LOGIN_SUCCESS', user._id, user._id, 'Auth', `User "${user.name}" (${user.email}) logged in successfully`, getClientIp(req));
 
   sendTokenResponse(user, 200, res);
@@ -199,7 +228,7 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
   const user = await User.findById(req.user.id)
-    .select('email name role labName parentAdminId accountStatus isVerified signatureUrl createdAt')
+    .select('email name role labName parentAdminId accountStatus isVerified signatureUrl createdAt mfa mfaEnforced')
     .lean();
   if (!user) {
     const err = new Error('User not found');

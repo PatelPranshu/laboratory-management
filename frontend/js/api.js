@@ -141,9 +141,11 @@ const api = {
         }
       }
 
-      // If unauthorized, redirect to login unless already on index
+      // If unauthorized, redirect to login unless already on index/login page
       if (!response.ok && response.status === 401) {
-        if (!window.location.pathname.endsWith('/') && !window.location.pathname.endsWith('/')) {
+        const path = window.location.pathname;
+        const isAuthPage = path.endsWith('index.html') || path.endsWith('/') || path === '';
+        if (!isAuthPage) {
           this.clearLocalData();
           return;
         }
@@ -182,6 +184,23 @@ const api = {
 
   async updateProfile(data) {
     return this.request('/auth/profile', 'PUT', data);
+  },
+
+  // MFA Helpers
+  async mfaSetup() {
+    return this.request('/mfa/setup', 'POST');
+  },
+
+  async mfaVerifySetup(code) {
+    return this.request('/mfa/verify-setup', 'POST', { code });
+  },
+
+  async mfaVerifyLogin(mfaToken, code, isBackup = false) {
+    return this.request('/mfa/verify-login', 'POST', { mfaToken, code, isBackup });
+  },
+
+  async mfaDisable(password, code) {
+    return this.request('/mfa/disable', 'POST', { password, code });
   },
 
   clearLocalData() {
