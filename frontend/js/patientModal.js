@@ -6,7 +6,7 @@ const PatientModal = {
         if (document.getElementById('universal-patient-modal')) return;
 
         const modalHTML = `
-            <div id="universal-patient-modal" class="fixed inset-0 bg-slate-900/40 hidden overflow-y-auto h-full w-full z-[200] flex items-center justify-center transition-opacity backdrop-blur-sm">
+            <div id="universal-patient-modal" class="fixed inset-0 bg-slate-900/50 hidden overflow-y-auto h-full w-full z-[200] flex items-center justify-center transition-opacity">
                 <div class="relative mx-auto border-0 w-full max-w-xl shadow-2xl rounded-2xl bg-white m-4 transform transition-transform scale-95 opacity-0 duration-300" id="universal-patient-modal-content">
                     <div class="px-5 sm:px-8 py-4 sm:py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
                         <h3 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center" id="upm-title">

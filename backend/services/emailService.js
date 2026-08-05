@@ -27,9 +27,9 @@ function isValidEmail(email) {
 }
 
 /**
- * Sends an invitation email to onboarding staff
+ * Sends an invitation email to onboarding staff with Lab details and Inviter Name
  */
-const sendInvitationEmail = async (email, role, inviteLink) => {
+const sendInvitationEmail = async (email, role, inviteLink, labName = 'MyPathoLabs Laboratory', inviterName = 'Lab Administrator') => {
   try {
     if (!isValidEmail(email)) {
       throw new Error(`Invalid recipient email address: ${email}`);
@@ -37,42 +37,84 @@ const sendInvitationEmail = async (email, role, inviteLink) => {
 
     const roleFormatted = role === 'Doctor' ? 'Doctor / Pathologist' : 'Lab Technician';
     const safeRole = escapeHtml(roleFormatted);
+    const safeLabName = escapeHtml(labName);
+    const safeInviterName = escapeHtml(inviterName);
+    const safeEmail = escapeHtml(email);
     const safeLink = escapeHtml(inviteLink);
     const safeYear = new Date().getFullYear();
 
     const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333333; line-height: 1.6; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-        <div style="background-color: #0ea5e9; padding: 24px; text-align: center;">
-          <h2 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 0.5px;">MyPathoLabs Platform</h2>
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; line-height: 1.6; border: 1px solid #cbd5e1; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); background-color: #ffffff;">
+        
+        <!-- Header Banner -->
+        <div style="background: linear-gradient(135deg, #0284c7 0%, #0f172a 100%); padding: 32px 24px; text-align: center; border-bottom: 3px solid #0ea5e9;">
+          <div style="display: inline-block; padding: 6px 16px; background: rgba(255, 255, 255, 0.15); border-radius: 20px; color: #e0f2fe; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(255, 255, 255, 0.2);">
+            VERIFIED LABORATORY INVITATION
+          </div>
+          <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">MyPathoLabs Platform</h1>
         </div>
-        <div style="padding: 32px 24px;">
-          <h3 style="margin-top: 0; font-size: 20px; color: #1e293b;">You've been invited!</h3>
-          <p style="margin-bottom: 24px; font-size: 16px;">
-            You have been invited to join the <strong>MyPathoLabs</strong> platform as a <strong>${safeRole}</strong>.
-            Click the button below to complete your registration and set your secure password.
+
+        <!-- Body Content -->
+        <div style="padding: 36px 32px;">
+          <h2 style="margin-top: 0; font-size: 22px; color: #0f172a; font-weight: 700;">You've Been Invited to Join Staff</h2>
+          <p style="margin-bottom: 24px; font-size: 15px; color: #475569;">
+            <strong>${safeInviterName}</strong> has invited you to join the official medical team at <strong>${safeLabName}</strong> via the MyPathoLabs Platform.
           </p>
-          <div style="text-align: center; margin: 32px 0;">
-            <a href="${safeLink}" style="display: inline-block; padding: 14px 28px; background-color: #0ea5e9; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2);">
-              Set Up Account
+
+          <!-- Invitation Details Highlight Card -->
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #0ea5e9; border-radius: 12px; padding: 20px 24px; margin: 28px 0;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600; width: 140px;">Laboratory:</td>
+                <td style="padding: 6px 0; color: #0f172a; font-weight: 700;">${safeLabName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Invited By:</td>
+                <td style="padding: 6px 0; color: #0f172a; font-weight: 600;">${safeInviterName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Assigned Role:</td>
+                <td style="padding: 6px 0; color: #0284c7; font-weight: 700;">${safeRole}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; font-weight: 600;">Invited Email:</td>
+                <td style="padding: 6px 0; color: #0f172a; font-weight: 500;">${safeEmail}</td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Primary CTA Button -->
+          <div style="text-align: center; margin: 36px 0;">
+            <a href="${safeLink}" style="display: inline-block; padding: 15px 36px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: #ffffff; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 15px; box-shadow: 0 10px 20px -5px rgba(14, 165, 233, 0.4); transition: all 0.2s ease;">
+              Complete Staff Setup & Set Password &rarr;
             </a>
           </div>
-          <p style="font-size: 14px; color: #64748b; margin-top: 32px;">
-            If the button above does not work, copy and paste this link into your browser:
-            <br />
-            <a href="${safeLink}" style="color: #0ea5e9; word-break: break-all;">${safeLink}</a>
-          </p>
+
+          <!-- Direct Link Box -->
+          <div style="background-color: #f1f5f9; padding: 14px 18px; border-radius: 8px; font-size: 12px; color: #64748b; margin-top: 28px; border: 1px dashed #cbd5e1;">
+            <span style="font-weight: 700; color: #475569;">Having trouble clicking the button?</span> Copy and paste this URL into your browser:
+            <div style="margin-top: 6px; word-break: break-all;">
+              <a href="${safeLink}" style="color: #0284c7; font-weight: 600; text-decoration: underline;">${safeLink}</a>
+            </div>
+          </div>
+
+          <!-- Security & Expiration Warning -->
+          <div style="margin-top: 28px; padding: 12px 16px; background-color: #fffbebfb; border: 1px solid #fef08a; border-radius: 8px; color: #854d0e; font-size: 12.5px;">
+            ⚠️ <strong>Security Notice:</strong> This invitation token is encrypted and strictly single-use. It will expire in 24 hours. If you were not expecting an invitation from <strong>${safeLabName}</strong>, please disregard this message.
+          </div>
         </div>
-        <div style="background-color: #f8fafc; padding: 16px; text-align: center; border-top: 1px solid #e5e7eb; padding-bottom: 20px;">
-          <p style="font-size: 12px; color: #94a3b8; margin: 0;">
-            This invitation link will expire in 24 hours.
-            <br />
-            &copy; ${safeYear} MyPathoLabs. All rights reserved.
+
+        <!-- Footer Banner -->
+        <div style="background-color: #0f172a; padding: 20px; text-align: center; border-top: 1px solid #334155; color: #94a3b8; font-size: 12px;">
+          <p style="margin: 0 0 6px 0; font-weight: 600; color: #cbd5e1;">MyPathoLabs Enterprise Healthcare System</p>
+          <p style="margin: 0;">
+            &copy; ${safeYear} MyPathoLabs. All rights reserved. &bull; Official Staff Onboarding Notice
           </p>
         </div>
       </div>
     `;
 
-    const textContent = `You have been invited to join MyPathoLabs as a ${roleFormatted}.\n\nPlease complete your setup using this link:\n${inviteLink}\n\nThis invitation link will expire in 24 hours.`;
+    const textContent = `Official Staff Invitation - MyPathoLabs Platform\n\n${inviterName} has invited you to join ${labName} as a ${roleFormatted}.\n\nInvitation Details:\n- Laboratory: ${labName}\n- Invited By: ${inviterName}\n- Role: ${roleFormatted}\n- Recipient: ${email}\n\nPlease complete your registration and set your secure password using this link:\n${inviteLink}\n\nSecurity Notice: This link will expire in 24 hours.`;
 
     console.log(`[EMAIL SERVICE] Attempting to send invite to ${email}...`);
     

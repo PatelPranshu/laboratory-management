@@ -111,7 +111,7 @@
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <i class="fas fa-lock text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
                             </div>
-                            <input type="password" id="login-password" required placeholder="••••••••" class="block w-full pl-11 pr-12 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-800 shadow-sm">
+                            <input type="password" id="login-password" required maxlength="72" placeholder="••••••••" class="block w-full pl-11 pr-12 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-800 shadow-sm">
                             <div class="absolute inset-y-0 right-0 pr-4 flex items-center">
                                 <button type="button" onclick="togglePasswordVisibility('login-password', this)" class="text-slate-400 hover:text-brand-500 focus:outline-none transition-colors">
                                     <i class="fas fa-eye"></i>
@@ -202,7 +202,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                                     <i class="fas fa-lock text-slate-400 text-sm group-focus-within:text-brand-500 transition-colors"></i>
                                 </div>
-                                <input type="password" id="reg-password" required minlength="6" placeholder="At least 6 chars" class="block w-full pl-10 pr-12 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-800 shadow-sm text-sm">
+                                <input type="password" id="reg-password" required minlength="8" maxlength="72" placeholder="8-72 chars, uppercase, number" class="block w-full pl-10 pr-12 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-800 shadow-sm text-sm">
                                 <div class="absolute inset-y-0 right-0 pr-4 flex items-center">
                                     <button type="button" onclick="togglePasswordVisibility('reg-password', this)" class="text-slate-400 hover:text-brand-500 focus:outline-none transition-colors">
                                         <i class="fas fa-eye text-xs"></i>
@@ -216,7 +216,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                                     <i class="fas fa-shield-alt text-slate-400 text-sm group-focus-within:text-brand-500 transition-colors"></i>
                                 </div>
-                                <input type="password" id="reg-confirm-password" required minlength="6" placeholder="Repeat password" class="block w-full pl-10 pr-12 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-800 shadow-sm text-sm">
+                                <input type="password" id="reg-confirm-password" required minlength="8" maxlength="72" placeholder="Repeat password" class="block w-full pl-10 pr-12 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all font-medium text-slate-800 shadow-sm text-sm">
                                 <div class="absolute inset-y-0 right-0 pr-4 flex items-center">
                                     <button type="button" onclick="togglePasswordVisibility('reg-confirm-password', this)" class="text-slate-400 hover:text-brand-500 focus:outline-none transition-colors">
                                         <i class="fas fa-eye text-xs"></i>
@@ -334,8 +334,11 @@
                     }, 1000);
                     
                 } else if (type === 'forgot') {
+                    const btnForgot = document.getElementById('btn-forgot');
+                    if (btnForgot.disabled) return;
+
                     UI.toggleLoader('btn-forgot', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Sending...');
-                    const email = document.getElementById('forgot-email').value;
+                    const email = document.getElementById('forgot-email').value.trim();
                     
                     const res = await fetch(`${API_URL}/auth/forgot-password`, {
                         method: 'POST',
@@ -344,10 +347,25 @@
                     });
                     const data = await res.json();
                     
-                    if (!res.ok) throw new Error(data.error || 'Failed to send reset link');
+                    if (!res.ok && !data.success) throw new Error(data.error || 'Failed to send reset link');
                     
-                    UI.showToast('Password reset link sent to your email', 'success');
-                    setTimeout(() => toggleForgotForm(), 2000);
+                    UI.showToast(data.message || 'If an account exists, a password reset link has been sent.', 'success');
+                    
+                    // Enforce 30-second cooldown timer to prevent API spamming
+                    btnForgot.disabled = true;
+                    let cooldown = 30;
+                    const originalHtml = 'Send Reset Link <i class="fas fa-paper-plane ml-2 mt-0.5 text-xs"></i>';
+                    const timer = setInterval(() => {
+                        cooldown--;
+                        btnForgot.innerHTML = `Wait ${cooldown}s <i class="fas fa-clock ml-2 text-xs"></i>`;
+                        if (cooldown <= 0) {
+                            clearInterval(timer);
+                            btnForgot.disabled = false;
+                            btnForgot.innerHTML = originalHtml;
+                        }
+                    }, 1000);
+
+                    setTimeout(() => toggleForgotForm(), 2500);
                 } else if (type === 'register') {
                     UI.toggleLoader('btn-register', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Creating Account...');
                     const labName = document.getElementById('reg-labName').value;

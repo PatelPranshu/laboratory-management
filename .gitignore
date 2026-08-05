@@ -19,6 +19,7 @@ shrinkwrap.yaml
 .env.test
 .env.production
 *.env
+.env.*
 
 # Logs and databases
 logs/
@@ -28,6 +29,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 *.sqlite
+*.sqlite3
+*.db
+*.duckdb
 
 # OS files
 .DS_Store
@@ -40,6 +44,7 @@ Ehthumbs.db
 # IDEs and editors
 .vscode/
 .idea/
+.cursor/
 *.suo
 *.ntvs*
 *.njsproj
@@ -68,9 +73,16 @@ temp/
 *.tmp
 *.bak
 
-# Agents and Skills
+# Agents, Tools, and Runtime
 .agents/
+.jetro/
+.github/
 skills-lock.json
-# Generated Exports (PII)
+
+# Generated Exports & Uploads (PII / Dynamic Data)
 backend/exports/*
 !backend/exports/.gitkeep
+backend/public/exports/*
+!backend/public/exports/.gitkeep
+uploads/
+backend/uploads/

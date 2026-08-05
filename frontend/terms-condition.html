@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terms & Conditions - MyPathoLabs</title>
+    <title>Enterprise Terms & Conditions - MyPathoLabs</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -29,82 +29,183 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        .prose h2 { color: #0f172a; font-weight: 700; margin-top: 2rem; margin-bottom: 1rem; font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 0.05em; font-size: 1.25rem; }
-        .prose p { color: #475569; line-height: 1.75; margin-bottom: 1rem; font-family: 'Inter', sans-serif; font-size: 0.95rem;}
-        .prose ul { list-style-type: disc; padding-left: 1.5rem; color: #475569; margin-bottom: 1rem; font-family: 'Inter', sans-serif; font-size: 0.95rem;}
+        .prose h2 { color: #0f172a; font-weight: 700; margin-top: 2.25rem; margin-bottom: 0.75rem; font-family: 'Outfit', sans-serif; text-transform: uppercase; letter-spacing: 0.05em; font-size: 1.25rem; border-bottom: 2px solid #e2e8f0; pb: 0.25rem; }
+        .prose h3 { color: #1e293b; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; font-family: 'Outfit', sans-serif; font-size: 1.05rem; }
+        .prose p { color: #475569; line-height: 1.75; margin-bottom: 1rem; font-family: 'Inter', sans-serif; font-size: 0.95rem; }
+        .prose ul { list-style-type: disc; padding-left: 1.5rem; color: #475569; margin-bottom: 1.25rem; font-family: 'Inter', sans-serif; font-size: 0.95rem; }
         .prose li { margin-bottom: 0.5rem; }
-        .prose strong { color: #1e293b; font-weight: 600; }
+        .prose strong { color: #0f172a; font-weight: 600; }
+        .compliance-badge { display: inline-flex; align-items: center; gap: 0.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.5rem 0.85rem; font-size: 0.8rem; font-weight: 600; color: #334155; }
     </style>
     <script src="js/datadog-init.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen font-sans antialiased">
-    <div class="max-w-4xl mx-auto px-4 py-12 sm:py-20">
+    <div class="max-w-5xl mx-auto px-4 py-12 sm:py-20">
         <a href="index.html" class="inline-flex items-center text-brand-600 hover:text-brand-800 font-bold mb-8 transition-colors text-sm uppercase tracking-wide">
-            <i class="fas fa-arrow-left mr-2"></i> Back
+            <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
         </a>
         
         <div class="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-slate-200 p-8 sm:p-14 relative overflow-hidden">
             <div class="absolute top-0 right-0 p-12 opacity-5 pointer-events-none">
-                <i class="fas fa-file-contract text-8xl"></i>
+                <i class="fas fa-file-contract text-9xl"></i>
             </div>
             
-            <div class="flex items-center justify-center w-16 h-16 bg-brand-50 rounded-2xl mb-8">
-                <i class="fas fa-file-contract text-2xl text-brand-600"></i>
+            <div class="flex items-center justify-between flex-wrap gap-4 mb-8">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center justify-center w-16 h-16 bg-brand-50 rounded-2xl">
+                        <i class="fas fa-file-contract text-2xl text-brand-600"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight uppercase">Master Terms of Service</h1>
+                        <p class="text-slate-500 font-medium text-sm">Enterprise Software & Master Services Agreement (MSA)</p>
+                    </div>
+                </div>
             </div>
-            <h1 class="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight mb-4 uppercase">Terms & Conditions</h1>
-            <p class="text-slate-500 font-medium mb-12 border-b border-slate-100 pb-8">Last Updated: <span id="current-date"></span></p>
+
+            <!-- Compliance Summary Bar -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10 p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
+                <div class="compliance-badge">
+                    <i class="fas fa-user-shield text-brand-600"></i>
+                    <span>HIPAA / HITECH</span>
+                </div>
+                <div class="compliance-badge">
+                    <i class="fas fa-globe-europe text-indigo-600"></i>
+                    <span>GDPR / UK GDPR</span>
+                </div>
+                <div class="compliance-badge">
+                    <i class="fas fa-flag text-emerald-600"></i>
+                    <span>India DPDP Act 2023</span>
+                </div>
+                <div class="compliance-badge">
+                    <i class="fas fa-lock text-amber-600"></i>
+                    <span>256-Bit TLS & AES</span>
+                </div>
+            </div>
+
+            <p class="text-slate-500 font-medium mb-8 border-b border-slate-100 pb-6 text-sm">
+                Effective Date: <strong>January 1, 2026</strong> | Last Updated: <span id="current-date"></span> | Version: <strong>2.4.0 Enterprise</strong>
+            </p>
+
+            <!-- Legal Notice Alert -->
+            <div class="bg-sky-50 border-l-4 border-brand-500 p-4 rounded-r-2xl mb-10 text-sm text-sky-950">
+                <div class="flex items-start gap-3">
+                    <i class="fas fa-info-circle text-brand-600 text-lg mt-0.5"></i>
+                    <div>
+                        <strong>Notice for Enterprise Healthcare Tenants:</strong> This Master Terms of Service Agreement governs access to and usage of the <strong>MyPathoLabs</strong> Diagnostic Laboratory Information System (LIS). If you are using the platform on behalf of a Covered Entity, Business Associate, or Healthcare Provider, your usage is subject to the executing Business Associate Agreement (BAA) and Data Processing Addendum (DPA) as incorporated herein.
+                    </div>
+                </div>
+            </div>
             
             <div class="prose max-w-none relative z-10">
-                <p>Welcome to <strong>MyPathoLabs</strong>. These Terms of Service ("Terms") govern your access to and use of the MyPathoLabs website, software, and services (collectively, the "Platform"). Please read these Terms carefully before using the Platform.</p>
+                <p>Welcome to <strong>MyPathoLabs</strong>. These Enterprise Terms of Service ("<strong>Terms</strong>", "<strong>Agreement</strong>") constitute a legally binding agreement executed between <strong>MyPathoLabs Inc. / MyPathoLabs Technologies Private Limited</strong> ("<strong>MyPathoLabs</strong>", "<strong>Company</strong>", "<strong>We</strong>", "<strong>Us</strong>", or "<strong>Our</strong>") and the subscribing diagnostic laboratory, healthcare organization, clinic, hospital, or enterprise client ("<strong>Subscriber</strong>", "<strong>Customer</strong>", "<strong>You</strong>", or "<strong>User</strong>").</p>
 
-                <h2>1. Acceptance of Terms</h2>
-                <p>By creating an account, accessing, or using the Platform, you agree to be bound by these Terms and our Privacy Policy. If you do not agree to these Terms, you must not access or use the Platform. These Terms apply to all users, including laboratories, administrators, and staff members.</p>
+                <h2>1. Acceptance of Terms & Legal Authority</h2>
+                <p>By registering for an account, accessing, deploying, or utilizing the MyPathoLabs software platform, APIs, databases, microservices, or mobile interfaces (collectively, the "<strong>Platform</strong>"), you explicitly acknowledge that you have read, understood, and agreed to be bound by these Terms and our <a href="privacy-policy.html" class="text-brand-600 font-semibold underline">Privacy Policy</a>.</p>
+                <p>If you are entering into this Agreement on behalf of a legal entity (such as a diagnostic laboratory network, hospital chain, or corporate healthcare provider), you represent and warrant that you possess the full legal authority to bind such entity to these Terms.</p>
 
-                <h2>2. Description of Service</h2>
-                <p>MyPathoLabs provides a cloud-based Laboratory Information System (LIS) designed to assist diagnostic laboratories in managing patient records, generating diagnostic reports, and facilitating laboratory workflows. The Platform is a tool for administrative and data management purposes and does not provide medical advice or diagnostic interpretations.</p>
+                <h2>2. Description of Platform & Clinical Disclaimer</h2>
+                <h3>2.1 Scope of Service</h3>
+                <p>MyPathoLabs provides a multi-tenant, enterprise-grade cloud Laboratory Information System (LIS) designed to automate diagnostic lab operations, patient record management, sample tracking, test order workflows, billing, integration with diagnostic machinery, and report generation.</p>
 
-                <h2>3. User Accounts and Responsibilities</h2>
+                <h3>2.2 Medical & Clinical Disclaimer</h3>
+                <p><strong>MYPATHOLABS IS A WORKFLOW MANAGEMENT AND DATA MANAGEMENT SOFTWARE TOOL ONLY. IT DOES NOT PROVIDE MEDICAL ADVICE, DIAGNOSTIC INTERPRETATIONS, OR CLINICAL DECISIONS.</strong></p>
                 <ul>
-                    <li><strong>Account Creation:</strong> You must provide accurate, current, and complete information during registration. You are responsible for maintaining the confidentiality of your account credentials.</li>
-                    <li><strong>Authorized Users:</strong> Only authorized staff members may access the Platform. You are responsible for all activities that occur under your laboratory's account.</li>
-                    <li><strong>Compliance:</strong> You agree to use the Platform in compliance with all applicable local, state, national, and international laws, rules, and regulations, specifically including healthcare data privacy laws (e.g., HIPAA, GDPR).</li>
+                    <li>All diagnostic reports, lab results, Reference Ranges, critical values, and medical test interpretations generated or stored on the Platform must be reviewed, verified, and signed off by a qualified, licensed Pathologist, Medical Practitioner, or Laboratory Director in accordance with local healthcare laws.</li>
+                    <li>Subscribers retain full clinical responsibility for patient diagnosis, treatment plans, and medical care outcomes.</li>
                 </ul>
 
-                <h2>4. Data Ownership and Licensing</h2>
-                <p><strong>Your Data:</strong> You retain all rights, title, and interest in and to all patient data, reports, and information you upload or process through the Platform. You grant MyPathoLabs a limited, non-exclusive license to host, copy, transmit, and display your data strictly for the purpose of providing the service to you.</p>
-                <p><strong>Our Platform:</strong> MyPathoLabs retains all intellectual property rights in the software, interfaces, graphics, and underlying technology of the Platform.</p>
+                <h2>3. Global Regulatory Compliance Standards</h2>
+                <p>MyPathoLabs is engineered to satisfy stringent global regulatory frameworks governing healthcare data privacy, security, and medical software compliance.</p>
 
-                <h2>5. HIPAA and Regulatory Compliance</h2>
-                <p>While MyPathoLabs implements enterprise-grade security and architecture designed to support regulatory compliance, the responsibility for ensuring that your specific use of the Platform complies with HIPAA and other applicable healthcare regulations rests solely with you. If you are subject to HIPAA, you must request and execute a Business Associate Agreement (BAA) with MyPathoLabs prior to processing Protected Health Information (PHI).</p>
-
-                <h2>6. Prohibited Conduct</h2>
-                <p>You agree not to:</p>
+                <h3>3.1 United States: HIPAA & HITECH Compliance</h3>
+                <p>For Subscribers subject to the U.S. Health Insurance Portability and Accountability Act of 1996 ("<strong>HIPAA</strong>") and the Health Information Technology for Economic and Clinical Health Act ("<strong>HITECH</strong>"):</p>
                 <ul>
-                    <li>Use the Platform for any illegal, unauthorized, or fraudulent purpose.</li>
-                    <li>Attempt to gain unauthorized access to any portion of the Platform, other user accounts, or our computer systems.</li>
-                    <li>Interfere with or disrupt the integrity or performance of the Platform or third-party data contained therein.</li>
-                    <li>Reverse engineer, decompile, or disassemble any aspect of the Platform.</li>
+                    <li>MyPathoLabs acts as a <strong>Business Associate</strong> to Covered Entities.</li>
+                    <li>Subscribers processing Protected Health Information (PHI) must request and execute our standard <strong>Business Associate Agreement (BAA)</strong> prior to transmitting PHI through the Platform.</li>
+                    <li>MyPathoLabs maintains administrative, physical, and technical safeguards complying with 45 CFR Part 160 and Part 164 (Subparts A and C).</li>
                 </ul>
 
-                <h2>7. Limitation of Liability</h2>
-                <p>To the maximum extent permitted by applicable law, MyPathoLabs and its affiliates, officers, employees, and agents shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses, resulting from (a) your access to or use of or inability to access or use the Platform; (b) any conduct or content of any third party on the Platform; or (c) unauthorized access, use, or alteration of your transmissions or content.</p>
+                <h3>3.2 European Union & United Kingdom: GDPR / UK GDPR</h3>
+                <p>For data subjects residing in the European Economic Area (EEA) or United Kingdom under the General Data Protection Regulation ("<strong>GDPR</strong>"):</p>
+                <ul>
+                    <li>The Subscriber acts as the <strong>Data Controller</strong>, and MyPathoLabs acts as the <strong>Data Processor</strong>.</li>
+                    <li>Data transfers outside the EEA/UK are governed by standard EU Model Clauses (Standard Contractual Clauses / SCCs) and UK International Data Transfer Addendums (IDTA).</li>
+                </ul>
 
-                <h2>8. Medical Disclaimer</h2>
-                <p>The Platform is an administrative tool. It is not a substitute for professional medical judgment. You are solely responsible for the accuracy of data entered and the medical decisions made based on reports generated using the Platform.</p>
+                <h3>3.3 India: Digital Personal Data Protection (DPDP) Act 2023 & IT Act</h3>
+                <p>For operations located in or serving data subjects in India:</p>
+                <ul>
+                    <li>The Subscriber acts as the <strong>Data Fiduciary</strong>, and MyPathoLabs acts as the <strong>Data Processor</strong> under Section 6 of the DPDP Act 2023.</li>
+                    <li>Platform architecture complies with the Information Technology Act, 2000, IT (Reasonable Security Practices and Procedures and Sensitive Personal Data or Information) Rules 2011, and guidelines of the National Medical Commission (NMC) and DISHA (Digital Information Security in Healthcare Act).</li>
+                </ul>
 
-                <h2>9. Termination</h2>
-                <p>We reserve the right to suspend or terminate your access to the Platform at our sole discretion, without prior notice, if you breach these Terms. Upon termination, your right to use the Platform will immediately cease, and you may request an export of your data subject to our data retention policies.</p>
+                <h3>3.4 Other Worldwide Jurisdictions</h3>
+                <p>The Platform provides compliance-ready infrastructure supporting California CCPA/CPRA (US), PIPEDA (Canada), LGPD (Brazil), and Privacy Act (Australia).</p>
 
-                <h2>10. Modifications to the Terms</h2>
-                <p>We may modify these Terms at any time. We will provide notice of material changes by posting the updated Terms on the Platform. Your continued use of the Platform following such modifications constitutes your acceptance of the revised Terms.</p>
+                <h2>4. Account Management, RBAC & Security Obligations</h2>
+                <ul>
+                    <li><strong>Role-Based Access Control (RBAC):</strong> Subscribers are responsible for establishing granular access permissions for staff, lab technicians, phlebotomists, and administrative personnel.</li>
+                    <li><strong>Credential Protection & Multi-Factor Authentication (MFA):</strong> Subscribers must enforce strong passwords and MFA across all user accounts. Sharing credentials or using generic shared logins is strictly prohibited.</li>
+                    <li><strong>Audit Logging:</strong> The Platform automatically maintains immutable audit logs tracking user authentication, record views, edits, report downloads, and administrative actions for security compliance.</li>
+                </ul>
 
-                <h2>11. Governing Law</h2>
-                <p>These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which MyPathoLabs is established, without regard to its conflict of law provisions.</p>
+                <h2>5. Data Ownership & Intellectual Property</h2>
+                <h3>5.1 Subscriber Data Ownership</h3>
+                <p>Subscriber retains exclusive ownership, title, and all intellectual property rights in and to all patient records, test results, lab metrics, and operational data ("<strong>Subscriber Data</strong>") uploaded or generated on the Platform.</p>
+
+                <h3>5.2 Platform Proprietary Rights</h3>
+                <p>MyPathoLabs retains all rights, title, and interest (including patents, copyrights, trade secrets, and trademarks) in the software architecture, algorithms, UI/UX designs, APIs, and underlying source code of the Platform. Subscriber receives a limited, non-exclusive, non-transferable, non-sublicensable license during the active subscription term.</p>
+
+                <h2>6. Enterprise Service Level Agreement (SLA) & Uptime</h2>
+                <ul>
+                    <li><strong>Target Uptime SLA:</strong> MyPathoLabs guarantees a Monthly Uptime Percentage of <strong>99.9%</strong> for core Platform infrastructure, excluding scheduled maintenance windows.</li>
+                    <li><strong>Scheduled Maintenance:</strong> Maintenance windows are scheduled during off-peak hours (between 01:00 AM and 04:00 AM UTC) with a minimum of 48 hours advance notification provided to administrators.</li>
+                    <li><strong>Data Redundancy & Backups:</strong> Automated encrypted backups (AES-256) are performed hourly, with geo-redundant storage across isolated availability zones.</li>
+                </ul>
+
+                <h2>7. Acceptable Use Policy & Prohibited Conduct</h2>
+                <p>Subscribers and authorized users strictly agree NOT to:</p>
+                <ul>
+                    <li>Decompile, reverse engineer, disassemble, or attempt to derive source code from the Platform.</li>
+                    <li>Exceed API rate limits, conduct automated unauthorized scraping, or attempt penetration testing without explicit prior written authorization.</li>
+                    <li>Process or store unlawful, malicious, or deceptive payloads, including software viruses or ransomware.</li>
+                    <li>Bypass or attempt to exploit access control mechanics, cryptographic tokens, or role scopes.</li>
+                </ul>
+
+                <h2>8. Subscription, Fees & Enterprise Invoicing</h2>
+                <p>Platform access is billed on a monthly or annual subscription tier based on active laboratory count, monthly report volumes, and enterprise module add-ons. Fees are non-refundable once billed. Failure to settle invoices within thirty (30) days of the due date may result in temporary account suspension, subject to data preservation guarantees under Section 10.</p>
+
+                <h2>9. Limitation of Liability & Mutual Indemnification</h2>
+                <h3>9.1 Limitation of Liability</h3>
+                <p><strong>TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL MYPATHOLABS BE LIABLE FOR ANY INDIRECT, INCIDENTAL, CONSEQUENTIAL, SPECIAL, OR PUNITIVE DAMAGES, OR FOR LOSS OF PROFITS, DATA LOSS, OR BUSINESS INTERRUPTION, ARISING OUT OF OR IN CONNECTION WITH THE PLATFORM.</strong></p>
+                <p>MyPathoLabs' total aggregate liability under this Agreement shall not exceed the total fees paid by Subscriber to MyPathoLabs during the twelve (12) calendar months preceding the incident giving rise to liability.</p>
+
+                <h3>9.2 Mutual Indemnification</h3>
+                <p>Subscriber agrees to defend, indemnify, and hold harmless MyPathoLabs against any third-party claims arising from Subscriber's clinical operations, medical misdiagnosis, or breach of applicable data protection laws. MyPathoLabs agrees to defend Subscriber against third-party claims alleging that the Platform infringes valid registered intellectual property rights.</p>
+
+                <h2>10. Data Retention, Account Termination & Offboarding</h2>
+                <ul>
+                    <li><strong>Termination for Convenience:</strong> Subscriber may terminate their subscription by providing thirty (30) days written notice prior to the end of the current billing cycle.</li>
+                    <li><strong>Data Export Grace Period:</strong> Upon account termination, Subscriber will be granted a <strong>30-day grace period</strong> to export all Subscriber Data in standard machine-readable formats (JSON, CSV, or FHIR/HL7 compatible export).</li>
+                    <li><strong>Cryptographic Data Purging:</strong> Following the 30-day grace period, MyPathoLabs will perform secure cryptographic erasure of Subscriber Data from active and backup storage in compliance with DoD 5220.22-M / NIST SP 800-88 sanitization guidelines, unless statutory medical retention mandates apply.</li>
+                </ul>
+
+                <h2>11. Governing Law & Dispute Resolution</h2>
+                <p>This Agreement shall be governed by and construed under the laws of the jurisdiction of incorporation of MyPathoLabs, without regard to conflict of law principles. Any dispute arising out of or relating to this Agreement shall be resolved through binding arbitration under the rules of the International Chamber of Commerce (ICC) or relevant national arbitration body, with proceedings conducted in English.</p>
+
+                <h2>12. Contact & Compliance Officer Details</h2>
+                <p>For questions regarding these Terms, enterprise contract execution, BAA requests, or legal notices, please reach out to our legal and compliance department:</p>
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 mt-4 text-sm">
+                    <p class="mb-1"><strong>MyPathoLabs Legal & Compliance Division</strong></p>
+                    <p class="mb-1"><i class="fas fa-envelope text-brand-600 mr-2"></i> Legal & Compliance: <a href="mailto:legal@mypatholabs.com" class="text-brand-600 underline">legal@mypatholabs.com</a></p>
+                    <p class="mb-1"><i class="fas fa-user-shield text-brand-600 mr-2"></i> Data Protection Officer: <a href="mailto:dpo@mypatholabs.com" class="text-brand-600 underline">pranshuvramani@gmail.com</a></p>
+                    <p class="mb-0"><i class="fas fa-building text-brand-600 mr-2"></i> Corporate Headquarters: Enterprise Tech Park, Financial District, India / USA</p>
+                </div>
             </div>
         </div>
         
         <div class="mt-8 text-center text-sm font-medium text-slate-400">
-            &copy; 2026 MyPathoLabs. All rights reserved.
+            &copy; 2026 MyPathoLabs Technologies Inc. All rights reserved. Enterprise LIS System v2.4.0.
         </div>
     </div>
     <script>
@@ -113,5 +214,3 @@
     <script src="js/app.js"></script>
 </body>
 </html>
-
-

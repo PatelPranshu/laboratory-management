@@ -84,6 +84,7 @@ const protect = async (req, res, next) => {
         role: dbUser.role,
         parentAdminId: dbUser.parentAdminId,
         name: dbUser.name,
+        labName: dbUser.labName,
         passwordChangedAt: dbUser.passwordChangedAt ? dbUser.passwordChangedAt.getTime() : null
       };
 
@@ -105,6 +106,7 @@ const protect = async (req, res, next) => {
       role: user.role,
       parentAdminId: user.parentAdminId,
       name: user.name,
+      labName: user.labName
     };
 
     next();

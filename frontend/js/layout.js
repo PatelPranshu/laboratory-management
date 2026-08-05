@@ -16,6 +16,8 @@ function sanitizeForHtml(str) {
 }
 
 function loadCommonLayout() {
+    if (document.getElementById('main-sidebar')) return;
+
     let labName = 'MyPathoLabs';
     let u = null;
     const userStr = localStorage.getItem('lis_user');
@@ -166,8 +168,6 @@ function loadCommonLayout() {
                 </button>
             `;
             
-            // Find search bar or breadcrumbs to insert before
-            const searchBar = header.querySelector('.flex-1.w-full.max-w-2xl') || header.querySelector('nav');
             const logoHTML = `
                 <div class="header-logo flex items-center lg:hidden mr-4 shrink-0 cursor-pointer" onclick="window.location.href='dashboard.html'">
                     <div class="bg-brand-600 p-1.5 rounded-lg shadow-sm mr-2.5">
@@ -177,10 +177,12 @@ function loadCommonLayout() {
                 </div>
             `;
             
-            if (searchBar) {
-                searchBar.insertAdjacentHTML('beforebegin', hamburgerBtn + logoHTML);
-            } else {
-                header.insertAdjacentHTML('afterbegin', hamburgerBtn + logoHTML);
+            // Insert directly as top-level children of <header>
+            header.insertAdjacentHTML('afterbegin', hamburgerBtn + logoHTML);
+
+            const actionsEl = header.querySelector('#header-actions');
+            if (actionsEl && !actionsEl.classList.contains('ml-auto')) {
+                actionsEl.classList.add('ml-auto');
             }
         }
 
@@ -530,5 +532,19 @@ function closeMobileSidebar() {
         document.body.style.overflow = '';
     }, 300);
 }
+
+// Auto-run layout initialization safely
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!document.getElementById('main-sidebar')) {
+            loadCommonLayout();
+        }
+    });
+} else {
+    if (!document.getElementById('main-sidebar')) {
+        loadCommonLayout();
+    }
+}
+
 
 

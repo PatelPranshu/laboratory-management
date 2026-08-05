@@ -52,8 +52,11 @@ exports.inviteStaff = async (req, res) => {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
   const inviteLink = `${frontendUrl}/register-staff.html?token=${token}`;
 
+  const labName = req.user.labName || 'MyPathoLabs Laboratory';
+  const inviterName = req.user.name || 'Lab Administrator';
+
   try {
-    await sendInvitationEmail(email, role, inviteLink);
+    await sendInvitationEmail(email, role, inviteLink, labName, inviterName);
     // Ensure we immediately notify the admin
     res.status(200).json({ success: true, message: 'Invitation email successfully sent!' });
   } catch (emailError) {
