@@ -17,7 +17,7 @@ const init = (server) => {
           return callback(null, true);
         }
 
-        if (!origin || origin === 'https://mypatholabs.tech' || origin === 'https://www.mypatholabs.tech' || origin === 'https://mylaboratory.onrender.com' || origin === 'https://mypatholabs2.onrender.com' || origin === 'https://mypatholabs3.onrender.com' || allowedOrigins.indexOf(origin) !== -1) {
+        if (!origin || origin === 'https://mypatholabs.tech' || origin === 'https://www.mypatholabs.tech' || origin.endsWith('.onrender.com') || allowedOrigins.indexOf(origin) !== -1) {
           return callback(null, true);
         }
 

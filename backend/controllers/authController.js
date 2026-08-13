@@ -23,11 +23,12 @@ const sendTokenResponse = (user, statusCode, res) => {
   // Expiration time for the frontend to manage its own redirect synchronously
   const expTimeMs = Date.now() + 8 * 60 * 60 * 1000;
 
+  const isProd = process.env.NODE_ENV === 'production';
   const options = {
     expires: new Date(expTimeMs),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // Only require HTTPS in production
-    sameSite: 'lax'
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax'
   };
 
   res
@@ -492,7 +493,7 @@ exports.logout = async (req, res) => {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax'
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   });
 
   res.status(200).json({
@@ -574,7 +575,7 @@ exports.deleteLab = async (req, res) => {
       expires: new Date(Date.now() + 10 * 1000),
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     });
 
     res.status(200).json({ success: true, message: 'Lab scheduled for permanent deletion in 30 days.' });
