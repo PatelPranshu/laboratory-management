@@ -397,8 +397,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==================== Data Export ====================
     window.exportLabsCsv = async () => {
         try {
-            const response = await fetch(`${BASE_URL}/superadmin/export/labs`, { credentials: 'include' });
-            if (!response.ok) throw new Error('Export failed');
+            const response = await api.request('/superadmin/export/labs');
+            if (!response || !response.ok) throw new Error('Export failed');
 
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);

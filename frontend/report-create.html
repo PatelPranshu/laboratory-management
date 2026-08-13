@@ -2080,11 +2080,9 @@
             });
 
             try {
-                const url = `${BASE_URL}/reports/${id}/pdf${!withHeaderFooter ? '?withHeaderFooter=false' : ''}`;
-                const res = await fetch(url, {
-                    credentials: 'include'
-                });
-                if (!res.ok) {
+                const endpoint = `/reports/${id}/pdf${!withHeaderFooter ? '?withHeaderFooter=false' : ''}`;
+                const res = await api.request(endpoint);
+                if (!res || !res.ok) {
                     throw new Error('Failed to generate PDF');
                 }
                 
