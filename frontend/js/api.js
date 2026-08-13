@@ -109,7 +109,11 @@ const api = {
   async request(endpoint, method = 'GET', body = null, signal = null) {
     const headers = {};
 
-    // Authorization header is removed because the token is now sent via HttpOnly cookie
+    // Support both HttpOnly cookies AND Bearer Authorization header for cross-site fallback
+    const token = localStorage.getItem('lis_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
     const config = {
       method,
@@ -180,7 +184,11 @@ const api = {
 
   // Auth Helpers
   async login(email, password) {
-    return this.request('/auth/login', 'POST', { email, password });
+    const res = await this.request('/auth/login', 'POST', { email, password });
+    if (res && res.token) {
+      localStorage.setItem('lis_token', res.token);
+    }
+    return res;
   },
 
   async register(data) {
@@ -205,7 +213,11 @@ const api = {
   },
 
   async mfaVerifyLogin(mfaToken, code, isBackup = false) {
-    return this.request('/mfa/verify-login', 'POST', { mfaToken, code, isBackup });
+    const res = await this.request('/mfa/verify-login', 'POST', { mfaToken, code, isBackup });
+    if (res && res.token) {
+      localStorage.setItem('lis_token', res.token);
+    }
+    return res;
   },
 
   async mfaDisable(password, code) {

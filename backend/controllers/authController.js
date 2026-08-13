@@ -17,18 +17,19 @@ const generateToken = (user) => {
 // Exported for shared use by staffController
 
 // Helper function to send token in HttpOnly cookie
-const sendTokenResponse = (user, statusCode, res) => {
+const sendTokenResponse = (user, statusCode, res, req = null) => {
   const token = generateToken(user);
 
   // Expiration time for the frontend to manage its own redirect synchronously
   const expTimeMs = Date.now() + 8 * 60 * 60 * 1000;
 
-  const isProd = process.env.NODE_ENV === 'production';
+  // Determine if secure protocol is used (HTTPS or proxy headers like Render)
+  const isSecure = (req && (req.secure || (req.headers && req.headers['x-forwarded-proto'] === 'https'))) || process.env.NODE_ENV === 'production' || true;
   const options = {
     expires: new Date(expTimeMs),
     httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax'
+    secure: isSecure,
+    sameSite: isSecure ? 'none' : 'lax'
   };
 
   res
@@ -36,6 +37,7 @@ const sendTokenResponse = (user, statusCode, res) => {
     .cookie('lis_token', token, options)
     .json({
       success: true,
+      token, // Return token for Bearer Authorization header fallback in cross-origin environments
       exp: Math.floor(expTimeMs / 1000), // Return expiration time in seconds for frontend checking
       user: {
         id: user._id,
@@ -45,8 +47,7 @@ const sendTokenResponse = (user, statusCode, res) => {
         labName: user.labName,
         parentAdminId: user.parentAdminId,
         accountStatus: user.accountStatus,
-        isVerified: user.isVerified,
-
+        isVerified: user.isVerified
       }
     });
 };
@@ -221,7 +222,7 @@ exports.login = async (req, res) => {
 
   logAudit('LOGIN_SUCCESS', user._id, user._id, 'Auth', `User "${user.name}" (${user.email}) logged in successfully`, getClientIp(req));
 
-  sendTokenResponse(user, 200, res);
+  sendTokenResponse(user, 200, res, req);
 };
 
 // @desc    Get current logged in user

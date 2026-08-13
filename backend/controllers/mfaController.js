@@ -170,7 +170,7 @@ exports.verifyLogin = async (req, res) => {
     logAudit('MFA_BACKUP_USED', user._id, user._id, 'Auth', `Backup code used for MFA login by ${user.email}`, getClientIp(req));
     logAudit('LOGIN_MFA_SUCCESS', user._id, user._id, 'Auth', `MFA step-up login successful via backup code for ${user.email}`, getClientIp(req));
 
-    return sendTokenResponse(user, 200, res);
+    return sendTokenResponse(user, 200, res, req);
   }
 
   // Standard TOTP Verification
@@ -191,7 +191,7 @@ exports.verifyLogin = async (req, res) => {
 
   logAudit('LOGIN_MFA_SUCCESS', user._id, user._id, 'Auth', `MFA step-up login successful for ${user.email}`, getClientIp(req));
 
-  sendTokenResponse(user, 200, res);
+  sendTokenResponse(user, 200, res, req);
 };
 
 // @desc    Disable MFA (Requires password + TOTP confirmation)
