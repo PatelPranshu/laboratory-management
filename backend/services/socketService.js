@@ -17,11 +17,11 @@ const init = (server) => {
           return callback(null, true);
         }
 
-        if (!origin || origin === 'https://mypatholabs.tech' || origin === 'https://www.mypatholabs.tech' || origin.endsWith('.onrender.com') || allowedOrigins.indexOf(origin) !== -1) {
+        if (!origin || origin.includes('mypatholabs.tech') || origin.endsWith('.onrender.com') || allowedOrigins.indexOf(origin) !== -1) {
           return callback(null, true);
         }
 
-        return callback(new Error('CORS not allowed'), false);
+        return callback(null, false);
       },
       methods: ["GET", "POST"],
       credentials: true

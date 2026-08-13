@@ -77,11 +77,11 @@ app.use(cors({
     
     // Strict origin check for production frontend (Cross-Origin Same-Site)
     // Allow !origin for Render internal health checks to pass without timing out
-    if (!origin || origin === 'https://mypatholabs.tech' || origin === 'https://www.mypatholabs.tech' || origin.endsWith('.onrender.com') || allowedOrigins.includes(origin)) {
+    if (!origin || origin.includes('mypatholabs.tech') || origin.endsWith('.onrender.com') || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    return callback(new Error('CORS not allowed'), false);
+    return callback(null, false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-datadog-origin', 'x-datadog-parent-id', 'x-datadog-trace-id', 'x-datadog-sampling-priority', 'traceparent', 'tracestate'],

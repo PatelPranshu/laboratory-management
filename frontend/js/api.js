@@ -7,9 +7,9 @@ const TERTIARY_SERVER = 'https://mylaboratory.onrender.com';
 const BASE_URL = (() => {
   const hostname = window.location.hostname;
 
-  // Production URL mapping
+  // Production URL mapping — route to active PRIMARY_SERVER (mypatholabs3.onrender.com)
   if (hostname === 'www.mypatholabs.tech' || hostname === 'mypatholabs.tech') {
-    return 'https://api.mypatholabs.tech/api';
+    return `${PRIMARY_SERVER}/api`;
   }
 
   if (hostname === 'laboratory-management-six.vercel.app') {
@@ -47,9 +47,9 @@ const API_URL = BASE_URL; // Global alias for scripts using old naming conventio
 const SOCKET_URL = (() => {
   const hostname = window.location.hostname;
 
-  // Production: backend is on api.mypatholabs.tech
+  // Production: route to active PRIMARY_SERVER
   if (hostname === 'www.mypatholabs.tech' || hostname === 'mypatholabs.tech') {
-    return 'https://api.mypatholabs.tech';
+    return PRIMARY_SERVER;
   }
 
   // Staging / Vercel preview → Render backend
