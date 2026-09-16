@@ -168,17 +168,15 @@ exports.completeRegistration = async (req, res) => {
     const tokenAuth = generateToken(user);
     const expTimeMs = Date.now() + 8 * 60 * 60 * 1000;
 
-    const isSecure = (req && (req.secure || (req.headers && req.headers['x-forwarded-proto'] === 'https'))) || process.env.NODE_ENV === 'production' || true;
     const options = {
       expires: new Date(expTimeMs),
       httpOnly: true,
-      secure: isSecure,
-      sameSite: isSecure ? 'none' : 'lax'
+      secure: true,
+      sameSite: 'lax'
     };
 
     res.status(201).cookie('lis_token', tokenAuth, options).json({
       success: true,
-      token: tokenAuth,
       exp: Math.floor(expTimeMs / 1000),
       user: {
         id: user._id,

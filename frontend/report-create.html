@@ -748,7 +748,23 @@
                 if (templatesData.length === 0) { container.innerHTML = '<span class="text-sm text-slate-400 font-medium">No Templates Found</span>'; return; }
                 templatesData.forEach(t => {
                     const wrapper = document.createElement('div');
-                    wrapper.innerHTML = `<input type="checkbox" id="tpl-${t._id}" class="hidden chip-checkbox" value="${t._id}" onchange="toggleTemplate(this, '${t._id}')"><label for="tpl-${t._id}" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-600 bg-white cursor-pointer hover:border-brand-400 transition-all block truncate max-w-[150px]" title="${sanitizeHTML(t.templateName)}">${sanitizeHTML(t.templateName)}</label>`;
+                    const hasPdfName = Boolean(
+                        t.showDifferentPdfName && 
+                        t.pdfTemplateName && 
+                        typeof t.pdfTemplateName === 'string' && 
+                        t.pdfTemplateName.trim() && 
+                        t.pdfTemplateName.trim().toLowerCase() !== (t.templateName || '').trim().toLowerCase()
+                    );
+                    const safeTemplateName = sanitizeHTML(t.templateName || '');
+                    const safePdfName = hasPdfName ? sanitizeHTML(t.pdfTemplateName.trim()) : '';
+                    const labelTitle = hasPdfName 
+                        ? `${safeTemplateName} (${safePdfName})` 
+                        : safeTemplateName;
+                    const labelContent = hasPdfName 
+                        ? `${safeTemplateName} <span class="text-[10px] opacity-75 font-normal ml-1">(${safePdfName})</span>` 
+                        : safeTemplateName;
+
+                    wrapper.innerHTML = `<input type="checkbox" id="tpl-${t._id}" class="hidden chip-checkbox" value="${t._id}" onchange="toggleTemplate(this, '${t._id}')"><label for="tpl-${t._id}" class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-600 bg-white cursor-pointer hover:border-brand-400 transition-all block whitespace-nowrap max-w-full" title="${labelTitle}">${labelContent}</label>`;
                     container.appendChild(wrapper.firstElementChild); container.appendChild(wrapper.lastElementChild);
                 });
             } catch (err) { }
@@ -2080,9 +2096,11 @@
             });
 
             try {
-                const endpoint = `/reports/${id}/pdf${!withHeaderFooter ? '?withHeaderFooter=false' : ''}`;
-                const res = await api.request(endpoint);
-                if (!res || !res.ok) {
+                const url = `${BASE_URL}/reports/${id}/pdf${!withHeaderFooter ? '?withHeaderFooter=false' : ''}`;
+                const res = await fetch(url, {
+                    credentials: 'include'
+                });
+                if (!res.ok) {
                     throw new Error('Failed to generate PDF');
                 }
                 

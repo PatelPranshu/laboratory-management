@@ -17,19 +17,17 @@ const generateToken = (user) => {
 // Exported for shared use by staffController
 
 // Helper function to send token in HttpOnly cookie
-const sendTokenResponse = (user, statusCode, res, req = null) => {
+const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user);
 
   // Expiration time for the frontend to manage its own redirect synchronously
   const expTimeMs = Date.now() + 8 * 60 * 60 * 1000;
 
-  // Determine if secure protocol is used (HTTPS or proxy headers like Render)
-  const isSecure = (req && (req.secure || (req.headers && req.headers['x-forwarded-proto'] === 'https'))) || process.env.NODE_ENV === 'production' || true;
   const options = {
     expires: new Date(expTimeMs),
     httpOnly: true,
-    secure: isSecure,
-    sameSite: isSecure ? 'none' : 'lax'
+    secure: process.env.NODE_ENV === 'production', // Only require HTTPS in production
+    sameSite: 'lax'
   };
 
   res
@@ -37,7 +35,6 @@ const sendTokenResponse = (user, statusCode, res, req = null) => {
     .cookie('lis_token', token, options)
     .json({
       success: true,
-      token, // Return token for Bearer Authorization header fallback in cross-origin environments
       exp: Math.floor(expTimeMs / 1000), // Return expiration time in seconds for frontend checking
       user: {
         id: user._id,
@@ -47,7 +44,8 @@ const sendTokenResponse = (user, statusCode, res, req = null) => {
         labName: user.labName,
         parentAdminId: user.parentAdminId,
         accountStatus: user.accountStatus,
-        isVerified: user.isVerified
+        isVerified: user.isVerified,
+
       }
     });
 };
@@ -222,7 +220,7 @@ exports.login = async (req, res) => {
 
   logAudit('LOGIN_SUCCESS', user._id, user._id, 'Auth', `User "${user.name}" (${user.email}) logged in successfully`, getClientIp(req));
 
-  sendTokenResponse(user, 200, res, req);
+  sendTokenResponse(user, 200, res);
 };
 
 // @desc    Get current logged in user
@@ -494,7 +492,7 @@ exports.logout = async (req, res) => {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    sameSite: 'lax'
   });
 
   res.status(200).json({
@@ -576,7 +574,7 @@ exports.deleteLab = async (req, res) => {
       expires: new Date(Date.now() + 10 * 1000),
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+      sameSite: 'lax'
     });
 
     res.status(200).json({ success: true, message: 'Lab scheduled for permanent deletion in 30 days.' });

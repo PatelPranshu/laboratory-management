@@ -138,7 +138,7 @@ exports.getReports = async (req, res) => {
   const [reports, total] = await Promise.all([
     ReportInstance.find(query)
       .select('-sections -auditLogs -amendmentHistory')
-      .populate('patientId', 'name phone age gender')
+      .populate('patientId', 'name phone age ageUnit gender')
       .populate('templateIds', 'templateName')
       .populate('performedByLabTechId', 'fullName doctorName signatureUrl')
       .skip(startIndex)
@@ -479,7 +479,7 @@ exports.generatePdf = async (req, res) => {
   // but the route restricts generatePdf to Admin/Doctor anyway.
   const report = await ReportInstance.findOne(query)
     .populate('patientId')
-    .populate('templateIds', 'templateName')
+    .populate('templateIds', 'templateName pdfTemplateName showDifferentPdfName')
     .populate('performedByLabTechId', 'fullName doctorName signatureUrl')
     .lean();
 
@@ -541,7 +541,13 @@ exports.generatePdf = async (req, res) => {
     .replace(/\s+/g, '_');
 
   const templateNames = (report.templateIds || [])
-    .map(t => (t.templateName || '').replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_'))
+    .map(t => {
+      if (!t || typeof t !== 'object') return '';
+      const name = (t.showDifferentPdfName && t.pdfTemplateName && typeof t.pdfTemplateName === 'string' && t.pdfTemplateName.trim())
+        ? t.pdfTemplateName.trim()
+        : (t.templateName || '');
+      return name.replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_');
+    })
     .filter(Boolean);
 
   let baseName = [patientName, ...templateNames].join('_');

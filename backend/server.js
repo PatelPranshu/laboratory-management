@@ -77,11 +77,11 @@ app.use(cors({
     
     // Strict origin check for production frontend (Cross-Origin Same-Site)
     // Allow !origin for Render internal health checks to pass without timing out
-    if (!origin || origin.includes('mypatholabs.tech') || origin.endsWith('.onrender.com') || allowedOrigins.includes(origin)) {
+    if (!origin || origin === 'https://mypatholabs.tech' || origin === 'https://www.mypatholabs.tech' || origin === 'https://mylaboratory.onrender.com' || origin === 'https://mypatholabs2.onrender.com' || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    return callback(null, false);
+    return callback(new Error('CORS not allowed'), false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-datadog-origin', 'x-datadog-parent-id', 'x-datadog-trace-id', 'x-datadog-sampling-priority', 'traceparent', 'tracestate'],
@@ -98,7 +98,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'"], // Allow UI scripts but block external malicious scripts
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
       imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com"],
-      connectSrc: ["'self'", "https://api.mypatholabs.tech", "https://*.onrender.com"]
+      connectSrc: ["'self'", "https://api.mypatholabs.tech", "https://mylaboratory.onrender.com", "https://mypatholabs2.onrender.com"]
     }
   } : false,
   crossOriginResourcePolicy: { policy: 'cross-origin' }

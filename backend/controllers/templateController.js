@@ -4,7 +4,24 @@ const SharedBundle = require('../models/SharedBundle');
 const { pickFields } = require('../middlewares/validate');
 
 // Allowed fields for template create/update
-const TEMPLATE_FIELDS = ['templateName', 'department', 'reportType', 'sections'];
+const TEMPLATE_FIELDS = ['templateName', 'department', 'reportType', 'sections', 'showDifferentPdfName', 'pdfTemplateName'];
+
+const sanitizePdfTemplateName = (body) => {
+  if (body.showDifferentPdfName === true || body.showDifferentPdfName === 'true') {
+    body.showDifferentPdfName = true;
+    body.pdfTemplateName = typeof body.pdfTemplateName === 'string' ? body.pdfTemplateName.trim() : '';
+    if (!body.pdfTemplateName) {
+      return 'Template Name for PDF is required when custom PDF name is enabled.';
+    }
+    if (body.pdfTemplateName.length > 200) {
+      return 'Template Name for PDF cannot exceed 200 characters.';
+    }
+  } else {
+    body.showDifferentPdfName = false;
+    body.pdfTemplateName = '';
+  }
+  return null;
+};
 
 const unescapeOperators = (sections) => {
   if (!sections || !Array.isArray(sections)) return;
@@ -89,6 +106,11 @@ exports.createTemplate = async (req, res) => {
       return res.status(400).json({ success: false, error: validationError });
     }
 
+    const pdfNameError = sanitizePdfTemplateName(sanitizedBody);
+    if (pdfNameError) {
+      return res.status(400).json({ success: false, error: pdfNameError });
+    }
+
     const template = await ReportTemplate.create(sanitizedBody);
     res.status(201).json({ success: true, data: template });
   };
@@ -111,6 +133,11 @@ exports.updateTemplate = async (req, res) => {
     const validationError = validateTemplatePayload(sanitizedBody.sections);
     if (validationError) {
       return res.status(400).json({ success: false, error: validationError });
+    }
+
+    const pdfNameError = sanitizePdfTemplateName(sanitizedBody);
+    if (pdfNameError) {
+      return res.status(400).json({ success: false, error: pdfNameError });
     }
 
     template = await ReportTemplate.findByIdAndUpdate(req.params.id, sanitizedBody, {

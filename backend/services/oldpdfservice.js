@@ -246,8 +246,13 @@ exports.generateReportPdf = async (report, patient, settings) => {
     let currentTemplateName = 'TEST RESULTS';
     if (block.templateId !== 'unassigned') {
       const tmpl = (report.templateIds || []).find(t => t && typeof t === 'object' && t._id && t._id.toString() === block.templateId);
-      if (tmpl && tmpl.templateName) {
-        currentTemplateName = tmpl.templateName.toUpperCase();
+      if (tmpl) {
+        const effectiveName = (tmpl.showDifferentPdfName && tmpl.pdfTemplateName && typeof tmpl.pdfTemplateName === 'string' && tmpl.pdfTemplateName.trim())
+          ? tmpl.pdfTemplateName.trim()
+          : (tmpl.templateName || '');
+        if (effectiveName) {
+          currentTemplateName = effectiveName.toUpperCase();
+        }
       }
     }
 

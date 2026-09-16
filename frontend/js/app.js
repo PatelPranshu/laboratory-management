@@ -744,11 +744,12 @@ function downloadPdfGlobal(id, event) {
         }
 
         try {
-            const endpoint = url.includes('/api') ? url.substring(url.indexOf('/api') + 4) : url;
-            const response = await api.request(endpoint);
+            const response = await fetch(url, {
+                credentials: 'include'
+            });
             
-            if (!response || !response.ok) {
-                const errData = response && response.json ? await response.json().catch(() => ({})) : {};
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
                 throw new Error(errData.error || 'Failed to generate PDF');
             }
             

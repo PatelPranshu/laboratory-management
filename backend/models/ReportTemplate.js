@@ -70,7 +70,19 @@ const ReportTemplateSchema = new mongoose.Schema({
   },
   templateName: {
     type: String,
-    required: true
+    required: true,
+    trim: true,
+    maxlength: 200
+  },
+  showDifferentPdfName: {
+    type: Boolean,
+    default: false
+  },
+  pdfTemplateName: {
+    type: String,
+    trim: true,
+    maxlength: 200,
+    default: ''
   },
   department: {
     type: String,

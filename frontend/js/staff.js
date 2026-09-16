@@ -14,7 +14,8 @@ const fetchConfig = {
 
 async function fetchStaff() {
     try {
-        const data = await api.request('/staff');
+        const res = await fetch(`${API_URL}/staff`, fetchConfig);
+        const data = await res.json();
         
         const tbody = document.getElementById('staff-table-body');
         if (!data.success) {
@@ -75,7 +76,8 @@ window.deleteStaff = async function(id, name) {
     const confirmed = await UI.showConfirm('Remove Team Member', `Are you extremely sure you want to delete ${name}? This action cannot be undone.`, 'Remove', 'danger');
     if(!confirmed) return;
     try {
-        const data = await api.request(`/staff/${id}`, 'DELETE');
+        const res = await fetch(`${API_URL}/staff/${id}`, { method: 'DELETE', ...fetchConfig });
+        const data = await res.json();
         if(data.success) {
             UI.showToast(`Removed ${name}`, 'success');
             fetchStaff();
@@ -119,7 +121,12 @@ async function handleInvite(e) {
     UI.toggleLoader('btn-invite', true);
 
     try {
-        const data = await api.request('/staff/invite', 'POST', { email, role: document.getElementById('invite-role').value });
+        const res = await fetch(`${API_URL}/staff/invite`, {
+            method: 'POST',
+            ...fetchConfig,
+            body: JSON.stringify({ email, role: document.getElementById('invite-role').value })
+        });
+        const data = await res.json();
         
         if (data.success) {
             UI.showToast('Invitation sent successfully! (Check server console)');
