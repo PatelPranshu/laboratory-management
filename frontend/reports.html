@@ -150,9 +150,12 @@
                         </div>
 
                         <!-- Action Button -->
-                        <div>
-                            <button onclick="applyFilters()" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-2 py-[11px] rounded-xl transition-all font-bold shadow-md text-[11px] flex items-center justify-center group tracking-tighter">
+                        <div class="flex gap-2">
+                            <button onclick="applyFilters()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white px-2 py-[11px] rounded-xl transition-all font-bold shadow-md text-[11px] flex items-center justify-center group tracking-tighter">
                                 <i class="fas fa-filter mr-1.5 text-brand-200 group-hover:text-white transition-colors"></i> Filter
+                            </button>
+                            <button onclick="resetFilters()" id="btn-reset-filters" class="px-3 py-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all font-bold text-[11px] flex items-center justify-center tooltip-container" title="Reset all filters">
+                                <i class="fas fa-undo text-xs"></i>
                             </button>
                         </div>
                     </div>
@@ -228,6 +231,36 @@
                 document.getElementById('filter-status').value = statusFilter;
             }
 
+            if (urlParams.get('filter') === 'today' || urlParams.get('date') === 'today') {
+                const today = typeof getLocalDateString === 'function' ? getLocalDateString() : (() => {
+                    const d = new Date();
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                })();
+                startDateFilter = today;
+                endDateFilter = today;
+                const startEl = document.getElementById('filter-start-date');
+                const endEl = document.getElementById('filter-end-date');
+                if (startEl) startEl.value = today;
+                if (endEl) endEl.value = today;
+            } else {
+                if (urlParams.has('startDate')) {
+                    startDateFilter = urlParams.get('startDate');
+                    const startEl = document.getElementById('filter-start-date');
+                    if (startEl) startEl.value = startDateFilter;
+                }
+                if (urlParams.has('endDate')) {
+                    endDateFilter = urlParams.get('endDate');
+                    const endEl = document.getElementById('filter-end-date');
+                    if (endEl) endEl.value = endDateFilter;
+                }
+            }
+
+            if (urlParams.has('search')) {
+                searchQuery = urlParams.get('search');
+                const searchEl = document.getElementById('report-search');
+                if (searchEl) searchEl.value = searchQuery;
+            }
+
             loadReferrers();
             loadReports(1);
 
@@ -260,9 +293,9 @@
             
             try {
                 const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
-                const statusParam = statusFilter ? `&status=${statusFilter}` : '';
-                const startDateParam = startDateFilter ? `&startDate=${startDateFilter}` : '';
-                const endDateParam = endDateFilter ? `&endDate=${endDateFilter}` : '';
+                const statusParam = statusFilter ? `&status=${encodeURIComponent(statusFilter)}` : '';
+                const startDateParam = startDateFilter ? `&startDate=${encodeURIComponent(startDateFilter)}` : '';
+                const endDateParam = endDateFilter ? `&endDate=${encodeURIComponent(endDateFilter)}` : '';
                 const referredByParam = referredByFilter ? `&referredBy=${encodeURIComponent(referredByFilter)}` : '';
                 
                 const res = await api.request(`/reports?page=${page}&limit=10${searchParam}${statusParam}${startDateParam}${endDateParam}${referredByParam}`);
@@ -408,11 +441,46 @@
         }
 
         function applyFilters() {
-            searchQuery = document.getElementById('report-search').value;
-            statusFilter = document.getElementById('filter-status').value;
-            startDateFilter = document.getElementById('filter-start-date').value;
-            endDateFilter = document.getElementById('filter-end-date').value;
-            referredByFilter = document.getElementById('filter-referred-by').value;
+            searchQuery = (document.getElementById('report-search')?.value || '').trim();
+            statusFilter = document.getElementById('filter-status')?.value || '';
+            startDateFilter = document.getElementById('filter-start-date')?.value || '';
+            endDateFilter = document.getElementById('filter-end-date')?.value || '';
+            referredByFilter = document.getElementById('filter-referred-by')?.value || '';
+
+            if (window.history && window.history.replaceState) {
+                const params = new URLSearchParams();
+                if (searchQuery) params.set('search', searchQuery);
+                if (statusFilter) params.set('status', statusFilter);
+                if (startDateFilter) params.set('startDate', startDateFilter);
+                if (endDateFilter) params.set('endDate', endDateFilter);
+                if (referredByFilter) params.set('referredBy', referredByFilter);
+                const queryStr = params.toString();
+                const newUrl = queryStr ? `${window.location.pathname}?${queryStr}` : window.location.pathname;
+                window.history.replaceState({}, '', newUrl);
+            }
+
+            loadReports(1);
+        }
+
+        function resetFilters() {
+            const searchEl = document.getElementById('report-search');
+            const refEl = document.getElementById('filter-referred-by');
+            const startEl = document.getElementById('filter-start-date');
+            const endEl = document.getElementById('filter-end-date');
+            const statusEl = document.getElementById('filter-status');
+            if (searchEl) searchEl.value = '';
+            if (refEl) refEl.value = '';
+            if (startEl) startEl.value = '';
+            if (endEl) endEl.value = '';
+            if (statusEl) statusEl.value = '';
+            searchQuery = '';
+            statusFilter = '';
+            startDateFilter = '';
+            endDateFilter = '';
+            referredByFilter = '';
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState({}, '', window.location.pathname);
+            }
             loadReports(1);
         }
 

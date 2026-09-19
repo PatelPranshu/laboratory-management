@@ -88,6 +88,18 @@ function escapeHtml(str) {
   return typeof sanitizeHTML === 'function' ? sanitizeHTML(str) : str;
 }
 
+/**
+ * Get date formatted as YYYY-MM-DD in local time.
+ * @param {Date} [d=new Date()]
+ * @returns {string} YYYY-MM-DD
+ */
+function getLocalDateString(d = new Date()) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 class UI {
   static showToast(message, type = 'success') {
     let container = document.getElementById('toast-container');

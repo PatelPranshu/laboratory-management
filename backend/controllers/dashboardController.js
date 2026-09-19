@@ -89,8 +89,32 @@ exports.getSummary = async (req, res) => {
     let patientQuery = { doctorId: adminId };
     let reportQuery = { doctorId: adminId };
 
-    // Last 5 patients + last 5 reports in parallel (minimal field projection)
-    const [recentPatients, recentReports] = await Promise.all([
+    // Calculate Today's Reports range matching reportController
+    let todayStart;
+    let todayEnd;
+    if (typeof req.query.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date.trim())) {
+      const trimmedDate = req.query.date.trim();
+      const parsedDate = new Date(trimmedDate);
+      if (!isNaN(parsedDate.getTime())) {
+        todayStart = new Date(trimmedDate);
+        todayStart.setUTCHours(0, 0, 0, 0);
+        todayEnd = new Date(trimmedDate);
+        todayEnd.setUTCHours(23, 59, 59, 999);
+      }
+    }
+    if (!todayStart) {
+      const now = new Date();
+      todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+      todayEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+    }
+
+    const todayReportQuery = {
+      doctorId: adminId,
+      createdAt: { $gte: todayStart, $lte: todayEnd }
+    };
+
+    // Last 5 patients + last 5 reports + today's count in parallel (minimal field projection, index-backed)
+    const [recentPatients, recentReports, todayReports] = await Promise.all([
       Patient.find(patientQuery)
         .select('name phone age gender createdAt')
         .sort({ createdAt: -1 })
@@ -101,7 +125,8 @@ exports.getSummary = async (req, res) => {
         .populate('patientId', 'name')
         .sort({ createdAt: -1 })
         .limit(5)
-        .lean()
+        .lean(),
+      ReportInstance.countDocuments(todayReportQuery)
     ]);
 
     res.status(200).json({
@@ -111,6 +136,7 @@ exports.getSummary = async (req, res) => {
         totalReports: stats.totalReports,
         pendingReports: stats.pendingReports,
         sentReports: stats.sentReports,
+        todayReports: todayReports || 0,
         recentPatients,
         recentReports,
         weeklyReports: cachedStats.weeklyReports || []

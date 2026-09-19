@@ -93,14 +93,29 @@ exports.getReports = async (req, res) => {
 
   // Date range filtering
   if (req.query.startDate || req.query.endDate) {
-    query.createdAt = {};
-    if (req.query.startDate) {
-      query.createdAt.$gte = new Date(req.query.startDate);
+    const dateQuery = {};
+    if (typeof req.query.startDate === 'string' && req.query.startDate.trim()) {
+      const trimmedStart = req.query.startDate.trim();
+      const startDate = new Date(trimmedStart);
+      if (!isNaN(startDate.getTime())) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmedStart)) {
+          startDate.setUTCHours(0, 0, 0, 0);
+        }
+        dateQuery.$gte = startDate;
+      }
     }
-    if (req.query.endDate) {
-      const endDate = new Date(req.query.endDate);
-      endDate.setUTCHours(23, 59, 59, 999);
-      query.createdAt.$lte = endDate;
+    if (typeof req.query.endDate === 'string' && req.query.endDate.trim()) {
+      const trimmedEnd = req.query.endDate.trim();
+      const endDate = new Date(trimmedEnd);
+      if (!isNaN(endDate.getTime())) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmedEnd)) {
+          endDate.setUTCHours(23, 59, 59, 999);
+        }
+        dateQuery.$lte = endDate;
+      }
+    }
+    if (Object.keys(dateQuery).length > 0) {
+      query.createdAt = dateQuery;
     }
   }
 

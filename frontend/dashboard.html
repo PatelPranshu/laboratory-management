@@ -250,7 +250,11 @@
             }
 
             try {
-                const res = await api.request('/dashboard/summary');
+                const today = typeof getLocalDateString === 'function' ? getLocalDateString() : (() => {
+                    const d = new Date();
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                })();
+                const res = await api.request(`/dashboard/summary?date=${today}`);
                 const data = res.data;
 
                 // Render KPI
@@ -281,16 +285,16 @@
                         </div>
                     </div>
  
-                    <div class="glass-card relative overflow-hidden group cursor-pointer border border-slate-200 transition-all" onclick="window.location.href='reports?status=sent'">
+                    <div class="glass-card relative overflow-hidden group cursor-pointer border border-slate-200 transition-all hover:border-emerald-300" onclick="window.location.href='reports.html?filter=today'">
                         <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-emerald-500 opacity-5 rounded-full"></div>
                         <div class="p-4 sm:p-6">
                             <div class="flex items-start sm:items-center justify-between gap-1.5 mb-2 sm:mb-4">
-                                <p class="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider">Sent Reports</p>
+                                <p class="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider">Today Reports</p>
                                 <div class="p-2 sm:p-2.5 rounded-xl bg-emerald-50 text-emerald-600 shadow-sm border border-emerald-100/50 shrink-0">
-                                    <i class="fas fa-check-circle"></i>
+                                    <i class="fas fa-calendar-day"></i>
                                 </div>
                             </div>
-                            <h3 class="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">${data.sentReports}</h3>
+                            <h3 class="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">${data.todayReports ?? 0}</h3>
                         </div>
                     </div>
  
