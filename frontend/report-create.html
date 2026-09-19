@@ -575,6 +575,8 @@
 
         let templatesData = []; let currentPatient = null; let signaturesData = []; let referralsData = [];
         let isRestoringDraft = false;
+        let currentReportLayoutPreferences = null;
+        let labDefaultLayoutPreferences = null;
         /** Returns the active draft key based on URL context */
         function getActiveDraftKey() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -1547,6 +1549,7 @@
         async function loadExistingReport(id) {
             try {
                 const res = await api.request(`/reports/${id}`), r = res.data; 
+                currentReportLayoutPreferences = r.layoutPreferences || null;
                 document.getElementById('report-id').value = r._id; 
                 const spReportId = document.getElementById('sp-report-id'); 
                 if(spReportId) { 
@@ -1755,7 +1758,8 @@
                     performedByLabTechId,
                     verifierId: performedByLabTechId,
                     referredBy,
-                    status: isDraft ? 'draft' : undefined
+                    status: isDraft ? 'draft' : undefined,
+                    ...(currentReportLayoutPreferences ? { layoutPreferences: currentReportLayoutPreferences } : {})
                 };
 
                 const url = reportId ? `/reports/${reportId}` : '/reports';
@@ -1858,7 +1862,14 @@
 
         async function downloadPdf() {
             const id = document.getElementById('report-id').value;
-            if (!id) return;
+            if (!id) {
+                if (typeof UI !== 'undefined' && UI.showToast) {
+                    UI.showToast('Please save the report before downloading PDF', 'warning');
+                } else {
+                    alert('Please save the report before downloading PDF');
+                }
+                return;
+            }
 
             const pdfButtons = document.querySelectorAll('[onclick="downloadPdf()"]');
             pdfButtons.forEach(btn => {
@@ -1869,21 +1880,18 @@
             });
 
             try {
-                let hasHeaderFooter = false;
+                let printSettings = null;
                 try {
                     const settingsRes = await api.request('/settings/print', 'GET');
                     if (settingsRes && settingsRes.data) {
-                        hasHeaderFooter = !!(settingsRes.data.headerImageURL || settingsRes.data.footerImageURL);
+                        printSettings = settingsRes.data;
                     }
                 } catch (err) {
                     console.warn('Failed to fetch print settings', err);
                 }
 
-                if (hasHeaderFooter) {
-                    promptHeaderFooter(id, pdfButtons);
-                } else {
-                    await executePdfDownload(id, true, pdfButtons);
-                }
+                labDefaultLayoutPreferences = (printSettings && printSettings.layoutPreferences) ? printSettings.layoutPreferences : {};
+                promptDownloadAndLayout(id, pdfButtons, printSettings);
             } catch (err) {
                 console.error(err);
                 if (typeof UI !== 'undefined' && UI.showToast) {
@@ -1904,30 +1912,267 @@
             });
         }
 
-        function promptHeaderFooter(id, pdfButtons) {
+        function promptDownloadAndLayout(id, pdfButtons, printSettings) {
+            restorePdfButtons(pdfButtons);
             const existing = document.getElementById('hf-modal');
             if (existing) existing.remove();
 
+            const defaultLp = (printSettings && printSettings.layoutPreferences) ? printSettings.layoutPreferences : {};
+            const hasHeaderFooter = !!(printSettings && (printSettings.headerImageURL || printSettings.footerImageURL));
+            let selectedWithHF = hasHeaderFooter;
+
             const overlay = document.createElement('div');
             overlay.id = 'hf-modal';
-            overlay.className = 'fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] backdrop-blur-sm';
+            overlay.className = 'fixed inset-0 bg-slate-900/50 flex items-center justify-center z-[100] p-3 sm:p-4';
             overlay.innerHTML = `
-                <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full mx-4 overflow-hidden transform transition-all">
-                    <div class="p-6">
-                        <div class="w-12 h-12 bg-brand-50 rounded-full flex items-center justify-center mb-4 mx-auto">
-                            <i class="fas fa-file-pdf text-brand-600 text-xl"></i>
+                <div class="bg-white rounded-2xl shadow-xl max-w-lg sm:max-w-xl w-full flex flex-col border border-slate-200 overflow-hidden transform transition-all">
+                    <!-- Header -->
+                    <div class="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center text-base shadow-sm">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-800 leading-tight">Download Report PDF</h3>
+                                <p class="text-[11px] text-slate-500">Choose letterhead style & customize layout if needed</p>
+                            </div>
                         </div>
-                        <h3 class="text-lg font-bold text-center text-slate-800 mb-2">Download PDF</h3>
-                        <p class="text-sm text-center text-slate-500 mb-6">Do you want to include the lab's header and footer in this PDF?</p>
-                        <div class="flex flex-col gap-3">
-                            <button id="hf-btn-with" class="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-xl transition-colors">
-                                With Header & Footer
-                            </button>
-                            <button id="hf-btn-without" class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-colors">
-                                Without Header & Footer
-                            </button>
-                            <button id="hf-btn-cancel" class="w-full py-2 px-4 text-slate-400 hover:text-slate-600 font-medium rounded-xl transition-colors mt-1">
+                        <button id="dl-btn-close" type="button" class="text-slate-400 hover:text-slate-600 w-7 h-7 rounded-lg flex items-center justify-center transition-colors">
+                            <i class="fas fa-times text-base"></i>
+                        </button>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="p-4 sm:p-5 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
+                        <!-- Letterhead Style Selector -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">Letterhead Style</label>
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <button type="button" id="hf-card-with" class="p-3 rounded-xl border text-left transition-all flex items-start gap-2.5">
+                                    <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-brand-100 text-brand-700 text-xs">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                            With Header & Footer
+                                            <i id="hf-check-with" class="fas fa-check-circle text-brand-600 text-xs"></i>
+                                        </div>
+                                        <div class="text-[11px] text-slate-500 mt-0.5 leading-snug">Includes lab letterhead images</div>
+                                    </div>
+                                </button>
+
+                                <button type="button" id="hf-card-without" class="p-3 rounded-xl border text-left transition-all flex items-start gap-2.5">
+                                    <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 bg-slate-100 text-slate-600 text-xs">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                            Without Header & Footer
+                                            <i id="hf-check-without" class="fas fa-check-circle text-brand-600 text-xs hidden"></i>
+                                        </div>
+                                        <div class="text-[11px] text-slate-500 mt-0.5 leading-snug">Blank for pre-printed letterhead</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Layout Preferences Tabs -->
+                        <div class="pt-1">
+                            <div class="flex items-center gap-1.5 border-b border-slate-200 pb-2">
+                                <button type="button" id="dl-tab-btn-margins" class="py-1.5 px-3 text-xs font-bold rounded-lg bg-brand-50 text-brand-700 border border-brand-200 transition-colors flex items-center gap-1.5">
+                                    <i class="fas fa-border-style text-[11px]"></i> Margins
+                                </button>
+                                <button type="button" id="dl-tab-btn-typography" class="py-1.5 px-3 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors flex items-center gap-1.5">
+                                    <i class="fas fa-font text-[11px]"></i> Font Sizes
+                                </button>
+                                <button type="button" id="dl-tab-btn-spacing" class="py-1.5 px-3 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors flex items-center gap-1.5">
+                                    <i class="fas fa-arrows-alt-v text-[11px]"></i> Spacing & Heights
+                                </button>
+                                <span class="ml-auto text-[10px] text-slate-400 italic hidden sm:inline">Per-report only</span>
+                            </div>
+
+                            <!-- Tab 1: Margins -->
+                            <div id="dl-tab-panel-margins" class="pt-3 space-y-3">
+                                <div>
+                                    <span class="block text-[11px] font-bold text-slate-600 mb-1">Standard Page Margins (pt)</span>
+                                    <div class="grid grid-cols-4 gap-2">
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-0.5 text-center">Top</label>
+                                            <input type="number" id="dl-m-top" min="0" max="1000" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-0.5 text-center">Bottom</label>
+                                            <input type="number" id="dl-m-bottom" min="0" max="1000" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-0.5 text-center">Left</label>
+                                            <input type="number" id="dl-m-left" min="0" max="1000" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-0.5 text-center">Right</label>
+                                            <input type="number" id="dl-m-right" min="0" max="1000" class="w-full px-2 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl">
+                                    <span class="block text-[11px] font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                                        <i class="fas fa-file-alt text-brand-500"></i> Margins when printed without header / blank stationery
+                                    </span>
+                                    <div class="grid grid-cols-2 gap-2.5">
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-0.5">Top Margin (No Header)</label>
+                                            <input type="number" id="dl-m-top-no-header" min="0" max="1000" class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:ring-2 focus:ring-brand-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-0.5">Bottom Margin (No Footer)</label>
+                                            <input type="number" id="dl-m-bottom-no-footer" min="0" max="1000" class="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:ring-2 focus:ring-brand-500 outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="pt-0.5">
+                                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                                        <input type="checkbox" id="dl-diff-hf-margins-cb" class="w-3.5 h-3.5 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+                                        <span class="text-xs font-medium text-slate-700">Different left/right margins for Header & Footer images</span>
+                                    </label>
+                                    <div id="dl-hf-margins-grid" class="grid grid-cols-4 gap-2 mt-2 hidden">
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-0.5 text-center">Head Left</label>
+                                            <input type="number" id="dl-h-left" min="0" max="1000" class="w-full px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-0.5 text-center">Head Right</label>
+                                            <input type="number" id="dl-h-right" min="0" max="1000" class="w-full px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-0.5 text-center">Foot Left</label>
+                                            <input type="number" id="dl-f-left" min="0" max="1000" class="w-full px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-0.5 text-center">Foot Right</label>
+                                            <input type="number" id="dl-f-right" min="0" max="1000" class="w-full px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tab 2: Typography -->
+                            <div id="dl-tab-panel-typography" class="pt-3 space-y-3 hidden">
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-1">Patient Info</label>
+                                        <div class="relative">
+                                            <input type="number" id="dl-patient-font-size" min="1" max="99" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                            <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-semibold pointer-events-none">pt</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-1">Test Results</label>
+                                        <div class="relative">
+                                            <input type="number" id="dl-template-font-size" min="1" max="99" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                            <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-semibold pointer-events-none">pt</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 mb-1">Signatures</label>
+                                        <div class="relative">
+                                            <input type="number" id="dl-signature-font-size" min="1" max="99" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                            <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-semibold pointer-events-none">pt</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-[11px] text-slate-500 bg-slate-50 border border-slate-200/60 rounded-lg p-2.5">
+                                    <i class="fas fa-info-circle text-brand-500 mr-1"></i> Standard font size is <strong>12pt</strong>. Adjusting font sizes can help fit long reports onto fewer pages.
+                                </p>
+                            </div>
+
+                            <!-- Tab 3: Spacing & Heights -->
+                            <div id="dl-tab-panel-spacing" class="pt-3 space-y-3 hidden">
+                                <!-- Multi-Template Flow Card -->
+                                <div class="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                                            <input type="checkbox" id="dl-template-page-break-cb" class="w-3.5 h-3.5 text-brand-600 rounded border-slate-300 focus:ring-brand-500" checked>
+                                            <span class="text-xs font-bold text-slate-700">Start each template on a new page</span>
+                                        </label>
+                                    </div>
+                                    <div id="dl-space-templates-container" class="hidden pt-1 border-t border-slate-200/60 flex items-center justify-between">
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600">Space between templates</label>
+                                            <span class="text-[10px] text-slate-400">Vertical gap when multiple templates share a page</span>
+                                        </div>
+                                        <div class="relative w-24">
+                                            <input type="number" id="dl-space-between-templates" min="0" max="200" value="15" class="w-full px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:ring-2 focus:ring-brand-500 outline-none">
+                                            <span class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-semibold pointer-events-none">pt</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <span class="block text-[11px] font-bold text-slate-600 mb-1">Header & Footer Heights (0 = auto)</span>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-0.5">Header Height (pt)</label>
+                                            <input type="number" id="dl-header-height" min="0" max="1000" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-0.5">Footer Height (pt)</label>
+                                            <input type="number" id="dl-footer-height" min="0" max="1000" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <span class="block text-[11px] font-bold text-slate-600 mb-1">Signature Box Size</span>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-0.5">Max Width (pt)</label>
+                                            <input type="number" id="dl-signature-width" min="10" max="1000" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-medium text-slate-500 mb-0.5">Max Height (pt)</label>
+                                            <input type="number" id="dl-signature-height" min="10" max="1000" class="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <span class="block text-[11px] font-bold text-slate-600 mb-1">Section Spacing (pt)</span>
+                                    <div class="grid grid-cols-4 gap-2">
+                                        <div>
+                                            <label class="block text-[9px] font-bold text-slate-500 mb-0.5 text-center truncate" title="Header to Patient Info">Head &rarr; Pat</label>
+                                            <input type="number" id="dl-space-header-patient" min="0" max="200" class="w-full px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[9px] font-bold text-slate-500 mb-0.5 text-center truncate" title="Patient Info to Test Results">Pat &rarr; Tests</label>
+                                            <input type="number" id="dl-space-patient-template" min="0" max="200" class="w-full px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[9px] font-bold text-slate-500 mb-0.5 text-center truncate" title="Test Results to Signature">Tests &rarr; Sig</label>
+                                            <input type="number" id="dl-space-template-signature" min="0" max="200" class="w-full px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[9px] font-bold text-slate-500 mb-0.5 text-center truncate" title="Signature to Footer">Sig &rarr; Foot</label>
+                                            <input type="number" id="dl-space-signature-footer" min="0" max="200" class="w-full px-1.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-800 text-center focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="px-5 py-3 border-t border-slate-200 bg-slate-50/80 flex items-center justify-between gap-3">
+                        <button id="dl-btn-reset" type="button" class="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-brand-600 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all flex items-center gap-1.5" title="Revert to lab defaults">
+                            <i class="fas fa-undo text-[10px]"></i> Reset Defaults
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <button id="dl-btn-cancel" type="button" class="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 transition-colors">
                                 Cancel
+                            </button>
+                            <button id="dl-btn-download" type="button" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2">
+                                <i class="fas fa-download"></i> <span id="dl-btn-download-text">Download PDF</span>
                             </button>
                         </div>
                     </div>
@@ -1935,20 +2180,165 @@
             `;
             document.body.appendChild(overlay);
 
+            // Populate inputs
+            const populateFields = (lp) => {
+                document.getElementById('dl-m-top').value = lp.marginTop ?? 20;
+                document.getElementById('dl-m-bottom').value = lp.marginBottom ?? 20;
+                document.getElementById('dl-m-left').value = lp.marginLeft ?? 20;
+                document.getElementById('dl-m-right').value = lp.marginRight ?? 20;
+                document.getElementById('dl-m-top-no-header').value = lp.marginTopWithoutHeader ?? 20;
+                document.getElementById('dl-m-bottom-no-footer').value = lp.marginBottomWithoutFooter ?? 20;
+
+                const diffCb = document.getElementById('dl-diff-hf-margins-cb');
+                diffCb.checked = !!lp.differentHFMargins;
+                document.getElementById('dl-h-left').value = lp.headerLeftMargin ?? 0;
+                document.getElementById('dl-h-right').value = lp.headerRightMargin ?? 0;
+                document.getElementById('dl-f-left').value = lp.footerLeftMargin ?? 0;
+                document.getElementById('dl-f-right').value = lp.footerRightMargin ?? 0;
+                
+                const hfGrid = document.getElementById('dl-hf-margins-grid');
+                if (diffCb.checked) hfGrid.classList.remove('hidden');
+                else hfGrid.classList.add('hidden');
+
+                document.getElementById('dl-header-height').value = lp.headerHeight ?? 0;
+                document.getElementById('dl-footer-height').value = lp.footerHeight ?? 0;
+                document.getElementById('dl-signature-width').value = lp.signatureImageWidth ?? 120;
+                document.getElementById('dl-signature-height').value = lp.signatureImageHeight ?? 60;
+
+                document.getElementById('dl-space-header-patient').value = lp.spaceHeaderPatient ?? 2;
+                document.getElementById('dl-space-patient-template').value = lp.spacePatientTemplate ?? 2;
+                document.getElementById('dl-space-template-signature').value = lp.spaceTemplateSignature ?? 5;
+                document.getElementById('dl-space-signature-footer').value = lp.spaceSignatureFooter ?? 10;
+
+                const tmplBreakCb = document.getElementById('dl-template-page-break-cb');
+                tmplBreakCb.checked = lp.templatePageBreak !== false;
+                document.getElementById('dl-space-between-templates').value = lp.spaceBetweenTemplates ?? 15;
+                const spaceTmplContainer = document.getElementById('dl-space-templates-container');
+                if (tmplBreakCb.checked) spaceTmplContainer.classList.add('hidden');
+                else spaceTmplContainer.classList.remove('hidden');
+
+                document.getElementById('dl-patient-font-size').value = lp.patientInfoFontSize ?? lp.fontSize ?? 12;
+                document.getElementById('dl-template-font-size').value = lp.templateInfoFontSize ?? lp.fontSize ?? 12;
+                document.getElementById('dl-signature-font-size').value = lp.signatureFontSize ?? lp.fontSize ?? 12;
+            };
+
+            populateFields(defaultLp);
+
+            // Toggle space between templates visibility
+            document.getElementById('dl-template-page-break-cb').onchange = (e) => {
+                const spaceTmplContainer = document.getElementById('dl-space-templates-container');
+                if (e.target.checked) spaceTmplContainer.classList.add('hidden');
+                else spaceTmplContainer.classList.remove('hidden');
+            };
+
+            // Letterhead selector handling
+            const updateLetterheadCards = (withHF) => {
+                selectedWithHF = withHF;
+                const cardWith = document.getElementById('hf-card-with');
+                const cardWithout = document.getElementById('hf-card-without');
+                const checkWith = document.getElementById('hf-check-with');
+                const checkWithout = document.getElementById('hf-check-without');
+                const dlText = document.getElementById('dl-btn-download-text');
+
+                if (withHF) {
+                    cardWith.className = 'p-3 rounded-xl border-2 border-brand-600 bg-brand-50/40 text-left transition-all flex items-start gap-2.5 shadow-sm';
+                    cardWithout.className = 'p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-left transition-all flex items-start gap-2.5';
+                    checkWith.classList.remove('hidden');
+                    checkWithout.classList.add('hidden');
+                    if (dlText) dlText.textContent = 'Download PDF (With Header)';
+                } else {
+                    cardWithout.className = 'p-3 rounded-xl border-2 border-brand-600 bg-brand-50/40 text-left transition-all flex items-start gap-2.5 shadow-sm';
+                    cardWith.className = 'p-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-left transition-all flex items-start gap-2.5';
+                    checkWithout.classList.remove('hidden');
+                    checkWith.classList.add('hidden');
+                    if (dlText) dlText.textContent = 'Download PDF (Without Header)';
+                }
+            };
+
+            updateLetterheadCards(selectedWithHF);
+
+            document.getElementById('hf-card-with').onclick = () => updateLetterheadCards(true);
+            document.getElementById('hf-card-without').onclick = () => updateLetterheadCards(false);
+
+            // Tab switching handling
+            const tabs = ['margins', 'typography', 'spacing'];
+            tabs.forEach(tab => {
+                document.getElementById(`dl-tab-btn-${tab}`).onclick = () => {
+                    tabs.forEach(t => {
+                        const btn = document.getElementById(`dl-tab-btn-${t}`);
+                        const panel = document.getElementById(`dl-tab-panel-${t}`);
+                        if (t === tab) {
+                            btn.className = 'py-1.5 px-3 text-xs font-bold rounded-lg bg-brand-50 text-brand-700 border border-brand-200 transition-colors flex items-center gap-1.5';
+                            panel.classList.remove('hidden');
+                        } else {
+                            btn.className = 'py-1.5 px-3 text-xs font-semibold rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors flex items-center gap-1.5';
+                            panel.classList.add('hidden');
+                        }
+                    });
+                };
+            });
+
+            // Toggle custom HF margins
+            document.getElementById('dl-diff-hf-margins-cb').onchange = (e) => {
+                const hfGrid = document.getElementById('dl-hf-margins-grid');
+                if (e.target.checked) hfGrid.classList.remove('hidden');
+                else hfGrid.classList.add('hidden');
+            };
+
             const close = () => {
                 overlay.remove();
                 restorePdfButtons(pdfButtons);
             };
 
-            document.getElementById('hf-btn-with').onclick = () => {
-                overlay.remove();
-                executePdfDownload(id, true, pdfButtons);
+            document.getElementById('dl-btn-close').onclick = close;
+            document.getElementById('dl-btn-cancel').onclick = close;
+
+            document.getElementById('dl-btn-reset').onclick = () => {
+                populateFields(defaultLp);
+                if (typeof UI !== 'undefined' && UI.showToast) {
+                    UI.showToast('Reset to design page defaults.', 'info');
+                }
             };
-            document.getElementById('hf-btn-without').onclick = () => {
+
+            document.getElementById('dl-btn-download').onclick = () => {
+                const clamp = (val, min, max, def) => Math.min(Math.max(Number(val) || def, min), max);
+
+                const pFont = clamp(document.getElementById('dl-patient-font-size').value, 1, 99, 12);
+                const tFont = clamp(document.getElementById('dl-template-font-size').value, 1, 99, 12);
+                const sFont = clamp(document.getElementById('dl-signature-font-size').value, 1, 99, 12);
+
+                const customLp = {
+                    marginTop: clamp(document.getElementById('dl-m-top').value, 0, 1000, 20),
+                    marginBottom: clamp(document.getElementById('dl-m-bottom').value, 0, 1000, 20),
+                    marginLeft: clamp(document.getElementById('dl-m-left').value, 0, 1000, 20),
+                    marginRight: clamp(document.getElementById('dl-m-right').value, 0, 1000, 20),
+                    marginTopWithoutHeader: clamp(document.getElementById('dl-m-top-no-header').value, 0, 1000, 20),
+                    marginBottomWithoutFooter: clamp(document.getElementById('dl-m-bottom-no-footer').value, 0, 1000, 20),
+                    patientInfoFontSize: pFont,
+                    templateInfoFontSize: tFont,
+                    signatureFontSize: sFont,
+                    fontSize: tFont,
+                    headerHeight: clamp(document.getElementById('dl-header-height').value, 0, 1000, 0),
+                    footerHeight: clamp(document.getElementById('dl-footer-height').value, 0, 1000, 0),
+                    differentHFMargins: document.getElementById('dl-diff-hf-margins-cb').checked,
+                    headerLeftMargin: clamp(document.getElementById('dl-h-left').value, 0, 1000, 0),
+                    headerRightMargin: clamp(document.getElementById('dl-h-right').value, 0, 1000, 0),
+                    footerLeftMargin: clamp(document.getElementById('dl-f-left').value, 0, 1000, 0),
+                    footerRightMargin: clamp(document.getElementById('dl-f-right').value, 0, 1000, 0),
+                    signatureImageWidth: clamp(document.getElementById('dl-signature-width').value, 10, 1000, 120),
+                    signatureImageHeight: clamp(document.getElementById('dl-signature-height').value, 10, 1000, 60),
+                    spaceHeaderPatient: clamp(document.getElementById('dl-space-header-patient').value, 0, 200, 2),
+                    spacePatientTemplate: clamp(document.getElementById('dl-space-patient-template').value, 0, 200, 2),
+                    spaceTemplateSignature: clamp(document.getElementById('dl-space-template-signature').value, 0, 200, 5),
+                    spaceSignatureFooter: clamp(document.getElementById('dl-space-signature-footer').value, 0, 200, 10),
+                    templatePageBreak: document.getElementById('dl-template-page-break-cb').checked,
+                    spaceBetweenTemplates: clamp(document.getElementById('dl-space-between-templates').value, 0, 200, 15)
+                };
+
+                currentReportLayoutPreferences = customLp;
                 overlay.remove();
-                executePdfDownload(id, false, pdfButtons);
+                executePdfDownload(id, selectedWithHF, customLp, pdfButtons);
             };
-            document.getElementById('hf-btn-cancel').onclick = close;
         }
 
 
@@ -2087,7 +2477,7 @@
             }
         }
 
-        async function executePdfDownload(id, withHeaderFooter, pdfButtons) {
+        async function executePdfDownload(id, withHeaderFooter, customLayoutPreferences, pdfButtons) {
             pdfButtons.forEach(btn => {
                 btn.disabled = true;
                 btn.style.pointerEvents = 'none';
@@ -2096,12 +2486,21 @@
             });
 
             try {
-                const url = `${BASE_URL}/reports/${id}/pdf${!withHeaderFooter ? '?withHeaderFooter=false' : ''}`;
+                const url = `${BASE_URL}/reports/${id}/pdf`;
                 const res = await fetch(url, {
-                    credentials: 'include'
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        withHeaderFooter,
+                        layoutPreferences: customLayoutPreferences || undefined
+                    })
                 });
                 if (!res.ok) {
-                    throw new Error('Failed to generate PDF');
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || errData.message || 'Failed to generate PDF');
                 }
                 
                 let filename = `Diagnostic_Report_${id.slice(-12)}.pdf`;
@@ -2118,7 +2517,9 @@
                 const a = document.createElement('a');
                 a.href = blobUrl;
                 a.download = filename;
+                document.body.appendChild(a);
                 a.click();
+                a.remove();
                 window.URL.revokeObjectURL(blobUrl);
             } catch (err) {
                 console.error(err);

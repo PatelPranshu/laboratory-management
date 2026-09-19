@@ -61,8 +61,53 @@ function resolveCalculatedParams(sections, patientContext = {}) {
 
 // Allowed fields for report create/update — prevents mass assignment
 // creatorId, verifierId, performedByLabTechId are set SERVER-SIDE only to prevent spoofing
-const REPORT_CREATE_FIELDS = ['patientId', 'date', 'referredBy', 'performedBy', 'sections', 'templateIds', 'performedByLabTechId', 'status'];
-const REPORT_UPDATE_FIELDS = ['date', 'referredBy', 'performedBy', 'sections', 'templateIds', 'performedByLabTechId', 'status'];
+const REPORT_CREATE_FIELDS = ['patientId', 'date', 'referredBy', 'performedBy', 'sections', 'templateIds', 'performedByLabTechId', 'status', 'layoutPreferences'];
+const REPORT_UPDATE_FIELDS = ['date', 'referredBy', 'performedBy', 'sections', 'templateIds', 'performedByLabTechId', 'status', 'layoutPreferences'];
+
+const clampNumber = (val, min, max, fallback) => {
+  const num = Number(val);
+  if (isNaN(num) || !isFinite(num)) return fallback;
+  return Math.min(Math.max(num, min), max);
+};
+
+const sanitizeLayoutPreferences = (lp) => {
+  if (!lp || typeof lp !== 'object' || Array.isArray(lp)) return {};
+  const sanitized = {};
+  
+  if (lp.marginTop !== undefined) sanitized.marginTop = clampNumber(lp.marginTop, 0, 1000, 20);
+  if (lp.marginBottom !== undefined) sanitized.marginBottom = clampNumber(lp.marginBottom, 0, 1000, 20);
+  if (lp.marginLeft !== undefined) sanitized.marginLeft = clampNumber(lp.marginLeft, 0, 1000, 20);
+  if (lp.marginRight !== undefined) sanitized.marginRight = clampNumber(lp.marginRight, 0, 1000, 20);
+  if (lp.marginTopWithoutHeader !== undefined) sanitized.marginTopWithoutHeader = clampNumber(lp.marginTopWithoutHeader, 0, 1000, 20);
+  if (lp.marginBottomWithoutFooter !== undefined) sanitized.marginBottomWithoutFooter = clampNumber(lp.marginBottomWithoutFooter, 0, 1000, 20);
+
+  if (lp.patientInfoFontSize !== undefined) sanitized.patientInfoFontSize = clampNumber(lp.patientInfoFontSize, 1, 99, 12);
+  if (lp.templateInfoFontSize !== undefined) sanitized.templateInfoFontSize = clampNumber(lp.templateInfoFontSize, 1, 99, 12);
+  if (lp.signatureFontSize !== undefined) sanitized.signatureFontSize = clampNumber(lp.signatureFontSize, 1, 99, 12);
+  if (lp.fontSize !== undefined) sanitized.fontSize = clampNumber(lp.fontSize, 1, 99, 12);
+
+  if (lp.headerHeight !== undefined) sanitized.headerHeight = clampNumber(lp.headerHeight, 0, 1000, 0);
+  if (lp.footerHeight !== undefined) sanitized.footerHeight = clampNumber(lp.footerHeight, 0, 1000, 0);
+
+  if (lp.differentHFMargins !== undefined) sanitized.differentHFMargins = (lp.differentHFMargins === true || lp.differentHFMargins === 'true' || lp.differentHFMargins === 1 || lp.differentHFMargins === '1');
+  if (lp.headerLeftMargin !== undefined) sanitized.headerLeftMargin = clampNumber(lp.headerLeftMargin, 0, 1000, 0);
+  if (lp.headerRightMargin !== undefined) sanitized.headerRightMargin = clampNumber(lp.headerRightMargin, 0, 1000, 0);
+  if (lp.footerLeftMargin !== undefined) sanitized.footerLeftMargin = clampNumber(lp.footerLeftMargin, 0, 1000, 0);
+  if (lp.footerRightMargin !== undefined) sanitized.footerRightMargin = clampNumber(lp.footerRightMargin, 0, 1000, 0);
+
+  if (lp.signatureImageWidth !== undefined) sanitized.signatureImageWidth = clampNumber(lp.signatureImageWidth, 10, 1000, 120);
+  if (lp.signatureImageHeight !== undefined) sanitized.signatureImageHeight = clampNumber(lp.signatureImageHeight, 10, 1000, 60);
+
+  if (lp.spaceHeaderPatient !== undefined) sanitized.spaceHeaderPatient = clampNumber(lp.spaceHeaderPatient, 0, 200, 2);
+  if (lp.spacePatientTemplate !== undefined) sanitized.spacePatientTemplate = clampNumber(lp.spacePatientTemplate, 0, 200, 2);
+  if (lp.spaceTemplateSignature !== undefined) sanitized.spaceTemplateSignature = clampNumber(lp.spaceTemplateSignature, 0, 200, 5);
+  if (lp.spaceSignatureFooter !== undefined) sanitized.spaceSignatureFooter = clampNumber(lp.spaceSignatureFooter, 0, 200, 10);
+
+  if (lp.templatePageBreak !== undefined) sanitized.templatePageBreak = (lp.templatePageBreak === true || lp.templatePageBreak === 'true' || lp.templatePageBreak === 1 || lp.templatePageBreak === '1');
+  if (lp.spaceBetweenTemplates !== undefined) sanitized.spaceBetweenTemplates = clampNumber(lp.spaceBetweenTemplates, 0, 200, 15);
+
+  return sanitized;
+};
 
 const getAdminId = (req) => {
   return req.user.role === 'Admin' ? req.user.id : (req.user.parentAdminId || req.user.id);
@@ -518,22 +563,43 @@ exports.generatePdf = async (req, res) => {
 
   const settings = await PrintSettings.findOne({ doctorId: adminId });
   
-  let finalSettings = null;
-  if (settings) {
-    finalSettings = settings.toObject();
-    if (req.query.withHeaderFooter === 'false') {
-      finalSettings.headerImageURL = null;
-      finalSettings.footerImageURL = null;
-      finalSettings.headerHeight = 0;
-      finalSettings.footerHeight = 0;
+  let finalSettings = settings ? settings.toObject() : { layoutPreferences: {} };
+  if (!finalSettings.layoutPreferences) {
+    finalSettings.layoutPreferences = {};
+  }
 
-      if (finalSettings.layoutPreferences) {
-        if (finalSettings.layoutPreferences.marginTopWithoutHeader !== undefined) {
-          finalSettings.layoutPreferences.marginTop = finalSettings.layoutPreferences.marginTopWithoutHeader;
-        }
-        if (finalSettings.layoutPreferences.marginBottomWithoutFooter !== undefined) {
-          finalSettings.layoutPreferences.marginBottom = finalSettings.layoutPreferences.marginBottomWithoutFooter;
-        }
+  // Check if request passed custom layoutPreferences (POST body or GET query)
+  let customLpRaw = req.body?.layoutPreferences;
+  if (!customLpRaw && req.query?.layoutPreferences) {
+    try {
+      customLpRaw = JSON.parse(req.query.layoutPreferences);
+    } catch (e) {}
+  }
+
+  if (customLpRaw && typeof customLpRaw === 'object') {
+    const sanitizedLp = sanitizeLayoutPreferences(customLpRaw);
+    finalSettings.layoutPreferences = {
+      ...finalSettings.layoutPreferences,
+      ...sanitizedLp
+    };
+  }
+
+  const withHF = req.body?.withHeaderFooter !== undefined
+    ? (req.body.withHeaderFooter === true || req.body.withHeaderFooter === 'true')
+    : req.query.withHeaderFooter !== 'false';
+
+  if (!withHF) {
+    finalSettings.headerImageURL = null;
+    finalSettings.footerImageURL = null;
+    finalSettings.headerHeight = 0;
+    finalSettings.footerHeight = 0;
+
+    if (finalSettings.layoutPreferences) {
+      if (finalSettings.layoutPreferences.marginTopWithoutHeader !== undefined) {
+        finalSettings.layoutPreferences.marginTop = finalSettings.layoutPreferences.marginTopWithoutHeader;
+      }
+      if (finalSettings.layoutPreferences.marginBottomWithoutFooter !== undefined) {
+        finalSettings.layoutPreferences.marginBottom = finalSettings.layoutPreferences.marginBottomWithoutFooter;
       }
     }
   }

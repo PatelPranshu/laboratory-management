@@ -145,6 +145,10 @@ const ReportInstanceSchema = new mongoose.Schema({
     previousStatus: { type: String },
     previousState: { type: mongoose.Schema.Types.Mixed }
   }],
+  layoutPreferences: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
   auditLogs: [AuditLogSchema]
 }, { timestamps: true });
 

@@ -39,7 +39,9 @@ const PrintSettingsSchema = new mongoose.Schema({
     spaceHeaderPatient: { type: Number, default: 2, min: 0, max: 200 },
     spacePatientTemplate: { type: Number, default: 2, min: 0, max: 200 },
     spaceTemplateSignature: { type: Number, default: 5, min: 0, max: 200 },
-    spaceSignatureFooter: { type: Number, default: 10, min: 0, max: 200 }
+    spaceSignatureFooter: { type: Number, default: 10, min: 0, max: 200 },
+    templatePageBreak: { type: Boolean, default: true },
+    spaceBetweenTemplates: { type: Number, default: 15, min: 0, max: 200 }
   }
 }, { timestamps: true });
 

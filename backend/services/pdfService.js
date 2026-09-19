@@ -328,11 +328,22 @@ exports.generateReportPdf = async (report, patient, settings) => {
       margin: [0, 0, 0, (lp.spacePatientTemplate !== undefined ? lp.spacePatientTemplate : 2)]
     };
 
-    if (blockIdx > 0) {
-      patientInfoTable.pageBreak = 'before';
-    }
+    const shouldPageBreak = lp.templatePageBreak !== false && lp.templatePageBreak !== 'false';
+    const isLastBlock = (blockIdx === groupedBlocks.length - 1);
+    const isContinuingBlock = (!shouldPageBreak && blockIdx > 0);
+    const spaceBetweenTmpl = Math.min(Math.max(Number(lp.spaceBetweenTemplates) || 15, 0), 200);
+    const blockRemarks = remarksByTemplate[block.templateId] || [];
 
-    content.push(patientInfoTable);
+    if (shouldPageBreak) {
+      if (blockIdx > 0) {
+        patientInfoTable.pageBreak = 'before';
+      }
+      content.push(patientInfoTable);
+    } else {
+      if (blockIdx === 0) {
+        content.push(patientInfoTable);
+      }
+    }
 
     const sectionTableBody = [];
 
@@ -583,10 +594,9 @@ exports.generateReportPdf = async (report, patient, settings) => {
           }
         }
       ],
-      margin: [0, 10, 0, 10]
+      margin: [0, isContinuingBlock ? spaceBetweenTmpl : 10, 0, (shouldPageBreak || isLastBlock || (blockRemarks && blockRemarks.length > 0)) ? 10 : 0]
     });
 
-    const blockRemarks = remarksByTemplate[block.templateId];
     if (blockRemarks && blockRemarks.length > 0) {
       const remarksContent = [];
       remarksContent.push({ canvas: [{ type: 'line', x1: 0, y1: 5, x2: contentWidth, y2: 5, lineWidth: 0.5, lineColor: '#cbd5e1' }] });
@@ -608,75 +618,80 @@ exports.generateReportPdf = async (report, patient, settings) => {
       content.push({
         stack: remarksContent,
         unbreakable: true,
-        margin: [0, 0, 0, 10]
+        margin: [0, 0, 0, (shouldPageBreak || isLastBlock) ? 10 : 0]
       });
     }
 
+    const shouldRenderEndOfReport = shouldPageBreak || isLastBlock;
 
+    if (shouldRenderEndOfReport) {
+      const endOfReportBlock = [];
+      const endText = (!shouldPageBreak && groupedBlocks.length > 1) 
+        ? '*** END OF REPORT ***' 
+        : `*** END OF ${currentTemplateName} ***`;
 
-    const endOfReportBlock = [];
+      endOfReportBlock.push({
+          text: endText,
+          alignment: 'center',
+          bold: true,
+          margin: [0, 0, 0, (lp.spaceTemplateSignature !== undefined ? lp.spaceTemplateSignature : 5)],
+          fontSize: signatureFontSize - 2,
+          color: '#475569'
+      });
 
-    endOfReportBlock.push({
-        text: `*** END OF ${currentTemplateName} ***`,
-        alignment: 'center',
-        bold: true,
-        margin: [0, 0, 0, (lp.spaceTemplateSignature !== undefined ? lp.spaceTemplateSignature : 5)],
-        fontSize: signatureFontSize - 2,
-        color: '#475569'
-    });
+      const hasSignatureData = signatureImageData && report.performedByLabTechId;
+      const hasSignerName = report.performedBy || (report.performedByLabTechId && (report.performedByLabTechId.fullName || report.performedByLabTechId.doctorName));
 
-    const hasSignatureData = signatureImageData && report.performedByLabTechId;
-    const hasSignerName = report.performedBy || (report.performedByLabTechId && (report.performedByLabTechId.fullName || report.performedByLabTechId.doctorName));
+      if (hasSignatureData || hasSignerName) {
+          const signerName = (report.performedBy || (report.performedByLabTechId && (report.performedByLabTechId.fullName || report.performedByLabTechId.doctorName)) || 'Authorized Signatory').toUpperCase();
+          
+          const sigStack = [];
+          if (signatureImageData) {
+              const sigWidth = lp.signatureImageWidth || 120;
+              const sigHeight = lp.signatureImageHeight || 60;
+              sigStack.push({ image: signatureImageData, fit: [sigWidth, sigHeight], alignment: 'center' });
+          } else {
+              // Leave vertical space for a physical signature if image is deleted or unavailable
+              sigStack.push({ text: '\n\n\n', fontSize: signatureFontSize });
+          }
+          
+          sigStack.push({ text: signerName, fontSize: signatureFontSize, bold: true, color: '#1e293b' });
+          sigStack.push({ text: 'PERFORMED BY / AUTHORIZED SIGNATORY', fontSize: signatureFontSize - 4, color: '#64748b', margin: [0, 2, 0, 0], bold: true, characterSpacing: 0.5 });
 
-    if (hasSignatureData || hasSignerName) {
-        const signerName = (report.performedBy || (report.performedByLabTechId && (report.performedByLabTechId.fullName || report.performedByLabTechId.doctorName)) || 'Authorized Signatory').toUpperCase();
-        
-        const sigStack = [];
-        if (signatureImageData) {
-            const sigWidth = lp.signatureImageWidth || 120;
-            const sigHeight = lp.signatureImageHeight || 60;
-            sigStack.push({ image: signatureImageData, fit: [sigWidth, sigHeight], alignment: 'center' });
-        } else {
-            // Leave vertical space for a physical signature if image is deleted or unavailable
-            sigStack.push({ text: '\n\n\n', fontSize: signatureFontSize });
-        }
-        
-        sigStack.push({ text: signerName, fontSize: signatureFontSize, bold: true, color: '#1e293b' });
-        sigStack.push({ text: 'PERFORMED BY / AUTHORIZED SIGNATORY', fontSize: signatureFontSize - 4, color: '#64748b', margin: [0, 2, 0, 0], bold: true, characterSpacing: 0.5 });
+          endOfReportBlock.push({
+              columns: [
+                  { 
+                      width: '*', 
+                      text: '*Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated and authenticated document.',
+                      fontSize: signatureFontSize - 4,
+                      color: '#64748b',
+                      italics: true,
+                      margin: [0, 5, 10, 0]
+                  }, 
+                  {
+                      width: 200,
+                      alignment: 'center',
+                      margin: [0, 0, 0, 0],
+                      stack: sigStack
+                  }
+              ]
+          });
+      } else {
+          endOfReportBlock.push({
+              text: '*Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated document.',
+              fontSize: signatureFontSize - 4,
+              color: '#64748b',
+              italics: true,
+              margin: [0, 10, 0, 0]
+          });
+      }
 
-        endOfReportBlock.push({
-            columns: [
-                { 
-                    width: '*', 
-                    text: '*Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated and authenticated document.',
-                    fontSize: signatureFontSize - 4,
-                    color: '#64748b',
-                    italics: true,
-                    margin: [0, 5, 10, 0]
-                }, 
-                {
-                    width: 200,
-                    alignment: 'center',
-                    margin: [0, 0, 0, 0],
-                    stack: sigStack
-                }
-            ]
-        });
-    } else {
-        endOfReportBlock.push({
-            text: '*Please correlate clinically. Partial reproduction of this report is not permitted.\nThis is an electronically generated document.',
-            fontSize: signatureFontSize - 4,
-            color: '#64748b',
-            italics: true,
-            margin: [0, 10, 0, 0]
-        });
+      content.push({
+        stack: endOfReportBlock,
+        unbreakable: true,
+        margin: [0, 10, 0, 0]
+      });
     }
-
-    content.push({
-      stack: endOfReportBlock,
-      unbreakable: true,
-      margin: [0, 10, 0, 0]
-    });
 
   }
 

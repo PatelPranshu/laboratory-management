@@ -34,7 +34,9 @@ router.route('/:id')
   .put(protect, validateObjectId, authorize('Admin', 'Doctor', 'LabTech'), updateReport)
   .delete(protect, validateObjectId, authorize('Admin'), deleteReport);
 
-router.get('/:id/pdf', protect, validateObjectId, pdfLimiter, authorize('Admin', 'Doctor', 'LabTech'), generatePdf);
+router.route('/:id/pdf')
+  .get(protect, validateObjectId, pdfLimiter, authorize('Admin', 'Doctor', 'LabTech'), generatePdf)
+  .post(protect, validateObjectId, pdfLimiter, authorize('Admin', 'Doctor', 'LabTech'), generatePdf);
 router.post('/:id/send', protect, validateObjectId, authorize('Admin', 'Doctor', 'LabTech'), sendReport);
 
 module.exports = router;
