@@ -28,7 +28,6 @@
         
         var PAGE_PERMISSIONS = {
             'staff.html': ['Admin'],
-            'register-staff.html': ['Admin'],
             'design.html': ['Admin'],
             'templates.html': ['Admin', 'Doctor'],
             'super-admin.html': ['SuperAdmin'],

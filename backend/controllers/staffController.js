@@ -11,6 +11,8 @@ const { sendNotification } = require('../utils/notifier');
 const { invalidateAuthCache } = require('../middlewares/authMiddleware');
 const { logAudit, getClientIp } = require('../middlewares/auditMiddleware');
 
+const escapeRegex = (str) => String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 
 
 // @desc    Invite Staff (Doctor/LabTech)
@@ -56,16 +58,22 @@ exports.inviteStaff = async (req, res) => {
   const labName = req.user.labName || 'MyPathoLabs Laboratory';
   const inviterName = req.user.name || 'Lab Administrator';
 
+  logAudit('STAFF_INVITED', req.user.id, null, 'Staff',
+    `Invited ${email.toLowerCase().trim()} as ${role}`,
+    getClientIp(req)
+  );
+
   try {
     await sendInvitationEmail(email, role, inviteLink, labName, inviterName);
-    // Ensure we immediately notify the admin
-    res.status(200).json({ success: true, message: 'Invitation email successfully sent!' });
+    // Ensure we immediately notify the admin and provide link
+    res.status(200).json({ success: true, message: 'Invitation email successfully sent!', inviteLink });
   } catch (emailError) {
     console.error(`[STAFF] Email delivery failed for invitation to ${email}. Invitation is still valid in DB.`);
     res.status(200).json({
       success: true,
       message: 'Invitation generated successfully, but the automatic email failed to send. You may share the link manually.',
-      warning: 'Email delivery failed'
+      warning: 'Email delivery failed',
+      inviteLink
     });
   }
 };
@@ -200,7 +208,29 @@ exports.completeRegistration = async (req, res) => {
 
 // @desc    Get all staff for this admin
 exports.getStaff = async (req, res) => {
-  const staff = await User.find({ parentAdminId: req.user.id })
+  const { search, role, status } = req.query;
+  const filter = {
+    parentAdminId: req.user.id,
+    isDeleted: { $ne: true }
+  };
+
+  if (role && ['Doctor', 'LabTech'].includes(role)) {
+    filter.role = role;
+  }
+
+  if (status && ['Active', 'Suspended', 'Pending'].includes(status)) {
+    filter.accountStatus = status;
+  }
+
+  if (search && typeof search === 'string' && search.trim()) {
+    const term = escapeRegex(search.trim());
+    filter.$or = [
+      { name: { $regex: term, $options: 'i' } },
+      { email: { $regex: term, $options: 'i' } }
+    ];
+  }
+
+  const staff = await User.find(filter)
     .select('-password')
     .sort({ createdAt: -1 })
     .lean();
@@ -212,18 +242,176 @@ exports.getStaff = async (req, res) => {
   });
 };
 
-// @desc    Remove Staff Member
-exports.removeStaff = async (req, res) => {
-  const staffMember = await User.findById(req.params.id);
-  if (!staffMember) {
+// @desc    Get all pending invitations for this admin
+exports.getInvitations = async (req, res) => {
+  const invitations = await Invitation.find({ parentAdminId: req.user.id })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const data = invitations.map(inv => {
+    const createdAt = inv.createdAt ? new Date(inv.createdAt) : new Date();
+    const expiresAt = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000);
+    const isExpired = Date.now() > expiresAt.getTime();
+    return {
+      _id: inv._id,
+      email: inv.email,
+      role: inv.role,
+      createdAt: inv.createdAt,
+      expiresAt,
+      isExpired
+    };
+  });
+
+  res.status(200).json({
+    success: true,
+    count: data.length,
+    data
+  });
+};
+
+// @desc    Revoke/Cancel a pending invitation
+exports.cancelInvitation = async (req, res) => {
+  const invitation = await Invitation.findOneAndDelete({
+    _id: req.params.id,
+    parentAdminId: req.user.id
+  });
+
+  if (!invitation) {
+    const err = new Error('Invitation not found or already processed');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  logAudit('STAFF_INVITATION_REVOKED', req.user.id, null, 'Staff',
+    `Revoked pending invitation for ${invitation.email} (${invitation.role})`,
+    getClientIp(req)
+  );
+
+  res.status(200).json({ success: true, message: 'Invitation revoked successfully' });
+};
+
+// @desc    Resend invitation email
+exports.resendInvitation = async (req, res) => {
+  const invitation = await Invitation.findOne({
+    _id: req.params.id,
+    parentAdminId: req.user.id
+  });
+
+  if (!invitation) {
+    const err = new Error('Invitation not found or has expired');
+    err.statusCode = 404;
+    throw err;
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  invitation.token = hashedToken;
+  invitation.createdAt = new Date();
+  await invitation.save();
+
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5500';
+  const inviteLink = `${frontendUrl}/register-staff.html?token=${token}`;
+  const labName = req.user.labName || 'MyPathoLabs Laboratory';
+  const inviterName = req.user.name || 'Lab Administrator';
+
+  logAudit('STAFF_INVITATION_RESENT', req.user.id, null, 'Staff',
+    `Resent invitation to ${invitation.email} (${invitation.role})`,
+    getClientIp(req)
+  );
+
+  try {
+    await sendInvitationEmail(invitation.email, invitation.role, inviteLink, labName, inviterName);
+    res.status(200).json({ success: true, message: 'Invitation email resent successfully!', inviteLink });
+  } catch (emailError) {
+    res.status(200).json({
+      success: true,
+      message: 'Invitation refreshed, but automatic email failed to send. You may share the link manually.',
+      warning: 'Email delivery failed',
+      inviteLink
+    });
+  }
+};
+
+// @desc    Update Staff Member (Name, Role, Account Status)
+exports.updateStaff = async (req, res) => {
+  const { name, role, accountStatus } = req.body;
+  const staff = await User.findOne({
+    _id: req.params.id,
+    parentAdminId: req.user.id,
+    isDeleted: { $ne: true }
+  });
+
+  if (!staff) {
     const err = new Error('Staff member not found');
     err.statusCode = 404;
     throw err;
   }
 
-  if (staffMember.parentAdminId.toString() !== req.user.id.toString()) {
-    const err = new Error('Not authorized to delete this staff member');
-    err.statusCode = 403;
+  if (staff._id.toString() === req.user.id.toString()) {
+    const err = new Error('Cannot modify root admin profile from staff settings');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const oldRole = staff.role;
+  const oldStatus = staff.accountStatus;
+
+  if (name && typeof name === 'string') {
+    staff.name = name.trim();
+  }
+
+  if (role && ['Doctor', 'LabTech'].includes(role)) {
+    staff.role = role;
+  }
+
+  if (accountStatus && ['Active', 'Suspended'].includes(accountStatus)) {
+    staff.accountStatus = accountStatus;
+    if (accountStatus === 'Suspended') {
+      invalidateAuthCache(staff._id);
+    }
+  }
+
+  await staff.save();
+
+  if (role && role !== oldRole) {
+    logAudit('STAFF_ROLE_CHANGED', req.user.id, staff._id, 'Staff',
+      `Staff "${staff.name}" (${staff.email}) role changed from ${oldRole} to ${role}`,
+      getClientIp(req)
+    );
+  }
+
+  if (accountStatus && accountStatus !== oldStatus) {
+    logAudit('STAFF_STATUS_CHANGED', req.user.id, staff._id, 'Staff',
+      `Staff "${staff.name}" (${staff.email}) status changed from ${oldStatus} to ${accountStatus}`,
+      getClientIp(req)
+    );
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Staff updated successfully',
+    data: {
+      _id: staff._id,
+      name: staff.name,
+      email: staff.email,
+      role: staff.role,
+      accountStatus: staff.accountStatus
+    }
+  });
+};
+
+// @desc    Remove Staff Member (HIPAA Soft-delete preserving medical audit trail)
+exports.removeStaff = async (req, res) => {
+  const staffMember = await User.findOne({
+    _id: req.params.id,
+    parentAdminId: req.user.id,
+    isDeleted: { $ne: true }
+  });
+
+  if (!staffMember) {
+    const err = new Error('Staff member not found');
+    err.statusCode = 404;
     throw err;
   }
 
@@ -233,19 +421,20 @@ exports.removeStaff = async (req, res) => {
     throw err;
   }
 
-  if (staffMember.signatureUrl) await deleteFromCloudinary(staffMember.signatureUrl);
-  if (staffMember.signature) await deleteFromCloudinary(staffMember.signature);
-  
-  // Also delete any Signature records for this staff
-  const sigs = await Signature.find({ userId: staffMember._id });
-  for (const sig of sigs) {
-     if (sig.signatureUrl) await deleteFromCloudinary(sig.signatureUrl);
-     await sig.deleteOne();
-  }
+  // Soft delete preserves references in historical patient reports/signatures
+  staffMember.isDeleted = true;
+  staffMember.deletedAt = new Date();
+  staffMember.accountStatus = 'Suspended';
+  await staffMember.save();
 
-  await staffMember.deleteOne();
   invalidateAuthCache(staffMember._id);
-  res.status(200).json({ success: true, data: {} });
+
+  logAudit('STAFF_REMOVED', req.user.id, staffMember._id, 'Staff',
+    `Staff "${staffMember.name}" (${staffMember.email}) soft-deleted by lab admin`,
+    getClientIp(req)
+  );
+
+  res.status(200).json({ success: true, message: 'Staff member removed successfully' });
 };
 
 

@@ -515,6 +515,21 @@ class UI {
               }
           });
 
+          // Sync if parent form is reset
+          if (select.form) {
+              select.form.addEventListener('reset', () => {
+                  setTimeout(() => {
+                      const selectedOption = select.options[select.selectedIndex];
+                      if (selectedOption) {
+                          trigger.querySelector('span').textContent = selectedOption.text;
+                          Array.from(optionsContainer.children).forEach((c, i) => {
+                              c.className = i === select.selectedIndex ? 'px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors bg-brand-50 text-brand-600' : 'px-4 py-2.5 text-sm font-medium cursor-pointer transition-colors text-slate-600 hover:bg-slate-50 hover:text-brand-500';
+                          });
+                      }
+                  }, 0);
+              });
+          }
+
           // Toggle dropdown
           const toggleDropdown = () => {
               const isHidden = optionsContainer.classList.contains('hidden');

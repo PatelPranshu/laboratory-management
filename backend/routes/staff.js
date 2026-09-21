@@ -5,6 +5,10 @@ const {
   verifyInvite,
   completeRegistration,
   getStaff,
+  getInvitations,
+  cancelInvitation,
+  resendInvitation,
+  updateStaff,
   removeStaff
 } = require('../controllers/staffController');
 const { protect, authorize } = require('../middlewares/authMiddleware');
@@ -21,8 +25,18 @@ const inviteLimiter = rateLimit({
   message: { success: false, error: 'Too many staff invitations sent, please try again after an hour' }
 });
 
+const updateStaffSchema = z.object({
+  name: z.string().min(1, 'Name cannot be empty').max(50).optional(),
+  role: z.enum(['Doctor', 'LabTech']).optional(),
+  accountStatus: z.enum(['Active', 'Suspended']).optional()
+});
+
 router.post('/invite', protect, authorize('Admin'), inviteLimiter, inviteStaff);
 router.get('/', protect, authorize('Admin'), getStaff);
+router.get('/invitations', protect, authorize('Admin'), getInvitations);
+router.delete('/invitations/:id', protect, authorize('Admin'), cancelInvitation);
+router.post('/invitations/:id/resend', protect, authorize('Admin'), inviteLimiter, resendInvitation);
+router.put('/:id', protect, authorize('Admin'), validateSchema(updateStaffSchema), updateStaff);
 router.delete('/:id', protect, authorize('Admin'), removeStaff);
 
 // Public routes for onboarding
