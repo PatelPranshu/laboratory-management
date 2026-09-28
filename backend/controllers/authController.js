@@ -23,11 +23,12 @@ const sendTokenResponse = (user, statusCode, res) => {
   // Expiration time for the frontend to manage its own redirect synchronously
   const expTimeMs = Date.now() + 8 * 60 * 60 * 1000;
 
+  const isProduction = process.env.NODE_ENV === 'production';
   const options = {
     expires: new Date(expTimeMs),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // Only require HTTPS in production
-    sameSite: 'lax'
+    secure: isProduction, // Only require HTTPS in production
+    sameSite: isProduction ? 'none' : 'lax'
   };
 
   res
@@ -35,6 +36,7 @@ const sendTokenResponse = (user, statusCode, res) => {
     .cookie('lis_token', token, options)
     .json({
       success: true,
+      token, // Return token for Bearer Authorization header fallback in cross-origin environments
       exp: Math.floor(expTimeMs / 1000), // Return expiration time in seconds for frontend checking
       user: {
         id: user._id,
@@ -488,11 +490,12 @@ exports.logout = async (req, res) => {
   invalidateAuthCache(req.user.id);
   logAudit('LOGOUT', req.user.id, req.user.id, 'Auth', `User logged out`, getClientIp(req));
 
+  const isProduction = process.env.NODE_ENV === 'production';
   res.cookie('lis_token', 'none', {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax'
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax'
   });
 
   res.status(200).json({
@@ -570,11 +573,12 @@ exports.deleteLab = async (req, res) => {
     invalidateAuthCache(adminId);
     staffUsers.forEach(s => invalidateAuthCache(s._id));
 
+    const isProduction = process.env.NODE_ENV === 'production';
     res.cookie('lis_token', 'none', {
       expires: new Date(Date.now() + 10 * 1000),
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax'
     });
 
     res.status(200).json({ success: true, message: 'Lab scheduled for permanent deletion in 30 days.' });

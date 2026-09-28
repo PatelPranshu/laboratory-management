@@ -1,16 +1,16 @@
-// Server URLs
-const PRIMARY_SERVER = 'https://mylaboratory.onrender.com';
+// Server URLs (Priority 1: Backup server mypatholabs3, Priority 2: mypatholabs2, Priority 3: mylaboratory)
+const PRIMARY_SERVER = 'https://mypatholabs3.onrender.com';
 const SECONDARY_SERVER = 'https://mypatholabs2.onrender.com';
-const BACKUP_SERVER = 'https://mypatholabs3.onrender.com';
-const TERTIARY_SERVER = BACKUP_SERVER;
+const TERTIARY_SERVER = 'https://mylaboratory.onrender.com';
+const BACKUP_SERVER = PRIMARY_SERVER;
 
 // Auto-detect API base URL: use same origin in production, localhost in development
 const BASE_URL = (() => {
   const hostname = window.location.hostname;
 
-  // Production URL mapping
+  // Production URL mapping — route to 1st priority server (mypatholabs3.onrender.com)
   if (hostname === 'www.mypatholabs.tech' || hostname === 'mypatholabs.tech') {
-    return 'https://api.mypatholabs.tech/api';
+    return `${PRIMARY_SERVER}/api`;
   }
 
   if (hostname === 'laboratory-management-six.vercel.app') {
@@ -48,9 +48,9 @@ const API_URL = BASE_URL; // Global alias for scripts using old naming conventio
 const SOCKET_URL = (() => {
   const hostname = window.location.hostname;
 
-  // Production: backend is on api.mypatholabs.tech
+  // Production: route to 1st priority server
   if (hostname === 'www.mypatholabs.tech' || hostname === 'mypatholabs.tech') {
-    return 'https://api.mypatholabs.tech';
+    return PRIMARY_SERVER;
   }
 
   // Staging / Vercel preview → Render backend
@@ -110,7 +110,11 @@ const api = {
   async request(endpoint, method = 'GET', body = null, signal = null) {
     const headers = {};
 
-    // Authorization header is removed because the token is now sent via HttpOnly cookie
+    // Support both HttpOnly cookies AND Bearer Authorization header for cross-site fallback
+    const token = localStorage.getItem('lis_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
     const config = {
       method,
@@ -181,7 +185,11 @@ const api = {
 
   // Auth Helpers
   async login(email, password) {
-    return this.request('/auth/login', 'POST', { email, password });
+    const res = await this.request('/auth/login', 'POST', { email, password });
+    if (res && res.token) {
+      localStorage.setItem('lis_token', res.token);
+    }
+    return res;
   },
 
   async register(data) {
@@ -206,7 +214,11 @@ const api = {
   },
 
   async mfaVerifyLogin(mfaToken, code, isBackup = false) {
-    return this.request('/mfa/verify-login', 'POST', { mfaToken, code, isBackup });
+    const res = await this.request('/mfa/verify-login', 'POST', { mfaToken, code, isBackup });
+    if (res && res.token) {
+      localStorage.setItem('lis_token', res.token);
+    }
+    return res;
   },
 
   async mfaDisable(password, code) {
