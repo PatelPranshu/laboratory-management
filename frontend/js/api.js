@@ -1,6 +1,8 @@
 // Server URLs
 const PRIMARY_SERVER = 'https://mylaboratory.onrender.com';
 const SECONDARY_SERVER = 'https://mypatholabs2.onrender.com';
+const BACKUP_SERVER = 'https://mypatholabs3.onrender.com';
+const TERTIARY_SERVER = BACKUP_SERVER;
 
 // Auto-detect API base URL: use same origin in production, localhost in development
 const BASE_URL = (() => {
@@ -13,6 +15,10 @@ const BASE_URL = (() => {
 
   if (hostname === 'laboratory-management-six.vercel.app') {
     return `${PRIMARY_SERVER}/api`;
+  }
+
+  if (hostname === 'mypatholabs3.onrender.com') {
+    return 'https://mypatholabs3.onrender.com/api';
   }
 
   if (hostname === 'mypatholabs2.onrender.com') {
@@ -50,6 +56,10 @@ const SOCKET_URL = (() => {
   // Staging / Vercel preview → Render backend
   if (hostname === 'laboratory-management-six.vercel.app') {
     return PRIMARY_SERVER;
+  }
+
+  if (hostname === 'mypatholabs3.onrender.com') {
+    return 'https://mypatholabs3.onrender.com';
   }
 
   if (hostname === 'mypatholabs2.onrender.com') {
