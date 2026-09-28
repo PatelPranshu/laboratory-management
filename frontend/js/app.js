@@ -757,9 +757,9 @@ function downloadPdfGlobal(id, event) {
     const close = () => overlay.remove();
 
     const openPdf = async (withHF) => {
-        let url = `${BASE_URL}/reports/${id}/pdf`;
+        let endpoint = `/reports/${id}/pdf`;
         if (!withHF) {
-            url += '?withHeaderFooter=false';
+            endpoint += '?withHeaderFooter=false';
         }
         
         const btnId = withHF ? 'hf-btn-with' : 'hf-btn-without';
@@ -771,17 +771,10 @@ function downloadPdfGlobal(id, event) {
         }
 
         try {
-            const response = await fetch(url, {
-                credentials: 'include'
-            });
-            
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(errData.error || 'Failed to generate PDF');
-            }
+            const response = await api.request(endpoint, 'GET');
             
             let filename = `Diagnostic_Report_${id.slice(-12)}.pdf`;
-            const disposition = response.headers.get('content-disposition');
+            const disposition = response.headers && response.headers.get ? response.headers.get('content-disposition') : null;
             if (disposition) {
                 const match = disposition.match(/filename="?([^";\n]+)"?/);
                 if (match && match[1]) {
