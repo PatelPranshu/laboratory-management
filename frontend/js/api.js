@@ -1,24 +1,18 @@
-// Server URLs (Priority 1: Backup server mypatholabs3, Priority 2: mypatholabs2, Priority 3: mylaboratory)
-const PRIMARY_SERVER = 'https://mypatholabs3.onrender.com';
+// Server URLs
+const PRIMARY_SERVER = 'https://mylaboratory.onrender.com';
 const SECONDARY_SERVER = 'https://mypatholabs2.onrender.com';
-const TERTIARY_SERVER = 'https://mylaboratory.onrender.com';
-const BACKUP_SERVER = PRIMARY_SERVER;
 
 // Auto-detect API base URL: use same origin in production, localhost in development
 const BASE_URL = (() => {
   const hostname = window.location.hostname;
 
-  // Production URL mapping — route to 1st priority server (mypatholabs3.onrender.com)
+  // Production URL mapping
   if (hostname === 'www.mypatholabs.tech' || hostname === 'mypatholabs.tech') {
-    return `${PRIMARY_SERVER}/api`;
+    return 'https://api.mypatholabs.tech/api';
   }
 
   if (hostname === 'laboratory-management-six.vercel.app') {
     return `${PRIMARY_SERVER}/api`;
-  }
-
-  if (hostname === 'mypatholabs3.onrender.com') {
-    return 'https://mypatholabs3.onrender.com/api';
   }
 
   if (hostname === 'mypatholabs2.onrender.com') {
@@ -48,18 +42,14 @@ const API_URL = BASE_URL; // Global alias for scripts using old naming conventio
 const SOCKET_URL = (() => {
   const hostname = window.location.hostname;
 
-  // Production: route to 1st priority server
+  // Production: backend is on api.mypatholabs.tech
   if (hostname === 'www.mypatholabs.tech' || hostname === 'mypatholabs.tech') {
-    return PRIMARY_SERVER;
+    return 'https://api.mypatholabs.tech';
   }
 
   // Staging / Vercel preview → Render backend
   if (hostname === 'laboratory-management-six.vercel.app') {
     return PRIMARY_SERVER;
-  }
-
-  if (hostname === 'mypatholabs3.onrender.com') {
-    return 'https://mypatholabs3.onrender.com';
   }
 
   if (hostname === 'mypatholabs2.onrender.com') {
@@ -110,11 +100,7 @@ const api = {
   async request(endpoint, method = 'GET', body = null, signal = null) {
     const headers = {};
 
-    // Support both HttpOnly cookies AND Bearer Authorization header for cross-site fallback
-    const token = localStorage.getItem('lis_token');
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
+    // Authorization header is removed because the token is now sent via HttpOnly cookie
 
     const config = {
       method,
@@ -185,11 +171,7 @@ const api = {
 
   // Auth Helpers
   async login(email, password) {
-    const res = await this.request('/auth/login', 'POST', { email, password });
-    if (res && res.token) {
-      localStorage.setItem('lis_token', res.token);
-    }
-    return res;
+    return this.request('/auth/login', 'POST', { email, password });
   },
 
   async register(data) {
@@ -214,11 +196,7 @@ const api = {
   },
 
   async mfaVerifyLogin(mfaToken, code, isBackup = false) {
-    const res = await this.request('/mfa/verify-login', 'POST', { mfaToken, code, isBackup });
-    if (res && res.token) {
-      localStorage.setItem('lis_token', res.token);
-    }
-    return res;
+    return this.request('/mfa/verify-login', 'POST', { mfaToken, code, isBackup });
   },
 
   async mfaDisable(password, code) {

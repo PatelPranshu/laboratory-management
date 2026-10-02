@@ -2486,13 +2486,25 @@
             });
 
             try {
-                const res = await api.request(`/reports/${id}/pdf`, 'POST', {
-                    withHeaderFooter,
-                    layoutPreferences: customLayoutPreferences || undefined
+                const url = `${BASE_URL}/reports/${id}/pdf`;
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        withHeaderFooter,
+                        layoutPreferences: customLayoutPreferences || undefined
+                    })
                 });
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || errData.message || 'Failed to generate PDF');
+                }
                 
                 let filename = `Diagnostic_Report_${id.slice(-12)}.pdf`;
-                const disposition = res.headers && res.headers.get ? res.headers.get('content-disposition') : null;
+                const disposition = res.headers.get('content-disposition');
                 if (disposition) {
                     const match = disposition.match(/filename="?([^";\n]+)"?/);
                     if (match && match[1]) {
