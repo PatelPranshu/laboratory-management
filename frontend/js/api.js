@@ -112,11 +112,21 @@ const api = {
     return this.getActiveServer();
   },
 
-  async checkServerHealth(serverUrl, timeoutMs = HEALTH_TIMEOUT_MS) {
+  getAdaptiveTimeout() {
+    if (typeof navigator !== 'undefined' && navigator.connection) {
+      const conn = navigator.connection;
+      if (conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g') return 8000;
+      if (conn.effectiveType === '3g' || (conn.rtt && conn.rtt > 600)) return 6500;
+    }
+    return 5000;
+  },
+
+  async checkServerHealth(serverUrl, timeoutMs = null) {
     if (!this.isAllowedServer(serverUrl)) return false;
 
+    const actualTimeout = timeoutMs || this.getAdaptiveTimeout();
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const timer = setTimeout(() => controller.abort(), actualTimeout);
 
     try {
       const response = await fetch(`${serverUrl}/health`, {
@@ -162,22 +172,51 @@ const api = {
           }
         }
 
-        // Step 1: Health check Primary Server 1 (api.mypatholabs.tech)
-        const server1Healthy = await this.checkServerHealth(PRIMARY_SERVER);
-        if (server1Healthy) {
+        const timeoutMs = this.getAdaptiveTimeout();
+        const staggerMs = Math.min(2500, Math.floor(timeoutMs * 0.5));
+
+        // Step 1: Probe Primary Server 1
+        let server1Finished = false;
+        let server1Ok = false;
+
+        const server1Promise = this.checkServerHealth(PRIMARY_SERVER, timeoutMs).then(res => {
+          server1Finished = true;
+          server1Ok = res;
+          return res;
+        });
+
+        // Give Server 1 a fair head start (staggerMs)
+        const staggerTimer = new Promise(resolve => setTimeout(resolve, staggerMs));
+        await Promise.race([server1Promise, staggerTimer]);
+
+        // If Server 1 responded promptly and is healthy, immediately use Server 1
+        if (server1Finished && server1Ok) {
           this.setActiveServer(PRIMARY_SERVER);
           return PRIMARY_SERVER;
         }
 
-        // Step 2: Server 1 not responding / unhealthy -> Health check Server 2 (api2.mypatholabs.tech)
-        const server2Healthy = await this.checkServerHealth(SECONDARY_SERVER);
-        if (server2Healthy) {
+        // If Server 1 is still in-flight (due to high latency) or failed,
+        // probe Backup Server 2 concurrently without killing Server 1:
+        const server2Promise = this.checkServerHealth(SECONDARY_SERVER, timeoutMs);
+
+        const [s1Result, s2Result] = await Promise.all([server1Promise, server2Promise]);
+
+        if (s1Result) {
+          // Server 1 responded OK (even if network was slow) -> prioritize Primary!
+          this.setActiveServer(PRIMARY_SERVER);
+          return PRIMARY_SERVER;
+        }
+
+        if (s2Result) {
+          // Server 1 genuinely failed, but Server 2 is healthy -> failover to Backup!
           this.setActiveServer(SECONDARY_SERVER);
           return SECONDARY_SERVER;
         }
 
-        // Both servers unavailable
-        throw new Error('Unable to connect to service. All servers are currently unavailable. Please try again shortly.');
+        // If both timed out (client network severely degraded), default to Primary
+        // so the user's actual request can proceed rather than blocking unconditionally.
+        this.setActiveServer(PRIMARY_SERVER);
+        return PRIMARY_SERVER;
       } finally {
         this._resolvingPromise = null;
       }
