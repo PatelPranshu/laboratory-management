@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     try {
+        if (typeof api !== 'undefined' && api.resolveServer) {
+            await api.resolveServer().catch(() => {});
+        }
         const res = await fetch(`${BASE_URL}/staff/verify-invite/${token}`);
         const data = await res.json();
 
@@ -65,6 +68,9 @@ async function handleRegistration(e) {
     UI.toggleLoader('btn-submit', true);
 
     try {
+        if (typeof api !== 'undefined' && api.resolveServer) {
+            await api.resolveServer();
+        }
         const payload = { token, name, password, termsAccepted, privacyAccepted };
         if (signatureUrl) payload.signatureUrl = signatureUrl;
 

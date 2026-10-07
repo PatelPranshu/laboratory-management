@@ -315,6 +315,11 @@
             window.location.href = 'dashboard.html';
         }
 
+        // Server availability check on site visit
+        if (typeof api !== 'undefined' && api.resolveServer) {
+            api.resolveServer().catch(err => console.warn('Server check on load:', err.message));
+        }
+
         function toggleForm(showRegister = true) {
             if (showRegister) {
                 document.getElementById('login-form').classList.add('hidden');
@@ -383,16 +388,8 @@
                     UI.toggleLoader('btn-forgot', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Sending...');
                     const email = document.getElementById('forgot-email').value.trim();
                     
-                    const res = await fetch(`${API_URL}/auth/forgot-password`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email })
-                    });
-                    const data = await res.json();
-                    
-                    if (!res.ok && !data.success) throw new Error(data.error || 'Failed to send reset link');
-                    
-                    UI.showToast(data.message || 'If an account exists, a password reset link has been sent.', 'success');
+                    const data = await api.forgotPassword(email);
+                    UI.showToast((data && data.message) || 'If an account exists, a password reset link has been sent.', 'success');
                     
                     // Enforce 30-second cooldown timer to prevent API spamming
                     btnForgot.disabled = true;

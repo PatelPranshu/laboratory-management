@@ -42,8 +42,9 @@ class DraftManager {
 // If another tab logs out (removes lis_token/lis_user), this tab
 // immediately redirects to the login page to prevent stale sessions.
 window.addEventListener('storage', (e) => {
-    if ((e.key === 'lis_exp' || e.key === 'lis_user') && e.newValue === null) {
+    if ((e.key === 'lis_exp' || e.key === 'lis_user' || e.key === 'lis_active_server') && e.newValue === null) {
         // Token/user was removed in another tab — force logout here
+        try { sessionStorage.removeItem('lis_active_server'); } catch (_) {}
         window.location.href = 'index.html';
     }
 });
@@ -656,6 +657,10 @@ function handleLogout() {
   if (typeof api !== 'undefined' && api.logout) {
     api.logout();
   } else {
+    try {
+      sessionStorage.removeItem('lis_active_server');
+      localStorage.removeItem('lis_active_server');
+    } catch (_) {}
     localStorage.removeItem('lis_exp');
     localStorage.removeItem('lis_user');
     window.location.href = 'index.html';

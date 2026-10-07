@@ -39,8 +39,7 @@ function initDatadog(consentStatus) {
       defaultPrivacyLevel: defaultPrivacyLevel,
       allowedTracingUrls: [
         { match: "https://api.mypatholabs.tech", propagatorTypes: ["datadog", "tracecontext"] },
-        { match: "https://mylaboratory.onrender.com", propagatorTypes: ["datadog", "tracecontext"] },
-        { match: "https://mypatholabs2.onrender.com", propagatorTypes: ["datadog", "tracecontext"] },
+        { match: "https://api2.mypatholabs.tech", propagatorTypes: ["datadog", "tracecontext"] },
         { match: /localhost/, propagatorTypes: ["datadog", "tracecontext"] }
       ]
     });

@@ -124,14 +124,7 @@
             UI.toggleLoader('btn-verify', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Verifying...');
 
             try {
-                const res = await fetch(`${API_URL}/auth/verify-email`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ token })
-                });
-
-                const data = await res.json();
+                const data = await api.verifyEmail(token);
 
                 if (data.success) {
                     if (data.user && data.exp) {
@@ -152,7 +145,7 @@
                     UI.toggleLoader('btn-verify', false, 'Click here to confirm <i class="fas fa-check-circle ml-2 mt-0.5 transition-transform group-hover:scale-110"></i>');
                 }
             } catch (err) {
-                document.getElementById('error-text').innerText = 'Network error while verifying email.';
+                document.getElementById('error-text').innerText = err.message || 'Network error while verifying email.';
                 document.getElementById('error-message').classList.remove('hidden');
                 UI.toggleLoader('btn-verify', false, 'Click here to confirm <i class="fas fa-check-circle ml-2 mt-0.5 transition-transform group-hover:scale-110"></i>');
             }
@@ -168,21 +161,15 @@
             UI.toggleLoader('btn-resend', true, '<i class="fas fa-circle-notch fa-spin mr-2"></i> Sending...');
 
             try {
-                const res = await fetch(`${API_URL}/auth/resend-verification`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-
-                const data = await res.json();
+                const data = await api.resendVerification(email);
 
                 feedback.classList.remove('hidden', 'bg-red-50', 'text-red-600', 'bg-emerald-50', 'text-emerald-600');
-                if (res.ok && data.success) {
+                if (data && data.success) {
                     feedback.classList.add('bg-emerald-50', 'text-emerald-600');
                     feedback.innerText = data.message || 'If an account exists, a verification email has been sent.';
                 } else {
                     feedback.classList.add('bg-red-50', 'text-red-600');
-                    feedback.innerText = data.error || 'Failed to send verification email.';
+                    feedback.innerText = (data && data.error) || 'Failed to send verification email.';
                 }
             } catch (err) {
                 feedback.classList.remove('hidden');

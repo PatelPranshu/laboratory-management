@@ -1,80 +1,7 @@
-// Server URLs
-const PRIMARY_SERVER = 'https://mylaboratory.onrender.com';
-const SECONDARY_SERVER = 'https://mypatholabs2.onrender.com';
-
-// Auto-detect API base URL: use same origin in production, localhost in development
-const BASE_URL = (() => {
-  const hostname = window.location.hostname;
-
-  // Production URL mapping
-  if (hostname === 'www.mypatholabs.tech' || hostname === 'mypatholabs.tech') {
-    return 'https://api.mypatholabs.tech/api';
-  }
-
-  if (hostname === 'laboratory-management-six.vercel.app') {
-    return `${PRIMARY_SERVER}/api`;
-  }
-
-  if (hostname === 'mypatholabs2.onrender.com') {
-    return 'https://mypatholabs2.onrender.com/api';
-  }
-
-  if (hostname === 'mylaboratory.onrender.com') {
-    return 'https://mylaboratory.onrender.com/api';
-  }
-
-  const isLocal = hostname === 'localhost' ||
-    hostname === '127.0.0.1' ||
-    hostname.startsWith('192.168.') ||
-    hostname.startsWith('10.') ||
-    hostname.startsWith('172.');
-
-  if (window.location.protocol !== 'file:' && !isLocal) {
-    return `${window.location.origin}/api`;
-  }
-  const host = hostname || '127.0.0.1';
-  return `http://${host}:5000/api`;
-})();
-
-const API_URL = BASE_URL; // Global alias for scripts using old naming convention
-
-// Socket.IO server URL — explicitly maps each environment to the correct origin
-const SOCKET_URL = (() => {
-  const hostname = window.location.hostname;
-
-  // Production: backend is on api.mypatholabs.tech
-  if (hostname === 'www.mypatholabs.tech' || hostname === 'mypatholabs.tech') {
-    return 'https://api.mypatholabs.tech';
-  }
-
-  // Staging / Vercel preview → Render backend
-  if (hostname === 'laboratory-management-six.vercel.app') {
-    return PRIMARY_SERVER;
-  }
-
-  if (hostname === 'mypatholabs2.onrender.com') {
-    return 'https://mypatholabs2.onrender.com';
-  }
-
-  if (hostname === 'mylaboratory.onrender.com') {
-    return 'https://mylaboratory.onrender.com';
-  }
-
-  // Local development
-  const isLocal = hostname === 'localhost' ||
-    hostname === '127.0.0.1' ||
-    hostname.startsWith('192.168.') ||
-    hostname.startsWith('10.') ||
-    hostname.startsWith('172.');
-
-  if (isLocal || window.location.protocol === 'file:') {
-    const host = hostname || '127.0.0.1';
-    return `http://${host}:5000`;
-  }
-
-  // Generic fallback — same origin (works when backend serves frontend)
-  return window.location.origin;
-})();
+// Production Server URLs
+const PRIMARY_SERVER = 'https://api.mypatholabs.tech';
+const SECONDARY_SERVER = 'https://api2.mypatholabs.tech';
+const HEALTH_TIMEOUT_MS = 3500;
 
 /**
  * SECURITY: XSS Mitigation Utility
@@ -93,6 +20,172 @@ const sanitizeHTML = (str) => {
 };
 
 const api = {
+  _activeServer: null,
+  _resolvingPromise: null,
+
+  isAllowedServer(url) {
+    if (!url || typeof url !== 'string') return false;
+    if (url === PRIMARY_SERVER || url === SECONDARY_SERVER) return true;
+
+    const hostname = window.location.hostname;
+    const isLocal = hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('172.');
+
+    if (isLocal) {
+      const host = hostname || '127.0.0.1';
+      return url === `http://${host}:5000` || url === 'http://localhost:5000' || url === 'http://127.0.0.1:5000';
+    }
+
+    return false;
+  },
+
+  _getStoredServer() {
+    try {
+      return sessionStorage.getItem('lis_active_server') || localStorage.getItem('lis_active_server');
+    } catch (_) {
+      return null;
+    }
+  },
+
+  _setStoredServer(url) {
+    try { sessionStorage.setItem('lis_active_server', url); } catch (_) {}
+    try { localStorage.setItem('lis_active_server', url); } catch (_) {}
+  },
+
+  _clearStoredServer() {
+    try { sessionStorage.removeItem('lis_active_server'); } catch (_) {}
+    try { localStorage.removeItem('lis_active_server'); } catch (_) {}
+  },
+
+  getActiveServer() {
+    if (this._activeServer && this.isAllowedServer(this._activeServer)) {
+      return this._activeServer;
+    }
+
+    const storedServer = this._getStoredServer();
+    if (storedServer && this.isAllowedServer(storedServer)) {
+      this._activeServer = storedServer;
+      return storedServer;
+    }
+
+    if (storedServer) {
+      this.resetActiveServer();
+    }
+
+    const hostname = window.location.hostname;
+    const isLocal = hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('172.');
+
+    if (window.location.protocol !== 'file:' && !isLocal) {
+      return PRIMARY_SERVER;
+    }
+
+    const host = hostname || '127.0.0.1';
+    return `http://${host}:5000`;
+  },
+
+  setActiveServer(url) {
+    if (!url || !this.isAllowedServer(url)) {
+      this.resetActiveServer();
+      return;
+    }
+    this._activeServer = url;
+    this._setStoredServer(url);
+  },
+
+  resetActiveServer() {
+    this._activeServer = null;
+    this._clearStoredServer();
+  },
+
+  getBaseUrl() {
+    return `${this.getActiveServer()}/api`;
+  },
+
+  getSocketUrl() {
+    return this.getActiveServer();
+  },
+
+  async checkServerHealth(serverUrl, timeoutMs = HEALTH_TIMEOUT_MS) {
+    if (!this.isAllowedServer(serverUrl)) return false;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(`${serverUrl}/health`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        cache: 'no-store',
+        credentials: 'omit',
+        signal: controller.signal
+      });
+
+      if (!response.ok) return false;
+      const data = await response.json();
+      return Boolean(data && data.status === 'ok' && data.service === 'mypatholabs-server');
+    } catch (_) {
+      return false;
+    } finally {
+      clearTimeout(timer);
+    }
+  },
+
+  async resolveServer() {
+    if (this._resolvingPromise) {
+      return this._resolvingPromise;
+    }
+
+    this._resolvingPromise = (async () => {
+      try {
+        const hostname = window.location.hostname;
+        const isLocal = hostname === 'localhost' ||
+          hostname === '127.0.0.1' ||
+          hostname.startsWith('192.168.') ||
+          hostname.startsWith('10.') ||
+          hostname.startsWith('172.');
+
+        // In local development, check local server first
+        if (isLocal) {
+          const host = hostname || '127.0.0.1';
+          const localUrl = `http://${host}:5000`;
+          const isLocalOk = await this.checkServerHealth(localUrl, 1500);
+          if (isLocalOk) {
+            this.setActiveServer(localUrl);
+            return localUrl;
+          }
+        }
+
+        // Step 1: Health check Primary Server 1 (api.mypatholabs.tech)
+        const server1Healthy = await this.checkServerHealth(PRIMARY_SERVER);
+        if (server1Healthy) {
+          this.setActiveServer(PRIMARY_SERVER);
+          return PRIMARY_SERVER;
+        }
+
+        // Step 2: Server 1 not responding / unhealthy -> Health check Server 2 (api2.mypatholabs.tech)
+        const server2Healthy = await this.checkServerHealth(SECONDARY_SERVER);
+        if (server2Healthy) {
+          this.setActiveServer(SECONDARY_SERVER);
+          return SECONDARY_SERVER;
+        }
+
+        // Both servers unavailable
+        throw new Error('Unable to connect to service. All servers are currently unavailable. Please try again shortly.');
+      } finally {
+        this._resolvingPromise = null;
+      }
+    })();
+
+    return this._resolvingPromise;
+  },
+
   getExp() {
     return localStorage.getItem('lis_exp');
   },
@@ -118,7 +211,7 @@ const api = {
     }
 
     try {
-      const response = await fetch(`${BASE_URL}${endpoint}`, config);
+      const response = await fetch(`${this.getBaseUrl()}${endpoint}`, config);
 
       // Handle non-JSON responses (e.g., PDF blobs, network errors)
       let data;
@@ -171,11 +264,33 @@ const api = {
 
   // Auth Helpers
   async login(email, password) {
+    await this.resolveServer();
     return this.request('/auth/login', 'POST', { email, password });
   },
 
   async register(data) {
+    await this.resolveServer();
     return this.request('/auth/register', 'POST', data);
+  },
+
+  async forgotPassword(email) {
+    await this.resolveServer();
+    return this.request('/auth/forgot-password', 'POST', { email });
+  },
+
+  async verifyEmail(token) {
+    await this.resolveServer();
+    return this.request('/auth/verify-email', 'POST', { token });
+  },
+
+  async resendVerification(email) {
+    await this.resolveServer();
+    return this.request('/auth/resend-verification', 'POST', { email });
+  },
+
+  async resetPasswordWithToken(token, newPassword) {
+    await this.resolveServer();
+    return this.request('/auth/reset-password-with-token', 'POST', { token, newPassword });
   },
 
   async getMe() {
@@ -207,6 +322,7 @@ const api = {
     localStorage.removeItem('lis_token'); // Kept for backwards compatibility cleanup
     localStorage.removeItem('lis_exp');
     localStorage.removeItem('lis_user');
+    this.resetActiveServer();
     window.location.href = 'index.html';
   },
 
@@ -219,5 +335,21 @@ const api = {
     this.clearLocalData();
   }
 };
+
+// Global aliases for backward compatibility across all existing scripts
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'BASE_URL', {
+    get() { return api.getBaseUrl(); },
+    configurable: true
+  });
+  Object.defineProperty(window, 'API_URL', {
+    get() { return api.getBaseUrl(); },
+    configurable: true
+  });
+  Object.defineProperty(window, 'SOCKET_URL', {
+    get() { return api.getSocketUrl(); },
+    configurable: true
+  });
+}
 
 
