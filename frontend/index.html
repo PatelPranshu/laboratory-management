@@ -313,11 +313,10 @@
         const exp = localStorage.getItem('lis_exp');
         if (exp && parseInt(exp, 10) > Math.floor(Date.now() / 1000)) {
             window.location.href = 'dashboard.html';
-        }
-
-        // Server availability check on site visit
-        if (typeof api !== 'undefined' && api.resolveServer) {
-            api.resolveServer().catch(err => console.warn('Server check on load:', err.message));
+        } else {
+            if (typeof api !== 'undefined' && api.resetActiveServer) {
+                api.resetActiveServer();
+            }
         }
 
         function toggleForm(showRegister = true) {

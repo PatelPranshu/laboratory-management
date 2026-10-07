@@ -35,13 +35,13 @@ connectDB();
 
 // Lightweight Render Free Tier Metrics Logger (Sent to Datadog Logs)
 let lastCpuTime = process.cpuUsage();
-setInterval(() => {
+const metricsTimer = setInterval(() => {
   const memUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage(lastCpuTime);
   lastCpuTime = process.cpuUsage();
   
   // CPU usage is in microseconds. Calculate percentage over the 60s interval
-  const cpuPercent = (((cpuUsage.user + cpuUsage.system) / 1000000) / 5) * 100; 
+  const cpuPercent = (((cpuUsage.user + cpuUsage.system) / 1000000) / 60) * 100; 
   const ramMB = memUsage.rss / 1024 / 1024;
   
   logger.info("Server hardware metrics", {
@@ -49,12 +49,19 @@ setInterval(() => {
     ram_mb: Math.round(ramMB * 100) / 100,
     cpu_percent: Math.round(cpuPercent * 100) / 100
   });
-}, 5000); // Every 5 seconds
+}, 60000); // Every 60 seconds (standard APM cadence)
+metricsTimer.unref();
 
 const app = express();
 
-// HTTP Request Logging with Morgan
-app.use(morgan('combined', { stream: logger.stream }));
+// HTTP Request Logging with Morgan (skip health checks and OPTIONS preflights to prevent bandwidth waste)
+app.use(morgan('combined', {
+  stream: logger.stream,
+  skip: (req) => {
+    const path = (req.originalUrl || req.url || '').split('?')[0];
+    return path === '/health' || path === '/' || req.method === 'OPTIONS';
+  }
+}));
 
 app.disable('x-powered-by');
 
@@ -98,7 +105,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'"], // Allow UI scripts but block external malicious scripts
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
       imgSrc: ["'self'", "data:", "blob:", "https://res.cloudinary.com"],
-      connectSrc: ["'self'", "https://api.mypatholabs.tech", "https://api2.mypatholabs.tech"]
+      connectSrc: ["'self'", "https://api.mypatholabs.tech", "https://api2.mypatholabs.tech", "wss://api.mypatholabs.tech", "wss://api2.mypatholabs.tech"]
     }
   } : false,
   crossOriginResourcePolicy: { policy: 'cross-origin' }
@@ -199,8 +206,8 @@ app.get('/', (req, res) => {
   res.json({ success: true, message: 'LIS API is running' });
 });
 
-// Render Health Check Route
-app.get('/health', (req, res) => {
+// Health Check Route (supports both /health and /api/health for reverse proxy compatibility)
+app.get(['/health', '/api/health'], (req, res) => {
   res.status(200).json({ status: 'ok', service: 'mypatholabs-server' });
 });
 
@@ -224,6 +231,7 @@ server.listen(PORT, '0.0.0.0', () => {
 // ---------- Graceful Shutdown ----------
 const gracefulShutdown = (signal) => {
   logger.info(`\n${signal} received. Shutting down gracefully...`);
+  clearInterval(metricsTimer);
   server.close(() => {
     const mongoose = require('mongoose');
     mongoose.connection.close(false).then(() => {

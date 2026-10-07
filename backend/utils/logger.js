@@ -23,23 +23,39 @@ const transports = [
 ];
 
 if (process.env.DD_API_KEY) {
-  transports.push(new winston.transports.Http({
+  const ddHttpTransport = new winston.transports.Http({
     host: `http-intake.logs.${process.env.DD_SITE || 'datadoghq.com'}`,
-    path: `/api/v2/logs?dd-api-key=${process.env.DD_API_KEY}&ddsource=nodejs&service=mypatholabs-server`,
-    ssl: true
-  }));
+    path: '/api/v2/logs?ddsource=nodejs&service=mypatholabs-server',
+    headers: {
+      'DD-API-KEY': process.env.DD_API_KEY
+    },
+    ssl: true,
+    batch: true,
+    batchInterval: 5000,
+    batchCount: 20
+  });
+
+  // Guard against unhandled transport errors to ensure server resilience
+  ddHttpTransport.on('error', (err) => {
+    console.error('[Logger] Datadog transport error:', err.message || err);
+  });
+
+  transports.push(ddHttpTransport);
 }
 
 const SENSITIVE_KEYS = /password|token|secret|apikey|authorization|cookie|phone|email|ssn|creditcard/i;
 
 const piiRedactFormat = winston.format((info) => {
-  const scrub = (obj) => {
+  const scrub = (obj, seen = new WeakSet()) => {
     if (!obj || typeof obj !== 'object') return obj;
+    if (seen.has(obj)) return '[CIRCULAR]';
+    seen.add(obj);
+
     for (const key of Object.keys(obj)) {
       if (SENSITIVE_KEYS.test(key)) {
         obj[key] = '[REDACTED]';
       } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-        scrub(obj[key]);
+        scrub(obj[key], seen);
       }
     }
     return obj;

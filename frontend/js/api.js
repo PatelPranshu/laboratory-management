@@ -1,7 +1,7 @@
 // Production Server URLs
 const PRIMARY_SERVER = 'https://api.mypatholabs.tech';
 const SECONDARY_SERVER = 'https://api2.mypatholabs.tech';
-const HEALTH_TIMEOUT_MS = 3500;
+const REQUEST_TIMEOUT_MS = 8000;
 
 /**
  * SECURITY: XSS Mitigation Utility
@@ -21,20 +21,22 @@ const sanitizeHTML = (str) => {
 
 const api = {
   _activeServer: null,
-  _resolvingPromise: null,
+
+  _isLocalHost(hostname) {
+    if (!hostname) return true;
+    return hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.') ||
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname);
+  },
 
   isAllowedServer(url) {
     if (!url || typeof url !== 'string') return false;
     if (url === PRIMARY_SERVER || url === SECONDARY_SERVER) return true;
 
     const hostname = window.location.hostname;
-    const isLocal = hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname.startsWith('192.168.') ||
-      hostname.startsWith('10.') ||
-      hostname.startsWith('172.');
-
-    if (isLocal) {
+    if (this._isLocalHost(hostname)) {
       const host = hostname || '127.0.0.1';
       return url === `http://${host}:5000` || url === 'http://localhost:5000' || url === 'http://127.0.0.1:5000';
     }
@@ -60,6 +62,18 @@ const api = {
     try { localStorage.removeItem('lis_active_server'); } catch (_) {}
   },
 
+  getDefaultPrimaryServer() {
+    const hostname = window.location.hostname;
+    const isLocal = this._isLocalHost(hostname);
+
+    if (window.location.protocol !== 'file:' && !isLocal) {
+      return PRIMARY_SERVER;
+    }
+
+    const host = hostname || '127.0.0.1';
+    return `http://${host}:5000`;
+  },
+
   getActiveServer() {
     if (this._activeServer && this.isAllowedServer(this._activeServer)) {
       return this._activeServer;
@@ -75,19 +89,7 @@ const api = {
       this.resetActiveServer();
     }
 
-    const hostname = window.location.hostname;
-    const isLocal = hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname.startsWith('192.168.') ||
-      hostname.startsWith('10.') ||
-      hostname.startsWith('172.');
-
-    if (window.location.protocol !== 'file:' && !isLocal) {
-      return PRIMARY_SERVER;
-    }
-
-    const host = hostname || '127.0.0.1';
-    return `http://${host}:5000`;
+    return this.getDefaultPrimaryServer();
   },
 
   setActiveServer(url) {
@@ -112,156 +114,77 @@ const api = {
     return this.getActiveServer();
   },
 
-  getAdaptiveTimeout() {
-    if (typeof navigator !== 'undefined' && navigator.connection) {
-      const conn = navigator.connection;
-      if (conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g') return 8000;
-      if (conn.effectiveType === '3g' || (conn.rtt && conn.rtt > 600)) return 6500;
-    }
-    return 5000;
+  // Backward-compatible server resolver
+  async resolveServer() {
+    return this.getActiveServer();
   },
 
-  async checkServerHealth(serverUrl, timeoutMs = null) {
-    if (!this.isAllowedServer(serverUrl)) return false;
-
-    const actualTimeout = timeoutMs || this.getAdaptiveTimeout();
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), actualTimeout);
-
+  // Server health check utility
+  async checkServerHealth(serverUrl = null, timeoutMs = 3000) {
+    const target = serverUrl || this.getActiveServer();
+    if (!this.isAllowedServer(target)) return false;
     try {
-      const response = await fetch(`${serverUrl}/health`, {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        cache: 'no-store',
-        credentials: 'omit',
-        signal: controller.signal
-      });
-
-      if (!response.ok) return false;
-      const data = await response.json();
-      return Boolean(data && data.status === 'ok' && data.service === 'mypatholabs-server');
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const res = await fetch(`${target}/health`, { signal: controller.signal, credentials: 'omit' });
+      clearTimeout(timer);
+      if (!res.ok) return false;
+      const data = await res.json();
+      return !!(data && data.status === 'ok' && data.service === 'mypatholabs-server');
     } catch (_) {
       return false;
-    } finally {
-      clearTimeout(timer);
     }
-  },
-
-  async resolveServer() {
-    if (this._resolvingPromise) {
-      return this._resolvingPromise;
-    }
-
-    this._resolvingPromise = (async () => {
-      try {
-        const hostname = window.location.hostname;
-        const isLocal = hostname === 'localhost' ||
-          hostname === '127.0.0.1' ||
-          hostname.startsWith('192.168.') ||
-          hostname.startsWith('10.') ||
-          hostname.startsWith('172.');
-
-        // In local development, check local server first
-        if (isLocal) {
-          const host = hostname || '127.0.0.1';
-          const localUrl = `http://${host}:5000`;
-          const isLocalOk = await this.checkServerHealth(localUrl, 1500);
-          if (isLocalOk) {
-            this.setActiveServer(localUrl);
-            return localUrl;
-          }
-        }
-
-        const timeoutMs = this.getAdaptiveTimeout();
-        const staggerMs = Math.min(2500, Math.floor(timeoutMs * 0.5));
-
-        // Step 1: Probe Primary Server 1
-        let server1Finished = false;
-        let server1Ok = false;
-
-        const server1Promise = this.checkServerHealth(PRIMARY_SERVER, timeoutMs).then(res => {
-          server1Finished = true;
-          server1Ok = res;
-          return res;
-        });
-
-        // Give Server 1 a fair head start (staggerMs)
-        const staggerTimer = new Promise(resolve => setTimeout(resolve, staggerMs));
-        await Promise.race([server1Promise, staggerTimer]);
-
-        // If Server 1 responded promptly and is healthy, immediately use Server 1
-        if (server1Finished && server1Ok) {
-          this.setActiveServer(PRIMARY_SERVER);
-          return PRIMARY_SERVER;
-        }
-
-        // If Server 1 is still in-flight (due to high latency) or failed,
-        // probe Backup Server 2 concurrently without killing Server 1:
-        const server2Promise = this.checkServerHealth(SECONDARY_SERVER, timeoutMs);
-
-        const [s1Result, s2Result] = await Promise.all([server1Promise, server2Promise]);
-
-        if (s1Result) {
-          // Server 1 responded OK (even if network was slow) -> prioritize Primary!
-          this.setActiveServer(PRIMARY_SERVER);
-          return PRIMARY_SERVER;
-        }
-
-        if (s2Result) {
-          // Server 1 genuinely failed, but Server 2 is healthy -> failover to Backup!
-          this.setActiveServer(SECONDARY_SERVER);
-          return SECONDARY_SERVER;
-        }
-
-        // If both timed out (client network severely degraded), default to Primary
-        // so the user's actual request can proceed rather than blocking unconditionally.
-        this.setActiveServer(PRIMARY_SERVER);
-        return PRIMARY_SERVER;
-      } finally {
-        this._resolvingPromise = null;
-      }
-    })();
-
-    return this._resolvingPromise;
   },
 
   getExp() {
     return localStorage.getItem('lis_exp');
   },
 
-  async request(endpoint, method = 'GET', body = null, signal = null) {
-    const headers = {};
+  async _fetchFrom(serverUrl, endpoint, config, timeoutMs = null) {
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = `${serverUrl}/api${cleanEndpoint}`;
 
-    // Authorization header is removed because the token is now sent via HttpOnly cookie
+    const defaultTimeout = (config && config.body instanceof FormData) ? 30000 : REQUEST_TIMEOUT_MS;
+    const actualTimeout = timeoutMs || defaultTimeout;
 
-    const config = {
-      method,
-      headers,
-      credentials: 'include',
-      signal // Support for AbortController cancellation
-    };
+    const controller = new AbortController();
+    const timeoutTimer = setTimeout(() => controller.abort(), actualTimeout);
 
-    if (body && !(body instanceof FormData)) {
-      headers['Content-Type'] = 'application/json';
-      config.body = JSON.stringify(body);
-    } else if (body instanceof FormData) {
-      // Let browser set Content-Type with boundary for FormData
-      config.body = body;
+    let onCallerAbort = null;
+    if (config.signal) {
+      if (config.signal.aborted) {
+        clearTimeout(timeoutTimer);
+        controller.abort();
+      } else {
+        onCallerAbort = () => controller.abort();
+        config.signal.addEventListener('abort', onCallerAbort, { once: true });
+      }
     }
 
-    try {
-      const response = await fetch(`${this.getBaseUrl()}${endpoint}`, config);
+    const fetchConfig = { ...config, signal: controller.signal };
 
-      // Handle non-JSON responses (e.g., PDF blobs, network errors)
+    try {
+      const response = await fetch(url, fetchConfig);
+
+      // Server gateway / infrastructure outage indicators (including Cloudflare 52x origin errors)
+      if (
+        response.status === 502 ||
+        response.status === 503 ||
+        response.status === 504 ||
+        (response.status >= 520 && response.status <= 526)
+      ) {
+        const err = new Error(`Server temporarily unavailable (${response.status})`);
+        err.isServerOutage = true;
+        throw err;
+      }
+
       let data;
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         data = await response.json();
       } else if (response.ok) {
-        // Non-JSON successful response (e.g., PDF) — return raw response
         return response;
       } else {
-        // Non-JSON error response
         if (response.status === 429) {
           data = { success: false, error: 'Too many requests. Please try again later.' };
         } else if (response.status >= 500) {
@@ -273,7 +196,6 @@ const api = {
         }
       }
 
-      // If unauthorized, redirect to login unless already on index/login page
       if (!response.ok && response.status === 401) {
         const path = window.location.pathname;
         const isAuthPage = path.endsWith('index.html') || path.endsWith('/') || path === '';
@@ -284,16 +206,107 @@ const api = {
       }
 
       if (!response.ok) {
-        throw new Error((data && data.error) || 'API Request Failed');
+        throw new Error((data && (data.error || data.message)) || 'API Request Failed');
       }
 
       return data;
-    } catch (error) {
-      // Don't log token in errors
-      console.error(`API Error on ${endpoint}:`, error.message || error);
+    } catch (err) {
+      if (err.name === 'AbortError' && (!config.signal || !config.signal.aborted)) {
+        const timeoutErr = new Error('Connection to server timed out');
+        timeoutErr.isServerOutage = true;
+        throw timeoutErr;
+      }
+      const msg = (err.message || '').toLowerCase();
+      if (
+        err.name === 'TypeError' ||
+        msg.includes('failed to fetch') ||
+        msg.includes('networkerror') ||
+        msg.includes('load failed') ||
+        msg.includes('network request failed')
+      ) {
+        err.isServerOutage = true;
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutTimer);
+      if (config.signal && onCallerAbort) {
+        config.signal.removeEventListener('abort', onCallerAbort);
+      }
+    }
+  },
 
+  async request(endpoint, method = 'GET', body = null, signal = null) {
+    const headers = {};
+
+    const config = {
+      method,
+      headers,
+      credentials: 'include',
+      signal
+    };
+
+    if (body && !(body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+      config.body = JSON.stringify(body);
+    } else if (body instanceof FormData) {
+      config.body = body;
+    }
+
+    const storedServer = this._getStoredServer();
+    const primaryTarget = (storedServer && this.isAllowedServer(storedServer))
+      ? storedServer
+      : this.getDefaultPrimaryServer();
+
+    const backupTarget = (primaryTarget === PRIMARY_SERVER)
+      ? SECONDARY_SERVER
+      : (primaryTarget === SECONDARY_SERVER ? PRIMARY_SERVER : null);
+
+    try {
+      const result = await this._fetchFrom(primaryTarget, endpoint, config);
+      if (!this._getStoredServer() || this._activeServer !== primaryTarget) {
+        this.setActiveServer(primaryTarget);
+      }
+      return result;
+    } catch (error) {
+      if (signal && signal.aborted) {
+        throw error;
+      }
+
+      const isNetworkFailure = !!error.isServerOutage;
+
+      // Safe failover:
+      // Always failover if establishing session (auth routes) OR if idempotent GET
+      const isSessionEstablishing = !this._getStoredServer();
+      const isIdempotent = method === 'GET';
+      const canFailover = isNetworkFailure && backupTarget && (isSessionEstablishing || isIdempotent);
+
+      if (canFailover) {
+        console.warn(`[API] Primary server (${primaryTarget}) unreachable. Failing over to ${backupTarget}...`);
+        try {
+          const backupResult = await this._fetchFrom(backupTarget, endpoint, config);
+          this.setActiveServer(backupTarget);
+          return backupResult;
+        } catch (backupError) {
+          if (!backupError.isServerOutage) {
+            // Backup server responded with HTTP status (e.g. 401, 400), so it is alive
+            this.setActiveServer(backupTarget);
+            throw backupError;
+          }
+          console.error(`[API] Backup server (${backupTarget}) also unreachable:`, backupError.message || backupError);
+        }
+      }
+
+      if (!isNetworkFailure) {
+        // Primary server responded with an HTTP status code (e.g. 401, 400) -> Primary is healthy
+        if (!this._getStoredServer() || this._activeServer !== primaryTarget) {
+          this.setActiveServer(primaryTarget);
+        }
+        throw error;
+      }
+
+      console.error(`API Error on ${endpoint}:`, error.message || error);
       let friendlyMessage = error.message || 'An unexpected error occurred';
-      if (friendlyMessage === 'Failed to fetch' || friendlyMessage.includes('NetworkError')) {
+      if (isNetworkFailure) {
         friendlyMessage = 'Network Error: Cannot connect to server. Please check your internet connection.';
       }
 
@@ -303,32 +316,26 @@ const api = {
 
   // Auth Helpers
   async login(email, password) {
-    await this.resolveServer();
     return this.request('/auth/login', 'POST', { email, password });
   },
 
   async register(data) {
-    await this.resolveServer();
     return this.request('/auth/register', 'POST', data);
   },
 
   async forgotPassword(email) {
-    await this.resolveServer();
     return this.request('/auth/forgot-password', 'POST', { email });
   },
 
   async verifyEmail(token) {
-    await this.resolveServer();
     return this.request('/auth/verify-email', 'POST', { token });
   },
 
   async resendVerification(email) {
-    await this.resolveServer();
     return this.request('/auth/resend-verification', 'POST', { email });
   },
 
   async resetPasswordWithToken(token, newPassword) {
-    await this.resolveServer();
     return this.request('/auth/reset-password-with-token', 'POST', { token, newPassword });
   },
 
